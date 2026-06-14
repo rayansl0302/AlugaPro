@@ -1,0 +1,230 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Admins reais reconhecidos pelo e-mail do token (não dependem de doc em users/)
+    function isAdminEmail() {
+      return isAuthenticated() &&
+        request.auth.token.email in ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com'];
+    }
+
+    function userExists() {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isRole(role) {
+      return userExists() && getUserData().role == role;
+    }
+
+    function isAdmin() {
+      return isAdminEmail() || isRole('admin');
+    }
+
+    function isGestor() {
+      return isAdmin() || isRole('gestor');
+    }
+
+    function isProprietario() {
+      return isGestor() || isRole('proprietario');
+    }
+
+    function isInquilinoOf(tenantId) {
+      return isAuthenticated() && request.auth.uid == tenantId;
+    }
+
+    function sameCompany(companyId) {
+      return isAdmin() || (userExists() && getUserData().companyId == companyId);
+    }
+
+    // Companies
+    match /companies/{companyId} {
+      allow read: if isAuthenticated() && sameCompany(companyId);
+      allow create: if isAdmin();
+      allow update: if isAdmin() && sameCompany(companyId);
+      allow delete: if false; // never delete companies via client
+    }
+
+    // Users
+    match /users/{userId} {
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      allow write: if isAdmin();
+      // O usuário convidado materializa o próprio doc conforme o convite criado
+      // pelo gestor — sem poder escolher empresa ou papel arbitrários.
+      allow create, update: if request.auth.uid == userId
+        && exists(/databases/$(database)/documents/userInvites/$(request.auth.token.email))
+        && request.resource.data.role == get(/databases/$(database)/documents/userInvites/$(request.auth.token.email)).data.role
+        && request.resource.data.companyId == get(/databases/$(database)/documents/userInvites/$(request.auth.token.email)).data.companyId;
+      // O próprio usuário pode atualizar apenas dados de contato/verificação de
+      // telefone do seu doc, sem alterar papel nem empresa.
+      allow update: if request.auth.uid == userId
+        && resource != null
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['phone', 'whatsapp', 'phoneVerified', 'phoneVerifiedAt', 'updatedAt'])
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.companyId == resource.data.companyId;
+    }
+
+    // Convites de acesso (criados pelo gestor; lidos só pelo próprio convidado)
+    match /userInvites/{email} {
+      allow read: if isAuthenticated() && request.auth.token.email == email;
+      allow create, update: if isGestor();
+      allow delete: if isAdmin();
+    }
+
+    // Properties
+    match /properties/{propertyId} {
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow delete: if isAdmin();
+    }
+
+    // Vehicles
+    match /vehicles/{vehicleId} {
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow delete: if isAdmin();
+    }
+
+    // Owners
+    match /owners/{ownerId} {
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow write: if isGestor() && sameCompany(request.resource.data.companyId);
+    }
+
+    // Tenants
+    match /tenants/{tenantId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) || request.auth.uid == tenantId);
+      allow create, update: if isGestor();
+      allow delete: if isAdmin();
+    }
+
+    // Contracts
+    match /contracts/{contractId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) ||
+         request.auth.uid == resource.data.tenantId);
+
+      allow create: if isGestor();
+
+      // Gestor/Admin: atualização completa.
+      // Inquilino: pode apenas assinar o PRÓPRIO contrato — anexa sua assinatura,
+      //   fotos e o PDF final, sem alterar termos, valores, status ou a parte do locador.
+      allow update: if isGestor()
+        || (isRole('inquilino')
+            && request.auth.uid == resource.data.tenantId
+            && request.resource.data.companyId  == resource.data.companyId
+            && request.resource.data.tenantId    == resource.data.tenantId
+            && request.resource.data.ownerId     == resource.data.ownerId
+            && request.resource.data.propertyId  == resource.data.propertyId
+            && request.resource.data.contractNumber == resource.data.contractNumber
+            && request.resource.data.rentValue   == resource.data.rentValue
+            && request.resource.data.startDate   == resource.data.startDate
+            && request.resource.data.dueDay      == resource.data.dueDay
+            && request.resource.data.status      == resource.data.status
+            && request.resource.data.signatureLocador == resource.data.signatureLocador
+            && request.resource.data.docsLocador == resource.data.docsLocador);
+
+      allow delete: if isAdmin();
+    }
+
+    // Charges
+    match /charges/{chargeId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) ||
+         request.auth.uid == resource.data.tenantId);
+
+      allow create: if isGestor();
+
+      // Gestor/Admin: full update.
+      // Inquilino: pode apenas anexar comprovante à própria cobrança
+      //   — não pode alterar status, valor, vencimento nem confirmar o próprio pagamento.
+      allow update: if isGestor()
+        || (isRole('inquilino')
+            && request.auth.uid == resource.data.tenantId
+            && request.resource.data.status    == resource.data.status
+            && request.resource.data.amount    == resource.data.amount
+            && request.resource.data.dueDate   == resource.data.dueDate
+            && request.resource.data.receiptStatus == 'aguardando'
+            && request.resource.data.paidBy == 'tenant');
+
+      allow delete: if isAdmin();
+    }
+
+    // Payments
+    match /payments/{paymentId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) ||
+         request.auth.uid == resource.data.tenantId);
+      allow create, update: if isGestor();
+      allow delete: if isAdmin();
+    }
+
+    // Shared Expenses
+    // Inquilino pode ler despesas cujo propertyId bate com seu contrato ativo.
+    // A validação fina (é participante?) é feita no client; aqui garantimos
+    // que só membros da mesma empresa acessam.
+    match /sharedExpenses/{expenseId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) ||
+         request.auth.uid == resource.data.tenantId);
+      allow write: if isGestor();
+    }
+
+    // Maintenance Requests
+    match /maintenanceRequests/{requestId} {
+      allow read: if isAuthenticated() &&
+        (sameCompany(resource.data.companyId) ||
+         request.auth.uid == resource.data.tenantId);
+      allow create: if isAuthenticated();
+      allow update: if isGestor() ||
+        (request.auth.uid == resource.data.tenantId && isRole('inquilino'));
+      allow delete: if isAdmin();
+    }
+
+    // Notifications
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() &&
+        (isGestor() || request.auth.uid == resource.data.recipientId);
+      allow write: if isGestor();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if false;
+    }
+
+    // Assinaturas de testemunhas (rota pública por token)
+    // O token aleatório é o ID do documento e funciona como segredo do link.
+    // Qualquer pessoa com o link pode LER (para ver a prévia) e ASSINAR uma vez,
+    // sem poder alterar os dados do contrato nem reescrever uma assinatura já feita.
+    match /witnessSignatures/{token} {
+      allow get: if true;
+      allow list: if isGestor();
+      allow create: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow update: if isGestor()
+        || (resource.data.status == 'pending'
+            && request.resource.data.status == 'signed'
+            && request.resource.data.contractId     == resource.data.contractId
+            && request.resource.data.companyId       == resource.data.companyId
+            && request.resource.data.contractNumber  == resource.data.contractNumber
+            && request.resource.data.witnessName     == resource.data.witnessName
+            && request.resource.data.witnessEmail    == resource.data.witnessEmail
+            && request.resource.data.locadorName     == resource.data.locadorName
+            && request.resource.data.locatarioName   == resource.data.locatarioName);
+      allow delete: if isAdmin();
+    }
+  }
+}

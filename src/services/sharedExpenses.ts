@@ -1,0 +1,102 @@
+import {
+  collection, addDoc, updateDoc, doc, getDoc, getDocs,
+  query, where, serverTimestamp,
+} from 'firebase/firestore'
+import { db } from '@/lib/firebase'
+import { SharedExpense, SharedExpenseParticipant, ExpenseStatus, PaymentMethod } from '@/types'
+
+const COL = 'sharedExpenses'
+
+export async function getSharedExpenses(companyId: string): Promise<SharedExpense[]> {
+  const q = query(
+    collection(db, COL),
+    where('companyId', '==', companyId)
+  )
+  const snap = await getDocs(q)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as SharedExpense))
+    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
+}
+
+export async function createSharedExpense(
+  data: Omit<SharedExpense, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  const ref = await addDoc(collection(db, COL), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function updateSharedExpense(
+  id: string,
+  data: Partial<SharedExpense>
+): Promise<void> {
+  const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined))
+  await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
+}
+
+// Both functions read fresh from Firestore and match by ARRAY INDEX (not tenantId).
+// Matching by tenantId is unsafe: if participants lack the field (undefined) or share the
+// same value, the condition matches every element and marks them all.
+export async function markParticipantPaid(
+  expenseId: string,
+  participantIndex: number,
+  data: { paidDate: string; paymentMethod: PaymentMethod }
+): Promise<void> {
+  const ref = doc(db, COL, expenseId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Despesa não encontrada')
+  const current = snap.data() as { participants: SharedExpenseParticipant[] }
+
+  const updatedParticipants: SharedExpenseParticipant[] = current.participants.map((p, idx) =>
+    idx === participantIndex
+      ? { ...p, status: 'pago' as const, paidDate: data.paidDate }
+      : { ...p }
+  )
+  const allPaid = updatedParticipants.every((p) => p.status === 'pago')
+  const somePaid = updatedParticipants.some((p) => p.status === 'pago')
+  const newStatus: ExpenseStatus = allPaid ? 'pago' : somePaid ? 'parcial' : 'pendente'
+  await updateDoc(ref, {
+    participants: updatedParticipants,
+    status: newStatus,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function markParticipantUnpaid(
+  expenseId: string,
+  participantIndex: number,
+): Promise<void> {
+  const ref = doc(db, COL, expenseId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Despesa não encontrada')
+  const current = snap.data() as { participants: SharedExpenseParticipant[] }
+
+  const updatedParticipants: SharedExpenseParticipant[] = current.participants.map((p, idx) => {
+    if (idx !== participantIndex) return { ...p }
+    const { paidDate, ...rest } = p
+    return { ...rest, status: 'pendente' as const }
+  })
+  const allPaid = updatedParticipants.every((p) => p.status === 'pago')
+  const somePaid = updatedParticipants.some((p) => p.status === 'pago')
+  const newStatus: ExpenseStatus = allPaid ? 'pago' : somePaid ? 'parcial' : 'pendente'
+  await updateDoc(ref, {
+    participants: updatedParticipants,
+    status: newStatus,
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export function splitExpenseEqually(
+  totalAmount: number,
+  participants: Array<{ tenantId: string; tenantName: string }>
+) {
+  const share = Math.round((totalAmount / participants.length) * 100) / 100
+  return participants.map((p) => ({
+    ...p,
+    amount: share,
+    status: 'pendente' as const,
+  }))
+}

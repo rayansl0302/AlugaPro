@@ -1,0 +1,87 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    // 10 MB limit for receipts/docs, 20 MB for photos
+    function maxSize(mb) {
+      return request.resource.size < mb * 1024 * 1024;
+    }
+
+    function isImage() {
+      return request.resource.contentType.matches('image/.*');
+    }
+
+    function isPdf() {
+      return request.resource.contentType == 'application/pdf';
+    }
+
+    function isReceiptType() {
+      return isImage() || isPdf();
+    }
+
+    // ── Comprovantes de pagamento ──────────────────────────────────────────
+    // Path: receipts/{companyId}/{chargeId}/{filename}
+    // Qualquer usuário autenticado pode ler (gestor valida, inquilino vê o seu).
+    // Upload permitido para qualquer autenticado (gestor ou o próprio inquilino).
+    // Controle fino de quem é o inquilino é feito pelas regras do Firestore.
+    match /receipts/{companyId}/{chargeId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isReceiptType() && maxSize(10);
+      allow delete: if isAuth();
+    }
+
+    // ── Fotos de imóveis ───────────────────────────────────────────────────
+    // Path: properties/{companyId}/{propertyId}/{filename}
+    match /properties/{companyId}/{propertyId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isImage() && maxSize(20);
+      allow delete: if isAuth();
+    }
+
+    // ── Fotos de veículos ──────────────────────────────────────────────────
+    // Path: vehicles/{companyId}/{vehicleId}/{filename}
+    match /vehicles/{companyId}/{vehicleId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isImage() && maxSize(20);
+      allow delete: if isAuth();
+    }
+
+    // ── Documentos de inquilinos ───────────────────────────────────────────
+    // Path: tenants/{companyId}/{tenantId}/{filename}
+    match /tenants/{companyId}/{tenantId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && maxSize(20);
+      allow delete: if isAuth();
+    }
+
+    // ── Contratos assinados ────────────────────────────────────────────────
+    // Path: contracts/{companyId}/{contractId}/{filename}
+    match /contracts/{companyId}/{contractId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && maxSize(20);
+      allow delete: if isAuth();
+    }
+
+    // ── Avatares de usuários ───────────────────────────────────────────────
+    // Path: avatars/{userId}/{filename}
+    // Apenas o próprio usuário pode fazer upload do seu avatar.
+    match /avatars/{userId}/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && request.auth.uid == userId && isImage() && maxSize(5);
+      allow delete: if isAuth() && request.auth.uid == userId;
+    }
+
+    // ── Logo da empresa ────────────────────────────────────────────────────
+    // Path: companies/{companyId}/logo/{filename}
+    match /companies/{companyId}/logo/{filename} {
+      allow read:  if isAuth();
+      allow write: if isAuth() && isImage() && maxSize(5);
+      allow delete: if isAuth();
+    }
+
+  }
+}

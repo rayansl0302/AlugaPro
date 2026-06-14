@@ -1,0 +1,101 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "charges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "tenantId",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "charges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "dueDate",   "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "charges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "contractId", "order": "ASCENDING" },
+        { "fieldPath": "type",       "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "charges",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId",      "order": "ASCENDING" },
+        { "fieldPath": "receiptStatus",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contracts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "tenantId",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "contracts",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "status",    "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "payments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "tenantId",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "payments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "paidDate",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "maintenanceRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "tenantId",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "maintenanceRequests",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId", "order": "ASCENDING" },
+        { "fieldPath": "status",    "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "notifications",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId",    "order": "ASCENDING" },
+        { "fieldPath": "recipientId",  "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "sharedExpenses",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "companyId",   "order": "ASCENDING" },
+        { "fieldPath": "propertyId",  "order": "ASCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

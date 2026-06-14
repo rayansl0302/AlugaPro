@@ -1,0 +1,45 @@
+import { useState } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
+import { Sidebar } from './Sidebar'
+import { Topbar } from './Topbar'
+
+const pageTitles: Record<string, string> = {
+  '/dashboard': 'Dashboard',
+  '/imoveis': 'Imóveis',
+  '/veiculos': 'Veículos',
+  '/proprietarios': 'Proprietários',
+  '/inquilinos': 'Inquilinos',
+  '/contratos': 'Contratos',
+  '/financeiro': 'Controle Financeiro',
+  '/cobrancas': 'Cobranças',
+  '/inadimplencia': 'Inadimplência',
+  '/despesas': 'Despesas Compartilhadas',
+  '/chamados': 'Chamados e Manutenções',
+  '/notificacoes': 'Notificações',
+  '/relatorios': 'Relatórios',
+  '/configuracoes': 'Configurações',
+}
+
+export function AdminLayout() {
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const location = useLocation()
+
+  const currentTitle =
+    Object.entries(pageTitles).find(([path]) => location.pathname.startsWith(path))?.[1] ??
+    'AlugaPro'
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-background">
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggle={() => setSidebarCollapsed((v) => !v)}
+      />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Topbar title={currentTitle} />
+        <main className="flex-1 overflow-auto p-6">
+          <Outlet />
+        </main>
+      </div>
+    </div>
+  )
+}
