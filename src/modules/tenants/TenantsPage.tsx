@@ -14,6 +14,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { TenantForm } from './TenantForm'
 import { PropertyDetail } from '../properties/PropertyDetail'
@@ -85,6 +87,8 @@ export function TenantsPage() {
       t.cpf?.includes(search) ||
       t.email?.toLowerCase().includes(search.toLowerCase())
   )
+
+  const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
     if (confirm('Remover inquilino?')) deleteMutation.mutate(id)
@@ -167,7 +171,7 @@ export function TenantsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((tenant) => (
+              {pag.pageItems.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -247,7 +251,7 @@ export function TenantsPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((tenant) => (
+          {pag.pageItems.map((tenant) => (
             <Card key={tenant.id} className="transition-shadow hover:shadow-md">
               <CardContent className="p-5">
                 <div className="flex items-center gap-3">
@@ -322,6 +326,18 @@ export function TenantsPage() {
             </Card>
           ))}
         </div>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <Pagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          total={pag.total}
+          rangeStart={pag.rangeStart}
+          rangeEnd={pag.rangeEnd}
+          onPageChange={pag.setPage}
+          itemLabel="inquilinos"
+        />
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

@@ -74,6 +74,11 @@
   @apply bg-muted-foreground/40;
 }
 
+/* Landing — logo horizontal branca no header escuro */
+.landing-logo-white {
+  filter: brightness(0) invert(1);
+}
+
 /* Smooth scroll */
 html {
   scroll-behavior: smooth;

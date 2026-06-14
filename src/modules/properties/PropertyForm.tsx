@@ -191,7 +191,7 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
       <p className="text-sm font-semibold text-muted-foreground">Endereço</p>
 
       <AddressFields
-        register={register}
+        register={(name) => register(name as Parameters<typeof register>[0])}
         setValue={setValue}
         watch={watch}
         errors={errors as Record<string, { message?: string }>}

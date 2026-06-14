@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRight, ChevronLeft, FileText, Camera, PenLine,
   CheckCircle, Download, Loader2, User, Building2, Car, X,
@@ -16,6 +16,8 @@ import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { getContractSigningStatus } from '@/lib/contractSigning'
 import { buildImovelBlocks } from '@/lib/contractTemplates/imovel'
 import { buildVeiculoBlocks } from '@/lib/contractTemplates/veiculo'
+import { renderCustomImovel, renderCustomVeiculo } from '@/lib/contractTemplates/engine'
+import { getContractTemplates } from '@/services/contractTemplates'
 import { generateContractPDF, contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
 import { formatCurrency, formatDate, maskCPF, maskPhone } from '@/lib/utils'
 import { SignatureCanvas } from '@/components/shared/SignatureCanvas'
@@ -322,6 +324,16 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
   const [editMode, setEditMode] = useState(false)
   const [currentPdfUrl, setCurrentPdfUrl] = useState<string | undefined>(undefined)
   const [viewSignature, setViewSignature] = useState<{ name: string; signature: string } | null>(null)
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>('system')
+
+  const { data: contractTemplates = [] } = useQuery({
+    queryKey: ['contractTemplates', contract?.companyId],
+    queryFn: () => getContractTemplates(contract!.companyId),
+    enabled: !!contract?.companyId,
+  })
+  const availableTemplates = contractTemplates.filter(
+    (t) => t.assetType === (isVeiculo ? 'veiculo' : 'imovel')
+  )
 
   // Populate form whenever a new contract is selected
   useEffect(() => {
@@ -333,6 +345,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     setEditMode(false)
     setCurrentPdfUrl(contract.signedPdfUrl)
     setLocalWitnesses(contract.witnesses ?? [])
+    setSelectedTemplateId(contract.templateId ?? 'system')
     setForm({
       locador: emptyParty(owner),
       locatario: emptyParty(tenant),
@@ -454,17 +467,22 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     try {
       const signingData = buildSigningData()
 
+      const chosenTemplate = availableTemplates.find((t) => t.id === selectedTemplateId)
+
       let blocks
       if (isVeiculo) {
-        blocks = buildVeiculoBlocks(signingData as VeiculoSigningData, {
+        const veiculoCtx = {
           contractNumber: contract.contractNumber,
           rentValue: contract.rentValue,
           cautionValue: contract.cautionValue,
           lateFee: contract.lateFee,
           monthlyInterest: contract.monthlyInterest,
-        })
+        }
+        blocks = chosenTemplate
+          ? renderCustomVeiculo(chosenTemplate.clauses, signingData as VeiculoSigningData, veiculoCtx)
+          : buildVeiculoBlocks(signingData as VeiculoSigningData, veiculoCtx)
       } else {
-        blocks = buildImovelBlocks(signingData as ImovelSigningData, {
+        const imovelCtx = {
           contractNumber: contract.contractNumber,
           rentValue: contract.rentValue,
           dueDay: contract.dueDay,
@@ -473,7 +491,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
           monthlyInterest: contract.monthlyInterest,
           startDate: contract.startDate,
           endDate: contract.endDate,
-        })
+        }
+        blocks = chosenTemplate
+          ? renderCustomImovel(chosenTemplate.clauses, signingData as ImovelSigningData, imovelCtx)
+          : buildImovelBlocks(signingData as ImovelSigningData, imovelCtx)
       }
 
       const existingWitnesses = contract.witnesses ?? []
@@ -536,6 +557,9 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         witnesses,
         signedPdfUrl: pdfUrl,
         signedAt: format(new Date(), 'yyyy-MM-dd HH:mm:ss'),
+        templateId: chosenTemplate?.id,
+        templateName: chosenTemplate?.name,
+        templateClauses: chosenTemplate?.clauses,
       }) as Partial<Contract>)
 
       // Testemunhas assinam remotamente: cria a solicitação por token e envia o link por e-mail
@@ -995,6 +1019,22 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
               {/* STEP 0: Dados complementares */}
               {step === 0 && (
                 <div className="space-y-6">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-primary">Modelo de contrato</Label>
+                    <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="system">Modelo do sistema (padrão)</SelectItem>
+                        {availableTemplates.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[11px] text-muted-foreground">
+                      Modelos personalizados são criados em "Modelos de Contrato".
+                    </p>
+                  </div>
+
                   <PartyFormFields label="Locador / Proprietário" value={form.locador} onChange={setFormLocador} />
                   <PartyFormFields label="Locatário / Inquilino" value={form.locatario} onChange={setFormLocatario} />
 

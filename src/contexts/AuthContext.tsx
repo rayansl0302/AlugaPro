@@ -37,6 +37,7 @@ function baseProfile(
     email: fbUser.email ?? docData?.email ?? '',
     role,
     companyId,
+    tenantId: docData?.tenantId,
     phone: docData?.phone,
     whatsapp: docData?.whatsapp,
     phoneVerified: docData?.phoneVerified ?? false,
@@ -65,7 +66,9 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Pro
   }
 
   if (docData?.role) {
-    return baseProfile(fbUser, fbUser.uid, docData.role, docData.companyId ?? 'demo-company', docData)
+    const profileId =
+      docData.role === 'inquilino' && docData.tenantId ? docData.tenantId : fbUser.uid
+    return baseProfile(fbUser, profileId, docData.role, docData.companyId ?? 'demo-company', docData)
   }
 
   const email = (fbUser.email ?? '').toLowerCase()

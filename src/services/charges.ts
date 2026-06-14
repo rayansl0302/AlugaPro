@@ -9,6 +9,21 @@ import { calculateLateFee, calculateInterest, getDaysLate, isOverdue } from '@/l
 
 const COL = 'charges'
 
+type ChargeGenerationContract = Pick<
+  Contract,
+  | 'id'
+  | 'status'
+  | 'companyId'
+  | 'propertyId'
+  | 'propertyName'
+  | 'tenantId'
+  | 'tenantName'
+  | 'startDate'
+  | 'endDate'
+  | 'dueDay'
+  | 'rentValue'
+>
+
 export async function getCharges(companyId: string): Promise<Charge[]> {
   const q = query(
     collection(db, COL),
@@ -100,7 +115,7 @@ export function generateMonthlyCharges(contract: Contract, monthOffset = 0): Omi
 
 // Generates monthly rent charges for a contract from startDate to today (or endDate).
 // Skips months that already have a charge. Returns count of charges created.
-export async function generateChargesForContract(contract: Contract): Promise<number> {
+export async function generateChargesForContract(contract: ChargeGenerationContract): Promise<number> {
   if (contract.status === 'encerrado' || contract.status === 'cancelado') return 0
 
   const q = query(collection(db, COL), where('contractId', '==', contract.id), where('type', '==', 'aluguel'))

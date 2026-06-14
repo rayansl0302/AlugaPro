@@ -95,6 +95,13 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Contract templates (modelos personalizados por empresa)
+    match /contractTemplates/{templateId} {
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow delete: if isGestor() && sameCompany(resource.data.companyId);
+    }
+
     // Owners
     match /owners/{ownerId} {
       allow read: if isAuthenticated() && sameCompany(resource.data.companyId);

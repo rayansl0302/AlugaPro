@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Navigate } from 'react-router-dom'
+import { Navigate, useSearchParams, Link } from 'react-router-dom'
 import { Loader2, Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -44,11 +44,14 @@ function loadRemembered(): { email: string; password: string } | null {
 
 export function LoginPage() {
   const { user, signIn, signInWithGoogle, resetPassword } = useAuth()
+  const [searchParams] = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [role, setRole] = useState<LoginRole>('gestor')
+  const [role, setRole] = useState<LoginRole>(
+    searchParams.get('tab') === 'inquilino' ? 'inquilino' : 'gestor',
+  )
 
   const remembered = loadRemembered()
   const [remember, setRemember] = useState(!!remembered)
@@ -116,6 +119,9 @@ export function LoginPage() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <Card className="w-full max-w-md shadow-xl">
         <CardHeader className="text-center">
+          <Link to="/" className="mb-4 inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
+            ← Voltar ao site
+          </Link>
           <img
             src="/logo-completa-alugapro.png"
             alt="AlugaPro - Gestão Inteligente de Aluguéis"

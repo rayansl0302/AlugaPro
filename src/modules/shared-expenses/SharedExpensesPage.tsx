@@ -23,6 +23,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Combobox } from '@/components/ui/combobox'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { SharedExpensePayDialog } from './SharedExpensePayDialog'
 
@@ -253,6 +255,8 @@ export function SharedExpensesPage() {
     }),
     [expenses, search, propertyFilter, statusFilter],
   )
+
+  const cardsPag = usePagination(filteredExpenses, 12)
 
   const kpiPending = useMemo(() =>
     expenses.flatMap((e) => e.participants).filter((p) => p.status !== 'pago').reduce((s, p) => s + p.amount, 0),
@@ -579,7 +583,7 @@ export function SharedExpensesPage() {
 
         /* ─── Cards view ─────────────────────────────────────────────────── */
         <div className="grid gap-4 sm:grid-cols-2">
-          {filteredExpenses.map((expense) => {
+          {cardsPag.pageItems.map((expense) => {
             const paidCount   = expense.participants.filter((p) => p.status === 'pago').length
             const pendingCount = expense.participants.length - paidCount
             return (
@@ -653,6 +657,19 @@ export function SharedExpensesPage() {
               </Card>
             )
           })}
+          {filteredExpenses.length > 0 && (
+            <div className="sm:col-span-2">
+              <Pagination
+                page={cardsPag.page}
+                totalPages={cardsPag.totalPages}
+                total={cardsPag.total}
+                rangeStart={cardsPag.rangeStart}
+                rangeEnd={cardsPag.rangeEnd}
+                onPageChange={cardsPag.setPage}
+                itemLabel="despesas"
+              />
+            </div>
+          )}
         </div>
       )}
 

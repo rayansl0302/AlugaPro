@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { label: 'Proprietários', href: '/proprietarios', icon: Home },
   { label: 'Inquilinos', href: '/inquilinos', icon: Users },
   { label: 'Contratos', href: '/contratos', icon: FileText },
+  { label: 'Modelos de Contrato', href: '/modelos-contrato', icon: FileText },
   { label: 'Financeiro', href: '/financeiro', icon: CreditCard },
   { label: 'Cobranças', href: '/cobrancas', icon: DollarSign },
   { label: 'Inadimplência', href: '/inadimplencia', icon: AlertTriangle },

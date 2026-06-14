@@ -15,6 +15,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { ContractForm } from './ContractForm'
 import { ContractSignFlow } from './ContractSignFlow'
@@ -103,6 +105,8 @@ export function ContractsPage() {
     const matchStatus = statusFilter === 'todos' || c.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const pag = usePagination(filtered, 10)
 
   const handleMarkComplete = async (contract: Contract) => {
     if (!window.confirm('Marcar este contrato como completo? Após confirmar, não será mais possível editar os dados do contrato nem completar dados de locador/locatário.')) return
@@ -211,7 +215,7 @@ export function ContractsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((contract) => {
+              {pag.pageItems.map((contract) => {
                 const sc = statusConfig[contract.status]
                 const signing = getContractSigningStatus(contract)
                 return (
@@ -358,6 +362,18 @@ export function ContractsPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <Pagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          total={pag.total}
+          rangeStart={pag.rangeStart}
+          rangeEnd={pag.rangeEnd}
+          onPageChange={pag.setPage}
+          itemLabel="contratos"
+        />
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>

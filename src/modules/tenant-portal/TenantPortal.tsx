@@ -4,6 +4,7 @@ import {
   FileText, LogOut, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
   ShieldCheck, AlertTriangle, Percent, Receipt, CalendarClock, Wallet,
   Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, UserCircle, ShieldAlert,
+  Eye, Download,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -12,6 +13,8 @@ import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
 import { getPaymentsByTenant } from '@/services/payments'
 import { uploadReceipt } from '@/services/storage'
+import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
+import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
 import { Charge, ChargeType, PaymentMethod } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -22,6 +25,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { ReceiptUpload } from '@/components/shared/ReceiptUpload'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 
 const statusVariant = {
@@ -92,6 +97,7 @@ export function TenantPortal() {
   const [receiptUrl, setReceiptUrl] = useState<string | undefined>()
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+  const [contractLoading, setContractLoading] = useState<false | 'view' | 'download'>(false)
 
   const { data: charges = [] } = useQuery({
     queryKey: ['charges', companyId, tenantId],
@@ -116,6 +122,8 @@ export function TenantPortal() {
   const overdueCharges = pendingCharges.filter((c) => c.dueDate && c.dueDate < TODAY)
   const totalPending = pendingCharges.reduce((s, c) => s + (c.totalAmount ?? c.amount), 0)
   const totalOverdue = overdueCharges.reduce((s, c) => s + (c.totalAmount ?? c.amount), 0)
+
+  const historyPag = usePagination(payments, 10)
 
   const toPay = [...pendingCharges].sort((a, b) =>
     (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31')
@@ -170,6 +178,48 @@ export function TenantPortal() {
   const openUpload = (charge: Charge) => {
     setReceiptUrl(charge.receipt)
     setUploadingCharge(charge)
+  }
+
+  const handleViewContract = async () => {
+    if (!activeContract) return
+    if (activeContract.signingData) {
+      setContractLoading('view')
+      try {
+        const doc = await generateSignedContractPDF(activeContract)
+        window.open(URL.createObjectURL(contractPDFToBlob(doc)), '_blank')
+      } catch {
+        toast({ title: 'Erro ao gerar o contrato.', variant: 'destructive' })
+      } finally {
+        setContractLoading(false)
+      }
+      return
+    }
+    if (activeContract.signedPdfUrl) {
+      window.open(activeContract.signedPdfUrl, '_blank')
+      return
+    }
+    toast({ title: 'Contrato ainda não disponível para visualização.' })
+  }
+
+  const handleDownloadContract = async () => {
+    if (!activeContract) return
+    if (activeContract.signingData) {
+      setContractLoading('download')
+      try {
+        const doc = await generateSignedContractPDF(activeContract)
+        downloadContractPDF(doc, `Contrato_${activeContract.contractNumber}.pdf`)
+      } catch {
+        toast({ title: 'Erro ao baixar o contrato.', variant: 'destructive' })
+      } finally {
+        setContractLoading(false)
+      }
+      return
+    }
+    if (activeContract.signedPdfUrl) {
+      window.open(activeContract.signedPdfUrl, '_blank')
+      return
+    }
+    toast({ title: 'Contrato ainda não disponível.' })
   }
 
   return (
@@ -319,6 +369,32 @@ export function TenantPortal() {
                         </span>
                       </div>
                     ))}
+                  </div>
+                  <div className="flex gap-2 px-4 pb-4 pt-3">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      disabled={!!contractLoading}
+                      onClick={handleViewContract}
+                    >
+                      {contractLoading === 'view'
+                        ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
+                        : <Eye className="mr-1.5 h-4 w-4" />}
+                      Visualizar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1"
+                      disabled={!!contractLoading}
+                      onClick={handleDownloadContract}
+                    >
+                      {contractLoading === 'download'
+                        ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
+                        : <Download className="mr-1.5 h-4 w-4" />}
+                      Baixar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -498,7 +574,7 @@ export function TenantPortal() {
                     <p className="text-sm text-muted-foreground mt-1">Nenhum pagamento registrado ainda.</p>
                   </div>
                 ) : (
-                  payments.slice(0, 30).map((payment) => {
+                  historyPag.pageItems.map((payment) => {
                     const { Icon } = getChargeCategory(payment)
                     return (
                       <Card key={payment.id} className="border-0 shadow-sm">
@@ -531,6 +607,17 @@ export function TenantPortal() {
                       </Card>
                     )
                   })
+                )}
+                {payments.length > 0 && (
+                  <Pagination
+                    page={historyPag.page}
+                    totalPages={historyPag.totalPages}
+                    total={historyPag.total}
+                    rangeStart={historyPag.rangeStart}
+                    rangeEnd={historyPag.rangeEnd}
+                    onPageChange={historyPag.setPage}
+                    itemLabel="pagamentos"
+                  />
                 )}
               </TabsContent>
             </Tabs>

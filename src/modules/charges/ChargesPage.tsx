@@ -21,6 +21,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { MarkPaidDialog } from './MarkPaidDialog'
 
@@ -276,6 +278,8 @@ export function ChargesPage() {
     }),
     [enriched, search, statusFilter, tenantFilter],
   )
+
+  const listPag = usePagination(filteredList, 15)
 
   // KPIs
   const kpiPending = enriched.filter((c) => c.status === 'pendente').reduce((s, c) => s + c.amount, 0)
@@ -650,7 +654,7 @@ export function ChargesPage() {
                   </td>
                 </TableRow>
               ) : (
-                filteredList.map((charge) => (
+                listPag.pageItems.map((charge) => (
                   <TableRow
                     key={charge.id}
                     className={charge.status === 'atrasado' ? 'bg-destructive/5' : ''}
@@ -710,6 +714,19 @@ export function ChargesPage() {
               )}
             </TableBody>
           </Table>
+          {filteredList.length > 0 && (
+            <div className="border-t px-4 py-3">
+              <Pagination
+                page={listPag.page}
+                totalPages={listPag.totalPages}
+                total={listPag.total}
+                rangeStart={listPag.rangeStart}
+                rangeEnd={listPag.rangeEnd}
+                onPageChange={listPag.setPage}
+                itemLabel="cobranças"
+              />
+            </div>
+          )}
         </div>
       )}
 

@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { VehicleForm } from './VehicleForm'
 import { VehicleDetail } from './VehicleDetail'
@@ -83,6 +85,8 @@ export function VehiclesPage() {
     const matchStatus = statusFilter === 'todos' || v.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
     if (confirm('Excluir veículo? Esta ação não pode ser desfeita.')) {
@@ -182,7 +186,7 @@ export function VehiclesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((vehicle) => {
+              {pag.pageItems.map((vehicle) => {
                 const sc = statusConfig[vehicle.status]
                 return (
                   <TableRow key={vehicle.id}>
@@ -254,7 +258,7 @@ export function VehiclesPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((vehicle) => {
+          {pag.pageItems.map((vehicle) => {
             const sc = statusConfig[vehicle.status]
             return (
               <Card key={vehicle.id} className="overflow-hidden transition-shadow hover:shadow-md">
@@ -341,6 +345,18 @@ export function VehiclesPage() {
             )
           })}
         </div>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <Pagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          total={pag.total}
+          rangeStart={pag.rangeStart}
+          rangeEnd={pag.rangeEnd}
+          onPageChange={pag.setPage}
+          itemLabel="veículos"
+        />
       )}
 
       {/* Form Dialog */}

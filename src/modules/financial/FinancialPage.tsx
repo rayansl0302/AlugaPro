@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 
 const methodLabels: Record<string, string> = {
   pix: 'PIX',
@@ -44,6 +46,8 @@ export function FinancialPage() {
   })
 
   const filtered = payments.filter((p) => p.dueDate?.startsWith(monthFilter))
+
+  const pag = usePagination(filtered, 15)
 
   const received = filtered.filter((p) => p.status === 'pago')
   const pending = filtered.filter((p) => p.status === 'pendente' || p.status === 'atrasado')
@@ -162,7 +166,7 @@ export function FinancialPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    filtered.map((payment) => (
+                    pag.pageItems.map((payment) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.description}</TableCell>
                         <TableCell>{payment.tenantName || '—'}</TableCell>
@@ -188,6 +192,19 @@ export function FinancialPage() {
                   )}
                 </TableBody>
               </Table>
+              {filtered.length > 0 && (
+                <div className="border-t px-4 py-3">
+                  <Pagination
+                    page={pag.page}
+                    totalPages={pag.totalPages}
+                    total={pag.total}
+                    rangeStart={pag.rangeStart}
+                    rangeEnd={pag.rangeEnd}
+                    onPageChange={pag.setPage}
+                    itemLabel="lançamentos"
+                  />
+                </div>
+              )}
             </div>
           )}
         </TabsContent>

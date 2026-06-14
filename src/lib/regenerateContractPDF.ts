@@ -3,6 +3,7 @@ import { ptBR } from 'date-fns/locale'
 import { Contract, ImovelSigningData, VeiculoSigningData } from '@/types'
 import { buildImovelBlocks } from './contractTemplates/imovel'
 import { buildVeiculoBlocks } from './contractTemplates/veiculo'
+import { renderCustomImovel, renderCustomVeiculo } from './contractTemplates/engine'
 import { generateContractPDF, PDFWitness } from './contractPDF'
 
 async function urlToBase64(url: string): Promise<string> {
@@ -36,24 +37,37 @@ export async function generateSignedContractPDF(contract: Contract) {
   if (!contract.signingData) throw new Error('Contrato sem dados de assinatura')
   const isVeiculo = contract.assetType === 'veiculo'
 
+  const customClauses = contract.templateClauses
   const blocks = isVeiculo
-    ? buildVeiculoBlocks(contract.signingData as VeiculoSigningData, {
-        contractNumber: contract.contractNumber,
-        rentValue: contract.rentValue,
-        cautionValue: contract.cautionValue,
-        lateFee: contract.lateFee,
-        monthlyInterest: contract.monthlyInterest,
-      })
-    : buildImovelBlocks(contract.signingData as ImovelSigningData, {
-        contractNumber: contract.contractNumber,
-        rentValue: contract.rentValue,
-        dueDay: contract.dueDay,
-        cautionValue: contract.cautionValue,
-        lateFee: contract.lateFee,
-        monthlyInterest: contract.monthlyInterest,
-        startDate: contract.startDate,
-        endDate: contract.endDate,
-      })
+    ? (() => {
+        const ctx = {
+          contractNumber: contract.contractNumber,
+          rentValue: contract.rentValue,
+          cautionValue: contract.cautionValue,
+          lateFee: contract.lateFee,
+          monthlyInterest: contract.monthlyInterest,
+        }
+        const data = contract.signingData as VeiculoSigningData
+        return customClauses?.length
+          ? renderCustomVeiculo(customClauses, data, ctx)
+          : buildVeiculoBlocks(data, ctx)
+      })()
+    : (() => {
+        const ctx = {
+          contractNumber: contract.contractNumber,
+          rentValue: contract.rentValue,
+          dueDay: contract.dueDay,
+          cautionValue: contract.cautionValue,
+          lateFee: contract.lateFee,
+          monthlyInterest: contract.monthlyInterest,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
+        }
+        const data = contract.signingData as ImovelSigningData
+        return customClauses?.length
+          ? renderCustomImovel(customClauses, data, ctx)
+          : buildImovelBlocks(data, ctx)
+      })()
 
   const [docsLocador, docsLocatario] = await Promise.all([
     photosToBase64(contract.docsLocador),

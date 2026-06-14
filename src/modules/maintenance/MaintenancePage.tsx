@@ -15,6 +15,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Combobox } from '@/components/ui/combobox'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 
 const categoryLabels: Record<MaintenanceCategory, string> = {
@@ -88,6 +90,8 @@ export function MaintenancePage() {
     return matchSearch && matchStatus
   })
 
+  const pag = usePagination(filtered, 12)
+
   const handleCreate = async () => {
     if (!form.title || !form.propertyId) {
       toast({ title: 'Preencha os campos obrigatórios.', variant: 'destructive' })
@@ -160,7 +164,7 @@ export function MaintenancePage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {filtered.map((request) => {
+          {pag.pageItems.map((request) => {
             const sc = statusConfig[request.status]
             return (
               <Card key={request.id} className="overflow-hidden">
@@ -212,6 +216,19 @@ export function MaintenancePage() {
               </Card>
             )
           })}
+          {filtered.length > 0 && (
+            <div className="sm:col-span-2">
+              <Pagination
+                page={pag.page}
+                totalPages={pag.totalPages}
+                total={pag.total}
+                rangeStart={pag.rangeStart}
+                rangeEnd={pag.rangeEnd}
+                onPageChange={pag.setPage}
+                itemLabel="chamados"
+              />
+            </div>
+          )}
         </div>
       )}
 

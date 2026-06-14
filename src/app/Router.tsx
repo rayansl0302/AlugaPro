@@ -7,6 +7,7 @@ import { PropertiesPage } from '@/modules/properties/PropertiesPage'
 import { VehiclesPage } from '@/modules/vehicles/VehiclesPage'
 import { TenantsPage } from '@/modules/tenants/TenantsPage'
 import { ContractsPage } from '@/modules/contracts/ContractsPage'
+import { ContractTemplatesPage } from '@/modules/contract-templates/ContractTemplatesPage'
 import { FinancialPage } from '@/modules/financial/FinancialPage'
 import { ChargesPage } from '@/modules/charges/ChargesPage'
 import { DefaultersPage } from '@/modules/defaulters/DefaultersPage'
@@ -19,6 +20,7 @@ import { OwnersPage } from '@/modules/owners/OwnersPage'
 import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
+import { LandingPage } from '@/modules/landing/LandingPage'
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth()
@@ -79,33 +81,38 @@ const router = createBrowserRouter([
   },
   {
     path: '/',
-    element: (
-      <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>
-        <AdminLayout />
-      </ProtectedRoute>
-    ),
     children: [
-      { index: true, element: <Navigate to="/dashboard" replace /> },
-      { path: 'dashboard', element: <DashboardPage /> },
-      { path: 'imoveis', element: <PropertiesPage /> },
-      { path: 'veiculos', element: <VehiclesPage /> },
-      { path: 'proprietarios', element: <OwnersPage /> },
-      { path: 'inquilinos', element: <TenantsPage /> },
-      { path: 'contratos', element: <ContractsPage /> },
-      { path: 'financeiro', element: <FinancialPage /> },
-      { path: 'cobrancas', element: <ChargesPage /> },
-      { path: 'inadimplencia', element: <DefaultersPage /> },
-      { path: 'despesas', element: <SharedExpensesPage /> },
-      { path: 'chamados', element: <MaintenancePage /> },
-      { path: 'notificacoes', element: <NotificationsPage /> },
-      { path: 'relatorios', element: <ReportsPage /> },
+      { index: true, element: <LandingPage /> },
       {
-        path: 'configuracoes',
         element: (
-          <ProtectedRoute roles={['admin']}>
-            <SettingsPage />
+          <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>
+            <AdminLayout />
           </ProtectedRoute>
         ),
+        children: [
+          { path: 'dashboard', element: <DashboardPage /> },
+          { path: 'imoveis', element: <PropertiesPage /> },
+          { path: 'veiculos', element: <VehiclesPage /> },
+          { path: 'proprietarios', element: <OwnersPage /> },
+          { path: 'inquilinos', element: <TenantsPage /> },
+          { path: 'contratos', element: <ContractsPage /> },
+          { path: 'modelos-contrato', element: <ContractTemplatesPage /> },
+          { path: 'financeiro', element: <FinancialPage /> },
+          { path: 'cobrancas', element: <ChargesPage /> },
+          { path: 'inadimplencia', element: <DefaultersPage /> },
+          { path: 'despesas', element: <SharedExpensesPage /> },
+          { path: 'chamados', element: <MaintenancePage /> },
+          { path: 'notificacoes', element: <NotificationsPage /> },
+          { path: 'relatorios', element: <ReportsPage /> },
+          {
+            path: 'configuracoes',
+            element: (
+              <ProtectedRoute roles={['admin']}>
+                <SettingsPage />
+              </ProtectedRoute>
+            ),
+          },
+        ],
       },
     ],
   },

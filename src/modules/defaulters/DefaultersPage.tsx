@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { format } from 'date-fns'
 import { toast } from '@/hooks/useToast'
 
@@ -33,6 +35,9 @@ export function DefaultersPage() {
     acc[key].push(charge)
     return acc
   }, {})
+
+  const tenantGroups = Object.entries(byTenant)
+  const pag = usePagination(tenantGroups, 8)
 
   const totalAmount = overdueCharges.reduce((s, c) => s + c.amount, 0)
   const avgDaysLate =
@@ -95,7 +100,7 @@ export function DefaultersPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          {Object.entries(byTenant).map(([tenantId, tenantCharges]) => {
+          {pag.pageItems.map(([tenantId, tenantCharges]) => {
             const total = tenantCharges.reduce((s, c) => s + c.amount, 0)
             const maxDelay = Math.max(...tenantCharges.map((c) => c.daysLate))
             const tenantName = tenantCharges[0].tenantName || 'Inquilino'
@@ -152,6 +157,15 @@ export function DefaultersPage() {
               </Card>
             )
           })}
+          <Pagination
+            page={pag.page}
+            totalPages={pag.totalPages}
+            total={pag.total}
+            rangeStart={pag.rangeStart}
+            rangeEnd={pag.rangeEnd}
+            onPageChange={pag.setPage}
+            itemLabel="inadimplentes"
+          />
         </div>
       )}
     </div>

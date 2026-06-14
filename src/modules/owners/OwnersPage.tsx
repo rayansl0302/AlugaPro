@@ -22,6 +22,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ReceiptUpload } from '@/components/shared/ReceiptUpload'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { Loader2 } from 'lucide-react'
 
@@ -115,6 +117,8 @@ export function OwnersPage() {
       o.cpf?.includes(search)
   )
 
+  const pag = usePagination(filtered, 10)
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -158,7 +162,7 @@ export function OwnersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((owner) => (
+              {pag.pageItems.map((owner) => (
                 <TableRow key={owner.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
@@ -207,6 +211,18 @@ export function OwnersPage() {
             </TableBody>
           </Table>
         </div>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <Pagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          total={pag.total}
+          rangeStart={pag.rangeStart}
+          rangeEnd={pag.rangeEnd}
+          onPageChange={pag.setPage}
+          itemLabel="proprietários"
+        />
       )}
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) reset() }}>

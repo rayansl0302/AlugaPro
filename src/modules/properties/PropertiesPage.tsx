@@ -12,6 +12,8 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { Pagination } from '@/components/ui/pagination'
+import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { PropertyForm } from './PropertyForm'
 import { PropertyDetail } from './PropertyDetail'
@@ -83,6 +85,8 @@ export function PropertiesPage() {
     const matchStatus = statusFilter === 'todos' || p.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
     if (confirm('Excluir imóvel? Esta ação não pode ser desfeita.')) {
@@ -182,7 +186,7 @@ export function PropertiesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((property) => {
+              {pag.pageItems.map((property) => {
                 const sc = statusConfig[property.status]
                 return (
                   <TableRow key={property.id}>
@@ -258,7 +262,7 @@ export function PropertiesPage() {
         </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((property) => {
+          {pag.pageItems.map((property) => {
             const sc = statusConfig[property.status]
             return (
               <Card key={property.id} className="overflow-hidden transition-shadow hover:shadow-md">
@@ -347,6 +351,18 @@ export function PropertiesPage() {
             )
           })}
         </div>
+      )}
+
+      {!isLoading && filtered.length > 0 && (
+        <Pagination
+          page={pag.page}
+          totalPages={pag.totalPages}
+          total={pag.total}
+          rangeStart={pag.rangeStart}
+          rangeEnd={pag.rangeEnd}
+          onPageChange={pag.setPage}
+          itemLabel="imóveis"
+        />
       )}
 
       {/* Form Dialog */}

@@ -37,6 +37,7 @@ export interface User {
   name: string
   email: string
   role: UserRole
+  tenantId?: string
   phone?: string
   whatsapp?: string
   phoneVerified?: boolean
@@ -219,6 +220,27 @@ export interface Contract {
   signedAt?: string
   locked?: boolean
   lockedAt?: string
+  templateId?: string
+  templateName?: string
+  templateClauses?: ContractTemplateClause[]
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+// ─── ContractTemplate (Modelo de Contrato) ───────────────────────────────────
+
+export interface ContractTemplateClause {
+  id: string
+  title: string
+  items: string[]
+}
+
+export interface ContractTemplate {
+  id: string
+  companyId: string
+  assetType: ContractAssetType
+  name: string
+  clauses: ContractTemplateClause[]
   createdAt: Timestamp
   updatedAt: Timestamp
 }
