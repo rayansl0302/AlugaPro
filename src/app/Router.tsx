@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { LoginPage } from '@/modules/auth/LoginPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
@@ -23,23 +24,25 @@ import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
 import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
+import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
+import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
+
+const Spinner = () => (
+  <div className="flex h-screen items-center justify-center">
+    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+  </div>
+)
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth()
+  const { hasAccess, isLoading: subLoading, status, isAdmin } = useSubscription()
 
-  if (loading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    )
-  }
-
+  if (loading || subLoading) return <Spinner />
   if (!user) return <Navigate to="/login" replace />
+  if (roles && !roles.includes(user.role)) return <Navigate to="/dashboard" replace />
 
-  if (roles && !roles.includes(user.role)) {
-    return <Navigate to="/dashboard" replace />
-  }
+  // Bloqueia acesso total quando expirado (exceto admin AlugaPro e página de assinatura)
+  if (!isAdmin && status === 'expired') return <ExpiredPage />
 
   return <>{children}</>
 }
@@ -119,6 +122,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute roles={['admin']}>
                 <SettingsPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'configuracoes/assinatura',
+            element: (
+              <ProtectedRoute roles={['admin', 'gestor']}>
+                <SubscriptionPage />
               </ProtectedRoute>
             ),
           },

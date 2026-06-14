@@ -49,6 +49,59 @@ export interface User {
   updatedAt: Timestamp
 }
 
+// ─── Subscription ────────────────────────────────────────────────────────────
+
+export type PlanId = 'starter' | 'pro' | 'business'
+export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'expired'
+
+export interface PlanLimits {
+  maxProperties: number
+  maxVehicles: number
+  maxUsers: number
+}
+
+export const PLANS: Record<PlanId, { name: string; price: number; limits: PlanLimits; description: string }> = {
+  starter: {
+    name: 'Starter',
+    price: 39,
+    description: 'Para gestores iniciantes',
+    limits: { maxProperties: 10, maxVehicles: 10, maxUsers: 2 },
+  },
+  pro: {
+    name: 'Pro',
+    price: 79,
+    description: 'Para administradoras em crescimento',
+    limits: { maxProperties: 50, maxVehicles: 50, maxUsers: 5 },
+  },
+  business: {
+    name: 'Business',
+    price: 129,
+    description: 'Para operações maiores',
+    limits: { maxProperties: 999, maxVehicles: 999, maxUsers: 20 },
+  },
+}
+
+export interface CompanySubscription {
+  companyId: string
+  planId: PlanId
+  status: SubscriptionStatus
+  provider?: 'asaas' | 'stripe'
+  providerCustomerId?: string
+  providerSubscriptionId?: string
+  trialEndsAt?: Timestamp
+  currentPeriodStart: Timestamp
+  currentPeriodEnd: Timestamp
+  cancelAtPeriodEnd: boolean
+  limits: PlanLimits
+  usage: {
+    propertyCount: number
+    vehicleCount: number
+    userCount: number
+  }
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
 // ─── Company ─────────────────────────────────────────────────────────────────
 
 export interface Company {
@@ -59,6 +112,7 @@ export interface Company {
   phone?: string
   address?: string
   logo?: string
+  ownerId?: string
   createdAt: Timestamp
 }
 

@@ -2,11 +2,12 @@ import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Building2, Car, FileText, CreditCard, Users, Bell,
-  BarChart3, ShieldCheck, ArrowRight, CheckCircle2,
+  BarChart3, ShieldCheck, ArrowRight, CheckCircle2, Zap,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { LandingHeroPreview } from '@/components/landing/LandingHeroPreview'
@@ -14,6 +15,8 @@ import {
   fadeInUp, fadeInLeft, fadeInRight, scaleIn,
   staggerContainer, viewportOnce, easeTransition,
 } from '@/lib/motion'
+import { PLANS, PlanId } from '@/types'
+import { formatCurrency } from '@/lib/utils'
 
 const FEATURES = [
   {
@@ -80,7 +83,34 @@ const STATS = [
   { value: 'Cobranças', label: 'Controle financeiro', icon: CreditCard },
 ]
 
-const HERO_PERKS = ['Assinatura digital', 'Cobranças automáticas', 'Portal do inquilino']
+const HERO_PERKS = ['14 dias grátis', 'Sem cartão de crédito', 'Cancele quando quiser']
+
+const PRICING_FEATURES: Record<PlanId, string[]> = {
+  starter: [
+    'Até 10 imóveis ou veículos',
+    '2 usuários gestores',
+    'Contratos e cobranças',
+    'Portal do inquilino',
+    'Controle de inadimplência',
+    'Notificações automáticas',
+  ],
+  pro: [
+    'Até 50 imóveis ou veículos',
+    '5 usuários gestores',
+    'Assinatura digital de contratos',
+    'Relatórios avançados',
+    'Exportação Excel e PDF',
+    'Modelos personalizados',
+  ],
+  business: [
+    'Imóveis e veículos ilimitados',
+    'Usuários ilimitados',
+    'Tudo do plano Pro',
+    'Múltiplas equipes',
+    'Onboarding assistido',
+    'API de integrações (em breve)',
+  ],
+}
 
 export function LandingPage() {
   const { user } = useAuth()
@@ -310,6 +340,94 @@ export function LandingPage() {
                 </motion.div>
               ))}
             </motion.div>
+          </div>
+        </section>
+
+        {/* Pricing */}
+        <section id="precos" className="bg-white py-20">
+          <div className="mx-auto max-w-6xl px-4 sm:px-6">
+            <motion.div
+              className="mx-auto max-w-2xl text-center"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={staggerContainer(0.12)}
+            >
+              <motion.span
+                variants={fadeInUp}
+                className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
+              >
+                <Zap className="h-3.5 w-3.5" />
+                14 dias grátis em qualquer plano
+              </motion.span>
+              <motion.h2
+                variants={fadeInUp}
+                className="mt-4 text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl"
+              >
+                Planos simples, sem surpresas
+              </motion.h2>
+              <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
+                Comece grátis por 14 dias. Nenhum cartão necessário. Cancele quando quiser.
+              </motion.p>
+            </motion.div>
+
+            <motion.div
+              className="mt-12 grid gap-6 sm:grid-cols-3"
+              variants={staggerContainer(0.1)}
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+            >
+              {(['starter', 'pro', 'business'] as PlanId[]).map((planId) => {
+                const plan = PLANS[planId]
+                const isPro = planId === 'pro'
+                return (
+                  <motion.div key={planId} variants={fadeInUp}>
+                    <Card className={`relative flex h-full flex-col ${isPro ? 'border-[#032B61] shadow-xl ring-1 ring-[#032B61]/20' : 'border-slate-200 shadow-md'}`}>
+                      {isPro && (
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                          <Badge className="bg-[#032B61] text-white px-4 py-1 text-xs">Mais popular</Badge>
+                        </div>
+                      )}
+                      <CardContent className="flex flex-col flex-1 p-6">
+                        <p className="text-sm font-semibold text-[#032B61]">{plan.name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>
+                        <div className="mt-4 flex items-baseline gap-1">
+                          <span className="text-4xl font-bold text-[#032B61]">
+                            {formatCurrency(plan.price)}
+                          </span>
+                          <span className="text-sm text-muted-foreground">/mês</span>
+                        </div>
+                        <ul className="mt-6 flex-1 space-y-2.5">
+                          {PRICING_FEATURES[planId].map((feat) => (
+                            <li key={feat} className="flex items-start gap-2 text-sm text-muted-foreground">
+                              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+                              {feat}
+                            </li>
+                          ))}
+                        </ul>
+                        <Button
+                          className={`mt-8 w-full ${isPro ? 'bg-[#032B61] text-white hover:bg-[#032B61]/90' : ''}`}
+                          variant={isPro ? 'default' : 'outline'}
+                          asChild
+                        >
+                          <Link to="/login">Começar grátis</Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )
+              })}
+            </motion.div>
+
+            <motion.p
+              className="mt-8 text-center text-xs text-muted-foreground"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={viewportOnce}
+            >
+              Portal do inquilino sempre gratuito. Inquilinos nunca pagam.
+            </motion.p>
           </div>
         </section>
 

@@ -2,14 +2,16 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 
 interface NavItem {
   label: string
@@ -44,6 +46,7 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth()
+  const { status, daysRemaining, isAdmin } = useSubscription()
   const location = useLocation()
 
   const filteredNav = navItems.filter(
@@ -106,6 +109,33 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           })}
         </nav>
       </ScrollArea>
+
+      {/* Subscription chip */}
+      {!isAdmin && status !== 'demo' && status !== 'active' && (
+        <div className={cn('px-3 pb-2', collapsed && 'flex justify-center')}>
+          <NavLink
+            to="/configuracoes/assinatura"
+            className={cn(
+              'flex items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors',
+              status === 'trialing'
+                ? 'bg-amber-50 text-amber-800 hover:bg-amber-100 dark:bg-amber-950/30 dark:text-amber-300'
+                : 'bg-red-50 text-red-800 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-300',
+              collapsed && 'px-2 justify-center'
+            )}
+            title="Gerenciar assinatura"
+          >
+            <Zap className="h-3.5 w-3.5 shrink-0" />
+            {!collapsed && (
+              <span>
+                {status === 'trialing' ? `Trial — ${daysRemaining}d` : 'Assinatura'}
+              </span>
+            )}
+            {!collapsed && status === 'trialing' && daysRemaining <= 3 && (
+              <Badge variant="destructive" className="ml-auto text-[10px] px-1 py-0">!</Badge>
+            )}
+          </NavLink>
+        </div>
+      )}
 
       <Separator />
 

@@ -9,6 +9,7 @@ import { easeTransition } from '@/lib/motion'
 const NAV_LINKS = [
   { label: 'Recursos', href: '#recursos' },
   { label: 'Como funciona', href: '#como-funciona' },
+  { label: 'Preços', href: '#precos' },
   { label: 'Para quem', href: '#para-quem' },
 ]
 

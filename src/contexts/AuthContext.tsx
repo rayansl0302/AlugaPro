@@ -13,6 +13,7 @@ import { auth, db } from '@/lib/firebase'
 import { User, UserRole } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 import { getInviteByEmail } from '@/services/invites'
+import { createTrialSubscription, getSubscription } from '@/services/subscription'
 
 // ── Admins reais (somente estes e-mails recebem o papel de administrador) ──────
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
@@ -100,6 +101,41 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Pro
     } catch {
       // ignora
     }
+  }
+
+  // Novo gestor sem convite: cria empresa própria automaticamente
+  if (hintRole === 'gestor') {
+    const companyId = `company_${fbUser.uid}`
+    try {
+      // Cria o doc da empresa se não existir
+      const companyRef = doc(db, 'companies', companyId)
+      const companySnap = await getDoc(companyRef)
+      if (!companySnap.exists()) {
+        await setDoc(companyRef, {
+          id: companyId,
+          name: fbUser.displayName ?? fbUser.email ?? 'Minha Empresa',
+          email: fbUser.email ?? '',
+          ownerId: fbUser.uid,
+          createdAt: serverTimestamp(),
+        })
+      }
+      // Cria o doc do usuário
+      await setDoc(doc(db, 'users', fbUser.uid), {
+        name: fbUser.displayName ?? fbUser.email ?? 'Usuário',
+        email: fbUser.email ?? '',
+        role: 'gestor',
+        companyId,
+        active: true,
+        updatedAt: serverTimestamp(),
+      }, { merge: true })
+      // Cria trial se ainda não existe assinatura
+      const existingSub = await getSubscription(companyId)
+      if (!existingSub) await createTrialSubscription(companyId)
+    } catch {
+      // Firebase não configurado ou regra bloqueou — cai no fallback
+      return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
+    }
+    return baseProfile(fbUser, fbUser.uid, 'gestor', companyId, docData)
   }
 
   return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
+import { SubscriptionBanner } from '@/components/subscription/SubscriptionBanner'
 
 const pageTitles: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -36,6 +37,7 @@ export function AdminLayout() {
       />
       <div className="flex flex-1 flex-col overflow-hidden">
         <Topbar title={currentTitle} />
+        <SubscriptionBanner />
         <main className="flex-1 overflow-auto p-6">
           <Outlet />
         </main>
