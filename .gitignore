@@ -26,3 +26,18 @@ dist-ssr
 
 # logs
 npm-debug.log*
+
+# Capacitor Android build artifacts
+android/.gradle/
+android/app/build/
+android/build/
+android/local.properties
+
+# Capacitor iOS build artifacts
+ios/App/Pods/
+ios/App/App/public/
+ios/.xcode.env.local
+
+# Capacitor assets generated
+resources/android/
+resources/ios/

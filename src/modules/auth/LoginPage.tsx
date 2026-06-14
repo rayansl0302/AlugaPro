@@ -247,6 +247,17 @@ export function LoginPage() {
           )}
         </CardContent>
       </Card>
+
+      <p className="mt-6 text-center text-xs text-muted-foreground">
+        Ao entrar, você concorda com os{' '}
+        <Link to="/termos" className="underline-offset-2 hover:text-primary hover:underline">
+          Termos de Uso
+        </Link>{' '}
+        e a{' '}
+        <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">
+          Política de Privacidade
+        </Link>.
+      </p>
     </div>
   )
 }

@@ -21,6 +21,8 @@ import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
+import { TermsPage } from '@/modules/legal/TermsPage'
+import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
   const { user, loading } = useAuth()
@@ -78,6 +80,14 @@ const router = createBrowserRouter([
         <ProfilePage />
       </ProtectedRoute>
     ),
+  },
+  {
+    path: '/termos',
+    element: <TermsPage />,
+  },
+  {
+    path: '/politica-de-privacidade',
+    element: <PrivacyPolicyPage />,
   },
   {
     path: '/',

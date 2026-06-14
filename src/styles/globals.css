@@ -83,3 +83,23 @@
 html {
   scroll-behavior: smooth;
 }
+
+/* Capacitor / Mobile — safe area para notch e home indicator do iOS */
+:root {
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
+/* Impede bounce scroll no iOS que aparece fora do app */
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Seleção de texto desabilitada em elementos de UI */
+button, a, [role="button"] {
+  -webkit-user-select: none;
+  user-select: none;
+}

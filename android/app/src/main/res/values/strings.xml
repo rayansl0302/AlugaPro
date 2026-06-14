@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">AlugaPro</string>
+    <string name="title_activity_main">AlugaPro</string>
+    <string name="package_name">com.alugapro.app</string>
+    <string name="custom_url_scheme">com.alugapro.app</string>
+</resources>
