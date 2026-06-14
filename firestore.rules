@@ -46,6 +46,26 @@ service cloud.firestore {
       return isAdmin() || (userExists() && getUserData().companyId == companyId);
     }
 
+    // Verifica se a assinatura da empresa permite escrita
+    function subscriptionCanWrite(companyId) {
+      let sub = get(/databases/$(database)/documents/subscriptions/$(companyId)).data;
+      return sub.status == 'trialing' || sub.status == 'active';
+    }
+
+    // Verifica se a assinatura existe e permite leitura (tolerância em past_due/canceled)
+    function subscriptionHasAccess(companyId) {
+      return !exists(/databases/$(database)/documents/subscriptions/$(companyId)) ||
+        get(/databases/$(database)/documents/subscriptions/$(companyId)).data.status in
+          ['trialing', 'active', 'past_due', 'canceled'];
+    }
+
+    // Subscriptions
+    match /subscriptions/{companyId} {
+      allow read: if isAdmin() || sameCompany(companyId);
+      allow write: if isAdminEmail();
+      allow create: if sameCompany(companyId) && isGestor();
+    }
+
     // Companies
     match /companies/{companyId} {
       allow read: if isAuthenticated() && sameCompany(companyId);
@@ -83,15 +103,19 @@ service cloud.firestore {
 
     // Properties
     match /properties/{propertyId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
-      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId)
+        && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId));
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId)
+        && (isAdminEmail() || subscriptionCanWrite(request.resource.data.companyId));
       allow delete: if isAdmin();
     }
 
     // Vehicles
     match /vehicles/{vehicleId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
-      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId)
+        && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId));
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId)
+        && (isAdminEmail() || subscriptionCanWrite(request.resource.data.companyId));
       allow delete: if isAdmin();
     }
 
