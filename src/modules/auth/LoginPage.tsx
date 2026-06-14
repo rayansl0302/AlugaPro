@@ -117,7 +117,8 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <Card className="w-full max-w-md shadow-xl">
+      <div className="flex w-full max-w-md flex-col items-center">
+        <Card className="w-full shadow-xl">
         <CardHeader className="text-center">
           <Link to="/" className="mb-4 inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
             ← Voltar ao site
@@ -246,18 +247,19 @@ export function LoginPage() {
             </>
           )}
         </CardContent>
-      </Card>
+        </Card>
 
-      <p className="mt-6 text-center text-xs text-muted-foreground">
-        Ao entrar, você concorda com os{' '}
-        <Link to="/termos" className="underline-offset-2 hover:text-primary hover:underline">
-          Termos de Uso
-        </Link>{' '}
-        e a{' '}
-        <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">
-          Política de Privacidade
-        </Link>.
-      </p>
+        <p className="mt-6 text-center text-xs text-muted-foreground">
+          Ao entrar, você concorda com os{' '}
+          <Link to="/termos" className="underline-offset-2 hover:text-primary hover:underline">
+            Termos de Uso
+          </Link>{' '}
+          e a{' '}
+          <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">
+            Política de Privacidade
+          </Link>.
+        </p>
+      </div>
     </div>
   )
 }
