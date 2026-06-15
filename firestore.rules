@@ -53,6 +53,13 @@ service cloud.firestore {
       return isAdmin() || (userExists() && getUserData().companyId == companyId);
     }
 
+    function inquilinoIsSharedExpenseParticipant() {
+      let tid = getUserData().tenantId;
+      return !('participantTenantIds' in resource.data)
+        || (tid != null && tid in resource.data.participantTenantIds)
+        || request.auth.uid in resource.data.participantTenantIds;
+    }
+
     // Verifica se a assinatura da empresa permite escrita
     function subscriptionCanWrite(companyId) {
       let sub = get(/databases/$(database)/documents/subscriptions/$(companyId)).data;
@@ -214,9 +221,13 @@ service cloud.firestore {
     match /sharedExpenses/{expenseId} {
       allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
       allow create: if isGestor();
+      // Gestor: atualização completa.
+      // Inquilino: pode anexar comprovante apenas na própria parcela (participants[i].receipt).
       allow update: if isGestor() || (
-        userExists() && isRole('inquilino')
+        userExists()
+        && isRole('inquilino')
         && getUserData().companyId == resource.data.companyId
+        && inquilinoIsSharedExpenseParticipant()
         && request.resource.data.companyId == resource.data.companyId
         && request.resource.data.propertyId == resource.data.propertyId
         && request.resource.data.totalAmount == resource.data.totalAmount
@@ -224,7 +235,6 @@ service cloud.firestore {
         && request.resource.data.type == resource.data.type
         && request.resource.data.status == resource.data.status
         && request.resource.data.participants.size() == resource.data.participants.size()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updatedAt'])
       );
       allow delete: if isAdmin();
     }
