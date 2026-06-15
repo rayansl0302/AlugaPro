@@ -12,11 +12,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
 import { getPaymentsByTenant } from '@/services/payments'
-import { createMaintenanceRequest, getMaintenanceRequestsByTenant } from '@/services/maintenance'
+import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment } from '@/services/maintenance'
 import { uploadReceipt } from '@/services/storage'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, MaintenanceComment } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -109,7 +109,7 @@ function greeting() {
 }
 
 export function TenantPortal() {
-  const { user, logout } = useAuth()
+  const { user, logout, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
   const tenantId = user?.tenantId ?? user?.id ?? ''
@@ -120,6 +120,9 @@ export function TenantPortal() {
   const [submitting, setSubmitting] = useState(false)
   const [contractLoading, setContractLoading] = useState<false | 'view' | 'download'>(false)
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false)
+  const [viewingRequest, setViewingRequest] = useState<MaintenanceRequest | null>(null)
+  const [commentText, setCommentText] = useState('')
+  const [commentLoading, setCommentLoading] = useState(false)
   const [maintenanceLoading, setMaintenanceLoading] = useState(false)
   const [maintenanceForm, setMaintenanceForm] = useState({
     title: '',
@@ -267,6 +270,35 @@ export function TenantPortal() {
     if (!request.createdAt) return '—'
     const date = request.createdAt.toDate ? request.createdAt.toDate() : new Date(String(request.createdAt))
     return formatDate(date.toISOString())
+  }
+
+  const formatCommentDate = (comment: MaintenanceComment) => {
+    if (!comment.createdAt) return ''
+    const date = comment.createdAt.toDate ? comment.createdAt.toDate() : new Date(String(comment.createdAt))
+    return formatDate(date.toISOString())
+  }
+
+  const handleAddComment = async () => {
+    if (!viewingRequest || !commentText.trim() || !user) return
+
+    setCommentLoading(true)
+    try {
+      const newComment = await addMaintenanceComment(viewingRequest.id, viewingRequest, {
+        authorId: firebaseUser?.uid ?? user.id,
+        authorName: user.name,
+        message: commentText.trim(),
+      })
+      setViewingRequest((prev) =>
+        prev ? { ...prev, comments: [...(prev.comments ?? []), newComment] } : null
+      )
+      setCommentText('')
+      qc.invalidateQueries({ queryKey: ['maintenance'] })
+      toast({ title: 'Comentário enviado.' })
+    } catch {
+      toast({ title: 'Erro ao enviar comentário.', variant: 'destructive' })
+    } finally {
+      setCommentLoading(false)
+    }
   }
 
   const handleViewContract = async () => {
@@ -777,7 +809,16 @@ export function TenantPortal() {
                               Prioridade {request.priority}
                             </span>
                           </div>
-                          <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full"
+                            onClick={() => setViewingRequest(request)}
+                          >
+                            <Eye className="mr-1.5 h-4 w-4" />
+                            Visualizar
+                          </Button>
                         </CardContent>
                       </Card>
                     )
@@ -936,6 +977,105 @@ export function TenantPortal() {
                   : <><Wrench className="mr-2 h-4 w-4" /> Enviar chamado</>
                 }
               </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!viewingRequest}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingRequest(null)
+            setCommentText('')
+          }
+        }}
+      >
+        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
+          </DialogHeader>
+
+          {viewingRequest && (
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={maintenanceStatusConfig[viewingRequest.status].variant}>
+                  {maintenanceStatusConfig[viewingRequest.status].label}
+                </Badge>
+                <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                  {maintenanceCategoryLabels[viewingRequest.category]}
+                </span>
+                <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
+                  Prioridade {viewingRequest.priority}
+                </span>
+              </div>
+
+              <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Local</span>
+                  <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
+                </div>
+                <div className="flex justify-between gap-4">
+                  <span className="text-muted-foreground">Aberto em</span>
+                  <span className="text-right">{formatMaintenanceDate(viewingRequest)}</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
+              </div>
+
+              <div className="flex min-h-0 flex-1 flex-col">
+                <p className="text-xs font-medium text-muted-foreground mb-2">
+                  Comentários ({viewingRequest.comments?.length ?? 0})
+                </p>
+                <div className="min-h-[120px] flex-1 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
+                  {(viewingRequest.comments ?? []).length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-6">
+                      Nenhum comentário ainda. Envie uma mensagem ao gestor.
+                    </p>
+                  ) : (
+                    (viewingRequest.comments ?? []).map((comment) => (
+                      <div
+                        key={comment.id}
+                        className="rounded-lg bg-background border px-3 py-2.5 text-sm"
+                      >
+                        <div className="flex items-center justify-between gap-2 mb-1">
+                          <span className="font-medium text-xs">{comment.authorName}</span>
+                          <span className="text-[11px] text-muted-foreground shrink-0">
+                            {formatCommentDate(comment)}
+                          </span>
+                        </div>
+                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.message}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {viewingRequest.status !== 'finalizado' && (
+                <div className="space-y-2 border-t pt-4">
+                  <Label htmlFor="maintenance-comment">Novo comentário</Label>
+                  <textarea
+                    id="maintenance-comment"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                    placeholder="Escreva uma mensagem para o gestor ou proprietário..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                  />
+                  <Button
+                    className="w-full"
+                    disabled={!commentText.trim() || commentLoading}
+                    onClick={handleAddComment}
+                  >
+                    {commentLoading
+                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
+                      : 'Enviar comentário'
+                    }
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </DialogContent>

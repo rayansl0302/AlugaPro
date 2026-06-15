@@ -42,6 +42,13 @@ service cloud.firestore {
       return isAuthenticated() && request.auth.uid == tenantId;
     }
 
+    // Inquilino vinculado ao registro em tenants/{tenantId} (nem sempre igual ao auth.uid)
+    function isLinkedTenant(tenantId) {
+      return userExists()
+        && isRole('inquilino')
+        && getUserData().tenantId == tenantId;
+    }
+
     function sameCompany(companyId) {
       return isAdmin() || (userExists() && getUserData().companyId == companyId);
     }
@@ -215,18 +222,26 @@ service cloud.firestore {
     // Maintenance Requests
     match /maintenanceRequests/{requestId} {
       allow read: if isAuthenticated() &&
-        (request.auth.uid == resource.data.tenantId ||
+        (isLinkedTenant(resource.data.tenantId) ||
          (isProprietario() && sameCompany(resource.data.companyId)));
 
       allow create: if isAuthenticated() && (
         (isGestor() && sameCompany(request.resource.data.companyId)) ||
         (isRole('inquilino')
-          && request.auth.uid == request.resource.data.tenantId
+          && userExists()
+          && getUserData().tenantId == request.resource.data.tenantId
           && getUserData().companyId == request.resource.data.companyId
           && request.resource.data.status == 'aberto')
       );
 
-      allow update: if isGestor() && sameCompany(resource.data.companyId);
+      allow update: if (isGestor() && sameCompany(resource.data.companyId)) ||
+        (isLinkedTenant(resource.data.tenantId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'updatedAt'])
+          && request.resource.data.companyId == resource.data.companyId
+          && request.resource.data.tenantId == resource.data.tenantId
+          && request.resource.data.status == resource.data.status
+          && request.resource.data.title == resource.data.title
+          && request.resource.data.description == resource.data.description);
       allow delete: if isAdmin();
     }
 

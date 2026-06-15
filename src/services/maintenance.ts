@@ -1,9 +1,9 @@
 import {
   collection, addDoc, updateDoc, doc, getDocs,
-  query, where, serverTimestamp,
+  query, where, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { MaintenanceRequest } from '@/types'
+import { MaintenanceComment, MaintenanceRequest } from '@/types'
 
 const COL = 'maintenanceRequests'
 
@@ -36,9 +36,11 @@ export async function getMaintenanceRequestsByTenant(
 export async function createMaintenanceRequest(
   data: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
+  const clean = Object.fromEntries(
+    Object.entries({ ...data, status: 'aberto' }).filter(([, v]) => v !== undefined)
+  )
   const ref = await addDoc(collection(db, COL), {
-    ...data,
-    status: 'aberto',
+    ...clean,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -49,5 +51,24 @@ export async function updateMaintenanceRequest(
   id: string,
   data: Partial<MaintenanceRequest>
 ): Promise<void> {
-  await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
+  const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined))
+  await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
+}
+
+export async function addMaintenanceComment(
+  requestId: string,
+  request: MaintenanceRequest,
+  comment: Pick<MaintenanceComment, 'authorId' | 'authorName' | 'message'>,
+): Promise<MaintenanceComment> {
+  const newComment: MaintenanceComment = {
+    id: crypto.randomUUID(),
+    authorId: comment.authorId,
+    authorName: comment.authorName,
+    message: comment.message,
+    createdAt: Timestamp.now(),
+  }
+  await updateMaintenanceRequest(requestId, {
+    comments: [...(request.comments ?? []), newComment],
+  })
+  return newComment
 }
