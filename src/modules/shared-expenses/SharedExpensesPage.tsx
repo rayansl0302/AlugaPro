@@ -6,10 +6,11 @@ import {
 import { ptBR } from 'date-fns/locale'
 import {
   DollarSign, CheckCircle, Clock, AlertTriangle, Users,
-  ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus, Search,
+  ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus, Search, FileCheck, Eye,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getSharedExpenses, createSharedExpense, splitExpenseEqually } from '@/services/sharedExpenses'
+import { countPendingExpenseReceipts, findFirstPendingExpenseReceipt } from '@/lib/pendingReceipts'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { SharedExpense, ExpenseType } from '@/types'
@@ -207,6 +208,7 @@ export function SharedExpensesPage() {
   const [propertyFilter, setPropertyFilter]   = useState('todos')
   const [statusFilter, setStatusFilter]       = useState('todos')
   const [managingId, setManagingId]           = useState<string | null>(null)
+  const [initialReceiptIndex, setInitialReceiptIndex] = useState<number | null>(null)
   const [showForm, setShowForm]               = useState(false)
   const [formLoading, setFormLoading]         = useState(false)
   const [formData, setFormData] = useState({
@@ -257,6 +259,25 @@ export function SharedExpensesPage() {
   )
 
   const cardsPag = usePagination(filteredExpenses, 12)
+
+  const pendingReceipts = useMemo(
+    () => countPendingExpenseReceipts(expenses),
+    [expenses],
+  )
+  const firstPendingReceipt = useMemo(
+    () => findFirstPendingExpenseReceipt(expenses),
+    [expenses],
+  )
+
+  const openExpenseManager = (expenseId: string, receiptIndex: number | null = null) => {
+    setInitialReceiptIndex(receiptIndex)
+    setManagingId(expenseId)
+  }
+
+  const closeExpenseManager = () => {
+    setManagingId(null)
+    setInitialReceiptIndex(null)
+  }
 
   const kpiPending = useMemo(() =>
     expenses.flatMap((e) => e.participants).filter((p) => p.status !== 'pago').reduce((s, p) => s + p.amount, 0),
@@ -449,6 +470,32 @@ export function SharedExpensesPage() {
         </Card>
       </div>
 
+      {pendingReceipts > 0 && canManage && (
+        <div className="flex flex-col gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 text-sm text-orange-900 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-100 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <FileCheck className="h-4 w-4 shrink-0" />
+            <span>
+              {pendingReceipts === 1
+                ? 'Há 1 comprovante aguardando confirmação de pagamento.'
+                : `Há ${pendingReceipts} comprovantes aguardando confirmação de pagamento.`}
+            </span>
+          </div>
+          {firstPendingReceipt && (
+            <Button
+              size="sm"
+              className="shrink-0 bg-orange-600 hover:bg-orange-700"
+              onClick={() => openExpenseManager(
+                firstPendingReceipt.expense.id,
+                firstPendingReceipt.participantIndex,
+              )}
+            >
+              <Eye className="mr-1.5 h-4 w-4" />
+              Visualizar comprovante
+            </Button>
+          )}
+        </div>
+      )}
+
       {isLoading ? (
         <div className="space-y-2">
           {Array.from({ length: 4 }).map((_, i) => (
@@ -471,7 +518,7 @@ export function SharedExpensesPage() {
         /* ─── Timeline view ──────────────────────────────────────────────── */
         <div className="rounded-lg border overflow-hidden">
           <div className="overflow-x-auto">
-            <div style={{ minWidth: 560 }}>
+            <div style={{ minWidth: 680 }}>
 
               {/* Month header */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
@@ -480,6 +527,9 @@ export function SharedExpensesPage() {
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
                   Total
+                </div>
+                <div className="w-[112px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  Comprovante
                 </div>
                 <Button
                   variant="ghost" size="icon" className="h-6 w-6 shrink-0"
@@ -523,6 +573,12 @@ export function SharedExpensesPage() {
               ) : filteredExpenses.map((expense, idx) => {
                 const paidCount  = expense.participants.filter((p) => p.status === 'pago').length
                 const totalCount = expense.participants.length
+                const pendingReceiptParticipants = expense.participants
+                  .map((participant, participantIndex) => ({ participant, participantIndex }))
+                  .filter(({ participant }) => participant.receiptStatus === 'aguardando')
+                const pendingReceiptCount = pendingReceiptParticipants.length
+                const firstPendingReceipt = pendingReceiptParticipants[0]
+
                 return (
                   <div
                     key={expense.id}
@@ -542,6 +598,31 @@ export function SharedExpensesPage() {
                         {expense.recurring ? `dia ${expense.dueDay}` : 'único'}
                       </p>
                     </div>
+                    <div className="w-[112px] shrink-0 flex flex-col items-center justify-center gap-1">
+                      {pendingReceiptCount > 0 ? (
+                        <>
+                          <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
+                            {pendingReceiptCount} aguardando
+                          </Badge>
+                          {canManage && firstPendingReceipt && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 px-2 text-[10px] border-orange-300 text-orange-700 hover:bg-orange-50"
+                              onClick={() => openExpenseManager(
+                                expense.id,
+                                firstPendingReceipt.participantIndex,
+                              )}
+                            >
+                              <Eye className="mr-1 h-3 w-3" />
+                              Validar
+                            </Button>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground/40">—</span>
+                      )}
+                    </div>
                     <div className="w-6 shrink-0" />
                     <div className="flex flex-1 justify-between">
                       {visibleMonths.map((monthDate) => {
@@ -555,7 +636,7 @@ export function SharedExpensesPage() {
                               currentMonthStr={currentMonthStr}
                               todayStr={todayStr}
                               canManage={canManage}
-                              onManage={setManagingId}
+                              onManage={(id) => openExpenseManager(id)}
                             />
                           </div>
                         )
@@ -573,6 +654,7 @@ export function SharedExpensesPage() {
             <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Pago</span>
             <span className="flex items-center gap-1 text-orange-500"><Users className="h-3 w-3" /> Parcial</span>
             <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> Atrasado</span>
+            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> Comprovante</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> Pendente</span>
             <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> Agendado</span>
             <span>— Fora do mês de vencimento</span>
@@ -623,9 +705,9 @@ export function SharedExpensesPage() {
                     </span>
                   </div>
                   <div className="space-y-1.5">
-                    {expense.participants.map((p) => (
+                    {expense.participants.map((p, idx) => (
                       <div
-                        key={p.tenantId}
+                        key={idx}
                         className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-1.5 text-sm"
                       >
                         <div>
@@ -638,8 +720,20 @@ export function SharedExpensesPage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-muted-foreground">{formatCurrency(p.amount)}</span>
+                          {p.receiptStatus === 'aguardando' && canManage && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-6 text-[10px] border-orange-300 text-orange-700 px-2"
+                              onClick={() => openExpenseManager(expense.id, idx)}
+                            >
+                              <Eye className="mr-1 h-3 w-3" /> Validar
+                            </Button>
+                          )}
                           <Badge variant={p.status === 'pago' ? 'success' : 'warning'} className="text-xs">
-                            {p.status === 'pago' ? 'Pago' : 'Pendente'}
+                            {p.receiptStatus === 'aguardando'
+                              ? 'Comprovante'
+                              : p.status === 'pago' ? 'Pago' : 'Pendente'}
                           </Badge>
                         </div>
                       </div>
@@ -648,7 +742,7 @@ export function SharedExpensesPage() {
                   {canManage && (
                     <Button
                       size="sm" variant="outline" className="mt-3 w-full"
-                      onClick={() => setManagingId(expense.id)}
+                      onClick={() => openExpenseManager(expense.id)}
                     >
                       <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Gerenciar Pagamentos
                     </Button>
@@ -677,7 +771,8 @@ export function SharedExpensesPage() {
 
       <SharedExpensePayDialog
         expense={managingExpense}
-        onClose={() => setManagingId(null)}
+        initialValidatingIndex={initialReceiptIndex}
+        onClose={closeExpenseManager}
         onSuccess={() => qc.invalidateQueries({ queryKey: ['sharedExpenses'] })}
       />
 

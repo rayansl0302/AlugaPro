@@ -1,12 +1,17 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
-  CheckCircle, Loader2, X,
+  CheckCircle, Loader2, X, Eye, FileCheck,
   Banknote, QrCode, ArrowLeftRight, CreditCard, Receipt,
 } from 'lucide-react'
 import { SharedExpense, PaymentMethod } from '@/types'
-import { markParticipantPaid, markParticipantUnpaid } from '@/services/sharedExpenses'
+import {
+  markParticipantPaid,
+  markParticipantUnpaid,
+  confirmParticipantReceipt,
+  rejectParticipantReceipt,
+} from '@/services/sharedExpenses'
 import { formatCurrency, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -26,22 +31,44 @@ const METHODS: { value: PaymentMethod; label: string; icon: React.ElementType }[
 
 interface Props {
   expense: SharedExpense | null
+  initialValidatingIndex?: number | null
   onClose: () => void
   onSuccess: () => void
 }
 
-export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
+export function SharedExpensePayDialog({
+  expense,
+  initialValidatingIndex = null,
+  onClose,
+  onSuccess,
+}: Props) {
   const today = format(new Date(), 'yyyy-MM-dd')
-  const [payingId, setPayingId]   = useState<string | null>(null)
-  const [paidDate, setPaidDate]   = useState(today)
-  const [method, setMethod]       = useState<PaymentMethod>('pix')
-  const [saving, setSaving]       = useState(false)
-  const [undoing, setUndoing]     = useState<string | null>(null)
+  const [payingId, setPayingId] = useState<string | null>(null)
+  const [validatingIdx, setValidatingIdx] = useState<number | null>(null)
+  const [paidDate, setPaidDate] = useState(today)
+  const [method, setMethod] = useState<PaymentMethod>('pix')
+  const [saving, setSaving] = useState(false)
+  const [validating, setValidating] = useState(false)
+  const [undoing, setUndoing] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!expense) {
+      setValidatingIdx(null)
+      setPayingId(null)
+      return
+    }
+    if (
+      typeof initialValidatingIndex === 'number'
+      && initialValidatingIndex >= 0
+      && initialValidatingIndex < expense.participants.length
+    ) {
+      setValidatingIdx(initialValidatingIndex)
+      setPayingId(null)
+    }
+  }, [expense, initialValidatingIndex])
 
   if (!expense) return null
 
-  // payingIdx stores the ARRAY INDEX of the participant being paid (not tenantId,
-  // which may be non-unique or undefined in existing data)
   const handleMarkPaid = async (idx: number) => {
     setSaving(true)
     try {
@@ -49,8 +76,7 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
       toast({ title: 'Pagamento registrado!' })
       onSuccess()
       setPayingId(null)
-    } catch (err) {
-      console.error('[SharedExpensePayDialog] erro ao registrar pagamento:', err)
+    } catch {
       toast({ title: 'Erro ao registrar pagamento.', variant: 'destructive' })
     } finally {
       setSaving(false)
@@ -70,10 +96,36 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
     }
   }
 
-  const paidCount    = expense.participants.filter((p) => p.status === 'pago').length
-  const pendingCount = expense.participants.length - paidCount
+  const handleConfirmReceipt = async (idx: number) => {
+    setValidating(true)
+    try {
+      await confirmParticipantReceipt(expense.id, idx)
+      toast({ title: 'Comprovante confirmado e pagamento registrado.' })
+      onSuccess()
+      setValidatingIdx(null)
+    } catch {
+      toast({ title: 'Erro ao confirmar comprovante.', variant: 'destructive' })
+    } finally {
+      setValidating(false)
+    }
+  }
 
-  // payingId stores the STRING version of the participant index ("0", "1", …)
+  const handleRejectReceipt = async (idx: number) => {
+    setValidating(true)
+    try {
+      await rejectParticipantReceipt(expense.id, idx)
+      toast({ title: 'Comprovante rejeitado. Inquilino precisará reenviar.' })
+      onSuccess()
+      setValidatingIdx(null)
+    } catch {
+      toast({ title: 'Erro ao rejeitar comprovante.', variant: 'destructive' })
+    } finally {
+      setValidating(false)
+    }
+  }
+
+  const paidCount = expense.participants.filter((p) => p.status === 'pago').length
+  const pendingCount = expense.participants.length - paidCount
   const toKey = (idx: number) => String(idx)
 
   return (
@@ -86,7 +138,6 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
           </DialogTitle>
         </DialogHeader>
 
-        {/* Expense summary */}
         <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1.5">
           <div className="flex justify-between">
             <span className="text-muted-foreground">Imóvel</span>
@@ -114,8 +165,6 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
           </div>
         </div>
 
-        {/* Participants — keyed by index to avoid duplicate-key issues when tenantId is
-            missing or shared between participants in existing data */}
         <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
           {expense.participants.map((p, idx) => (
             <div key={idx} className="rounded-lg border p-3 space-y-2">
@@ -124,11 +173,30 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
                   <p className="text-sm font-semibold truncate">{p.tenantName}</p>
                   <p className="text-xs text-muted-foreground">{formatCurrency(p.amount)}</p>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                  {p.receiptStatus === 'aguardando' && (
+                    <Badge variant="warning" className="text-xs">Comprovante enviado</Badge>
+                  )}
+                  {p.receiptStatus === 'rejeitado' && (
+                    <Badge variant="destructive" className="text-xs">Comprovante rejeitado</Badge>
+                  )}
                   {p.status === 'pago'
                     ? <Badge variant="success">Pago</Badge>
                     : <Badge variant="warning">Pendente</Badge>
                   }
+                  {p.receiptStatus === 'aguardando' && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 text-xs border-orange-300 text-orange-700"
+                      onClick={() => {
+                        setValidatingIdx(validatingIdx === idx ? null : idx)
+                        setPayingId(null)
+                      }}
+                    >
+                      <Eye className="mr-1 h-3 w-3" /> Validar
+                    </Button>
+                  )}
                   {p.status === 'pago' ? (
                     <Button
                       size="sm" variant="ghost"
@@ -141,11 +209,14 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
                         : <><X className="mr-1 h-3 w-3" /> Desfazer</>
                       }
                     </Button>
-                  ) : (
+                  ) : p.receiptStatus !== 'aguardando' && (
                     <Button
                       size="sm"
                       className="h-7 text-xs"
-                      onClick={() => setPayingId(payingId === toKey(idx) ? null : toKey(idx))}
+                      onClick={() => {
+                        setPayingId(payingId === toKey(idx) ? null : toKey(idx))
+                        setValidatingIdx(null)
+                      }}
                     >
                       <CheckCircle className="mr-1 h-3 w-3" /> Pago
                     </Button>
@@ -159,8 +230,53 @@ export function SharedExpensePayDialog({ expense, onClose, onSuccess }: Props) {
                 </p>
               )}
 
-              {/* Inline payment form — opens for the specific participant by index */}
-              {payingId === toKey(idx) && p.status !== 'pago' && (
+              {validatingIdx === idx && p.receiptStatus === 'aguardando' && (
+                <div className="border-t pt-3 space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-medium text-orange-700">
+                    <FileCheck className="h-4 w-4" />
+                    Validar comprovante PIX
+                  </div>
+
+                  {p.receipt && (
+                    <a href={p.receipt} target="_blank" rel="noreferrer" className="block">
+                      <img
+                        src={p.receipt}
+                        alt="Comprovante"
+                        className="w-full rounded-lg border object-contain max-h-52"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                      <p className="mt-1.5 text-center text-xs text-primary underline">
+                        Abrir comprovante em nova aba
+                      </p>
+                    </a>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="flex-1 bg-green-600 hover:bg-green-700"
+                      disabled={validating}
+                      onClick={() => handleConfirmReceipt(idx)}
+                    >
+                      {validating
+                        ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        : <><CheckCircle className="mr-1 h-3.5 w-3.5" /> Confirmar pago</>
+                      }
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="flex-1"
+                      disabled={validating}
+                      onClick={() => handleRejectReceipt(idx)}
+                    >
+                      Rejeitar
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {payingId === toKey(idx) && p.status !== 'pago' && p.receiptStatus !== 'aguardando' && (
                 <div className="border-t pt-3 space-y-3">
                   <div className="grid grid-cols-5 gap-1">
                     {METHODS.map(({ value, label, icon: Icon }) => (

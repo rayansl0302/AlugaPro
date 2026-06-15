@@ -21,6 +21,7 @@ export async function getSharedExpenses(companyId: string): Promise<SharedExpens
 export interface TenantSharedExpenseItem {
   expense: SharedExpense
   participant: SharedExpenseParticipant
+  participantIndex: number
 }
 
 export async function getSharedExpensesByTenant(
@@ -28,29 +29,71 @@ export async function getSharedExpensesByTenant(
   tenantId: string,
 ): Promise<TenantSharedExpenseItem[]> {
   const expenses = await getSharedExpenses(companyId)
-  return expenses.flatMap((expense) => {
-    const participant = expense.participants.find((p) => p.tenantId === tenantId)
-    return participant ? [{ expense, participant }] : []
-  })
+  return expenses.flatMap((expense) =>
+    expense.participants.flatMap((participant, participantIndex) =>
+      participant.tenantId === tenantId
+        ? [{ expense, participant, participantIndex }]
+        : []
+    )
+  )
+}
+
+export function resolveExpenseParticipantIndex(
+  expense: SharedExpense,
+  participant: SharedExpenseParticipant,
+  preferredIndex: number | undefined,
+  fallbackTenantId: string,
+): number {
+  if (
+    typeof preferredIndex === 'number'
+    && Number.isInteger(preferredIndex)
+    && preferredIndex >= 0
+    && preferredIndex < expense.participants.length
+  ) {
+    return preferredIndex
+  }
+
+  const tenantId = participant.tenantId ?? fallbackTenantId
+  if (tenantId) {
+    const byTenant = expense.participants.findIndex((p) => p.tenantId === tenantId)
+    if (byTenant >= 0) return byTenant
+  }
+
+  return expense.participants.findIndex(
+    (p) => p.tenantName === participant.tenantName && p.amount === participant.amount,
+  )
 }
 
 export async function submitSharedExpenseReceipt(
   expenseId: string,
-  tenantId: string,
+  participantIndex: number,
   receiptUrl: string,
+  expectedTenantId?: string,
 ): Promise<void> {
   const ref = doc(db, COL, expenseId)
   const snap = await getDoc(ref)
   if (!snap.exists()) throw new Error('Despesa não encontrada')
   const current = snap.data() as SharedExpense
-  const participantIndex = current.participants.findIndex((p) => p.tenantId === tenantId)
-  if (participantIndex < 0) throw new Error('Participante não encontrado')
+  if (
+    !Number.isInteger(participantIndex)
+    || participantIndex < 0
+    || participantIndex >= current.participants.length
+  ) {
+    throw new Error('Participante não encontrado')
+  }
 
-  const updatedParticipants: SharedExpenseParticipant[] = current.participants.map((p, idx) =>
-    idx === participantIndex
-      ? { ...p, receipt: receiptUrl, receiptStatus: 'aguardando' as const }
-      : { ...p }
-  )
+  const participant = current.participants[participantIndex]
+  if (!participant) throw new Error('Participante não encontrado')
+  if (expectedTenantId && participant.tenantId && participant.tenantId !== expectedTenantId) {
+    throw new Error('Participante não autorizado')
+  }
+
+  const updatedParticipants = [...current.participants]
+  updatedParticipants[participantIndex] = {
+    ...participant,
+    receipt: receiptUrl,
+    receiptStatus: 'aguardando',
+  }
 
   await updateDoc(ref, {
     participants: updatedParticipants,
@@ -63,6 +106,7 @@ export async function createSharedExpense(
 ): Promise<string> {
   const ref = await addDoc(collection(db, COL), {
     ...data,
+    participantTenantIds: data.participants.map((p) => p.tenantId),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -75,6 +119,78 @@ export async function updateSharedExpense(
 ): Promise<void> {
   const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined))
   await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
+}
+
+function computeExpenseStatus(participants: SharedExpenseParticipant[]): ExpenseStatus {
+  const allPaid = participants.every((p) => p.status === 'pago')
+  const somePaid = participants.some((p) => p.status === 'pago')
+  return allPaid ? 'pago' : somePaid ? 'parcial' : 'pendente'
+}
+
+export async function confirmParticipantReceipt(
+  expenseId: string,
+  participantIndex: number,
+): Promise<void> {
+  const ref = doc(db, COL, expenseId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Despesa não encontrada')
+  const current = snap.data() as SharedExpense
+  if (
+    !Number.isInteger(participantIndex)
+    || participantIndex < 0
+    || participantIndex >= current.participants.length
+  ) {
+    throw new Error('Participante não encontrado')
+  }
+
+  const participant = current.participants[participantIndex]
+  if (!participant) throw new Error('Participante não encontrado')
+
+  const paidDate = new Date().toISOString().slice(0, 10)
+  const updatedParticipants = [...current.participants]
+  updatedParticipants[participantIndex] = {
+    ...participant,
+    status: 'pago',
+    paidDate,
+    receiptStatus: 'confirmado',
+  }
+
+  await updateDoc(ref, {
+    participants: updatedParticipants,
+    status: computeExpenseStatus(updatedParticipants),
+    updatedAt: serverTimestamp(),
+  })
+}
+
+export async function rejectParticipantReceipt(
+  expenseId: string,
+  participantIndex: number,
+): Promise<void> {
+  const ref = doc(db, COL, expenseId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Despesa não encontrada')
+  const current = snap.data() as SharedExpense
+  if (
+    !Number.isInteger(participantIndex)
+    || participantIndex < 0
+    || participantIndex >= current.participants.length
+  ) {
+    throw new Error('Participante não encontrado')
+  }
+
+  const participant = current.participants[participantIndex]
+  if (!participant) throw new Error('Participante não encontrado')
+
+  const updatedParticipants = [...current.participants]
+  updatedParticipants[participantIndex] = {
+    ...participant,
+    receiptStatus: 'rejeitado',
+  }
+
+  await updateDoc(ref, {
+    participants: updatedParticipants,
+    updatedAt: serverTimestamp(),
+  })
 }
 
 // Both functions read fresh from Firestore and match by ARRAY INDEX (not tenantId).

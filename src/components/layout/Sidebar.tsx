@@ -7,6 +7,7 @@ import {
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { useNotificationAlerts } from '@/hooks/useNotificationAlerts'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -48,6 +49,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const { user, logout } = useAuth()
   const { status, daysRemaining, isAdmin } = useSubscription()
   const location = useLocation()
+  const companyId = user?.companyId ?? ''
+  const { pendingChargeReceipts, pendingExpenseReceipts } = useNotificationAlerts(companyId)
+
+  const sidebarBadgeByHref: Record<string, number> = {
+    '/cobrancas': pendingChargeReceipts,
+    '/despesas': pendingExpenseReceipts,
+  }
 
   const filteredNav = navItems.filter(
     (item) => !item.roles || (user && item.roles.includes(user.role))
@@ -89,21 +97,38 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           {filteredNav.map((item) => {
             const Icon = item.icon
             const active = location.pathname.startsWith(item.href)
+            const showAlertBadge = (sidebarBadgeByHref[item.href] ?? 0) > 0
+            const badgeCount = sidebarBadgeByHref[item.href] ?? 0
             return (
               <NavLink
                 key={item.href}
                 to={item.href}
                 title={collapsed ? item.label : undefined}
                 className={cn(
-                  'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                  'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   active
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
                   collapsed && 'justify-center px-2'
                 )}
               >
-                <Icon className="h-4 w-4 shrink-0" />
-                {!collapsed && <span>{item.label}</span>}
+                <span className="relative shrink-0">
+                  <Icon className="h-4 w-4" />
+                  {showAlertBadge && collapsed && (
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                      {badgeCount > 9 ? '9+' : badgeCount}
+                    </span>
+                  )}
+                </span>
+                {!collapsed && <span className="flex-1">{item.label}</span>}
+                {showAlertBadge && !collapsed && (
+                  <Badge
+                    variant="destructive"
+                    className="h-5 min-w-5 justify-center px-1.5 text-[10px]"
+                  >
+                    {badgeCount > 9 ? '9+' : badgeCount}
+                  </Badge>
+                )}
               </NavLink>
             )
           })}

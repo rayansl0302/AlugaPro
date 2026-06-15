@@ -406,6 +406,7 @@ export interface SharedExpense {
   dueDay?: number
   attachments?: string[]
   participants: SharedExpenseParticipant[]
+  participantTenantIds?: string[]
   status: ExpenseStatus
   notes?: string
   createdAt: Timestamp

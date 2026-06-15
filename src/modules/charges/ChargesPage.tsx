@@ -598,7 +598,7 @@ export function ChargesPage() {
           {/* Scrollable inner wrapper */}
           <div className="overflow-x-auto">
             {/* Min-width ensures chips never collapse */}
-            <div style={{ minWidth: 640 }}>
+            <div style={{ minWidth: 760 }}>
 
               {/* Month header with navigation */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
@@ -607,6 +607,9 @@ export function ChargesPage() {
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
                   Aluguel
+                </div>
+                <div className="w-[112px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  Comprovante
                 </div>
                 <Button
                   variant="ghost" size="icon" className="h-6 w-6 shrink-0"
@@ -655,8 +658,11 @@ export function ChargesPage() {
               ) : (
                 filteredContracts.map((contract, idx) => {
                   const contractChargeMap = chargeIndex.get(contract.id)
-                  const hasPendingReceipt = contractChargeMap &&
-                    Array.from(contractChargeMap.values()).some((c) => c.receiptStatus === 'aguardando')
+                  const pendingReceiptCharges = contractChargeMap
+                    ? Array.from(contractChargeMap.values()).filter((c) => c.receiptStatus === 'aguardando')
+                    : []
+                  const pendingReceiptCount = pendingReceiptCharges.length
+                  const firstPendingReceipt = pendingReceiptCharges[0]
 
                   const overdueCount = contractChargeMap
                     ? Array.from(contractChargeMap.values()).filter((c) => c.status === 'atrasado').length
@@ -688,12 +694,6 @@ export function ChargesPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-1.5">
                               <p className="text-sm font-semibold truncate">{entityPhotos.tenantName}</p>
-                              {hasPendingReceipt && (
-                                <span
-                                  title="Comprovante aguardando validação"
-                                  className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
-                                />
-                              )}
                               {overdueCount > 0 && (
                                 <Badge variant="destructive" className="h-4 px-1 text-[9px]">{overdueCount}</Badge>
                               )}
@@ -709,6 +709,29 @@ export function ChargesPage() {
                       <div className="w-[72px] shrink-0 text-right pr-2">
                         <p className="text-sm font-bold text-primary">{formatCurrency(contract.rentValue)}</p>
                         <p className="text-[10px] text-muted-foreground">dia {contract.dueDay}</p>
+                      </div>
+
+                      <div className="w-[112px] shrink-0 flex flex-col items-center justify-center gap-1">
+                        {pendingReceiptCount > 0 ? (
+                          <>
+                            <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
+                              {pendingReceiptCount} aguardando
+                            </Badge>
+                            {canManage && firstPendingReceipt && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-6 px-2 text-[10px] border-orange-300 text-orange-700 hover:bg-orange-50"
+                                onClick={() => setViewingCharge(firstPendingReceipt)}
+                              >
+                                <Eye className="mr-1 h-3 w-3" />
+                                Validar
+                              </Button>
+                            )}
+                          </>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/40">—</span>
+                        )}
                       </div>
 
                       {/* Navigation spacer left */}

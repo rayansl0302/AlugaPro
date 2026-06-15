@@ -1,37 +1,45 @@
 import { useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getCharges } from '@/services/charges'
+import { getSharedExpenses } from '@/services/sharedExpenses'
+import { buildPendingReceiptKeys } from '@/lib/pendingReceipts'
 import { playNotificationSound } from '@/lib/notificationSound'
 
+const RECEIPT_REFETCH_MS = 15_000
+
 export function useReceiptSoundAlert(companyId: string, enabled: boolean) {
-  const knownIdsRef = useRef<Set<string> | null>(null)
+  const knownKeysRef = useRef<Set<string> | null>(null)
 
   const { data: charges = [] } = useQuery({
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
     enabled: enabled && !!companyId,
-    refetchInterval: 30_000,
+    refetchInterval: RECEIPT_REFETCH_MS,
+  })
+
+  const { data: expenses = [] } = useQuery({
+    queryKey: ['sharedExpenses', companyId],
+    queryFn: () => getSharedExpenses(companyId),
+    enabled: enabled && !!companyId,
+    refetchInterval: RECEIPT_REFETCH_MS,
   })
 
   useEffect(() => {
     if (!enabled) return
 
-    const pendingIds = charges
-      .filter((charge) => charge.receiptStatus === 'aguardando')
-      .map((charge) => charge.id)
+    const pendingKeys = buildPendingReceiptKeys(charges, expenses)
+    const current = new Set(pendingKeys)
 
-    const current = new Set(pendingIds)
-
-    if (knownIdsRef.current === null) {
-      knownIdsRef.current = current
+    if (knownKeysRef.current === null) {
+      knownKeysRef.current = current
       return
     }
 
-    const hasNew = pendingIds.some((id) => !knownIdsRef.current!.has(id))
+    const hasNew = pendingKeys.some((key) => !knownKeysRef.current!.has(key))
     if (hasNew) {
       playNotificationSound()
     }
 
-    knownIdsRef.current = current
-  }, [charges, enabled])
+    knownKeysRef.current = current
+  }, [charges, expenses, enabled])
 }

@@ -113,7 +113,7 @@ export function NotificationBell() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link to="/notificacoes" className="w-full justify-center text-center text-xs text-muted-foreground">
-            Configurar alertas automáticos
+            Ver todos os alertas
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

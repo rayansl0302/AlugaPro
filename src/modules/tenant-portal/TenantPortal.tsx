@@ -16,7 +16,7 @@ import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
 import { getOwners } from '@/services/owners'
 import { getTenant } from '@/services/tenants'
-import { getSharedExpensesByTenant, submitSharedExpenseReceipt, type TenantSharedExpenseItem } from '@/services/sharedExpenses'
+import { getSharedExpensesByTenant, resolveExpenseParticipantIndex, submitSharedExpenseReceipt, type TenantSharedExpenseItem } from '@/services/sharedExpenses'
 import { uploadReceipt } from '@/services/storage'
 import { useTenantContractActions } from '@/hooks/useTenantContractActions'
 import { TenantPortalHeader } from './TenantPortalHeader'
@@ -466,8 +466,18 @@ export function TenantPortal() {
   }
 
   const openExpenseUpload = (item: TenantSharedExpenseItem) => {
+    const participantIndex = resolveExpenseParticipantIndex(
+      item.expense,
+      item.participant,
+      item.participantIndex,
+      tenantId,
+    )
+    if (participantIndex < 0) {
+      toast({ title: 'Não foi possível identificar sua parcela nesta despesa.', variant: 'destructive' })
+      return
+    }
     setExpenseReceiptUrl(item.participant.receipt)
-    setUploadingExpense(item)
+    setUploadingExpense({ ...item, participantIndex })
   }
 
   const handleExpenseReceiptFile = async (file: File) => {
@@ -487,17 +497,27 @@ export function TenantPortal() {
     if (!uploadingExpense || !expenseReceiptUrl) return
     setExpenseSubmitting(true)
     try {
+      const participantIndex = resolveExpenseParticipantIndex(
+        uploadingExpense.expense,
+        uploadingExpense.participant,
+        uploadingExpense.participantIndex,
+        tenantId,
+      )
+      if (participantIndex < 0) throw new Error('Participante não encontrado')
+
       await submitSharedExpenseReceipt(
         uploadingExpense.expense.id,
-        tenantId,
+        participantIndex,
         expenseReceiptUrl,
+        uploadingExpense.participant.tenantId ?? tenantId,
       )
       qc.invalidateQueries({ queryKey: ['sharedExpenses'] })
       toast({ title: 'Comprovante enviado!', description: 'Aguarde a confirmação do gestor.' })
       setUploadingExpense(null)
       setExpenseReceiptUrl(undefined)
-    } catch {
-      toast({ title: 'Erro ao enviar comprovante.', variant: 'destructive' })
+    } catch (err) {
+      const description = err instanceof Error ? err.message : undefined
+      toast({ title: 'Erro ao enviar comprovante.', description, variant: 'destructive' })
     } finally {
       setExpenseSubmitting(false)
     }
@@ -1040,7 +1060,7 @@ export function TenantPortal() {
                     </p>
                   </div>
                 ) : (
-                  sharedExpensesPag.pageItems.map(({ expense, participant }) => {
+                  sharedExpensesPag.pageItems.map(({ expense, participant, participantIndex }) => {
                     const ExpenseIcon = expenseTypeIcons[expense.type]
                     const typeLabel = expenseTypeLabels[expense.type]
                     const isPaid = participant.status === 'pago'
@@ -1112,7 +1132,7 @@ export function TenantPortal() {
                                 size="sm"
                                 variant="outline"
                                 className="w-full border-dashed gap-2"
-                                onClick={() => openExpenseUpload({ expense, participant })}
+                                onClick={() => openExpenseUpload({ expense, participant, participantIndex })}
                               >
                                 <Upload className="h-4 w-4" />
                                 Reenviar comprovante
@@ -1125,7 +1145,7 @@ export function TenantPortal() {
                               size="sm"
                               variant="outline"
                               className="w-full border-dashed gap-2"
-                              onClick={() => openExpenseUpload({ expense, participant })}
+                              onClick={() => openExpenseUpload({ expense, participant, participantIndex })}
                             >
                               <Upload className="h-4 w-4" />
                               Enviar comprovante de pagamento
