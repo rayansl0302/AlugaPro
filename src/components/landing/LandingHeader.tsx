@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
+
+const MotionLink = motion(Link)
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { easeTransition } from '@/lib/motion'
 
 const NAV_LINKS = [
-  { label: 'Recursos', href: '#recursos' },
+  { label: 'Recursos', href: '/recursos' },
   { label: 'Como funciona', href: '#como-funciona' },
   { label: 'Preços', href: '#precos' },
   { label: 'Para quem', href: '#para-quem' },
@@ -42,18 +44,23 @@ export function LandingHeader() {
         </Link>
 
         <nav className="hidden items-center gap-7 md:flex">
-          {NAV_LINKS.map((link, i) => (
-            <motion.a
-              key={link.href}
-              href={link.href}
-              className="text-sm font-medium text-slate-600 transition-colors hover:text-[#032B61]"
-              initial={{ opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ ...easeTransition, delay: 0.1 + i * 0.06 }}
-            >
-              {link.label}
-            </motion.a>
-          ))}
+          {NAV_LINKS.map((link, i) => {
+            const cls = "text-sm font-medium text-slate-600 transition-colors hover:text-[#032B61]"
+            const motionProps = {
+              initial: { opacity: 0, y: -8 },
+              animate: { opacity: 1, y: 0 },
+              transition: { ...easeTransition, delay: 0.1 + i * 0.06 },
+            }
+            return link.href.startsWith('/') ? (
+              <MotionLink key={link.href} to={link.href} className={cls} {...motionProps}>
+                {link.label}
+              </MotionLink>
+            ) : (
+              <motion.a key={link.href} href={link.href} className={cls} {...motionProps}>
+                {link.label}
+              </motion.a>
+            )
+          })}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
@@ -92,16 +99,18 @@ export function LandingHeader() {
             transition={{ duration: 0.25 }}
           >
             <nav className="flex flex-col gap-1 pt-3">
-              {NAV_LINKS.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-[#032B61]"
-                  onClick={() => setOpen(false)}
-                >
-                  {link.label}
-                </a>
-              ))}
+              {NAV_LINKS.map((link) => {
+                const cls = "rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-[#032B61]"
+                return link.href.startsWith('/') ? (
+                  <Link key={link.href} to={link.href} className={cls} onClick={() => setOpen(false)}>
+                    {link.label}
+                  </Link>
+                ) : (
+                  <a key={link.href} href={link.href} className={cls} onClick={() => setOpen(false)}>
+                    {link.label}
+                  </a>
+                )
+              })}
               {!user && (
                 <Link
                   to="/login?tab=inquilino"

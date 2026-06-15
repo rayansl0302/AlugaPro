@@ -1,8 +1,9 @@
+import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
   Building2, Car, FileText, CreditCard, Users, Bell,
-  BarChart3, ShieldCheck, ArrowRight, CheckCircle2, Zap,
+  BarChart3, ShieldCheck, ArrowRight, CheckCircle2, Zap, X, Check,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -84,6 +85,52 @@ const STATS = [
 ]
 
 const HERO_PERKS = ['14 dias grátis', 'Sem cartão de crédito', 'Cancele quando quiser']
+
+type CellValue = boolean | string
+interface CompRow { label: string; starter: CellValue; pro: CellValue; business: CellValue }
+interface CompGroup { group: string; rows: CompRow[] }
+
+const COMPARISON: CompGroup[] = [
+  {
+    group: 'Gestão',
+    rows: [
+      { label: 'Imóveis e veículos', starter: 'Até 10', pro: 'Até 50', business: 'Ilimitado' },
+      { label: 'Usuários gestores', starter: '2', pro: '5', business: 'Ilimitado' },
+      { label: 'Proprietários e inquilinos', starter: true, pro: true, business: true },
+      { label: 'Portal do inquilino', starter: true, pro: true, business: true },
+    ],
+  },
+  {
+    group: 'Contratos e cobranças',
+    rows: [
+      { label: 'Geração de contratos', starter: true, pro: true, business: true },
+      { label: 'Assinatura digital', starter: false, pro: true, business: true },
+      { label: 'Modelos personalizados', starter: false, pro: true, business: true },
+      { label: 'Cobranças automáticas', starter: true, pro: true, business: true },
+      { label: 'Controle de inadimplência', starter: true, pro: true, business: true },
+    ],
+  },
+  {
+    group: 'Financeiro',
+    rows: [
+      { label: 'Dashboard financeiro', starter: true, pro: true, business: true },
+      { label: 'Despesas compartilhadas', starter: true, pro: true, business: true },
+      { label: 'Relatórios avançados', starter: false, pro: true, business: true },
+      { label: 'Exportação Excel / PDF', starter: false, pro: true, business: true },
+      { label: 'Reajuste IPCA / IGPM', starter: false, pro: true, business: true },
+    ],
+  },
+  {
+    group: 'Operação',
+    rows: [
+      { label: 'Chamados e manutenções', starter: true, pro: true, business: true },
+      { label: 'Notificações automáticas', starter: true, pro: true, business: true },
+      { label: 'Múltiplas equipes', starter: false, pro: false, business: true },
+      { label: 'Onboarding assistido', starter: false, pro: false, business: true },
+      { label: 'API de integrações', starter: false, pro: false, business: 'Em breve' },
+    ],
+  },
+]
 
 const PRICING_FEATURES: Record<PlanId, string[]> = {
   starter: [
@@ -429,6 +476,245 @@ export function LandingPage() {
               Portal do inquilino sempre gratuito. Inquilinos nunca pagam.
             </motion.p>
           </div>
+        </section>
+
+        {/* Comparison table */}
+        <section className="border-y border-slate-200 bg-slate-50/50 py-20">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6">
+            <motion.div
+              className="mx-auto max-w-2xl text-center"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={staggerContainer(0.1)}
+            >
+              <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
+                Compare os planos
+              </motion.h2>
+              <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
+                Veja exatamente o que está incluído em cada nível de assinatura.
+              </motion.p>
+            </motion.div>
+
+            {/* Mobile: cards deslizáveis por plano */}
+            <motion.div
+              className="mt-10 md:hidden"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={viewportOnce}
+              transition={{ duration: 0.5 }}
+            >
+              <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
+                {([
+                  { id: 'starter', name: 'Starter', price: 'R$ 39/mês', popular: false },
+                  { id: 'pro',     name: 'Pro',     price: 'R$ 79/mês', popular: true },
+                  { id: 'business',name: 'Business',price: 'R$ 129/mês',popular: false },
+                ] as const).map((plan) => (
+                  <div
+                    key={plan.id}
+                    className={`snap-center shrink-0 w-[80vw] max-w-xs rounded-2xl border bg-white shadow-sm ${plan.popular ? 'border-[#032B61] ring-1 ring-[#032B61]/20' : 'border-slate-200'}`}
+                  >
+                    <div className={`rounded-t-2xl px-5 py-4 ${plan.popular ? 'bg-[#032B61]' : 'bg-slate-50'}`}>
+                      {plan.popular && (
+                        <span className="mb-1 inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white">
+                          Mais popular
+                        </span>
+                      )}
+                      <p className={`font-bold text-lg ${plan.popular ? 'text-white' : 'text-[#032B61]'}`}>{plan.name}</p>
+                      <p className={`text-sm ${plan.popular ? 'text-white/70' : 'text-slate-400'}`}>{plan.price}</p>
+                    </div>
+
+                    <div className="px-5 py-4 space-y-4">
+                      {COMPARISON.map((group) => (
+                        <div key={group.group}>
+                          <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+                            {group.group}
+                          </p>
+                          <div className="space-y-2">
+                            {group.rows.map((row) => {
+                              const val = row[plan.id]
+                              return (
+                                <div key={row.label} className="flex items-center justify-between gap-2">
+                                  <span className="text-xs text-slate-600">{row.label}</span>
+                                  <span className="shrink-0">
+                                    {val === true  && <Check className="h-3.5 w-3.5 text-emerald-500" />}
+                                    {val === false && <X className="h-3.5 w-3.5 text-slate-300" />}
+                                    {typeof val === 'string' && (
+                                      <span className="text-[11px] font-medium text-[#032B61]">{val}</span>
+                                    )}
+                                  </span>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="px-5 pb-5">
+                      <Button
+                        className={`w-full ${plan.popular ? 'bg-[#032B61] text-white hover:bg-[#032B61]/90' : ''}`}
+                        variant={plan.popular ? 'default' : 'outline'}
+                        size="sm"
+                        asChild
+                      >
+                        <Link to="/login">Começar grátis</Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-center text-xs text-slate-400">← deslize para ver todos os planos →</p>
+            </motion.div>
+
+            {/* Desktop: tabela completa */}
+            <motion.div
+              className="mt-10 hidden overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm md:block"
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={viewportOnce}
+              transition={{ duration: 0.5 }}
+            >
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="px-5 py-4 text-left font-medium text-slate-500 w-1/2">Recurso</th>
+                    <th className="px-4 py-4 text-center font-semibold text-[#032B61]">
+                      <div>Starter</div>
+                      <div className="text-xs font-normal text-slate-400">R$ 39/mês</div>
+                    </th>
+                    <th className="px-4 py-4 text-center font-semibold text-[#032B61] bg-[#032B61]/[0.03]">
+                      <div className="flex flex-col items-center gap-1">
+                        <span className="rounded-full bg-[#032B61] px-2 py-0.5 text-[10px] text-white font-medium">Popular</span>
+                        <span>Pro</span>
+                        <span className="text-xs font-normal text-slate-400">R$ 79/mês</span>
+                      </div>
+                    </th>
+                    <th className="px-4 py-4 text-center font-semibold text-[#032B61]">
+                      <div>Business</div>
+                      <div className="text-xs font-normal text-slate-400">R$ 129/mês</div>
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {COMPARISON.map((group) => (
+                    <Fragment key={group.group}>
+                      <tr className="bg-slate-50 border-t border-slate-200">
+                        <td colSpan={4} className="px-5 py-2 text-xs font-semibold uppercase tracking-wider text-slate-400">
+                          {group.group}
+                        </td>
+                      </tr>
+                      {group.rows.map((row) => (
+                        <tr key={row.label} className="border-t border-slate-100 hover:bg-slate-50/50 transition-colors">
+                          <td className="px-5 py-3 text-slate-700">{row.label}</td>
+                          {(['starter', 'pro', 'business'] as const).map((plan) => {
+                            const val = row[plan]
+                            const isProCol = plan === 'pro'
+                            return (
+                              <td key={plan} className={`px-4 py-3 text-center ${isProCol ? 'bg-[#032B61]/[0.02]' : ''}`}>
+                                {val === true && <Check className="h-4 w-4 text-emerald-500 mx-auto" />}
+                                {val === false && <X className="h-4 w-4 text-slate-300 mx-auto" />}
+                                {typeof val === 'string' && (
+                                  <span className="text-xs font-medium text-[#032B61]">{val}</span>
+                                )}
+                              </td>
+                            )
+                          })}
+                        </tr>
+                      ))}
+                    </Fragment>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-slate-200">
+                    <td className="px-5 py-4" />
+                    {(['starter', 'pro', 'business'] as const).map((plan) => (
+                      <td key={plan} className={`px-4 py-4 text-center ${plan === 'pro' ? 'bg-[#032B61]/[0.02]' : ''}`}>
+                        <Button
+                          size="sm"
+                          variant={plan === 'pro' ? 'default' : 'outline'}
+                          className={plan === 'pro' ? 'bg-[#032B61] text-white hover:bg-[#032B61]/90' : ''}
+                          asChild
+                        >
+                          <Link to="/login">Começar grátis</Link>
+                        </Button>
+                      </td>
+                    ))}
+                  </tr>
+                </tfoot>
+              </table>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* Sign-up CTA */}
+        <section className="bg-[#032B61] py-20">
+          <motion.div
+            className="mx-auto max-w-4xl px-4 text-center sm:px-6"
+            initial="hidden"
+            whileInView="visible"
+            viewport={viewportOnce}
+            variants={staggerContainer(0.12)}
+          >
+            <motion.span
+              variants={fadeInUp}
+              className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Sem cartão de crédito · Cancele quando quiser
+            </motion.span>
+            <motion.h2
+              variants={fadeInUp}
+              className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
+            >
+              Comece seu trial grátis hoje
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="mt-5 text-lg text-white/70 max-w-xl mx-auto"
+            >
+              14 dias com acesso completo ao plano Pro. Sem compromisso. Configure sua empresa em menos de 5 minutos.
+            </motion.p>
+            <motion.div
+              variants={fadeInUp}
+              className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
+            >
+              <Button
+                size="lg"
+                className="h-12 bg-white px-8 text-[#032B61] font-semibold hover:bg-white/90"
+                asChild
+              >
+                <Link to="/login">
+                  Criar conta gratuita
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60"
+                asChild
+              >
+                <Link to="/login?tab=inquilino">Sou inquilino</Link>
+              </Button>
+            </motion.div>
+            <motion.div
+              variants={staggerContainer(0.08)}
+              className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3"
+            >
+              {[
+                'Imóveis e veículos ilimitados no trial',
+                'Contratos com assinatura digital',
+                'Portal do inquilino incluso',
+                'Suporte por e-mail',
+              ].map((perk) => (
+                <motion.span key={perk} variants={fadeInUp} className="flex items-center gap-2 text-sm text-white/60">
+                  <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
+                  {perk}
+                </motion.span>
+              ))}
+            </motion.div>
+          </motion.div>
         </section>
 
         {/* Audience */}

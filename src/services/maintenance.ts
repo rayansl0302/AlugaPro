@@ -18,6 +18,14 @@ export async function getMaintenanceRequests(companyId: string): Promise<Mainten
     .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
 }
 
+export async function getMaintenanceRequestsByTenant(
+  companyId: string,
+  tenantId: string,
+): Promise<MaintenanceRequest[]> {
+  const requests = await getMaintenanceRequests(companyId)
+  return requests.filter((r) => r.tenantId === tenantId)
+}
+
 export async function createMaintenanceRequest(
   data: Omit<MaintenanceRequest, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {

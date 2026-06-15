@@ -49,9 +49,9 @@ export function LandingFooter() {
             <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">Plataforma</h3>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li>
-                <a href="#recursos" className="transition-colors hover:text-[#032B61]">
+                <Link to="/recursos" className="transition-colors hover:text-[#032B61]">
                   Recursos
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#como-funciona" className="transition-colors hover:text-[#032B61]">
@@ -109,9 +109,6 @@ export function LandingFooter() {
             <Link to="/login" className="transition-colors hover:text-[#032B61]">
               Entrar
             </Link>
-            <a href="/#recursos" className="transition-colors hover:text-[#032B61]">
-              Conhecer recursos
-            </a>
           </div>
         </div>
       </div>

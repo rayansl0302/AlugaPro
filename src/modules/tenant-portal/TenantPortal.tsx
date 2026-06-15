@@ -4,7 +4,7 @@ import {
   FileText, LogOut, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
   ShieldCheck, AlertTriangle, Percent, Receipt, CalendarClock, Wallet,
   Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, UserCircle, ShieldAlert,
-  Eye, Download,
+  Eye, Download, Wrench, Plus, Loader2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -12,10 +12,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
 import { getPaymentsByTenant } from '@/services/payments'
+import { createMaintenanceRequest, getMaintenanceRequestsByTenant } from '@/services/maintenance'
 import { uploadReceipt } from '@/services/storage'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
-import { Charge, ChargeType, PaymentMethod } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +25,9 @@ import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ReceiptUpload } from '@/components/shared/ReceiptUpload'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
@@ -49,6 +53,23 @@ const methodLabel: Record<PaymentMethod, string> = {
   transferencia: 'Transferência',
   cartao: 'Cartão',
   boleto: 'Boleto',
+}
+
+const maintenanceCategoryLabels: Record<MaintenanceCategory, string> = {
+  eletrica: 'Elétrica',
+  hidraulica: 'Hidráulica',
+  pintura: 'Pintura',
+  estrutura: 'Estrutura',
+  limpeza: 'Limpeza',
+  seguranca: 'Segurança',
+  outro: 'Outro',
+}
+
+const maintenanceStatusConfig = {
+  aberto: { label: 'Aberto', variant: 'info' as const },
+  em_analise: { label: 'Em análise', variant: 'warning' as const },
+  em_andamento: { label: 'Em andamento', variant: 'secondary' as const },
+  finalizado: { label: 'Finalizado', variant: 'success' as const },
 }
 
 type ChargeCategory = { label: string; Icon: LucideIcon }
@@ -91,13 +112,21 @@ export function TenantPortal() {
   const { user, logout } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
-  const tenantId = user?.id ?? ''
+  const tenantId = user?.tenantId ?? user?.id ?? ''
 
   const [uploadingCharge, setUploadingCharge] = useState<Charge | null>(null)
   const [receiptUrl, setReceiptUrl] = useState<string | undefined>()
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [contractLoading, setContractLoading] = useState<false | 'view' | 'download'>(false)
+  const [showMaintenanceForm, setShowMaintenanceForm] = useState(false)
+  const [maintenanceLoading, setMaintenanceLoading] = useState(false)
+  const [maintenanceForm, setMaintenanceForm] = useState({
+    title: '',
+    description: '',
+    category: 'outro' as MaintenanceCategory,
+    priority: 'media' as MaintenanceRequest['priority'],
+  })
 
   const { data: charges = [] } = useQuery({
     queryKey: ['charges', companyId, tenantId],
@@ -117,6 +146,12 @@ export function TenantPortal() {
     enabled: !!companyId && !!tenantId,
   })
 
+  const { data: maintenanceRequests = [] } = useQuery({
+    queryKey: ['maintenance', companyId, tenantId],
+    queryFn: () => getMaintenanceRequestsByTenant(companyId, tenantId),
+    enabled: !!companyId && !!tenantId,
+  })
+
   const activeContract = contracts.find((c) => c.status === 'ativo')
   const pendingCharges = charges.filter((c) => c.status !== 'pago' && c.status !== 'cancelado')
   const overdueCharges = pendingCharges.filter((c) => c.dueDate && c.dueDate < TODAY)
@@ -124,6 +159,9 @@ export function TenantPortal() {
   const totalOverdue = overdueCharges.reduce((s, c) => s + (c.totalAmount ?? c.amount), 0)
 
   const historyPag = usePagination(payments, 10)
+  const maintenancePag = usePagination(maintenanceRequests, 8)
+
+  const openMaintenanceRequests = maintenanceRequests.filter((r) => r.status !== 'finalizado')
 
   const toPay = [...pendingCharges].sort((a, b) =>
     (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31')
@@ -178,6 +216,57 @@ export function TenantPortal() {
   const openUpload = (charge: Charge) => {
     setReceiptUrl(charge.receipt)
     setUploadingCharge(charge)
+  }
+
+  const resetMaintenanceForm = () => {
+    setMaintenanceForm({
+      title: '',
+      description: '',
+      category: 'outro',
+      priority: 'media',
+    })
+  }
+
+  const handleCreateMaintenance = async () => {
+    if (!activeContract) {
+      toast({ title: 'Contrato ativo necessário', description: 'Você precisa de um contrato ativo para abrir um chamado.', variant: 'destructive' })
+      return
+    }
+    if (!maintenanceForm.title.trim() || !maintenanceForm.description.trim()) {
+      toast({ title: 'Preencha título e descrição.', variant: 'destructive' })
+      return
+    }
+
+    setMaintenanceLoading(true)
+    try {
+      await createMaintenanceRequest({
+        companyId,
+        propertyId: activeContract.propertyId,
+        propertyName: activeContract.propertyName,
+        tenantId,
+        tenantName: user?.name,
+        title: maintenanceForm.title.trim(),
+        description: maintenanceForm.description.trim(),
+        category: maintenanceForm.category,
+        priority: maintenanceForm.priority,
+        status: 'aberto',
+        comments: [],
+      })
+      qc.invalidateQueries({ queryKey: ['maintenance'] })
+      toast({ title: 'Chamado aberto!', description: 'O proprietário/gestor foi notificado sobre sua solicitação.' })
+      setShowMaintenanceForm(false)
+      resetMaintenanceForm()
+    } catch {
+      toast({ title: 'Erro ao abrir chamado.', variant: 'destructive' })
+    } finally {
+      setMaintenanceLoading(false)
+    }
+  }
+
+  const formatMaintenanceDate = (request: MaintenanceRequest) => {
+    if (!request.createdAt) return '—'
+    const date = request.createdAt.toDate ? request.createdAt.toDate() : new Date(String(request.createdAt))
+    return formatDate(date.toISOString())
   }
 
   const handleViewContract = async () => {
@@ -475,6 +564,14 @@ export function TenantPortal() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="historico" className="flex-1">Histórico de pagamentos</TabsTrigger>
+                <TabsTrigger value="chamados" className="flex-1">
+                  Chamados
+                  {openMaintenanceRequests.length > 0 && (
+                    <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500/15 px-1.5 text-[11px] font-bold text-orange-600">
+                      {openMaintenanceRequests.length}
+                    </span>
+                  )}
+                </TabsTrigger>
               </TabsList>
 
               <TabsContent value="a-pagar" className="space-y-3">
@@ -620,6 +717,85 @@ export function TenantPortal() {
                   />
                 )}
               </TabsContent>
+
+              <TabsContent value="chamados" className="space-y-3">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-semibold">Manutenção e reparos</p>
+                    <p className="text-xs text-muted-foreground">
+                      Abra um chamado para o proprietário ou gestor
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={() => setShowMaintenanceForm(true)}
+                    disabled={!activeContract}
+                  >
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Novo chamado
+                  </Button>
+                </div>
+
+                {!activeContract && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                    É necessário um contrato ativo para abrir chamados de manutenção.
+                  </div>
+                )}
+
+                {maintenanceRequests.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
+                    <Wrench className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                    <p className="font-semibold text-foreground">Nenhum chamado</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {activeContract
+                        ? 'Reporte um problema no imóvel ou veículo alugado.'
+                        : 'Aguarde a ativação do seu contrato.'}
+                    </p>
+                  </div>
+                ) : (
+                  maintenancePag.pageItems.map((request) => {
+                    const status = maintenanceStatusConfig[request.status]
+                    return (
+                      <Card key={request.id} className="border-0 shadow-sm">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-semibold leading-tight">{request.title}</p>
+                              <p className="text-xs text-muted-foreground mt-0.5">
+                                {request.propertyName ?? 'Imóvel'} · {formatMaintenanceDate(request)}
+                              </p>
+                            </div>
+                            <Badge variant={status.variant} className="shrink-0 text-xs">
+                              {status.label}
+                            </Badge>
+                          </div>
+                          <div className="flex flex-wrap gap-2 text-xs">
+                            <span className="rounded bg-muted px-2 py-0.5 text-muted-foreground">
+                              {maintenanceCategoryLabels[request.category]}
+                            </span>
+                            <span className="rounded bg-muted px-2 py-0.5 text-muted-foreground capitalize">
+                              Prioridade {request.priority}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-3">{request.description}</p>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+
+                {maintenanceRequests.length > 0 && (
+                  <Pagination
+                    page={maintenancePag.page}
+                    totalPages={maintenancePag.totalPages}
+                    total={maintenancePag.total}
+                    rangeStart={maintenancePag.rangeStart}
+                    rangeEnd={maintenancePag.rangeEnd}
+                    onPageChange={maintenancePag.setPage}
+                    itemLabel="chamados"
+                  />
+                )}
+              </TabsContent>
             </Tabs>
           </div>
         </div>
@@ -669,6 +845,95 @@ export function TenantPortal() {
                 {submitting
                   ? <><CheckCircle className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
                   : <><Upload className="mr-2 h-4 w-4" /> Enviar para confirmação</>
+                }
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={showMaintenanceForm}
+        onOpenChange={(open) => {
+          setShowMaintenanceForm(open)
+          if (!open) resetMaintenanceForm()
+        }}
+      >
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Abrir chamado de manutenção</DialogTitle>
+          </DialogHeader>
+
+          {activeContract && (
+            <div className="space-y-4">
+              <div className="rounded-xl border bg-muted/30 p-3 text-sm">
+                <p className="text-xs text-muted-foreground">Local</p>
+                <p className="font-medium">{activeContract.propertyName ?? 'Imóvel alugado'}</p>
+                <p className="text-xs text-muted-foreground mt-2">Contrato</p>
+                <p className="font-mono text-xs">{activeContract.contractNumber}</p>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="maintenance-title">Título *</Label>
+                <Input
+                  id="maintenance-title"
+                  placeholder="Ex.: Vazamento na torneira da cozinha"
+                  value={maintenanceForm.title}
+                  onChange={(e) => setMaintenanceForm((p) => ({ ...p, title: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5">
+                  <Label>Categoria</Label>
+                  <Select
+                    value={maintenanceForm.category}
+                    onValueChange={(v) => setMaintenanceForm((p) => ({ ...p, category: v as MaintenanceCategory }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(maintenanceCategoryLabels).map(([value, label]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Prioridade</Label>
+                  <Select
+                    value={maintenanceForm.priority}
+                    onValueChange={(v) => setMaintenanceForm((p) => ({ ...p, priority: v as MaintenanceRequest['priority'] }))}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="baixa">Baixa</SelectItem>
+                      <SelectItem value="media">Média</SelectItem>
+                      <SelectItem value="alta">Alta</SelectItem>
+                      <SelectItem value="urgente">Urgente</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="maintenance-description">Descrição *</Label>
+                <textarea
+                  id="maintenance-description"
+                  className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  placeholder="Descreva o problema com o máximo de detalhes possível..."
+                  value={maintenanceForm.description}
+                  onChange={(e) => setMaintenanceForm((p) => ({ ...p, description: e.target.value }))}
+                />
+              </div>
+
+              <Button
+                className="w-full"
+                onClick={handleCreateMaintenance}
+                disabled={maintenanceLoading}
+              >
+                {maintenanceLoading
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
+                  : <><Wrench className="mr-2 h-4 w-4" /> Enviar chamado</>
                 }
               </Button>
             </div>

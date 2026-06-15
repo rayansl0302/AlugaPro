@@ -22,6 +22,7 @@ import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
+import { RecursosPage } from '@/modules/landing/RecursosPage'
 import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
@@ -96,6 +97,7 @@ const router = createBrowserRouter([
     path: '/',
     children: [
       { index: true, element: <LandingPage /> },
+      { path: 'recursos', element: <RecursosPage /> },
       {
         element: (
           <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>
