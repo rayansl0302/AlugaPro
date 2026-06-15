@@ -6,7 +6,6 @@ service firebase.storage {
       return request.auth != null;
     }
 
-    // 10 MB limit for receipts/docs, 20 MB for photos
     function maxSize(mb) {
       return request.resource.size < mb * 1024 * 1024;
     }
@@ -23,64 +22,100 @@ service firebase.storage {
       return isImage() || isPdf();
     }
 
+    function isAdminEmail() {
+      return isAuth() && request.auth.token.email in
+        ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com'];
+    }
+
+    // Reads the authenticated user's Firestore document.
+    // Costs 1 Firestore read per rule evaluation — acceptable for security.
+    function userDoc() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    // True if the requesting user is a gestor/admin of the given company.
+    function isGestorOf(companyId) {
+      return isAdminEmail() || (
+        isAuth() &&
+        userDoc().companyId == companyId &&
+        userDoc().role in ['admin', 'gestor', 'proprietario']
+      );
+    }
+
+    // True if the requesting user belongs to the given company (any role).
+    function isMemberOf(companyId) {
+      return isAdminEmail() || (
+        isAuth() && userDoc().companyId == companyId
+      );
+    }
+
+    // True if the requesting user is the inquilino identified by tenantId.
+    function isTenantDoc(companyId, tenantId) {
+      let u = userDoc();
+      return isAuth() &&
+        u.companyId == companyId &&
+        u.role == 'inquilino' &&
+        u.tenantId == tenantId;
+    }
+
     // ── Comprovantes de pagamento ──────────────────────────────────────────
     // Path: receipts/{companyId}/{chargeId}/{filename}
-    // Qualquer usuário autenticado pode ler (gestor valida, inquilino vê o seu).
-    // Upload permitido para qualquer autenticado (gestor ou o próprio inquilino).
-    // Controle fino de quem é o inquilino é feito pelas regras do Firestore.
+    // Gestor da empresa OU qualquer membro da mesma empresa podem ler/enviar.
+    // Apenas gestores podem excluir.
     match /receipts/{companyId}/{chargeId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && isReceiptType() && maxSize(10);
-      allow delete: if isAuth();
+      allow read:   if isMemberOf(companyId);
+      allow write:  if isMemberOf(companyId) && isReceiptType() && maxSize(10);
+      allow delete: if isGestorOf(companyId);
     }
 
     // ── Fotos de imóveis ───────────────────────────────────────────────────
     // Path: properties/{companyId}/{propertyId}/{filename}
     match /properties/{companyId}/{propertyId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && isImage() && maxSize(20);
-      allow delete: if isAuth();
+      allow read:   if isMemberOf(companyId);
+      allow write:  if isGestorOf(companyId) && isImage() && maxSize(20);
+      allow delete: if isGestorOf(companyId);
     }
 
     // ── Fotos de veículos ──────────────────────────────────────────────────
     // Path: vehicles/{companyId}/{vehicleId}/{filename}
     match /vehicles/{companyId}/{vehicleId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && isImage() && maxSize(20);
-      allow delete: if isAuth();
+      allow read:   if isMemberOf(companyId);
+      allow write:  if isGestorOf(companyId) && isImage() && maxSize(20);
+      allow delete: if isGestorOf(companyId);
     }
 
     // ── Documentos de inquilinos ───────────────────────────────────────────
     // Path: tenants/{companyId}/{tenantId}/{filename}
+    // O próprio inquilino pode ler e enviar seus documentos.
     match /tenants/{companyId}/{tenantId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && maxSize(20);
-      allow delete: if isAuth();
+      allow read:   if isGestorOf(companyId) || isTenantDoc(companyId, tenantId);
+      allow write:  if (isGestorOf(companyId) || isTenantDoc(companyId, tenantId)) && maxSize(20);
+      allow delete: if isGestorOf(companyId);
     }
 
     // ── Contratos assinados ────────────────────────────────────────────────
     // Path: contracts/{companyId}/{contractId}/{filename}
+    // Membros da empresa leem; apenas gestores escrevem/excluem.
     match /contracts/{companyId}/{contractId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && maxSize(20);
-      allow delete: if isAuth();
+      allow read:   if isMemberOf(companyId);
+      allow write:  if isGestorOf(companyId) && maxSize(20);
+      allow delete: if isGestorOf(companyId);
     }
 
     // ── Avatares de usuários ───────────────────────────────────────────────
     // Path: avatars/{userId}/{filename}
-    // Apenas o próprio usuário pode fazer upload do seu avatar.
     match /avatars/{userId}/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && request.auth.uid == userId && isImage() && maxSize(5);
+      allow read:   if isAuth();
+      allow write:  if isAuth() && request.auth.uid == userId && isImage() && maxSize(5);
       allow delete: if isAuth() && request.auth.uid == userId;
     }
 
     // ── Logo da empresa ────────────────────────────────────────────────────
     // Path: companies/{companyId}/logo/{filename}
     match /companies/{companyId}/logo/{filename} {
-      allow read:  if isAuth();
-      allow write: if isAuth() && isImage() && maxSize(5);
-      allow delete: if isAuth();
+      allow read:   if isMemberOf(companyId);
+      allow write:  if isGestorOf(companyId) && isImage() && maxSize(5);
+      allow delete: if isGestorOf(companyId);
     }
 
   }

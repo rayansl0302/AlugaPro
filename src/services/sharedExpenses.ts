@@ -34,6 +34,30 @@ export async function getSharedExpensesByTenant(
   })
 }
 
+export async function submitSharedExpenseReceipt(
+  expenseId: string,
+  tenantId: string,
+  receiptUrl: string,
+): Promise<void> {
+  const ref = doc(db, COL, expenseId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) throw new Error('Despesa não encontrada')
+  const current = snap.data() as SharedExpense
+  const participantIndex = current.participants.findIndex((p) => p.tenantId === tenantId)
+  if (participantIndex < 0) throw new Error('Participante não encontrado')
+
+  const updatedParticipants: SharedExpenseParticipant[] = current.participants.map((p, idx) =>
+    idx === participantIndex
+      ? { ...p, receipt: receiptUrl, receiptStatus: 'aguardando' as const }
+      : { ...p }
+  )
+
+  await updateDoc(ref, {
+    participants: updatedParticipants,
+    updatedAt: serverTimestamp(),
+  })
+}
+
 export async function createSharedExpense(
   data: Omit<SharedExpense, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {

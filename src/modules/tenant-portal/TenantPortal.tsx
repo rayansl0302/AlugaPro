@@ -1,13 +1,12 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  FileText, LogOut, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
+  FileText, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
   ShieldCheck, AlertTriangle, Percent, Receipt, CalendarClock, Wallet,
-  Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, UserCircle, ShieldAlert,
-  Eye, Download, Wrench, Plus, Loader2, DollarSign,
+  Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, Car, User,
+  Eye, Download, Wrench, Plus, Loader2, DollarSign, QrCode, Copy,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
-import { Link } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
@@ -15,19 +14,19 @@ import { getPaymentsByTenant } from '@/services/payments'
 import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment, buildInitialStatusHistory } from '@/services/maintenance'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
+import { getOwners } from '@/services/owners'
 import { getTenant } from '@/services/tenants'
-import { getSharedExpensesByTenant } from '@/services/sharedExpenses'
+import { getSharedExpensesByTenant, submitSharedExpenseReceipt, type TenantSharedExpenseItem } from '@/services/sharedExpenses'
 import { uploadReceipt } from '@/services/storage'
-import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
-import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType } from '@/types'
-import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
+import { useTenantContractActions } from '@/hooks/useTenantContractActions'
+import { TenantPortalHeader } from './TenantPortalHeader'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Owner, Property, PropertyType, Vehicle } from '@/types'
+import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,6 +43,19 @@ import {
   buildMaintenancePhotoLookups,
   resolveMaintenanceEntityPhotos,
 } from '@/lib/maintenanceEntityPhotos'
+import { PropertyDetail } from '@/modules/properties/PropertyDetail'
+import { VehicleDetail } from '@/modules/vehicles/VehicleDetail'
+import { OwnerDetail } from '@/modules/owners/OwnerDetail'
+
+const propertyTypeLabels: Record<PropertyType, string> = {
+  apartamento: 'Apartamento',
+  casa: 'Casa',
+  kitnet: 'Kitnet',
+  sala_comercial: 'Sala Comercial',
+  galpao: 'Galpão',
+  terreno: 'Terreno',
+  outro: 'Outro',
+}
 
 const statusVariant = {
   pendente: 'warning',
@@ -142,17 +154,125 @@ function greeting() {
   return 'Boa noite'
 }
 
+interface TenantPaymentInfo {
+  pixKey?: string
+  bank?: string
+  agency?: string
+  account?: string
+}
+
+function resolvePaymentInfo(contract: Contract | undefined, owner: Owner | undefined): TenantPaymentInfo {
+  const fin = contract?.signingData?.financeiro
+  if (fin?.pixKey?.trim() || fin?.banco?.trim()) {
+    return {
+      pixKey: fin.pixKey?.trim(),
+      bank: fin.banco?.trim(),
+      agency: 'agencia' in fin ? fin.agencia?.trim() : undefined,
+      account: 'conta' in fin ? fin.conta?.trim() : undefined,
+    }
+  }
+  const bankAccount = owner?.bankAccount
+  if (bankAccount?.pixKey?.trim() || bankAccount?.bank?.trim()) {
+    return {
+      pixKey: bankAccount.pixKey?.trim(),
+      bank: bankAccount.bank?.trim(),
+      agency: bankAccount.agency?.trim(),
+      account: bankAccount.account?.trim(),
+    }
+  }
+  return {}
+}
+
+function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
+  const handleCopyPix = async () => {
+    if (!info.pixKey) return
+    try {
+      await navigator.clipboard.writeText(info.pixKey)
+      toast({ title: 'Chave PIX copiada!' })
+    } catch {
+      toast({ title: 'Não foi possível copiar a chave.', variant: 'destructive' })
+    }
+  }
+
+  const hasInfo = !!(info.pixKey || info.bank || info.agency || info.account)
+
+  if (!hasInfo) {
+    return (
+      <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
+        Dados de pagamento não cadastrados. Entre em contato com o gestor.
+      </p>
+    )
+  }
+
+  return (
+    <div className="space-y-3 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 p-3">
+      <p className="text-xs font-semibold text-[#032B61]">Dados para pagamento PIX</p>
+
+      {info.bank && (
+        <div className="text-sm">
+          <span className="text-muted-foreground">Banco: </span>
+          <span className="font-medium">{info.bank}</span>
+        </div>
+      )}
+
+      {(info.agency || info.account) && (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+          {info.agency && (
+            <span>
+              <span className="text-muted-foreground">Agência: </span>
+              <span className="font-medium">{info.agency}</span>
+            </span>
+          )}
+          {info.account && (
+            <span>
+              <span className="text-muted-foreground">Conta: </span>
+              <span className="font-medium">{info.account}</span>
+            </span>
+          )}
+        </div>
+      )}
+
+      {info.pixKey && (
+        <div className="space-y-1.5 border-t border-[#032B61]/10 pt-2">
+          <p className="text-xs text-muted-foreground">Chave PIX</p>
+          <div className="flex items-start gap-2">
+            <p className="flex-1 break-all font-mono text-sm font-medium leading-snug">{info.pixKey}</p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-8 shrink-0 border-[#032B61]/20 text-[#032B61] hover:bg-[#032B61]/10"
+              onClick={handleCopyPix}
+            >
+              <Copy className="mr-1.5 h-3.5 w-3.5" />
+              Copiar
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 export function TenantPortal() {
-  const { user, logout, firebaseUser } = useAuth()
+  const { user, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
   const tenantId = user?.tenantId ?? user?.id ?? ''
 
   const [uploadingCharge, setUploadingCharge] = useState<Charge | null>(null)
+  const [uploadingExpense, setUploadingExpense] = useState<TenantSharedExpenseItem | null>(null)
   const [receiptUrl, setReceiptUrl] = useState<string | undefined>()
+  const [expenseReceiptUrl, setExpenseReceiptUrl] = useState<string | undefined>()
   const [uploading, setUploading] = useState(false)
+  const [expenseUploading, setExpenseUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
-  const [contractLoading, setContractLoading] = useState<false | 'view' | 'download'>(false)
+  const [expenseSubmitting, setExpenseSubmitting] = useState(false)
+  const [selectedContractId, setSelectedContractId] = useState('')
+  const { viewContract, downloadContract, isContractLoading } = useTenantContractActions()
+  const [viewProperty, setViewProperty] = useState<Property | null>(null)
+  const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null)
+  const [viewOwner, setViewOwner] = useState<Owner | null>(null)
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false)
   const [viewingRequest, setViewingRequest] = useState<MaintenanceRequest | null>(null)
   const [commentText, setCommentText] = useState('')
@@ -213,12 +333,71 @@ export function TenantPortal() {
     enabled: !!companyId,
   })
 
+  const { data: owners = [] } = useQuery({
+    queryKey: ['owners', companyId],
+    queryFn: () => getOwners(companyId),
+    enabled: !!companyId,
+  })
+
+  const propertyById = useMemo(() => {
+    const map: Record<string, Property> = {}
+    properties.forEach((p) => { map[p.id] = p })
+    return map
+  }, [properties])
+
+  const vehicleById = useMemo(() => {
+    const map: Record<string, Vehicle> = {}
+    vehicles.forEach((v) => { map[v.id] = v })
+    return map
+  }, [vehicles])
+
+  const ownerById = useMemo(() => {
+    const map: Record<string, Owner> = {}
+    owners.forEach((o) => { map[o.id] = o })
+    return map
+  }, [owners])
+
+  const chargePaymentInfo = useMemo(() => {
+    if (!uploadingCharge) return {}
+    const contract = contracts.find((c) => c.id === uploadingCharge.contractId)
+    return resolvePaymentInfo(contract, contract ? ownerById[contract.ownerId] : undefined)
+  }, [uploadingCharge, contracts, ownerById])
+
+  const expensePaymentInfo = useMemo(() => {
+    if (!uploadingExpense) return {}
+    const contract =
+      contracts.find(
+        (c) =>
+          c.propertyId === uploadingExpense.expense.propertyId &&
+          (c.status === 'ativo' || c.status === 'renovado'),
+      ) ?? contracts.find((c) => c.propertyId === uploadingExpense.expense.propertyId)
+    return resolvePaymentInfo(contract, contract ? ownerById[contract.ownerId] : undefined)
+  }, [uploadingExpense, contracts, ownerById])
+
   const photoLookups = useMemo(() => {
     const tenants = tenantProfile ? [tenantProfile] : []
     return buildMaintenancePhotoLookups(properties, vehicles, tenants)
   }, [properties, vehicles, tenantProfile])
 
-  const activeContract = contracts.find((c) => c.status === 'ativo')
+  const activeContracts = useMemo(
+    () => contracts.filter((c) => c.status === 'ativo' || c.status === 'renovado'),
+    [contracts],
+  )
+
+  useEffect(() => {
+    if (activeContracts.length === 0) {
+      setSelectedContractId('')
+      return
+    }
+    if (!selectedContractId || !activeContracts.some((c) => c.id === selectedContractId)) {
+      setSelectedContractId(activeContracts[0].id)
+    }
+  }, [activeContracts, selectedContractId])
+
+  const selectedContract = activeContracts.find((c) => c.id === selectedContractId) ?? activeContracts[0]
+  const selectedProperty = selectedContract ? propertyById[selectedContract.propertyId] : undefined
+  const selectedVehicle = selectedContract ? vehicleById[selectedContract.propertyId] : undefined
+  const selectedOwner = selectedContract ? ownerById[selectedContract.ownerId] : undefined
   const pendingCharges = charges.filter((c) => c.status !== 'pago' && c.status !== 'cancelado')
   const overdueCharges = pendingCharges.filter((c) => c.dueDate && c.dueDate < TODAY)
   const totalPending = pendingCharges.reduce((s, c) => s + (c.totalAmount ?? c.amount), 0)
@@ -286,6 +465,47 @@ export function TenantPortal() {
     setUploadingCharge(charge)
   }
 
+  const openExpenseUpload = (item: TenantSharedExpenseItem) => {
+    setExpenseReceiptUrl(item.participant.receipt)
+    setUploadingExpense(item)
+  }
+
+  const handleExpenseReceiptFile = async (file: File) => {
+    if (!uploadingExpense) return
+    setExpenseUploading(true)
+    try {
+      const url = await uploadReceipt(companyId, `expense-${uploadingExpense.expense.id}`, file)
+      setExpenseReceiptUrl(url)
+    } catch {
+      toast({ title: 'Erro ao enviar arquivo.', variant: 'destructive' })
+    } finally {
+      setExpenseUploading(false)
+    }
+  }
+
+  const handleSubmitExpenseReceipt = async () => {
+    if (!uploadingExpense || !expenseReceiptUrl) return
+    setExpenseSubmitting(true)
+    try {
+      await submitSharedExpenseReceipt(
+        uploadingExpense.expense.id,
+        tenantId,
+        expenseReceiptUrl,
+      )
+      qc.invalidateQueries({ queryKey: ['sharedExpenses'] })
+      toast({ title: 'Comprovante enviado!', description: 'Aguarde a confirmação do gestor.' })
+      setUploadingExpense(null)
+      setExpenseReceiptUrl(undefined)
+    } catch {
+      toast({ title: 'Erro ao enviar comprovante.', variant: 'destructive' })
+    } finally {
+      setExpenseSubmitting(false)
+    }
+  }
+
+  const contractAssetLabel = (contract: Contract) =>
+    contract.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+
   const resetMaintenanceForm = () => {
     setMaintenanceForm({
       title: '',
@@ -297,7 +517,7 @@ export function TenantPortal() {
 
   const handleCreateMaintenance = async () => {
     if (!user) return
-    if (!activeContract) {
+    if (!selectedContract) {
       toast({ title: 'Contrato ativo necessário', description: 'Você precisa de um contrato ativo para abrir um chamado.', variant: 'destructive' })
       return
     }
@@ -310,8 +530,8 @@ export function TenantPortal() {
     try {
       await createMaintenanceRequest({
         companyId,
-        propertyId: activeContract.propertyId,
-        propertyName: activeContract.propertyName,
+        propertyId: selectedContract.propertyId,
+        propertyName: selectedContract.propertyName,
         tenantId,
         tenantName: user?.name,
         title: maintenanceForm.title.trim(),
@@ -369,85 +589,18 @@ export function TenantPortal() {
     }
   }
 
-  const handleViewContract = async () => {
-    if (!activeContract) return
-    if (activeContract.signingData) {
-      setContractLoading('view')
-      try {
-        const doc = await generateSignedContractPDF(activeContract)
-        window.open(URL.createObjectURL(contractPDFToBlob(doc)), '_blank')
-      } catch {
-        toast({ title: 'Erro ao gerar o contrato.', variant: 'destructive' })
-      } finally {
-        setContractLoading(false)
-      }
-      return
-    }
-    if (activeContract.signedPdfUrl) {
-      window.open(activeContract.signedPdfUrl, '_blank')
-      return
-    }
-    toast({ title: 'Contrato ainda não disponível para visualização.' })
+  const handleViewContract = () => {
+    if (selectedContract) viewContract(selectedContract)
   }
 
-  const handleDownloadContract = async () => {
-    if (!activeContract) return
-    if (activeContract.signingData) {
-      setContractLoading('download')
-      try {
-        const doc = await generateSignedContractPDF(activeContract)
-        downloadContractPDF(doc, `Contrato_${activeContract.contractNumber}.pdf`)
-      } catch {
-        toast({ title: 'Erro ao baixar o contrato.', variant: 'destructive' })
-      } finally {
-        setContractLoading(false)
-      }
-      return
-    }
-    if (activeContract.signedPdfUrl) {
-      window.open(activeContract.signedPdfUrl, '_blank')
-      return
-    }
-    toast({ title: 'Contrato ainda não disponível.' })
+  const handleDownloadContract = () => {
+    if (selectedContract) downloadContract(selectedContract)
   }
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
 
-      {/* ── Header ── */}
-      <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur dark:bg-gray-900/90 shadow-sm">
-        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4">
-          <div className="flex items-center gap-2.5">
-            <img src="/favicon.png" alt="AlugaPro" className="h-7 w-7 object-contain" />
-            <span className="font-bold tracking-tight">AlugaPro</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
-                {user ? getInitials(user.name) : 'U'}
-              </AvatarFallback>
-            </Avatar>
-            <span className="hidden items-center gap-1 text-sm font-medium sm:flex">
-              {user?.name}
-              {user?.phoneVerified ? (
-                <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label="Telefone verificado">
-                  <title>Telefone verificado</title>
-                </ShieldCheck>
-              ) : (
-                <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Telefone não verificado">
-                  <title>Telefone não verificado</title>
-                </ShieldAlert>
-              )}
-            </span>
-            <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="Meu perfil">
-              <Link to="/perfil"><UserCircle className="h-4 w-4" /></Link>
-            </Button>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title="Sair">
-              <LogOut className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </header>
+      <TenantPortalHeader />
 
       <main className="mx-auto max-w-6xl px-4 py-6 space-y-5">
 
@@ -525,24 +678,48 @@ export function TenantPortal() {
           <div className="space-y-4">
 
             {/* Active contract */}
-            {activeContract && (
+            {selectedContract && (
               <Card className="border-0 shadow-sm overflow-hidden">
-                <div className="bg-gradient-to-br from-primary to-primary/80 px-4 py-3">
-                  <div className="flex items-center gap-2 text-primary-foreground">
-                    <FileText className="h-4 w-4 opacity-80" />
-                    <span className="text-sm font-semibold">Contrato Ativo</span>
+                <div className="bg-gradient-to-br from-primary to-primary/80 px-4 py-3 space-y-3">
+                  <div className="flex items-center justify-between gap-2 text-primary-foreground">
+                    <div className="flex items-center gap-2">
+                      <FileText className="h-4 w-4 opacity-80" />
+                      <span className="text-sm font-semibold">
+                        {activeContracts.length > 1 ? 'Seus contratos' : 'Contrato ativo'}
+                      </span>
+                    </div>
+                    {activeContracts.length > 1 && (
+                      <Badge variant="secondary" className="bg-white/20 text-primary-foreground border-0">
+                        {activeContracts.length}
+                      </Badge>
+                    )}
                   </div>
+                  {activeContracts.length > 1 && (
+                    <Select value={selectedContractId} onValueChange={setSelectedContractId}>
+                      <SelectTrigger className="h-9 bg-white/15 border-white/20 text-primary-foreground">
+                        <SelectValue placeholder="Selecione um contrato" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {activeContracts.map((contract) => (
+                          <SelectItem key={contract.id} value={contract.id}>
+                            {contract.propertyName ?? contract.contractNumber} — {contract.contractNumber}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
                 <CardContent className="p-0">
                   <div className="divide-y">
                     {[
-                      { label: 'Número', value: activeContract.contractNumber, mono: true },
-                      { label: 'Imóvel', value: activeContract.propertyName },
-                      { label: 'Valor', value: formatCurrency(activeContract.rentValue), bold: true },
-                      { label: 'Vence todo dia', value: String(activeContract.dueDay) },
+                      { label: 'Número', value: selectedContract.contractNumber, mono: true },
+                      { label: contractAssetLabel(selectedContract), value: selectedContract.propertyName },
+                      { label: 'Proprietário', value: selectedContract.ownerName ?? selectedOwner?.name },
+                      { label: 'Valor', value: formatCurrency(selectedContract.rentValue), bold: true },
+                      { label: 'Vence todo dia', value: String(selectedContract.dueDay) },
                       {
                         label: 'Vigência',
-                        value: `${formatDate(activeContract.startDate)} — ${formatDateOptional(activeContract.endDate, 'Indeterminado')}`,
+                        value: `${formatDate(selectedContract.startDate)} — ${formatDateOptional(selectedContract.endDate, 'Indeterminado')}`,
                         small: true,
                       },
                     ].map(({ label, value, mono, bold, small }) => (
@@ -559,15 +736,35 @@ export function TenantPortal() {
                       </div>
                     ))}
                   </div>
-                  <div className="flex gap-2 px-4 pb-4 pt-3">
+                  <div className="flex flex-wrap gap-2 px-4 pb-2">
+                    {selectedContract.assetType !== 'veiculo' && selectedProperty && (
+                      <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewProperty(selectedProperty)}>
+                        <Building2 className="mr-1.5 h-4 w-4" />
+                        Ver {propertyTypeLabels[selectedProperty.type]}
+                      </Button>
+                    )}
+                    {selectedContract.assetType === 'veiculo' && selectedVehicle && (
+                      <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewVehicle(selectedVehicle)}>
+                        <Car className="mr-1.5 h-4 w-4" />
+                        Ver veículo
+                      </Button>
+                    )}
+                    {selectedOwner && (
+                      <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewOwner(selectedOwner)}>
+                        <User className="mr-1.5 h-4 w-4" />
+                        Ver proprietário
+                      </Button>
+                    )}
+                  </div>
+                  <div className="flex gap-2 px-4 pb-4 pt-1">
                     <Button
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      disabled={!!contractLoading}
+                      disabled={!selectedContract || isContractLoading(selectedContract.id, 'view')}
                       onClick={handleViewContract}
                     >
-                      {contractLoading === 'view'
+                      {selectedContract && isContractLoading(selectedContract.id, 'view')
                         ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
                         : <Eye className="mr-1.5 h-4 w-4" />}
                       Visualizar
@@ -576,10 +773,10 @@ export function TenantPortal() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
-                      disabled={!!contractLoading}
+                      disabled={!selectedContract || isContractLoading(selectedContract.id, 'download')}
                       onClick={handleDownloadContract}
                     >
-                      {contractLoading === 'download'
+                      {selectedContract && isContractLoading(selectedContract.id, 'download')
                         ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
                         : <Download className="mr-1.5 h-4 w-4" />}
                       Baixar
@@ -898,10 +1095,41 @@ export function TenantPortal() {
                             </div>
                           )}
 
-                          {!isPaid && (
-                            <p className="text-xs text-muted-foreground">
-                              Envie o comprovante ao gestor ou aguarde a confirmação do pagamento.
-                            </p>
+                          {!isPaid && participant.receiptStatus === 'aguardando' && (
+                            <div className="flex items-center gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 px-3 py-2.5 text-sm text-yellow-700 dark:text-yellow-300">
+                              <Clock className="h-4 w-4 shrink-0" />
+                              <span>Comprovante enviado — aguardando confirmação do gestor</span>
+                            </div>
+                          )}
+
+                          {!isPaid && participant.receiptStatus === 'rejeitado' && (
+                            <div className="space-y-2">
+                              <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-sm text-destructive">
+                                <X className="h-4 w-4 shrink-0" />
+                                <span>Comprovante rejeitado — envie novamente</span>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full border-dashed gap-2"
+                                onClick={() => openExpenseUpload({ expense, participant })}
+                              >
+                                <Upload className="h-4 w-4" />
+                                Reenviar comprovante
+                              </Button>
+                            </div>
+                          )}
+
+                          {!isPaid && participant.receiptStatus !== 'aguardando' && participant.receiptStatus !== 'rejeitado' && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-dashed gap-2"
+                              onClick={() => openExpenseUpload({ expense, participant })}
+                            >
+                              <Upload className="h-4 w-4" />
+                              Enviar comprovante de pagamento
+                            </Button>
                           )}
                         </CardContent>
                       </Card>
@@ -933,14 +1161,14 @@ export function TenantPortal() {
                   <Button
                     size="sm"
                     onClick={() => setShowMaintenanceForm(true)}
-                    disabled={!activeContract}
+                    disabled={!selectedContract}
                   >
                     <Plus className="mr-1.5 h-4 w-4" />
                     Novo chamado
                   </Button>
                 </div>
 
-                {!activeContract && (
+                {!selectedContract && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
                     É necessário um contrato ativo para abrir chamados de manutenção.
                   </div>
@@ -951,7 +1179,7 @@ export function TenantPortal() {
                     <Wrench className="h-12 w-12 text-muted-foreground/30 mb-3" />
                     <p className="font-semibold text-foreground">Nenhum chamado</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      {activeContract
+                      {selectedContract
                         ? 'Reporte um problema no imóvel ou veículo alugado.'
                         : 'Aguarde a ativação do seu contrato.'}
                     </p>
@@ -1026,7 +1254,7 @@ export function TenantPortal() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Enviar Comprovante</DialogTitle>
+            <DialogTitle>Enviar comprovante PIX</DialogTitle>
           </DialogHeader>
 
           {uploadingCharge && (
@@ -1043,26 +1271,91 @@ export function TenantPortal() {
                 )}
               </div>
 
+              <div className="flex items-center gap-2 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 px-3 py-2.5 text-xs text-[#032B61]">
+                <QrCode className="h-4 w-4 shrink-0" />
+                <span>Realize o pagamento via <strong>PIX</strong> e envie o comprovante abaixo.</span>
+              </div>
+
+              <PaymentInfoBox info={chargePaymentInfo} />
+
               <ReceiptUpload
                 value={receiptUrl}
                 onChange={setReceiptUrl}
                 onFileSelect={handleReceiptFile}
                 uploading={uploading}
-                label="Comprovante do PIX ou pagamento"
+                label="Comprovante do PIX"
               />
 
               <p className="text-xs text-muted-foreground">
-                Aceito: foto do comprovante, print do app, PDF. Após o envio, o gestor irá confirmar o pagamento.
+                Aceito: foto do comprovante PIX, print do app ou PDF. Após o envio, o gestor confirmará o pagamento.
               </p>
 
               <Button
-                className="w-full"
+                className="w-full bg-[#032B61] text-white hover:bg-[#032B61]/90"
                 disabled={!receiptUrl || submitting || uploading}
                 onClick={handleSubmitReceipt}
               >
                 {submitting
                   ? <><CheckCircle className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
-                  : <><Upload className="mr-2 h-4 w-4" /> Enviar para confirmação</>
+                  : <><Upload className="mr-2 h-4 w-4" /> Enviar comprovante PIX</>
+                }
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!uploadingExpense}
+        onOpenChange={(open) => {
+          if (!open) {
+            setUploadingExpense(null)
+            setExpenseReceiptUrl(undefined)
+          }
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Enviar comprovante PIX</DialogTitle>
+          </DialogHeader>
+
+          {uploadingExpense && (
+            <div className="space-y-4">
+              <div className="rounded-xl border bg-muted/30 p-4 text-sm space-y-1">
+                <p className="font-semibold">{uploadingExpense.expense.description}</p>
+                <p className="text-2xl font-bold">{formatCurrency(uploadingExpense.participant.amount)}</p>
+                <p className="text-muted-foreground text-xs">
+                  {uploadingExpense.expense.propertyName ?? 'Despesa compartilhada'}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 px-3 py-2.5 text-xs text-[#032B61]">
+                <QrCode className="h-4 w-4 shrink-0" />
+                <span>Realize o pagamento via <strong>PIX</strong> e envie o comprovante abaixo.</span>
+              </div>
+
+              <PaymentInfoBox info={expensePaymentInfo} />
+
+              <ReceiptUpload
+                value={expenseReceiptUrl}
+                onChange={setExpenseReceiptUrl}
+                onFileSelect={handleExpenseReceiptFile}
+                uploading={expenseUploading}
+                label="Comprovante do PIX"
+              />
+
+              <p className="text-xs text-muted-foreground">
+                Aceito: foto do comprovante PIX, print do app ou PDF. Após o envio, o gestor confirmará o pagamento.
+              </p>
+
+              <Button
+                className="w-full bg-[#032B61] text-white hover:bg-[#032B61]/90"
+                disabled={!expenseReceiptUrl || expenseSubmitting || expenseUploading}
+                onClick={handleSubmitExpenseReceipt}
+              >
+                {expenseSubmitting
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
+                  : <><Upload className="mr-2 h-4 w-4" /> Enviar comprovante PIX</>
                 }
               </Button>
             </div>
@@ -1082,13 +1375,13 @@ export function TenantPortal() {
             <DialogTitle>Abrir chamado de manutenção</DialogTitle>
           </DialogHeader>
 
-          {activeContract && (
+          {selectedContract && (
             <div className="space-y-4">
               <div className="rounded-xl border bg-muted/30 p-3 text-sm">
                 <p className="text-xs text-muted-foreground">Local</p>
-                <p className="font-medium">{activeContract.propertyName ?? 'Imóvel alugado'}</p>
+                <p className="font-medium">{selectedContract.propertyName ?? 'Imóvel alugado'}</p>
                 <p className="text-xs text-muted-foreground mt-2">Contrato</p>
-                <p className="font-mono text-xs">{activeContract.contractNumber}</p>
+                <p className="font-mono text-xs">{selectedContract.contractNumber}</p>
               </div>
 
               <div className="space-y-1.5">
@@ -1229,6 +1522,33 @@ export function TenantPortal() {
             </div>
             )
           })()}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewProperty} onOpenChange={() => setViewProperty(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do imóvel</DialogTitle>
+          </DialogHeader>
+          {viewProperty && <PropertyDetail property={viewProperty} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewVehicle} onOpenChange={() => setViewVehicle(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do veículo</DialogTitle>
+          </DialogHeader>
+          {viewVehicle && <VehicleDetail vehicle={viewVehicle} />}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewOwner} onOpenChange={() => setViewOwner(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do proprietário</DialogTitle>
+          </DialogHeader>
+          {viewOwner && <OwnerDetail owner={viewOwner} />}
         </DialogContent>
       </Dialog>
     </div>

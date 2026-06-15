@@ -1,0 +1,59 @@
+import { useState } from 'react'
+import { Contract } from '@/types'
+import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
+import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
+import { toast } from '@/hooks/useToast'
+
+export function useTenantContractActions() {
+  const [loadingContractId, setLoadingContractId] = useState<string | null>(null)
+  const [loadingAction, setLoadingAction] = useState<'view' | 'download' | null>(null)
+
+  const viewContract = async (contract: Contract) => {
+    if (contract.signingData) {
+      setLoadingContractId(contract.id)
+      setLoadingAction('view')
+      try {
+        const doc = await generateSignedContractPDF(contract)
+        window.open(URL.createObjectURL(contractPDFToBlob(doc)), '_blank')
+      } catch {
+        toast({ title: 'Erro ao gerar o contrato.', variant: 'destructive' })
+      } finally {
+        setLoadingContractId(null)
+        setLoadingAction(null)
+      }
+      return
+    }
+    if (contract.signedPdfUrl) {
+      window.open(contract.signedPdfUrl, '_blank')
+      return
+    }
+    toast({ title: 'Contrato ainda não disponível para visualização.' })
+  }
+
+  const downloadContract = async (contract: Contract) => {
+    if (contract.signingData) {
+      setLoadingContractId(contract.id)
+      setLoadingAction('download')
+      try {
+        const doc = await generateSignedContractPDF(contract)
+        downloadContractPDF(doc, `Contrato_${contract.contractNumber}.pdf`)
+      } catch {
+        toast({ title: 'Erro ao baixar o contrato.', variant: 'destructive' })
+      } finally {
+        setLoadingContractId(null)
+        setLoadingAction(null)
+      }
+      return
+    }
+    if (contract.signedPdfUrl) {
+      window.open(contract.signedPdfUrl, '_blank')
+      return
+    }
+    toast({ title: 'Contrato ainda não disponível.' })
+  }
+
+  const isContractLoading = (contractId: string, action: 'view' | 'download') =>
+    loadingContractId === contractId && loadingAction === action
+
+  return { viewContract, downloadContract, isContractLoading }
+}

@@ -149,9 +149,10 @@ service cloud.firestore {
 
     // Contracts
     match /contracts/{contractId} {
+      // G3: use isLinkedTenant so inquilino auth.uid doesn't need to equal tenantId
       allow read: if isAuthenticated() &&
         (sameCompany(resource.data.companyId) ||
-         request.auth.uid == resource.data.tenantId);
+         isLinkedTenant(resource.data.tenantId));
 
       allow create: if isGestor();
 
@@ -212,7 +213,20 @@ service cloud.firestore {
     // Shared Expenses — membros da empresa leem; o client filtra participantes no portal do inquilino.
     match /sharedExpenses/{expenseId} {
       allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
-      allow write: if isGestor();
+      allow create: if isGestor();
+      allow update: if isGestor() || (
+        userExists() && isRole('inquilino')
+        && getUserData().companyId == resource.data.companyId
+        && request.resource.data.companyId == resource.data.companyId
+        && request.resource.data.propertyId == resource.data.propertyId
+        && request.resource.data.totalAmount == resource.data.totalAmount
+        && request.resource.data.description == resource.data.description
+        && request.resource.data.type == resource.data.type
+        && request.resource.data.status == resource.data.status
+        && request.resource.data.participants.size() == resource.data.participants.size()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['participants', 'updatedAt'])
+      );
+      allow delete: if isAdmin();
     }
 
     // Maintenance Requests
@@ -249,10 +263,10 @@ service cloud.firestore {
       allow write: if isGestor();
     }
 
-    // Audit Logs
+    // Audit Logs — G4: only gestors can create; clients cannot spam fake logs
     match /auditLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isAuthenticated();
+      allow create: if isGestor();
       allow update, delete: if false;
     }
 

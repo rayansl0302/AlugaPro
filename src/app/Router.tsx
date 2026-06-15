@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -19,6 +19,7 @@ import { ReportsPage } from '@/modules/reports/ReportsPage'
 import { SettingsPage } from '@/modules/settings/SettingsPage'
 import { OwnersPage } from '@/modules/owners/OwnersPage'
 import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
+import { TenantContractsPage } from '@/modules/tenant-portal/TenantContractsPage'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
@@ -73,9 +74,13 @@ const router = createBrowserRouter([
     path: '/portal',
     element: (
       <TenantRoute>
-        <TenantPortal />
+        <Outlet />
       </TenantRoute>
     ),
+    children: [
+      { index: true, element: <TenantPortal /> },
+      { path: 'contratos', element: <TenantContractsPage /> },
+    ],
   },
   {
     path: '/perfil',

@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useSearchParams, Link } from 'react-router-dom'
-import { Loader2, Eye, EyeOff } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertTriangle, Clock } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -31,14 +31,24 @@ const schema = z.object({
 })
 type FormData = z.infer<typeof schema>
 
+// Lockout thresholds: after N failures, lock for X seconds
+const LOCKOUT_RULES = [
+  { after: 5, seconds: 30 },
+  { after: 8, seconds: 300 },  // 5 min
+  { after: 12, seconds: 900 }, // 15 min
+]
+
 const REMEMBER_KEY = 'alugapro_remember'
 
-function loadRemembered(): { email: string; password: string } | null {
+function loadRememberedEmail(): string {
   try {
     const raw = localStorage.getItem(REMEMBER_KEY)
-    return raw ? (JSON.parse(raw) as { email: string; password: string }) : null
+    if (!raw) return ''
+    const parsed = JSON.parse(raw)
+    // Support legacy format that may have stored {email, password} — only use email
+    return typeof parsed === 'string' ? parsed : (parsed?.email ?? '')
   } catch {
-    return null
+    return ''
   }
 }
 
@@ -53,8 +63,29 @@ export function LoginPage() {
     searchParams.get('tab') === 'inquilino' ? 'inquilino' : 'gestor',
   )
 
-  const remembered = loadRemembered()
-  const [remember, setRemember] = useState(!!remembered)
+  const rememberedEmail = loadRememberedEmail()
+  const [remember, setRemember] = useState(!!rememberedEmail)
+
+  // Brute-force protection — NOT persisted across page reloads intentionally
+  const [failCount, setFailCount] = useState(0)
+  const [lockedUntil, setLockedUntil] = useState<Date | null>(null)
+  const [secondsLeft, setSecondsLeft] = useState(0)
+
+  useEffect(() => {
+    if (!lockedUntil) return
+    const tick = setInterval(() => {
+      const remaining = Math.ceil((lockedUntil.getTime() - Date.now()) / 1000)
+      if (remaining <= 0) {
+        setLockedUntil(null)
+        setSecondsLeft(0)
+      } else {
+        setSecondsLeft(remaining)
+      }
+    }, 500)
+    return () => clearInterval(tick)
+  }, [lockedUntil])
+
+  const isLocked = !!lockedUntil && lockedUntil > new Date()
 
   const {
     register,
@@ -63,7 +94,7 @@ export function LoginPage() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { email: remembered?.email ?? '', password: remembered?.password ?? '' },
+    defaultValues: { email: rememberedEmail, password: '' },
   })
 
   if (user) {
@@ -71,15 +102,28 @@ export function LoginPage() {
   }
 
   const onSubmit = async (data: FormData) => {
+    if (isLocked) return
     setLoading(true)
     try {
       await signIn(data.email, data.password, role)
+      // G1: persist only email, never password
       if (remember) {
-        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email: data.email, password: data.password }))
+        localStorage.setItem(REMEMBER_KEY, JSON.stringify({ email: data.email }))
       } else {
         localStorage.removeItem(REMEMBER_KEY)
       }
+      setFailCount(0)
     } catch {
+      const next = failCount + 1
+      setFailCount(next)
+
+      const lockRule = [...LOCKOUT_RULES].reverse().find(r => next >= r.after)
+      if (lockRule) {
+        const until = new Date(Date.now() + lockRule.seconds * 1000)
+        setLockedUntil(until)
+        setSecondsLeft(lockRule.seconds)
+      }
+
       toast({ title: 'Erro ao entrar', description: 'E-mail ou senha inválidos.', variant: 'destructive' })
     } finally {
       setLoading(false)
@@ -87,6 +131,7 @@ export function LoginPage() {
   }
 
   const handleGoogle = async () => {
+    if (isLocked) return
     setGoogleLoading(true)
     try {
       await signInWithGoogle(role)
@@ -115,6 +160,8 @@ export function LoginPage() {
     }
   }
 
+  const attemptsUntilLock = LOCKOUT_RULES[0].after - failCount
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
       <div className="flex w-full max-w-md flex-col items-center">
@@ -140,6 +187,28 @@ export function LoginPage() {
             </Tabs>
           )}
 
+          {/* Lockout banner */}
+          {isLocked && (
+            <div className="mb-4 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+              <Clock className="h-4 w-4 shrink-0" />
+              <span>
+                Muitas tentativas. Aguarde <strong>{secondsLeft}s</strong> para tentar novamente.
+              </span>
+            </div>
+          )}
+
+          {/* Warning before lockout */}
+          {!isLocked && failCount >= 3 && (
+            <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
+              <AlertTriangle className="h-4 w-4 shrink-0" />
+              <span>
+                {attemptsUntilLock > 0
+                  ? `Mais ${attemptsUntilLock} tentativa(s) antes do bloqueio temporário.`
+                  : 'Próxima falha resultará em bloqueio temporário.'}
+              </span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">E-mail</Label>
@@ -148,6 +217,7 @@ export function LoginPage() {
                 type="email"
                 placeholder="seu@email.com"
                 autoComplete="username"
+                disabled={isLocked}
                 {...register('email')}
               />
               {errors.email && (
@@ -165,12 +235,14 @@ export function LoginPage() {
                     placeholder="••••••••"
                     className="pr-10"
                     autoComplete="current-password"
+                    disabled={isLocked}
                     {...register('password')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    tabIndex={-1}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -190,11 +262,11 @@ export function LoginPage() {
                     onChange={(e) => setRemember(e.target.checked)}
                     className="h-4 w-4 rounded border-input accent-primary"
                   />
-                  Lembrar meu acesso
+                  Lembrar meu e-mail
                 </label>
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || isLocked}>
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Entrar
+                  {isLocked ? `Bloqueado (${secondsLeft}s)` : 'Entrar'}
                 </Button>
                 <button
                   type="button"
@@ -233,7 +305,7 @@ export function LoginPage() {
                 variant="outline"
                 className="w-full"
                 onClick={handleGoogle}
-                disabled={googleLoading || loading}
+                disabled={googleLoading || loading || isLocked}
               >
                 {googleLoading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

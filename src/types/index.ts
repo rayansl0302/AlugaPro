@@ -419,6 +419,8 @@ export interface SharedExpenseParticipant {
   status: PaymentStatus
   chargeId?: string
   paidDate?: string
+  receipt?: string
+  receiptStatus?: 'aguardando' | 'confirmado' | 'rejeitado'
 }
 
 // ─── Notification ─────────────────────────────────────────────────────────────
