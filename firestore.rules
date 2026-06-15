@@ -180,7 +180,7 @@ service cloud.firestore {
     match /charges/{chargeId} {
       allow read: if isAuthenticated() &&
         (sameCompany(resource.data.companyId) ||
-         request.auth.uid == resource.data.tenantId);
+         isLinkedTenant(resource.data.tenantId));
 
       allow create: if isGestor();
 
@@ -188,11 +188,12 @@ service cloud.firestore {
       // Inquilino: pode apenas anexar comprovante à própria cobrança
       //   — não pode alterar status, valor, vencimento nem confirmar o próprio pagamento.
       allow update: if isGestor()
-        || (isRole('inquilino')
-            && request.auth.uid == resource.data.tenantId
+        || (isLinkedTenant(resource.data.tenantId)
             && request.resource.data.status    == resource.data.status
             && request.resource.data.amount    == resource.data.amount
             && request.resource.data.dueDate   == resource.data.dueDate
+            && request.resource.data.tenantId  == resource.data.tenantId
+            && request.resource.data.companyId == resource.data.companyId
             && request.resource.data.receiptStatus == 'aguardando'
             && request.resource.data.paidBy == 'tenant');
 
@@ -203,7 +204,7 @@ service cloud.firestore {
     match /payments/{paymentId} {
       allow read: if isAuthenticated() &&
         (sameCompany(resource.data.companyId) ||
-         request.auth.uid == resource.data.tenantId);
+         isLinkedTenant(resource.data.tenantId));
       allow create, update: if isGestor();
       allow delete: if isAdmin();
     }

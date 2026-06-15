@@ -7,11 +7,15 @@ import { ptBR } from 'date-fns/locale'
 import {
   Search, CheckCircle, Clock, AlertTriangle, RefreshCw,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus,
+  FileCheck, Eye,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges, updateCharge, generateChargesForContract, createCharge } from '@/services/charges'
 import { getContracts } from '@/services/contracts'
-import { Charge, Contract } from '@/types'
+import { getProperties } from '@/services/properties'
+import { getTenants } from '@/services/tenants'
+import { getVehicles } from '@/services/vehicles'
+import { Charge, Contract, ContractAssetType } from '@/types'
 import { formatCurrency, getDaysLate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -25,10 +29,17 @@ import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { MarkPaidDialog } from './MarkPaidDialog'
+import { MaintenanceEntityPhotos } from '@/components/maintenance/MaintenanceEntityPhotos'
+import {
+  buildMaintenancePhotoLookups,
+  inferAssetType,
+  resolveChargeEntityPhotos,
+} from '@/lib/maintenanceEntityPhotos'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 type ViewMode = 'timeline' | 'list'
+type AssetFilter = 'todos' | ContractAssetType
 
 const STATUS_VARIANT = {
   pendente: 'warning',
@@ -120,6 +131,25 @@ function MonthCell({
     )
   }
 
+  if (charge.receiptStatus === 'aguardando') {
+    return (
+      <button
+        type="button"
+        title="Comprovante enviado — clique para visualizar e confirmar"
+        onClick={() => onViewDetails(charge)}
+        className={cn(
+          base,
+          'border border-orange-300 bg-orange-50 text-orange-700',
+          'hover:bg-orange-100 cursor-pointer',
+          'dark:bg-orange-950/30 dark:border-orange-700 dark:text-orange-400',
+        )}
+      >
+        <FileCheck className="h-3.5 w-3.5" />
+        <span className="mt-0.5 text-[9px] leading-tight">validar</span>
+      </button>
+    )
+  }
+
   // Paid
   if (charge.status === 'pago') {
     return (
@@ -196,6 +226,7 @@ export function ChargesPage() {
   const [centerMonth, setCenterMonth] = useState(startOfMonth(new Date()))
   const [search, setSearch] = useState('')
   const [tenantFilter, setTenantFilter] = useState('todos')
+  const [assetFilter, setAssetFilter] = useState<AssetFilter>('todos')
   const [statusFilter, setStatusFilter] = useState('todos')
   const [payingCharge, setPayingCharge] = useState<Charge | null>(null)
   const [viewingCharge, setViewingCharge] = useState<Charge | null>(null)
@@ -206,6 +237,7 @@ export function ChargesPage() {
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
     enabled: !!companyId,
+    refetchInterval: 30_000,
   })
 
   const { data: contracts = [], isLoading: contractsLoading } = useQuery({
@@ -213,6 +245,37 @@ export function ChargesPage() {
     queryFn: () => getContracts(companyId),
     enabled: !!companyId,
   })
+
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties', companyId],
+    queryFn: () => getProperties(companyId),
+    enabled: !!companyId,
+  })
+
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants', companyId],
+    queryFn: () => getTenants(companyId),
+    enabled: !!companyId,
+  })
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', companyId],
+    queryFn: () => getVehicles(companyId),
+    enabled: !!companyId,
+  })
+
+  const photoLookups = useMemo(
+    () => buildMaintenancePhotoLookups(properties, vehicles, tenants),
+    [properties, vehicles, tenants],
+  )
+
+  const contractById = useMemo(
+    () => Object.fromEntries(contracts.map((contract) => [contract.id, contract])),
+    [contracts],
+  )
+
+  const matchesAssetFilter = (propertyId: string, contractAssetType?: ContractAssetType) =>
+    assetFilter === 'todos' || inferAssetType(propertyId, photoLookups, contractAssetType) === assetFilter
 
   const isLoading = chargesLoading || contractsLoading
 
@@ -255,9 +318,10 @@ export function ChargesPage() {
       const q = search.toLowerCase()
       const matchSearch = !q || c.tenantName?.toLowerCase().includes(q) || c.propertyName?.toLowerCase().includes(q)
       const matchTenant = tenantFilter === 'todos' || c.tenantId === tenantFilter
-      return matchSearch && matchTenant
+      const matchAsset = matchesAssetFilter(c.propertyId, c.assetType)
+      return matchSearch && matchTenant && matchAsset
     }),
-    [activeContracts, search, tenantFilter],
+    [activeContracts, search, tenantFilter, assetFilter, photoLookups],
   )
 
   const visibleMonths = useMemo(() =>
@@ -274,9 +338,11 @@ export function ChargesPage() {
         c.description.toLowerCase().includes(q)
       const matchStatus = statusFilter === 'todos' || c.status === statusFilter
       const matchTenant = tenantFilter === 'todos' || c.tenantId === tenantFilter
-      return matchSearch && matchStatus && matchTenant
+      const contract = c.contractId ? contractById[c.contractId] : undefined
+      const matchAsset = matchesAssetFilter(c.propertyId, contract?.assetType)
+      return matchSearch && matchStatus && matchTenant && matchAsset
     }),
-    [enriched, search, statusFilter, tenantFilter],
+    [enriched, search, statusFilter, tenantFilter, assetFilter, contractById, photoLookups],
   )
 
   const listPag = usePagination(filteredList, 15)
@@ -286,6 +352,7 @@ export function ChargesPage() {
   const kpiOverdue = enriched.filter((c) => c.status === 'atrasado').reduce((s, c) => s + c.amount, 0)
   const kpiPaid = enriched.filter((c) => c.status === 'pago').reduce((s, c) => s + (c.paidAmount ?? c.amount), 0)
   const pendingReceipts = enriched.filter((c) => c.receiptStatus === 'aguardando').length
+  const firstPendingReceipt = enriched.find((c) => c.receiptStatus === 'aguardando') ?? null
 
   // Actions
   const handleGenerateAll = async () => {
@@ -362,11 +429,23 @@ export function ChargesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar inquilino ou imóvel..."
+                placeholder="Buscar inquilino, imóvel ou veículo..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-64 pl-9"
               />
+            </div>
+            <div className="flex gap-1 flex-wrap">
+              {(['todos', 'imovel', 'veiculo'] as const).map((type) => (
+                <Button
+                  key={type}
+                  variant={assetFilter === type ? 'default' : 'outline'}
+                  size="sm"
+                  onClick={() => setAssetFilter(type)}
+                >
+                  {type === 'todos' ? 'Todos' : type === 'imovel' ? 'Imóveis' : 'Veículos'}
+                </Button>
+              ))}
             </div>
             {tenantOptions.length > 1 && (
               <Select value={tenantFilter} onValueChange={setTenantFilter}>
@@ -466,13 +545,45 @@ export function ChargesPage() {
             <div className={cn('h-7 w-7 shrink-0 flex items-center justify-center rounded-full text-sm font-bold', pendingReceipts > 0 ? 'bg-orange-100 text-orange-600 dark:bg-orange-900/40' : 'bg-muted text-muted-foreground')}>
               {pendingReceipts}
             </div>
-            <div>
+            <div className="min-w-0 flex-1">
               <p className="text-xs text-muted-foreground">Compr. Pendentes</p>
               <p className="text-sm font-medium">{pendingReceipts === 0 ? 'Nenhum' : `${pendingReceipts} para validar`}</p>
             </div>
+            {pendingReceipts > 0 && canManage && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="shrink-0 border-orange-300 text-orange-700 hover:bg-orange-50"
+                onClick={() => setViewingCharge(firstPendingReceipt)}
+              >
+                <Eye className="mr-1.5 h-4 w-4" />
+                Visualizar
+              </Button>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {pendingReceipts > 0 && canManage && (
+        <div className="flex flex-col gap-3 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 text-sm text-orange-900 dark:border-orange-800 dark:bg-orange-950/30 dark:text-orange-100 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <FileCheck className="h-4 w-4 shrink-0" />
+            <span>
+              {pendingReceipts === 1
+                ? 'Há 1 comprovante aguardando confirmação de pagamento.'
+                : `Há ${pendingReceipts} comprovantes aguardando confirmação de pagamento.`}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="shrink-0 bg-orange-600 hover:bg-orange-700"
+            onClick={() => setViewingCharge(firstPendingReceipt)}
+          >
+            <Eye className="mr-1.5 h-4 w-4" />
+            Visualizar comprovante
+          </Button>
+        </div>
+      )}
 
       {isLoading ? (
         <div className="space-y-2">
@@ -487,12 +598,12 @@ export function ChargesPage() {
           {/* Scrollable inner wrapper */}
           <div className="overflow-x-auto">
             {/* Min-width ensures chips never collapse */}
-            <div style={{ minWidth: 560 }}>
+            <div style={{ minWidth: 640 }}>
 
               {/* Month header with navigation */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
-                <div className="w-[180px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Inquilino / Imóvel
+                <div className="w-[240px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Inquilino / Imóvel / Veículo
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
                   Aluguel
@@ -551,6 +662,17 @@ export function ChargesPage() {
                     ? Array.from(contractChargeMap.values()).filter((c) => c.status === 'atrasado').length
                     : 0
 
+                  const entityPhotos = resolveChargeEntityPhotos(
+                    {
+                      tenantId: contract.tenantId,
+                      tenantName: contract.tenantName,
+                      propertyId: contract.propertyId,
+                      propertyName: contract.propertyName,
+                      assetType: contract.assetType,
+                    },
+                    photoLookups,
+                  )
+
                   return (
                     <div
                       key={contract.id}
@@ -560,20 +682,27 @@ export function ChargesPage() {
                       )}
                     >
                       {/* Tenant + property */}
-                      <div className="w-[180px] shrink-0 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <p className="text-sm font-semibold truncate">{contract.tenantName ?? '—'}</p>
-                          {hasPendingReceipt && (
-                            <span
-                              title="Comprovante aguardando validação"
-                              className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
-                            />
-                          )}
-                          {overdueCount > 0 && (
-                            <Badge variant="destructive" className="h-4 px-1 text-[9px]">{overdueCount}</Badge>
-                          )}
+                      <div className="w-[240px] shrink-0 min-w-0">
+                        <div className="flex items-start gap-2">
+                          <MaintenanceEntityPhotos photos={entityPhotos} size="sm" />
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center gap-1.5">
+                              <p className="text-sm font-semibold truncate">{entityPhotos.tenantName}</p>
+                              {hasPendingReceipt && (
+                                <span
+                                  title="Comprovante aguardando validação"
+                                  className="h-2 w-2 shrink-0 rounded-full bg-orange-400"
+                                />
+                              )}
+                              {overdueCount > 0 && (
+                                <Badge variant="destructive" className="h-4 px-1 text-[9px]">{overdueCount}</Badge>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-muted-foreground truncate">
+                              {entityPhotos.assetName ?? contract.propertyName ?? '—'}
+                            </p>
+                          </div>
                         </div>
-                        <p className="text-[11px] text-muted-foreground truncate">{contract.propertyName ?? '—'}</p>
                       </div>
 
                       {/* Rent value */}
@@ -624,6 +753,7 @@ export function ChargesPage() {
             <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Pago</span>
             <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> Atrasado</span>
             <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> Pendente</span>
+            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> Comprovante</span>
             <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> Agendado</span>
             <span className="flex items-center gap-1 text-orange-400"><Plus className="h-3 w-3" /> Gerar cobrança</span>
             <span>— Fora da vigência</span>
@@ -639,7 +769,7 @@ export function ChargesPage() {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Inquilino</TableHead>
-                <TableHead>Imóvel</TableHead>
+                <TableHead>Imóvel / Veículo</TableHead>
                 <TableHead>Vencimento</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>
@@ -654,14 +784,31 @@ export function ChargesPage() {
                   </td>
                 </TableRow>
               ) : (
-                listPag.pageItems.map((charge) => (
+                listPag.pageItems.map((charge) => {
+                  const contract = charge.contractId ? contractById[charge.contractId] : undefined
+                  const entityPhotos = resolveChargeEntityPhotos(
+                    {
+                      tenantId: charge.tenantId,
+                      tenantName: charge.tenantName,
+                      propertyId: charge.propertyId,
+                      propertyName: charge.propertyName,
+                      assetType: contract?.assetType,
+                    },
+                    photoLookups,
+                  )
+
+                  return (
                   <TableRow
                     key={charge.id}
                     className={charge.status === 'atrasado' ? 'bg-destructive/5' : ''}
                   >
                     <TableCell className="font-medium">{charge.description}</TableCell>
-                    <TableCell>{charge.tenantName || '—'}</TableCell>
-                    <TableCell className="text-muted-foreground">{charge.propertyName || '—'}</TableCell>
+                    <TableCell className="max-w-[180px]">
+                      <MaintenanceEntityPhotos photos={entityPhotos} variant="tenant" />
+                    </TableCell>
+                    <TableCell className="max-w-[180px]">
+                      <MaintenanceEntityPhotos photos={entityPhotos} variant="asset" />
+                    </TableCell>
                     <TableCell className="text-sm">
                       {charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM/yyyy') : '—'}
                       {charge.daysLate ? (
@@ -677,7 +824,7 @@ export function ChargesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex flex-col gap-1">
+                      <div className="flex flex-col items-start gap-1">
                         <Badge variant={STATUS_VARIANT[charge.status]}>
                           {STATUS_LABEL[charge.status]}
                         </Badge>
@@ -694,7 +841,8 @@ export function ChargesPage() {
                             className="text-orange-600 border-orange-300 hover:bg-orange-50"
                             onClick={() => setViewingCharge(charge)}
                           >
-                            Validar
+                            <Eye className="mr-1 h-3 w-3" />
+                            Visualizar comprovante
                           </Button>
                         )}
                         {charge.status === 'pago' && (
@@ -702,7 +850,7 @@ export function ChargesPage() {
                             Ver
                           </Button>
                         )}
-                        {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && (
+                        {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && charge.receiptStatus !== 'aguardando' && (
                           <Button size="sm" onClick={() => setPayingCharge(charge)}>
                             <CheckCircle className="mr-1 h-3 w-3" /> Pago
                           </Button>
@@ -710,7 +858,8 @@ export function ChargesPage() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))
+                  )
+                })
               )}
             </TableBody>
           </Table>

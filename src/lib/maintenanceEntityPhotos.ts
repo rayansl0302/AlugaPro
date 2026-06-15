@@ -30,20 +30,54 @@ export function resolveMaintenanceEntityPhotos(
   request: MaintenanceRequest,
   lookups: MaintenancePhotoLookups,
 ): ResolvedMaintenanceEntityPhotos {
-  const tenant = lookups.tenantById[request.tenantId]
-  const property = lookups.propertyById[request.propertyId]
-  const vehicle = lookups.vehicleById[request.propertyId]
+  return resolveChargeEntityPhotos(
+    {
+      tenantId: request.tenantId,
+      tenantName: request.tenantName,
+      propertyId: request.propertyId,
+      propertyName: request.propertyName,
+    },
+    lookups,
+  )
+}
+
+export interface ChargeEntityInput {
+  tenantId: string
+  tenantName?: string
+  propertyId: string
+  propertyName?: string
+  assetType?: 'imovel' | 'veiculo'
+}
+
+export function inferAssetType(
+  propertyId: string,
+  lookups: MaintenancePhotoLookups,
+  contractAssetType?: 'imovel' | 'veiculo',
+): 'imovel' | 'veiculo' {
+  if (contractAssetType) return contractAssetType
+  if (lookups.vehicleById[propertyId]) return 'veiculo'
+  return 'imovel'
+}
+
+export function resolveChargeEntityPhotos(
+  input: ChargeEntityInput,
+  lookups: MaintenancePhotoLookups,
+): ResolvedMaintenanceEntityPhotos {
+  const tenant = lookups.tenantById[input.tenantId]
+  const property = lookups.propertyById[input.propertyId]
+  const vehicle = lookups.vehicleById[input.propertyId]
+  const assetType = input.assetType ?? inferAssetType(input.propertyId, lookups)
 
   const assetName =
-    request.propertyName ??
+    input.propertyName ??
     property?.name ??
     (vehicle ? `${vehicle.brand} ${vehicle.model}` : undefined)
 
   return {
     tenantPhotoUrl: tenant?.photoUrl,
-    tenantName: request.tenantName ?? tenant?.name ?? 'Inquilino',
+    tenantName: input.tenantName ?? tenant?.name ?? 'Inquilino',
     assetPhotoUrl: property?.photos?.[0] ?? vehicle?.photos?.[0],
-    assetType: property ? 'imovel' : vehicle ? 'veiculo' : undefined,
+    assetType,
     assetName,
   }
 }

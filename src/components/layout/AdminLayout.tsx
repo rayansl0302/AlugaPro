@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
+import { useAuth } from '@/contexts/AuthContext'
+import { useReceiptSoundAlert } from '@/hooks/useReceiptSoundAlert'
 import { Sidebar } from './Sidebar'
 import { Topbar } from './Topbar'
 import { SubscriptionBanner } from '@/components/subscription/SubscriptionBanner'
@@ -24,6 +26,12 @@ const pageTitles: Record<string, string> = {
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const location = useLocation()
+  const { user } = useAuth()
+  const companyId = user?.companyId ?? ''
+  const canHearReceiptAlerts =
+    user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'proprietario'
+
+  useReceiptSoundAlert(companyId, canHearReceiptAlerts)
 
   const currentTitle =
     Object.entries(pageTitles).find(([path]) => location.pathname.startsWith(path))?.[1] ??
