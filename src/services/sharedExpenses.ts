@@ -18,6 +18,22 @@ export async function getSharedExpenses(companyId: string): Promise<SharedExpens
     .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
 }
 
+export interface TenantSharedExpenseItem {
+  expense: SharedExpense
+  participant: SharedExpenseParticipant
+}
+
+export async function getSharedExpensesByTenant(
+  companyId: string,
+  tenantId: string,
+): Promise<TenantSharedExpenseItem[]> {
+  const expenses = await getSharedExpenses(companyId)
+  return expenses.flatMap((expense) => {
+    const participant = expense.participants.find((p) => p.tenantId === tenantId)
+    return participant ? [{ expense, participant }] : []
+  })
+}
+
 export async function createSharedExpense(
   data: Omit<SharedExpense, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {

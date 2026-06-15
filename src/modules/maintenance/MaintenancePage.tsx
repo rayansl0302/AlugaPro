@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Wrench, Search, Eye } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,6 +11,7 @@ import {
 } from '@/services/maintenance'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
+import { getVehicles } from '@/services/vehicles'
 import { MaintenanceRequest, MaintenanceCategory, MaintenanceStatus } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -24,8 +25,17 @@ import { Combobox } from '@/components/ui/combobox'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table'
 import { MaintenanceCommentsPanel } from '@/components/maintenance/MaintenanceCommentsPanel'
 import { MaintenanceStatusHistoryPanel } from '@/components/maintenance/MaintenanceStatusHistoryPanel'
+import { MaintenanceEntityPhotos } from '@/components/maintenance/MaintenanceEntityPhotos'
+import { MaintenanceRequestPhotos } from '@/components/maintenance/MaintenanceRequestPhotos'
+import {
+  buildMaintenancePhotoLookups,
+  resolveMaintenanceEntityPhotos,
+} from '@/lib/maintenanceEntityPhotos'
 
 const categoryLabels: Record<MaintenanceCategory, string> = {
   eletrica: 'Elétrica',
@@ -64,6 +74,7 @@ export function MaintenancePage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<MaintenanceStatus | 'todos'>('todos')
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [showForm, setShowForm] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
   const [viewingRequest, setViewingRequest] = useState<MaintenanceRequest | null>(null)
@@ -99,6 +110,17 @@ export function MaintenancePage() {
     enabled: !!companyId,
   })
 
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', companyId],
+    queryFn: () => getVehicles(companyId),
+    enabled: !!companyId,
+  })
+
+  const photoLookups = useMemo(
+    () => buildMaintenancePhotoLookups(properties, vehicles, tenants),
+    [properties, vehicles, tenants],
+  )
+
   const filtered = requests.filter((r) => {
     const matchSearch =
       r.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -108,7 +130,58 @@ export function MaintenancePage() {
     return matchSearch && matchStatus
   })
 
-  const pag = usePagination(filtered, 12)
+  const pag = usePagination(filtered, viewMode === 'table' ? 15 : 12)
+
+  const renderRequestCard = (request: MaintenanceRequest) => {
+    const sc = statusConfig[request.status]
+    const entityPhotos = resolveMaintenanceEntityPhotos(request, photoLookups)
+    const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+    return (
+      <Card key={request.id} className="overflow-hidden">
+        <CardHeader className="pb-3">
+          <div className="flex items-start gap-3">
+            <MaintenanceEntityPhotos photos={entityPhotos} size="md" />
+            <div className="flex min-w-0 flex-1 items-start justify-between gap-2">
+              <div className="min-w-0">
+                <CardTitle className="truncate text-base">{request.title}</CardTitle>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {entityPhotos.assetName ?? request.propertyName} • {entityPhotos.tenantName}
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  {assetLabel}
+                </p>
+              </div>
+              <div className="flex shrink-0 flex-col items-end gap-1">
+                <Badge variant={sc.variant}>{sc.label}</Badge>
+                <Badge variant={priorityVariant[request.priority]} className="text-xs">
+                  {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
+                </Badge>
+              </div>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="mb-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <span className="rounded bg-muted px-2 py-0.5">
+              {categoryLabels[request.category]}
+            </span>
+            <span>Aberto em {formatRequestDate(request)}</span>
+          </div>
+          <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
+
+          <Button
+            size="sm"
+            variant="outline"
+            className="mt-3 w-full"
+            onClick={() => setViewingRequest(request)}
+          >
+            <Eye className="mr-1.5 h-4 w-4" />
+            Visualizar
+          </Button>
+        </CardContent>
+      </Card>
+    )
+  }
 
   const handleCreate = async () => {
     if (!form.title || !form.propertyId) {
@@ -214,66 +287,122 @@ export function MaintenancePage() {
             ))}
           </div>
         </div>
-        <Button onClick={() => setShowForm(true)}>
-          <Plus className="mr-2 h-4 w-4" /> Abrir Chamado
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={viewMode === 'table' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('table')}
+          >
+            Tabela
+          </Button>
+          <Button
+            variant={viewMode === 'grid' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setViewMode('grid')}
+          >
+            Cards
+          </Button>
+          <Button onClick={() => setShowForm(true)}>
+            <Plus className="mr-2 h-4 w-4" /> Abrir Chamado
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-48 animate-pulse rounded-lg bg-muted" />
-          ))}
-        </div>
+        viewMode === 'table' ? (
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="h-48 animate-pulse rounded-lg bg-muted" />
+            ))}
+          </div>
+        )
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Wrench className="h-12 w-12 text-muted-foreground/40" />
           <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum chamado encontrado</p>
         </div>
+      ) : viewMode === 'table' ? (
+        <>
+          <div className="rounded-lg border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Título</TableHead>
+                  <TableHead>Imóvel / Veículo</TableHead>
+                  <TableHead>Inquilino</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead>Prioridade</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Aberto em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pag.pageItems.map((request) => {
+                  const sc = statusConfig[request.status]
+                  const entityPhotos = resolveMaintenanceEntityPhotos(request, photoLookups)
+                  return (
+                    <TableRow key={request.id}>
+                      <TableCell className="font-medium max-w-[200px]">
+                        <span className="line-clamp-2">{request.title}</span>
+                      </TableCell>
+                      <TableCell className="max-w-[180px]">
+                        <MaintenanceEntityPhotos photos={entityPhotos} variant="asset" />
+                      </TableCell>
+                      <TableCell className="max-w-[180px]">
+                        <MaintenanceEntityPhotos photos={entityPhotos} variant="tenant" />
+                      </TableCell>
+                      <TableCell>
+                        <span className="rounded bg-muted px-2 py-0.5 text-xs">
+                          {categoryLabels[request.category]}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={priorityVariant[request.priority]} className="text-xs capitalize">
+                          {request.priority}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={sc.variant}>{sc.label}</Badge>
+                      </TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap">
+                        {formatRequestDate(request)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => setViewingRequest(request)}
+                        >
+                          <Eye className="mr-1.5 h-4 w-4" />
+                          Visualizar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })}
+              </TableBody>
+            </Table>
+          </div>
+          <Pagination
+            page={pag.page}
+            totalPages={pag.totalPages}
+            total={pag.total}
+            rangeStart={pag.rangeStart}
+            rangeEnd={pag.rangeEnd}
+            onPageChange={pag.setPage}
+            itemLabel="chamados"
+          />
+        </>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2">
-          {pag.pageItems.map((request) => {
-            const sc = statusConfig[request.status]
-            return (
-              <Card key={request.id} className="overflow-hidden">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <CardTitle className="truncate text-base">{request.title}</CardTitle>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {request.propertyName} • {request.tenantName}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 flex-col items-end gap-1">
-                      <Badge variant={sc.variant}>{sc.label}</Badge>
-                      <Badge variant={priorityVariant[request.priority]} className="text-xs">
-                        {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
-                      </Badge>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="mb-3 flex flex-wrap gap-2 text-sm text-muted-foreground">
-                    <span className="rounded bg-muted px-2 py-0.5">
-                      {categoryLabels[request.category]}
-                    </span>
-                    <span>Aberto em {formatRequestDate(request)}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
-
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-3 w-full"
-                    onClick={() => setViewingRequest(request)}
-                  >
-                    <Eye className="mr-1.5 h-4 w-4" />
-                    Visualizar
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          })}
+          {pag.pageItems.map((request) => renderRequestCard(request))}
           {filtered.length > 0 && (
             <div className="sm:col-span-2">
               <Pagination
@@ -385,7 +514,10 @@ export function MaintenancePage() {
             <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
 
-          {viewingRequest && (
+          {viewingRequest && (() => {
+            const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
+            const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+            return (
             <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4 overflow-y-auto pr-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -400,14 +532,16 @@ export function MaintenancePage() {
                   </span>
                 </div>
 
+                <MaintenanceEntityPhotos photos={entityPhotos} size="lg" showLabels />
+
                 <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Imóvel</span>
-                    <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
+                    <span className="text-muted-foreground">{assetLabel}</span>
+                    <span className="font-medium text-right">{entityPhotos.assetName ?? viewingRequest.propertyName ?? '—'}</span>
                   </div>
                   <div className="flex justify-between gap-4">
                     <span className="text-muted-foreground">Inquilino</span>
-                    <span className="font-medium text-right">{viewingRequest.tenantName ?? '—'}</span>
+                    <span className="font-medium text-right">{entityPhotos.tenantName}</span>
                   </div>
                   <div className="flex justify-between gap-4">
                     <span className="text-muted-foreground">Aberto em</span>
@@ -419,6 +553,8 @@ export function MaintenancePage() {
                   <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
                 </div>
+
+                <MaintenanceRequestPhotos photos={viewingRequest.photos} />
 
                 <div className="space-y-1.5">
                   <Label>Status do chamado</Label>
@@ -453,7 +589,8 @@ export function MaintenancePage() {
                 placeholder="Responda ao inquilino ou registre uma observação..."
               />
             </div>
-          )}
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>

@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, LogOut, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
   ShieldCheck, AlertTriangle, Percent, Receipt, CalendarClock, Wallet,
   Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, UserCircle, ShieldAlert,
-  Eye, Download, Wrench, Plus, Loader2,
+  Eye, Download, Wrench, Plus, Loader2, DollarSign,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { Link } from 'react-router-dom'
@@ -13,17 +13,21 @@ import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
 import { getPaymentsByTenant } from '@/services/payments'
 import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment, buildInitialStatusHistory } from '@/services/maintenance'
+import { getProperties } from '@/services/properties'
+import { getVehicles } from '@/services/vehicles'
+import { getTenant } from '@/services/tenants'
+import { getSharedExpensesByTenant } from '@/services/sharedExpenses'
 import { uploadReceipt } from '@/services/storage'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -34,6 +38,12 @@ import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { MaintenanceCommentsPanel } from '@/components/maintenance/MaintenanceCommentsPanel'
 import { MaintenanceStatusHistoryPanel } from '@/components/maintenance/MaintenanceStatusHistoryPanel'
+import { MaintenanceEntityPhotos } from '@/components/maintenance/MaintenanceEntityPhotos'
+import { MaintenanceRequestPhotos } from '@/components/maintenance/MaintenanceRequestPhotos'
+import {
+  buildMaintenancePhotoLookups,
+  resolveMaintenanceEntityPhotos,
+} from '@/lib/maintenanceEntityPhotos'
 
 const statusVariant = {
   pendente: 'warning',
@@ -72,6 +82,28 @@ const maintenanceStatusConfig = {
   em_analise: { label: 'Em análise', variant: 'warning' as const },
   em_andamento: { label: 'Em andamento', variant: 'secondary' as const },
   finalizado: { label: 'Finalizado', variant: 'success' as const },
+}
+
+const expenseTypeLabels: Record<ExpenseType, string> = {
+  internet: 'Internet',
+  energia: 'Energia',
+  agua: 'Água',
+  gas: 'Gás',
+  iptu: 'IPTU',
+  condominio: 'Condomínio',
+  seguranca: 'Segurança',
+  outro: 'Outro',
+}
+
+const expenseTypeIcons: Record<ExpenseType, LucideIcon> = {
+  internet: Wifi,
+  energia: Zap,
+  agua: Droplets,
+  gas: Flame,
+  iptu: Landmark,
+  condominio: Building2,
+  seguranca: ShieldCheck,
+  outro: Receipt,
 }
 
 type ChargeCategory = { label: string; Icon: LucideIcon }
@@ -157,6 +189,35 @@ export function TenantPortal() {
     enabled: !!companyId && !!tenantId,
   })
 
+  const { data: sharedExpenses = [] } = useQuery({
+    queryKey: ['sharedExpenses', companyId, tenantId],
+    queryFn: () => getSharedExpensesByTenant(companyId, tenantId),
+    enabled: !!companyId && !!tenantId,
+  })
+
+  const { data: tenantProfile } = useQuery({
+    queryKey: ['tenant', tenantId],
+    queryFn: () => getTenant(tenantId),
+    enabled: !!tenantId,
+  })
+
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties', companyId],
+    queryFn: () => getProperties(companyId),
+    enabled: !!companyId,
+  })
+
+  const { data: vehicles = [] } = useQuery({
+    queryKey: ['vehicles', companyId],
+    queryFn: () => getVehicles(companyId),
+    enabled: !!companyId,
+  })
+
+  const photoLookups = useMemo(() => {
+    const tenants = tenantProfile ? [tenantProfile] : []
+    return buildMaintenancePhotoLookups(properties, vehicles, tenants)
+  }, [properties, vehicles, tenantProfile])
+
   const activeContract = contracts.find((c) => c.status === 'ativo')
   const pendingCharges = charges.filter((c) => c.status !== 'pago' && c.status !== 'cancelado')
   const overdueCharges = pendingCharges.filter((c) => c.dueDate && c.dueDate < TODAY)
@@ -165,8 +226,10 @@ export function TenantPortal() {
 
   const historyPag = usePagination(payments, 10)
   const maintenancePag = usePagination(maintenanceRequests, 8)
+  const sharedExpensesPag = usePagination(sharedExpenses, 8)
 
   const openMaintenanceRequests = maintenanceRequests.filter((r) => r.status !== 'finalizado')
+  const pendingSharedExpenses = sharedExpenses.filter((item) => item.participant.status !== 'pago')
 
   const toPay = [...pendingCharges].sort((a, b) =>
     (a.dueDate || '9999-12-31').localeCompare(b.dueDate || '9999-12-31')
@@ -601,6 +664,14 @@ export function TenantPortal() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="historico" className="flex-1">Histórico de pagamentos</TabsTrigger>
+                <TabsTrigger value="despesas" className="flex-1">
+                  Despesas
+                  {pendingSharedExpenses.length > 0 && (
+                    <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/15 px-1.5 text-[11px] font-bold text-amber-600">
+                      {pendingSharedExpenses.length}
+                    </span>
+                  )}
+                </TabsTrigger>
                 <TabsTrigger value="chamados" className="flex-1">
                   Chamados
                   {openMaintenanceRequests.length > 0 && (
@@ -755,6 +826,102 @@ export function TenantPortal() {
                 )}
               </TabsContent>
 
+              <TabsContent value="despesas" className="space-y-3">
+                <div>
+                  <p className="text-sm font-semibold">Despesas compartilhadas</p>
+                  <p className="text-xs text-muted-foreground">
+                    Internet, condomínio, energia e outras despesas divididas do imóvel
+                  </p>
+                </div>
+
+                {sharedExpenses.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
+                    <DollarSign className="h-12 w-12 text-muted-foreground/30 mb-3" />
+                    <p className="font-semibold text-foreground">Nenhuma despesa compartilhada</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Quando o gestor dividir despesas do imóvel com você, elas aparecerão aqui.
+                    </p>
+                  </div>
+                ) : (
+                  sharedExpensesPag.pageItems.map(({ expense, participant }) => {
+                    const ExpenseIcon = expenseTypeIcons[expense.type]
+                    const typeLabel = expenseTypeLabels[expense.type]
+                    const isPaid = participant.status === 'pago'
+                    const dueLabel = expense.recurring
+                      ? `Todo dia ${expense.dueDay ?? 1}`
+                      : expense.dueDate
+                        ? `Vence ${formatDateOptional(expense.dueDate)}`
+                        : 'Sem vencimento'
+
+                    return (
+                      <Card key={expense.id} className="border-0 shadow-sm overflow-hidden">
+                        <CardContent className="p-4 space-y-3">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex min-w-0 items-start gap-3">
+                              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                <ExpenseIcon className="h-5 w-5" />
+                              </span>
+                              <div className="min-w-0">
+                                <p className="font-semibold leading-tight">{expense.description}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {expense.propertyName ?? 'Imóvel'} · {typeLabel}
+                                </p>
+                                <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
+                                  <CalendarClock className="h-3 w-3" />
+                                  {dueLabel}
+                                  {expense.recurring && (
+                                    <span className="text-muted-foreground/60">· Recorrente</span>
+                                  )}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="text-right shrink-0">
+                              <p className="text-lg font-bold">{formatCurrency(participant.amount)}</p>
+                              <Badge variant={isPaid ? 'success' : 'warning'} className="text-xs mt-0.5">
+                                {isPaid ? 'Pago' : 'Pendente'}
+                              </Badge>
+                            </div>
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                            <span>Total da despesa: {formatCurrency(expense.totalAmount)}</span>
+                            <span>
+                              {expense.participants.length}{' '}
+                              {expense.participants.length === 1 ? 'participante' : 'participantes'}
+                            </span>
+                          </div>
+
+                          {isPaid && participant.paidDate && (
+                            <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-3 py-2.5 text-sm text-green-700 dark:text-green-300">
+                              <CheckCircle className="h-4 w-4 shrink-0" />
+                              <span>Pago em {formatDateOptional(participant.paidDate)}</span>
+                            </div>
+                          )}
+
+                          {!isPaid && (
+                            <p className="text-xs text-muted-foreground">
+                              Envie o comprovante ao gestor ou aguarde a confirmação do pagamento.
+                            </p>
+                          )}
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+
+                {sharedExpenses.length > 0 && (
+                  <Pagination
+                    page={sharedExpensesPag.page}
+                    totalPages={sharedExpensesPag.totalPages}
+                    total={sharedExpensesPag.total}
+                    rangeStart={sharedExpensesPag.rangeStart}
+                    rangeEnd={sharedExpensesPag.rangeEnd}
+                    onPageChange={sharedExpensesPag.setPage}
+                    itemLabel="despesas"
+                  />
+                )}
+              </TabsContent>
+
               <TabsContent value="chamados" className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
@@ -792,19 +959,24 @@ export function TenantPortal() {
                 ) : (
                   maintenancePag.pageItems.map((request) => {
                     const status = maintenanceStatusConfig[request.status]
+                    const entityPhotos = resolveMaintenanceEntityPhotos(request, photoLookups)
+                    const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
                     return (
                       <Card key={request.id} className="border-0 shadow-sm">
                         <CardContent className="p-4 space-y-3">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                              <p className="font-semibold leading-tight">{request.title}</p>
-                              <p className="text-xs text-muted-foreground mt-0.5">
-                                {request.propertyName ?? 'Imóvel'} · {formatMaintenanceDate(request)}
-                              </p>
+                          <div className="flex items-start gap-3">
+                            <MaintenanceEntityPhotos photos={entityPhotos} size="md" />
+                            <div className="flex min-w-0 flex-1 items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="font-semibold leading-tight">{request.title}</p>
+                                <p className="text-xs text-muted-foreground mt-0.5">
+                                  {entityPhotos.assetName ?? request.propertyName ?? assetLabel} · {formatMaintenanceDate(request)}
+                                </p>
+                              </div>
+                              <Badge variant={status.variant} className="shrink-0 text-xs">
+                                {status.label}
+                              </Badge>
                             </div>
-                            <Badge variant={status.variant} className="shrink-0 text-xs">
-                              {status.label}
-                            </Badge>
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
                             <span className="rounded bg-muted px-2 py-0.5 text-muted-foreground">
@@ -1001,7 +1173,10 @@ export function TenantPortal() {
             <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
 
-          {viewingRequest && (
+          {viewingRequest && (() => {
+            const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
+            const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+            return (
             <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4 overflow-y-auto pr-1">
                 <div className="flex flex-wrap items-center gap-2">
@@ -1016,10 +1191,12 @@ export function TenantPortal() {
                   </span>
                 </div>
 
+                <MaintenanceEntityPhotos photos={entityPhotos} size="lg" showLabels />
+
                 <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Local</span>
-                    <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
+                    <span className="text-muted-foreground">{assetLabel}</span>
+                    <span className="font-medium text-right">{entityPhotos.assetName ?? viewingRequest.propertyName ?? '—'}</span>
                   </div>
                   <div className="flex justify-between gap-4">
                     <span className="text-muted-foreground">Aberto em</span>
@@ -1031,6 +1208,8 @@ export function TenantPortal() {
                   <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
                 </div>
+
+                <MaintenanceRequestPhotos photos={viewingRequest.photos} />
 
                 <MaintenanceStatusHistoryPanel request={viewingRequest} />
               </div>
@@ -1048,7 +1227,8 @@ export function TenantPortal() {
                 placeholder="Escreva uma mensagem para o gestor ou proprietário..."
               />
             </div>
-          )}
+            )
+          })()}
         </DialogContent>
       </Dialog>
     </div>

@@ -208,14 +208,9 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
-    // Shared Expenses
-    // Inquilino pode ler despesas cujo propertyId bate com seu contrato ativo.
-    // A validação fina (é participante?) é feita no client; aqui garantimos
-    // que só membros da mesma empresa acessam.
+    // Shared Expenses — membros da empresa leem; o client filtra participantes no portal do inquilino.
     match /sharedExpenses/{expenseId} {
-      allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) ||
-         request.auth.uid == resource.data.tenantId);
+      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
       allow write: if isGestor();
     }
 
