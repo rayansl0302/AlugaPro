@@ -22,8 +22,15 @@ export async function getMaintenanceRequestsByTenant(
   companyId: string,
   tenantId: string,
 ): Promise<MaintenanceRequest[]> {
-  const requests = await getMaintenanceRequests(companyId)
-  return requests.filter((r) => r.tenantId === tenantId)
+  const q = query(
+    collection(db, COL),
+    where('companyId', '==', companyId),
+    where('tenantId', '==', tenantId),
+  )
+  const snap = await getDocs(q)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as MaintenanceRequest))
+    .sort((a, b) => (b.createdAt?.seconds ?? 0) - (a.createdAt?.seconds ?? 0))
 }
 
 export async function createMaintenanceRequest(

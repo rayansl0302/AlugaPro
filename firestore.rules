@@ -215,11 +215,18 @@ service cloud.firestore {
     // Maintenance Requests
     match /maintenanceRequests/{requestId} {
       allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) ||
-         request.auth.uid == resource.data.tenantId);
-      allow create: if isAuthenticated();
-      allow update: if isGestor() ||
-        (request.auth.uid == resource.data.tenantId && isRole('inquilino'));
+        (request.auth.uid == resource.data.tenantId ||
+         (isProprietario() && sameCompany(resource.data.companyId)));
+
+      allow create: if isAuthenticated() && (
+        (isGestor() && sameCompany(request.resource.data.companyId)) ||
+        (isRole('inquilino')
+          && request.auth.uid == request.resource.data.tenantId
+          && getUserData().companyId == request.resource.data.companyId
+          && request.resource.data.status == 'aberto')
+      );
+
+      allow update: if isGestor() && sameCompany(resource.data.companyId);
       allow delete: if isAdmin();
     }
 
