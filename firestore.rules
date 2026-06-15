@@ -226,7 +226,7 @@ service cloud.firestore {
          (isProprietario() && sameCompany(resource.data.companyId)));
 
       allow create: if isAuthenticated() && (
-        (isGestor() && sameCompany(request.resource.data.companyId)) ||
+        (isProprietario() && sameCompany(request.resource.data.companyId)) ||
         (isRole('inquilino')
           && userExists()
           && getUserData().tenantId == request.resource.data.tenantId
@@ -234,12 +234,13 @@ service cloud.firestore {
           && request.resource.data.status == 'aberto')
       );
 
-      allow update: if (isGestor() && sameCompany(resource.data.companyId)) ||
+      allow update: if (isProprietario() && sameCompany(resource.data.companyId)) ||
         (isLinkedTenant(resource.data.tenantId)
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['comments', 'updatedAt'])
           && request.resource.data.companyId == resource.data.companyId
           && request.resource.data.tenantId == resource.data.tenantId
           && request.resource.data.status == resource.data.status
+          && request.resource.data.statusHistory == resource.data.statusHistory
           && request.resource.data.title == resource.data.title
           && request.resource.data.description == resource.data.description);
       allow delete: if isAdmin();

@@ -12,11 +12,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getChargesByTenant, updateCharge } from '@/services/charges'
 import { getContractsByTenant } from '@/services/contracts'
 import { getPaymentsByTenant } from '@/services/payments'
-import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment } from '@/services/maintenance'
+import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment, buildInitialStatusHistory } from '@/services/maintenance'
 import { uploadReceipt } from '@/services/storage'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, MaintenanceComment } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional, getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,6 +32,8 @@ import { ReceiptUpload } from '@/components/shared/ReceiptUpload'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
+import { MaintenanceCommentsPanel } from '@/components/maintenance/MaintenanceCommentsPanel'
+import { MaintenanceStatusHistoryPanel } from '@/components/maintenance/MaintenanceStatusHistoryPanel'
 
 const statusVariant = {
   pendente: 'warning',
@@ -231,6 +233,7 @@ export function TenantPortal() {
   }
 
   const handleCreateMaintenance = async () => {
+    if (!user) return
     if (!activeContract) {
       toast({ title: 'Contrato ativo necessário', description: 'Você precisa de um contrato ativo para abrir um chamado.', variant: 'destructive' })
       return
@@ -254,6 +257,13 @@ export function TenantPortal() {
         priority: maintenanceForm.priority,
         status: 'aberto',
         comments: [],
+        statusHistory: [
+          buildInitialStatusHistory({
+            id: tenantId,
+            name: user.name,
+            role: 'inquilino',
+          }),
+        ],
       })
       qc.invalidateQueries({ queryKey: ['maintenance'] })
       toast({ title: 'Chamado aberto!', description: 'O proprietário/gestor foi notificado sobre sua solicitação.' })
@@ -272,20 +282,15 @@ export function TenantPortal() {
     return formatDate(date.toISOString())
   }
 
-  const formatCommentDate = (comment: MaintenanceComment) => {
-    if (!comment.createdAt) return ''
-    const date = comment.createdAt.toDate ? comment.createdAt.toDate() : new Date(String(comment.createdAt))
-    return formatDate(date.toISOString())
-  }
-
   const handleAddComment = async () => {
     if (!viewingRequest || !commentText.trim() || !user) return
 
     setCommentLoading(true)
     try {
       const newComment = await addMaintenanceComment(viewingRequest.id, viewingRequest, {
-        authorId: firebaseUser?.uid ?? user.id,
+        authorId: tenantId,
         authorName: user.name,
+        authorRole: 'inquilino',
         message: commentText.trim(),
       })
       setViewingRequest((prev) =>
@@ -991,91 +996,57 @@ export function TenantPortal() {
           }
         }}
       >
-        <DialogContent className="max-w-lg max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
           <DialogHeader>
             <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
 
           {viewingRequest && (
-            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={maintenanceStatusConfig[viewingRequest.status].variant}>
-                  {maintenanceStatusConfig[viewingRequest.status].label}
-                </Badge>
-                <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                  {maintenanceCategoryLabels[viewingRequest.category]}
-                </span>
-                <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
-                  Prioridade {viewingRequest.priority}
-                </span>
+            <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
+              <div className="space-y-4 overflow-y-auto pr-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={maintenanceStatusConfig[viewingRequest.status].variant}>
+                    {maintenanceStatusConfig[viewingRequest.status].label}
+                  </Badge>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {maintenanceCategoryLabels[viewingRequest.category]}
+                  </span>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
+                    Prioridade {viewingRequest.priority}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Local</span>
+                    <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Aberto em</span>
+                    <span className="text-right">{formatMaintenanceDate(viewingRequest)}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
+                </div>
+
+                <MaintenanceStatusHistoryPanel request={viewingRequest} />
               </div>
 
-              <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Local</span>
-                  <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
-                </div>
-                <div className="flex justify-between gap-4">
-                  <span className="text-muted-foreground">Aberto em</span>
-                  <span className="text-right">{formatMaintenanceDate(viewingRequest)}</span>
-                </div>
-              </div>
-
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
-                <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
-              </div>
-
-              <div className="flex min-h-0 flex-1 flex-col">
-                <p className="text-xs font-medium text-muted-foreground mb-2">
-                  Comentários ({viewingRequest.comments?.length ?? 0})
-                </p>
-                <div className="min-h-[120px] flex-1 space-y-2 overflow-y-auto rounded-xl border bg-muted/20 p-3">
-                  {(viewingRequest.comments ?? []).length === 0 ? (
-                    <p className="text-sm text-muted-foreground text-center py-6">
-                      Nenhum comentário ainda. Envie uma mensagem ao gestor.
-                    </p>
-                  ) : (
-                    (viewingRequest.comments ?? []).map((comment) => (
-                      <div
-                        key={comment.id}
-                        className="rounded-lg bg-background border px-3 py-2.5 text-sm"
-                      >
-                        <div className="flex items-center justify-between gap-2 mb-1">
-                          <span className="font-medium text-xs">{comment.authorName}</span>
-                          <span className="text-[11px] text-muted-foreground shrink-0">
-                            {formatCommentDate(comment)}
-                          </span>
-                        </div>
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{comment.message}</p>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-
-              {viewingRequest.status !== 'finalizado' && (
-                <div className="space-y-2 border-t pt-4">
-                  <Label htmlFor="maintenance-comment">Novo comentário</Label>
-                  <textarea
-                    id="maintenance-comment"
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                    placeholder="Escreva uma mensagem para o gestor ou proprietário..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                  />
-                  <Button
-                    className="w-full"
-                    disabled={!commentText.trim() || commentLoading}
-                    onClick={handleAddComment}
-                  >
-                    {commentLoading
-                      ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
-                      : 'Enviar comentário'
-                    }
-                  </Button>
-                </div>
-              )}
+              <MaintenanceCommentsPanel
+                comments={viewingRequest.comments ?? []}
+                tenantId={viewingRequest.tenantId}
+                tenantName={viewingRequest.tenantName}
+                commentText={commentText}
+                onCommentTextChange={setCommentText}
+                onSubmit={handleAddComment}
+                loading={commentLoading}
+                canComment={viewingRequest.status !== 'finalizado'}
+                inputId="tenant-maintenance-comment"
+                placeholder="Escreva uma mensagem para o gestor ou proprietário..."
+              />
             </div>
           )}
         </DialogContent>

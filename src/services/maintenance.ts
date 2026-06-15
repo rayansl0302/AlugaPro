@@ -3,7 +3,7 @@ import {
   query, where, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { MaintenanceComment, MaintenanceRequest } from '@/types'
+import { MaintenanceComment, MaintenanceRequest, MaintenanceStatus, MaintenanceStatusHistory, UserRole } from '@/types'
 
 const COL = 'maintenanceRequests'
 
@@ -55,15 +55,59 @@ export async function updateMaintenanceRequest(
   await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
 }
 
+export function buildInitialStatusHistory(
+  actor: { id: string; name: string; role: UserRole },
+): MaintenanceStatusHistory {
+  return {
+    id: crypto.randomUUID(),
+    status: 'aberto',
+    changedById: actor.id,
+    changedByName: actor.name,
+    changedByRole: actor.role,
+    createdAt: Timestamp.now(),
+  }
+}
+
+export async function updateMaintenanceStatus(
+  request: MaintenanceRequest,
+  status: MaintenanceStatus,
+  actor: { id: string; name: string; role: UserRole },
+): Promise<MaintenanceStatusHistory | null> {
+  if (request.status === status) return null
+
+  const entry: MaintenanceStatusHistory = {
+    id: crypto.randomUUID(),
+    status,
+    previousStatus: request.status,
+    changedById: actor.id,
+    changedByName: actor.name,
+    changedByRole: actor.role,
+    createdAt: Timestamp.now(),
+  }
+
+  const patch: Partial<MaintenanceRequest> = {
+    status,
+    statusHistory: [...(request.statusHistory ?? []), entry],
+  }
+
+  if (status === 'finalizado') {
+    patch.resolvedAt = Timestamp.now()
+  }
+
+  await updateMaintenanceRequest(request.id, patch)
+  return entry
+}
+
 export async function addMaintenanceComment(
   requestId: string,
   request: MaintenanceRequest,
-  comment: Pick<MaintenanceComment, 'authorId' | 'authorName' | 'message'>,
+  comment: Pick<MaintenanceComment, 'authorId' | 'authorName' | 'message' | 'authorRole'>,
 ): Promise<MaintenanceComment> {
   const newComment: MaintenanceComment = {
     id: crypto.randomUUID(),
     authorId: comment.authorId,
     authorName: comment.authorName,
+    authorRole: comment.authorRole,
     message: comment.message,
     createdAt: Timestamp.now(),
   }

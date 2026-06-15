@@ -567,6 +567,7 @@ export interface MaintenanceRequest {
   photos?: string[]
   videos?: string[]
   comments?: MaintenanceComment[]
+  statusHistory?: MaintenanceStatusHistory[]
   assignedTo?: string
   resolvedAt?: Timestamp
   createdAt: Timestamp
@@ -577,8 +578,19 @@ export interface MaintenanceComment {
   id: string
   authorId: string
   authorName: string
+  authorRole?: UserRole
   message: string
   attachments?: string[]
+  createdAt: Timestamp
+}
+
+export interface MaintenanceStatusHistory {
+  id: string
+  status: MaintenanceStatus
+  previousStatus?: MaintenanceStatus
+  changedById: string
+  changedByName: string
+  changedByRole?: UserRole
   createdAt: Timestamp
 }
 

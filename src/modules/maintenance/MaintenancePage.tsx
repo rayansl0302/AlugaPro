@@ -1,8 +1,14 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Wrench, Search } from 'lucide-react'
+import { Plus, Wrench, Search, Eye } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getMaintenanceRequests, createMaintenanceRequest, updateMaintenanceRequest } from '@/services/maintenance'
+import {
+  getMaintenanceRequests,
+  createMaintenanceRequest,
+  updateMaintenanceStatus,
+  buildInitialStatusHistory,
+  addMaintenanceComment,
+} from '@/services/maintenance'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { MaintenanceRequest, MaintenanceCategory, MaintenanceStatus } from '@/types'
@@ -18,6 +24,8 @@ import { Combobox } from '@/components/ui/combobox'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
+import { MaintenanceCommentsPanel } from '@/components/maintenance/MaintenanceCommentsPanel'
+import { MaintenanceStatusHistoryPanel } from '@/components/maintenance/MaintenanceStatusHistoryPanel'
 
 const categoryLabels: Record<MaintenanceCategory, string> = {
   eletrica: 'Elétrica',
@@ -43,8 +51,14 @@ const priorityVariant = {
   urgente: 'destructive',
 } as const
 
+function formatRequestDate(request: MaintenanceRequest) {
+  if (!request.createdAt) return '—'
+  const date = request.createdAt.toDate ? request.createdAt.toDate() : new Date(String(request.createdAt))
+  return formatDate(date.toISOString())
+}
+
 export function MaintenancePage() {
-  const { user } = useAuth()
+  const { user, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
 
@@ -52,6 +66,10 @@ export function MaintenancePage() {
   const [statusFilter, setStatusFilter] = useState<MaintenanceStatus | 'todos'>('todos')
   const [showForm, setShowForm] = useState(false)
   const [formLoading, setFormLoading] = useState(false)
+  const [viewingRequest, setViewingRequest] = useState<MaintenanceRequest | null>(null)
+  const [commentText, setCommentText] = useState('')
+  const [commentLoading, setCommentLoading] = useState(false)
+  const [statusLoading, setStatusLoading] = useState(false)
   const [form, setForm] = useState({
     propertyId: '',
     propertyName: '',
@@ -99,7 +117,18 @@ export function MaintenancePage() {
     }
     setFormLoading(true)
     try {
-      await createMaintenanceRequest({ companyId, ...form, status: 'aberto' as const, comments: [] })
+      const actor = {
+        id: firebaseUser?.uid ?? user!.id,
+        name: user!.name,
+        role: user!.role,
+      }
+      await createMaintenanceRequest({
+        companyId,
+        ...form,
+        status: 'aberto' as const,
+        comments: [],
+        statusHistory: [buildInitialStatusHistory(actor)],
+      })
       qc.invalidateQueries({ queryKey: ['maintenance'] })
       toast({ title: 'Chamado aberto com sucesso.' })
       setShowForm(false)
@@ -110,13 +139,52 @@ export function MaintenancePage() {
     }
   }
 
-  const handleStatusChange = async (request: MaintenanceRequest, status: MaintenanceStatus) => {
+  const handleStatusChange = async (status: MaintenanceStatus) => {
+    if (!viewingRequest || !user) return
+    if (viewingRequest.status === status) return
+
+    setStatusLoading(true)
     try {
-      await updateMaintenanceRequest(request.id, { status })
+      const entry = await updateMaintenanceStatus(viewingRequest, status, {
+        id: firebaseUser?.uid ?? user.id,
+        name: user.name,
+        role: user.role,
+      })
+      if (entry) {
+        setViewingRequest((prev) =>
+          prev ? { ...prev, status, statusHistory: [...(prev.statusHistory ?? []), entry] } : null
+        )
+      }
       qc.invalidateQueries({ queryKey: ['maintenance'] })
       toast({ title: 'Status atualizado.' })
     } catch {
-      toast({ title: 'Erro ao atualizar.', variant: 'destructive' })
+      toast({ title: 'Erro ao atualizar status.', variant: 'destructive' })
+    } finally {
+      setStatusLoading(false)
+    }
+  }
+
+  const handleAddComment = async () => {
+    if (!viewingRequest || !commentText.trim() || !user) return
+
+    setCommentLoading(true)
+    try {
+      const newComment = await addMaintenanceComment(viewingRequest.id, viewingRequest, {
+        authorId: firebaseUser?.uid ?? user.id,
+        authorName: user.name,
+        authorRole: user.role,
+        message: commentText.trim(),
+      })
+      setViewingRequest((prev) =>
+        prev ? { ...prev, comments: [...(prev.comments ?? []), newComment] } : null
+      )
+      setCommentText('')
+      qc.invalidateQueries({ queryKey: ['maintenance'] })
+      toast({ title: 'Comentário enviado.' })
+    } catch {
+      toast({ title: 'Erro ao enviar comentário.', variant: 'destructive' })
+    } finally {
+      setCommentLoading(false)
     }
   }
 
@@ -189,29 +257,19 @@ export function MaintenancePage() {
                     <span className="rounded bg-muted px-2 py-0.5">
                       {categoryLabels[request.category]}
                     </span>
-                    <span>Aberto em {formatDate(request.createdAt.toDate ? request.createdAt.toDate().toISOString() : String(request.createdAt))}</span>
+                    <span>Aberto em {formatRequestDate(request)}</span>
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
 
-                  {request.status !== 'finalizado' && (
-                    <div className="mt-3 flex gap-2">
-                      {request.status === 'aberto' && (
-                        <Button size="sm" variant="outline" onClick={() => handleStatusChange(request, 'em_analise')}>
-                          Analisar
-                        </Button>
-                      )}
-                      {request.status === 'em_analise' && (
-                        <Button size="sm" variant="outline" onClick={() => handleStatusChange(request, 'em_andamento')}>
-                          Iniciar
-                        </Button>
-                      )}
-                      {request.status === 'em_andamento' && (
-                        <Button size="sm" onClick={() => handleStatusChange(request, 'finalizado')}>
-                          Finalizar
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-3 w-full"
+                    onClick={() => setViewingRequest(request)}
+                  >
+                    <Eye className="mr-1.5 h-4 w-4" />
+                    Visualizar
+                  </Button>
                 </CardContent>
               </Card>
             )
@@ -260,7 +318,7 @@ export function MaintenancePage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Prioridade</Label>
-                <Select value={form.priority} onValueChange={(v) => setForm((p) => ({ ...p, priority: v as any }))}>
+                <Select value={form.priority} onValueChange={(v) => setForm((p) => ({ ...p, priority: v as MaintenanceRequest['priority'] }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="baixa">Baixa</SelectItem>
@@ -310,6 +368,92 @@ export function MaintenancePage() {
               {formLoading ? 'Abrindo...' : 'Abrir Chamado'}
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={!!viewingRequest}
+        onOpenChange={(open) => {
+          if (!open) {
+            setViewingRequest(null)
+            setCommentText('')
+          }
+        }}
+      >
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
+          </DialogHeader>
+
+          {viewingRequest && (
+            <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
+              <div className="space-y-4 overflow-y-auto pr-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant={statusConfig[viewingRequest.status].variant}>
+                    {statusConfig[viewingRequest.status].label}
+                  </Badge>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                    {categoryLabels[viewingRequest.category]}
+                  </span>
+                  <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
+                    Prioridade {viewingRequest.priority}
+                  </span>
+                </div>
+
+                <div className="rounded-xl border bg-muted/30 p-3 text-sm space-y-2">
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Imóvel</span>
+                    <span className="font-medium text-right">{viewingRequest.propertyName ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Inquilino</span>
+                    <span className="font-medium text-right">{viewingRequest.tenantName ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between gap-4">
+                    <span className="text-muted-foreground">Aberto em</span>
+                    <span className="text-right">{formatRequestDate(viewingRequest)}</span>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label>Status do chamado</Label>
+                  <Select
+                    value={viewingRequest.status}
+                    onValueChange={(v) => handleStatusChange(v as MaintenanceStatus)}
+                    disabled={statusLoading}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(statusConfig).map(([value, { label }]) => (
+                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <MaintenanceStatusHistoryPanel request={viewingRequest} />
+              </div>
+
+              <MaintenanceCommentsPanel
+                comments={viewingRequest.comments ?? []}
+                tenantId={viewingRequest.tenantId}
+                tenantName={viewingRequest.tenantName}
+                commentText={commentText}
+                onCommentTextChange={setCommentText}
+                onSubmit={handleAddComment}
+                loading={commentLoading}
+                inputId="gestor-comment"
+                placeholder="Responda ao inquilino ou registre uma observação..."
+              />
+            </div>
+          )}
         </DialogContent>
       </Dialog>
     </div>
