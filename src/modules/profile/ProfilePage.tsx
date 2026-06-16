@@ -182,7 +182,7 @@ export function ProfilePage() {
                       setRefreshing(true)
                       try { await refreshProfile() } finally { setRefreshing(false) }
                     }
-                    navigate('/assinatura')
+                    navigate('/configuracoes/assinatura')
                   }}
                 >
                   {refreshing
@@ -193,16 +193,16 @@ export function ProfilePage() {
               )}
               {(status === 'expired' || status === 'canceled') && (
                 <Button size="sm" className="gap-1.5 shrink-0" asChild>
-                  <Link to="/assinatura"><Zap className="h-3.5 w-3.5" /> Assinar agora</Link>
+                  <Link to="/configuracoes/assinatura"><Zap className="h-3.5 w-3.5" /> Assinar agora</Link>
                 </Button>
               )}
               {status === 'past_due' && (
                 <Button size="sm" variant="destructive" className="gap-1.5 shrink-0" asChild>
-                  <Link to="/assinatura"><AlertTriangle className="h-3.5 w-3.5" /> Regularizar</Link>
+                  <Link to="/configuracoes/assinatura"><AlertTriangle className="h-3.5 w-3.5" /> Regularizar</Link>
                 </Button>
               )}
               {status === 'active' && (
-                <Button size="sm" variant="outline" className="shrink-0" onClick={() => navigate('/assinatura')}>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => navigate('/configuracoes/assinatura')}>
                   Gerenciar
                 </Button>
               )}

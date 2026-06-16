@@ -116,24 +116,32 @@ export function SubscriptionPage() {
       {!isAdmin && sub && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Plano atual</CardTitle>
+            <CardTitle className="text-base">
+              {status === 'trialing' ? 'Período de avaliação' : 'Plano atual'}
+            </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                {PLAN_ICONS[sub.planId]}
-                <span className="font-semibold text-lg">{PLANS[sub.planId].name}</span>
+                {status === 'trialing'
+                  ? <Zap className="h-5 w-5 text-amber-500" />
+                  : PLAN_ICONS[sub.planId]}
+                <span className="font-semibold text-lg">
+                  {status === 'trialing' ? 'Teste gratuito' : PLANS[sub.planId].name}
+                </span>
               </div>
-              <span className="text-2xl font-bold text-primary">
-                {formatCurrency(PLANS[sub.planId].price)}
-                <span className="text-sm font-normal text-muted-foreground">/mês</span>
-              </span>
+              {status !== 'trialing' && (
+                <span className="text-2xl font-bold text-primary">
+                  {formatCurrency(PLANS[sub.planId].price)}
+                  <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                </span>
+              )}
             </div>
 
             {status === 'trialing' && (
               <div className="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg p-3 text-sm dark:bg-amber-950/30 dark:text-amber-300">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Trial termina em <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong>. Assine para não perder acesso.
+                Trial termina em <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong>. Assine um plano para não perder acesso.
               </div>
             )}
 
@@ -193,7 +201,7 @@ export function SubscriptionPage() {
         </h3>
         <div className="grid gap-4 sm:grid-cols-3">
           {(Object.keys(PLANS) as PlanId[]).map((plan) => {
-            const isCurrentPlan = sub?.planId === plan && (status === 'active' || status === 'trialing')
+            const isCurrentPlan = sub?.planId === plan && status === 'active'
             const isCheaper = sub && PLANS[plan].price < PLANS[sub.planId].price
             return (
               <Card

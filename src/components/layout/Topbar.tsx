@@ -38,7 +38,7 @@ export function Topbar({ title }: TopbarProps) {
         {showUpgrade && (
           <Button
             size="sm"
-            onClick={() => navigate('/assinatura')}
+            onClick={() => navigate('/configuracoes/assinatura')}
             className={cn(
               'gap-1.5 font-semibold shadow-sm',
               isUrgent
