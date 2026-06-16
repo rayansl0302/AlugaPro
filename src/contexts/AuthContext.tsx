@@ -143,43 +143,43 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Pro
   return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
 }
 
-// ── Usuários demo (apenas em desenvolvimento) ─────────────────────────────────
-// G6: never ship demo credentials in production builds
-const DEMO_USERS: Record<string, User> = import.meta.env.DEV
-  ? {
-      'admin@alugapro.com': {
-        id: 'demo-admin',
-        name: 'Administrador',
-        email: 'admin@alugapro.com',
-        role: 'admin',
-        companyId: 'demo-company',
-        active: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      },
-      'gestor@alugapro.com': {
-        id: 'demo-gestor',
-        name: 'Gestor Demo',
-        email: 'gestor@alugapro.com',
-        role: 'gestor',
-        companyId: 'demo-company',
-        active: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      },
-      'inquilino@alugapro.com': {
-        id: 'demo-inquilino',
-        name: 'Inquilino Demo',
-        email: 'inquilino@alugapro.com',
-        role: 'inquilino',
-        companyId: 'demo-company',
-        active: true,
-        createdAt: Timestamp.now(),
-        updatedAt: Timestamp.now(),
-      },
-    }
-  : {}
-const DEMO_PASSWORD = import.meta.env.DEV ? 'demo1234' : ''
+// ── Usuários demo (disponíveis em todas as builds, inclusive Vercel) ───────────
+// Credenciais públicas para demonstrações comerciais — companyId demo-company
+// tem dados de vitrine e nunca toca em dados reais ou cobranças reais.
+const DEMO_USERS: Record<string, User> = {
+  'admin@alugapro.com': {
+    id: 'demo-admin',
+    name: 'Administrador',
+    email: 'admin@alugapro.com',
+    role: 'admin',
+    companyId: 'demo-company',
+    active: true,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  },
+  'gestor@alugapro.com': {
+    id: 'demo-gestor',
+    name: 'Carlos Gestor',
+    email: 'gestor@alugapro.com',
+    role: 'gestor',
+    companyId: 'demo-company',
+    active: true,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  },
+  'inquilino@alugapro.com': {
+    id: 'demo-inquilino',
+    name: 'Roberto Alves',
+    email: 'inquilino@alugapro.com',
+    role: 'inquilino',
+    companyId: 'demo-company',
+    tenantId: 'demo-tenant-roberto',
+    active: true,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  },
+}
+const DEMO_PASSWORD = 'demo1234'
 const DEMO_SESSION_KEY = 'alugapro_demo_user'
 
 interface AuthContextValue {

@@ -232,59 +232,71 @@ export function SubscriptionPage() {
         <h3 className="text-lg font-semibold mb-4">
           {status === 'active' ? 'Alterar plano' : 'Escolha um plano'}
         </h3>
-        <div className="grid gap-4 sm:grid-cols-3">
-          {(Object.keys(PLANS) as PlanId[]).map((plan) => {
-            const isCurrentPlan = sub?.planId === plan && status === 'active'
-            const isCheaper = status === 'active' && sub && PLANS[plan].price < PLANS[sub.planId].price
-            return (
-              <Card
-                key={plan}
-                className={`relative flex flex-col transition-all ${
-                  plan === 'pro'
-                    ? 'border-primary shadow-md ring-1 ring-primary/20'
-                    : ''
-                } ${isCurrentPlan ? 'opacity-70' : ''}`}
-              >
-                {plan === 'pro' && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground text-xs px-3">Mais popular</Badge>
-                  </div>
-                )}
-                <CardHeader className="pb-2">
-                  <div className="flex items-center gap-2 text-primary">
-                    {PLAN_ICONS[plan]}
-                    <CardTitle className="text-base">{PLANS[plan].name}</CardTitle>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{PLANS[plan].description}</p>
-                  <div className="pt-2">
-                    <span className="text-3xl font-bold">{formatCurrency(PLANS[plan].price)}</span>
-                    <span className="text-muted-foreground text-sm">/mês</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex flex-col flex-1 gap-4">
-                  <ul className="space-y-1.5 flex-1">
-                    {PLAN_FEATURES[plan].map((feat) => (
-                      <li key={feat} className="flex items-start gap-2 text-sm">
-                        <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                        {feat}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className="w-full mt-auto"
-                    variant={plan === 'pro' ? 'default' : 'outline'}
-                    disabled={isCurrentPlan || !!checkoutLoading}
-                    onClick={() => handleChoosePlan(plan)}
-                  >
-                    {checkoutLoading === plan ? 'Aguarde...' :
-                     isCurrentPlan ? 'Plano atual' :
-                     isCheaper ? 'Fazer downgrade' : 'Assinar agora'}
-                  </Button>
-                </CardContent>
-              </Card>
-            )
-          })}
-        </div>
+
+        {status === 'demo' ? (
+          <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-8 text-center">
+            <BarChart3 className="mx-auto h-10 w-10 text-primary mb-3" />
+            <p className="font-semibold text-lg">Conta de demonstração</p>
+            <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
+              Esta conta tem acesso completo ao plano <strong>Business</strong> para
+              apresentações comerciais. Cobranças reais não são aplicáveis.
+            </p>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-3">
+            {(Object.keys(PLANS) as PlanId[]).map((plan) => {
+              const isCurrentPlan = sub?.planId === plan && status === 'active'
+              const isCheaper = status === 'active' && sub && PLANS[plan].price < PLANS[sub.planId].price
+              return (
+                <Card
+                  key={plan}
+                  className={`relative flex flex-col transition-all ${
+                    plan === 'pro'
+                      ? 'border-primary shadow-md ring-1 ring-primary/20'
+                      : ''
+                  } ${isCurrentPlan ? 'opacity-70' : ''}`}
+                >
+                  {plan === 'pro' && (
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-primary text-primary-foreground text-xs px-3">Mais popular</Badge>
+                    </div>
+                  )}
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2 text-primary">
+                      {PLAN_ICONS[plan]}
+                      <CardTitle className="text-base">{PLANS[plan].name}</CardTitle>
+                    </div>
+                    <p className="text-xs text-muted-foreground">{PLANS[plan].description}</p>
+                    <div className="pt-2">
+                      <span className="text-3xl font-bold">{formatCurrency(PLANS[plan].price)}</span>
+                      <span className="text-muted-foreground text-sm">/mês</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex flex-col flex-1 gap-4">
+                    <ul className="space-y-1.5 flex-1">
+                      {PLAN_FEATURES[plan].map((feat) => (
+                        <li key={feat} className="flex items-start gap-2 text-sm">
+                          <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
+                          {feat}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button
+                      className="w-full mt-auto"
+                      variant={plan === 'pro' ? 'default' : 'outline'}
+                      disabled={isCurrentPlan || !!checkoutLoading}
+                      onClick={() => handleChoosePlan(plan)}
+                    >
+                      {checkoutLoading === plan ? 'Aguarde...' :
+                       isCurrentPlan ? 'Plano atual' :
+                       isCheaper ? 'Fazer downgrade' : 'Assinar agora'}
+                    </Button>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+        )}
       </div>
 
       {/* Nota sobre mobile */}
