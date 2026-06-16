@@ -202,7 +202,7 @@ export function SubscriptionPage() {
         <div className="grid gap-4 sm:grid-cols-3">
           {(Object.keys(PLANS) as PlanId[]).map((plan) => {
             const isCurrentPlan = sub?.planId === plan && status === 'active'
-            const isCheaper = sub && PLANS[plan].price < PLANS[sub.planId].price
+            const isCheaper = status === 'active' && sub && PLANS[plan].price < PLANS[sub.planId].price
             return (
               <Card
                 key={plan}

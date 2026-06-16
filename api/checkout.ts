@@ -2,24 +2,36 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { adminDb, Timestamp } from './_firebase'
 
 const MP_BASE = 'https://api.mercadopago.com'
-const TOKEN = process.env.MP_ACCESS_TOKEN!
+const USE_TEST = process.env.MP_USE_TEST === 'true'
+const TOKEN = (USE_TEST ? process.env.MP_ACCESS_TOKEN_TEST : process.env.MP_ACCESS_TOKEN_PROD)!
 const APP_URL = process.env.VITE_APP_URL ?? 'https://alugapro.com.br'
+const PLAN_SUFFIX = USE_TEST ? '_TEST' : '_PROD'
 
 const PLANS: Record<string, { name: string; amount: number; envPlanId: string }> = {
-  starter:  { name: 'AlugaPro Starter',  amount: 39,  envPlanId: 'MP_PLAN_STARTER_ID' },
-  pro:      { name: 'AlugaPro Pro',      amount: 79,  envPlanId: 'MP_PLAN_PRO_ID' },
-  business: { name: 'AlugaPro Business', amount: 129, envPlanId: 'MP_PLAN_BUSINESS_ID' },
+  starter:  { name: 'AlugaPro Starter',  amount: 39,  envPlanId: `MP_PLAN_STARTER_ID${PLAN_SUFFIX}` },
+  pro:      { name: 'AlugaPro Pro',      amount: 79,  envPlanId: `MP_PLAN_PRO_ID${PLAN_SUFFIX}` },
+  business: { name: 'AlugaPro Business', amount: 129, envPlanId: `MP_PLAN_BUSINESS_ID${PLAN_SUFFIX}` },
 }
 
-// Returns an existing MP preapproval_plan ID or creates one and logs it for the admin to save.
-async function getOrCreateMpPlanId(planKey: string): Promise<string> {
+// Gets or creates an MP preapproval_plan and returns { id, initPoint }.
+// The initPoint is MP's hosted checkout URL — the user goes there to enter card details.
+// We never create a preapproval directly; that requires a card_token from the frontend.
+async function getOrCreateMpPlan(planKey: string): Promise<{ id: string; initPoint: string }> {
   const plan = PLANS[planKey]
-
-  // Prefer pre-configured plan IDs (set once in Vercel env vars)
   const cached = process.env[plan.envPlanId]
-  if (cached) return cached
 
-  // Sandbox/first-run: create a new plan and print the ID for the admin to save
+  if (cached) {
+    const res = await fetch(`${MP_BASE}/preapproval_plan/${cached}`, {
+      headers: { Authorization: `Bearer ${TOKEN}` },
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return { id: data.id, initPoint: data.init_point }
+    }
+    console.warn(`[MP] Cached plan ID ${cached} (${plan.envPlanId}) not found — creating a new one`)
+  }
+
+  // First-run or stale: create the plan
   const res = await fetch(`${MP_BASE}/preapproval_plan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
@@ -48,9 +60,8 @@ async function getOrCreateMpPlanId(planKey: string): Promise<string> {
   }
 
   const data = await res.json()
-  // Log so the admin can set the env var and avoid re-creating
-  console.info(`[MP] Plan created — set ${plan.envPlanId}=${data.id} in your Vercel env vars`)
-  return data.id as string
+  console.info(`[MP] Plan created — set ${plan.envPlanId}=${data.id} in your env vars`)
+  return { id: data.id, initPoint: data.init_point }
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -73,45 +84,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const mpPlanId = await getOrCreateMpPlanId(planId)
+    const { id: mpPlanId, initPoint } = await getOrCreateMpPlan(planId)
 
-    // Create the preapproval (subscription instance) for this customer
-    const subRes = await fetch(`${MP_BASE}/preapproval`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${TOKEN}` },
-      body: JSON.stringify({
-        preapproval_plan_id: mpPlanId,
-        payer_email: email,
-        external_reference: `${companyId}:${planId}`,
-        back_url: `${APP_URL}/configuracoes/assinatura`,
-      }),
-    })
-
-    if (!subRes.ok) {
-      const err = await subRes.json()
-      console.error('[MP] preapproval error:', err)
-      return res.status(502).json({ error: 'Erro ao criar assinatura no Mercado Pago' })
-    }
-
-    const mpSub = await subRes.json()
-
-    // Persist the pending subscription reference in Firestore
-    // Status remains 'trialing' or current — only webhook updates to 'active'
+    // Record pending checkout so the webhook can identify the company by email
     await adminDb.doc(`subscriptions/${companyId}`).set(
       {
         provider: 'mercadopago',
-        providerSubscriptionId: mpSub.id,
+        pendingPlanId: planId,
+        pendingMpPlanId: mpPlanId,
+        payerEmail: email,
         updatedAt: Timestamp.now(),
       },
       { merge: true }
     )
 
-    return res.status(200).json({
-      checkoutUrl: mpSub.init_point,
-      subscriptionId: mpSub.id,
-    })
+    return res.status(200).json({ checkoutUrl: initPoint })
   } catch (err) {
     console.error('[checkout] error:', err)
-    return res.status(500).json({ error: 'Erro interno ao iniciar checkout' })
+    return res.status(500).json({
+      error: err instanceof Error ? err.message : 'Erro interno ao iniciar checkout',
+    })
   }
 }

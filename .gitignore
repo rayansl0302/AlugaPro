@@ -41,3 +41,6 @@ ios/.xcode.env.local
 # Capacitor assets generated
 resources/android/
 resources/ios/
+
+.vercel
+.env*
