@@ -1,17 +1,19 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone } from 'lucide-react'
+import { ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone, Zap, CreditCard, AlertTriangle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
+import { useSubscription } from '@/hooks/useSubscription'
 import { usePhoneVerification } from '@/hooks/usePhoneVerification'
 import { auth, db } from '@/lib/firebase'
-import { formatPhone, maskPhone } from '@/lib/utils'
+import { formatPhone, maskPhone, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/useToast'
+import { PLANS } from '@/types'
 
 const RECAPTCHA_ID = 'recaptcha-profile-container'
 
@@ -20,9 +22,19 @@ function toE164BR(masked: string): string {
   return `+55${digits}`
 }
 
+const SUB_STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' | 'info' }> = {
+  trialing:  { label: 'Trial ativo',        variant: 'info' },
+  active:    { label: 'Ativo',              variant: 'success' },
+  past_due:  { label: 'Pagamento pendente', variant: 'destructive' },
+  canceled:  { label: 'Cancelado',          variant: 'warning' },
+  expired:   { label: 'Expirado',           variant: 'secondary' },
+  demo:      { label: 'Admin',              variant: 'secondary' },
+}
+
 export function ProfilePage() {
   const navigate = useNavigate()
   const { user, updateLocalUser } = useAuth()
+  const { status, daysRemaining, isAdmin, planId } = useSubscription()
   const { step, sending, confirming, error, sendCode, confirmCode, reset } = usePhoneVerification()
 
   const [editing, setEditing] = useState(false)
@@ -116,6 +128,67 @@ export function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {user.role !== 'inquilino' && !isAdmin && (
+          <Card className={cn(
+            'border-2 transition-colors',
+            status === 'active'   ? 'border-green-300 dark:border-green-700' :
+            status === 'trialing' ? 'border-amber-300 dark:border-amber-700' :
+            status === 'past_due' ? 'border-red-400 dark:border-red-700' :
+            'border-muted',
+          )}>
+            <CardHeader className="pb-3">
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <CreditCard className="h-4 w-4" /> Assinatura
+                </CardTitle>
+                <Badge variant={SUB_STATUS_BADGE[status]?.variant ?? 'secondary'}>
+                  {SUB_STATUS_BADGE[status]?.label ?? status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold">{PLANS[planId as keyof typeof PLANS]?.name ?? planId}</p>
+                {status === 'trialing' && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    {daysRemaining} dia{daysRemaining !== 1 ? 's' : ''} restante{daysRemaining !== 1 ? 's' : ''} de trial
+                  </p>
+                )}
+                {status === 'past_due' && (
+                  <p className="text-sm text-destructive">Pagamento falhou — acesso de escrita suspenso</p>
+                )}
+                {(status === 'expired' || status === 'canceled') && (
+                  <p className="text-sm text-muted-foreground">Assine um plano para continuar usando</p>
+                )}
+                {status === 'active' && (
+                  <p className="text-sm text-muted-foreground">Assinatura ativa</p>
+                )}
+              </div>
+
+              {status === 'trialing' && (
+                <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white shrink-0" asChild>
+                  <Link to="/assinatura"><Zap className="h-3.5 w-3.5 fill-current" /> Ativar plano</Link>
+                </Button>
+              )}
+              {(status === 'expired' || status === 'canceled') && (
+                <Button size="sm" className="gap-1.5 shrink-0" asChild>
+                  <Link to="/assinatura"><Zap className="h-3.5 w-3.5" /> Assinar agora</Link>
+                </Button>
+              )}
+              {status === 'past_due' && (
+                <Button size="sm" variant="destructive" className="gap-1.5 shrink-0" asChild>
+                  <Link to="/assinatura"><AlertTriangle className="h-3.5 w-3.5" /> Regularizar</Link>
+                </Button>
+              )}
+              {status === 'active' && (
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => navigate('/assinatura')}>
+                  Gerenciar
+                </Button>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader>
