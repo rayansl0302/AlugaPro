@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { PLANS, PlanId } from '@/types'
@@ -8,7 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle, Zap, Building2, BarChart3, ExternalLink, CreditCard, AlertTriangle } from 'lucide-react'
+import { CheckCircle, Zap, Building2, BarChart3, ExternalLink, CreditCard, AlertTriangle, Loader2 } from 'lucide-react'
 import { toast } from '@/hooks/useToast'
 
 const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
@@ -62,6 +63,31 @@ export function SubscriptionPage() {
   const { user } = useAuth()
   const { sub, status, planId, isAdmin } = useSubscription()
   const [checkoutLoading, setCheckoutLoading] = useState<PlanId | null>(null)
+  const [verifying, setVerifying] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  // When MP redirects back with ?preapproval_id=xxx, verify and update subscription
+  useEffect(() => {
+    const preapprovalId = searchParams.get('preapproval_id')
+    if (!preapprovalId || !user?.companyId || verifying) return
+
+    setVerifying(true)
+    fetch('/api/verify-preapproval', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ preapprovalId, companyId: user.companyId }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.status === 'active') {
+          toast({ title: 'Assinatura ativada!', description: 'Seu plano está ativo.' })
+        }
+        // Remove query param from URL
+        setSearchParams({}, { replace: true })
+      })
+      .catch(() => toast({ title: 'Erro ao verificar assinatura', variant: 'destructive' }))
+      .finally(() => setVerifying(false))
+  }, [searchParams, user?.companyId])
 
   const daysLeft = sub ? getDaysRemaining(sub) : 0
   const statusInfo = STATUS_BADGE[status] ?? STATUS_BADGE.expired
@@ -99,6 +125,13 @@ export function SubscriptionPage() {
 
   return (
     <div className="space-y-8 max-w-5xl">
+      {verifying && (
+        <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+          <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+          Verificando pagamento com o Mercado Pago...
+        </div>
+      )}
+
       {/* Status atual */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
