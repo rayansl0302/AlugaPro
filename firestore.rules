@@ -82,8 +82,14 @@ service cloud.firestore {
 
     // Companies
     match /companies/{companyId} {
-      allow read: if isAuthenticated() && sameCompany(companyId);
-      allow create: if isAdmin();
+      // Novo gestor precisa ler o próprio slot antes de criar
+      allow read: if isAuthenticated() &&
+        (sameCompany(companyId) || companyId == 'company_' + request.auth.uid);
+      allow create: if isAdmin()
+        // Novo gestor criando sua própria empresa (companyId = company_{uid})
+        || (isAuthenticated()
+            && companyId == 'company_' + request.auth.uid
+            && request.resource.data.ownerId == request.auth.uid);
       allow update: if isAdmin() && sameCompany(companyId);
       allow delete: if false; // never delete companies via client
     }
@@ -92,6 +98,11 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
       allow write: if isAdmin();
+      // Novo gestor: auto-registro sem convite (cria o próprio doc na primeira vez)
+      allow create: if request.auth.uid == userId
+        && request.resource.data.role == 'gestor'
+        && request.resource.data.companyId == 'company_' + request.auth.uid
+        && request.resource.data.active == true;
       // O usuário convidado materializa o próprio doc conforme o convite criado
       // pelo gestor — sem poder escolher empresa ou papel arbitrários.
       allow create, update: if request.auth.uid == userId

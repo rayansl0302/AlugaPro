@@ -33,8 +33,9 @@ const SUB_STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'wa
 
 export function ProfilePage() {
   const navigate = useNavigate()
-  const { user, updateLocalUser } = useAuth()
+  const { user, updateLocalUser, refreshProfile } = useAuth()
   const { status, daysRemaining, isAdmin, planId } = useSubscription()
+  const [refreshing, setRefreshing] = useState(false)
   const { step, sending, confirming, error, sendCode, confirmCode, reset } = usePhoneVerification()
 
   const [editing, setEditing] = useState(false)
@@ -155,6 +156,11 @@ export function ProfilePage() {
                     {daysRemaining} dia{daysRemaining !== 1 ? 's' : ''} restante{daysRemaining !== 1 ? 's' : ''} de trial
                   </p>
                 )}
+                {status === 'demo' && (
+                  <p className="text-sm text-amber-600 dark:text-amber-400">
+                    Conta pendente de ativação
+                  </p>
+                )}
                 {status === 'past_due' && (
                   <p className="text-sm text-destructive">Pagamento falhou — acesso de escrita suspenso</p>
                 )}
@@ -166,9 +172,23 @@ export function ProfilePage() {
                 )}
               </div>
 
-              {status === 'trialing' && (
-                <Button size="sm" className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white shrink-0" asChild>
-                  <Link to="/assinatura"><Zap className="h-3.5 w-3.5 fill-current" /> Ativar plano</Link>
+              {(status === 'trialing' || status === 'demo') && (
+                <Button
+                  size="sm"
+                  className="gap-1.5 bg-amber-500 hover:bg-amber-600 text-white shrink-0"
+                  disabled={refreshing}
+                  onClick={async () => {
+                    if (status === 'demo') {
+                      setRefreshing(true)
+                      try { await refreshProfile() } finally { setRefreshing(false) }
+                    }
+                    navigate('/assinatura')
+                  }}
+                >
+                  {refreshing
+                    ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    : <Zap className="h-3.5 w-3.5 fill-current" />}
+                  Ativar plano
                 </Button>
               )}
               {(status === 'expired' || status === 'canceled') && (

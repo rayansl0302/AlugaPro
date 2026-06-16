@@ -192,6 +192,7 @@ interface AuthContextValue {
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateLocalUser: (patch: Partial<User>) => void
+  refreshProfile: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -263,6 +264,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await sendPasswordResetEmail(auth, email)
   }
 
+  const refreshProfile = async () => {
+    const fbUser = auth.currentUser
+    if (!fbUser) return
+    const hint = (localStorage.getItem(ROLE_HINT_KEY) as UserRole) || 'gestor'
+    setUser(await resolveUserProfile(fbUser, hint))
+  }
+
   const updateLocalUser = (patch: Partial<User>) => {
     setUser((prev) => {
       if (!prev) return prev
@@ -275,7 +283,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signUp, signInWithGoogle, logout, resetPassword, updateLocalUser }}>
+    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signUp, signInWithGoogle, logout, resetPassword, updateLocalUser, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   )

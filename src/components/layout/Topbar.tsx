@@ -18,15 +18,16 @@ export function Topbar({ title }: TopbarProps) {
   const { user } = useAuth()
   const { status, daysRemaining, isAdmin, isLoading } = useSubscription()
 
+  // Show for any gestor that isn't a real admin and hasn't paid yet
   const showUpgrade =
-    !isLoading && !isAdmin && user?.role !== 'inquilino' &&
-    ['trialing', 'expired', 'canceled', 'past_due'].includes(status)
+    !isLoading && !isAdmin && user?.role === 'gestor' && status !== 'active'
 
   const isUrgent = ['expired', 'canceled', 'past_due'].includes(status)
 
   const upgradeLabel =
     status === 'trialing' ? `${daysRemaining}d de trial` :
     status === 'past_due' ? 'Regularizar pagamento' :
+    status === 'demo'     ? 'Ativar plano' :
     'Assinar agora'
 
   return (
