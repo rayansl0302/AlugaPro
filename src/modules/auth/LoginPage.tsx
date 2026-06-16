@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useSearchParams, Link } from 'react-router-dom'
-import { Loader2, Eye, EyeOff, AlertTriangle, Clock } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertTriangle, Clock, Building2, User, Info, CheckCircle } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/useToast'
+import { cn } from '@/lib/utils'
 
 type LoginRole = 'gestor' | 'inquilino'
 
@@ -61,12 +62,95 @@ function loadRememberedEmail(): string {
   }
 }
 
+const GESTOR_FEATURES = [
+  'Portfólio de imóveis e veículos',
+  'Contratos digitais com assinatura',
+  'Cobranças e controle financeiro',
+  'Dashboard e relatórios',
+  'Gerenciamento de inquilinos',
+  '14 dias de trial grátis',
+]
+
+const INQUILINO_FEATURES = [
+  'Acesso ao contrato ativo',
+  'Histórico de pagamentos',
+  'Envio de comprovantes',
+  'Notificações de vencimento',
+]
+
+function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
+  return (
+    <Card className="hidden lg:flex flex-col h-fit shadow-xl">
+      <CardContent className="p-6 space-y-4">
+        <h3 className="font-semibold text-base text-foreground">Qual é o seu perfil?</h3>
+
+        <div className={cn(
+          'rounded-xl border-2 p-4 transition-all duration-200',
+          selectedRole === 'gestor' ? 'border-primary bg-primary/5' : 'border-border opacity-60',
+        )}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className={cn(
+              'rounded-lg p-1.5 transition-colors',
+              selectedRole === 'gestor' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+            )}>
+              <Building2 className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Gestor / Proprietário</p>
+              <p className="text-xs text-muted-foreground">Administra locações e inquilinos</p>
+            </div>
+          </div>
+          <ul className="space-y-1.5">
+            {GESTOR_FEATURES.map(f => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <CheckCircle className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', selectedRole === 'gestor' ? 'text-primary' : 'text-muted-foreground')} />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className={cn(
+          'rounded-xl border-2 p-4 transition-all duration-200',
+          selectedRole === 'inquilino' ? 'border-primary bg-primary/5' : 'border-border opacity-60',
+        )}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className={cn(
+              'rounded-lg p-1.5 transition-colors',
+              selectedRole === 'inquilino' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+            )}>
+              <User className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Inquilino / Locatário</p>
+              <p className="text-xs text-muted-foreground">Acessa contrato e pagamentos</p>
+            </div>
+          </div>
+          <ul className="space-y-1.5 mb-3">
+            {INQUILINO_FEATURES.map(f => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <CheckCircle className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', selectedRole === 'inquilino' ? 'text-primary' : 'text-muted-foreground')} />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+            <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
+            <span>Use o e-mail informado pelo seu gestor no convite. O sistema vinculará automaticamente ao seu contrato.</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
 export function LoginPage() {
   const { user, signIn, signUp, signInWithGoogle, resetPassword } = useAuth()
   const [searchParams] = useSearchParams()
   const [pageMode, setPageMode] = useState<'login' | 'signup'>(
-    searchParams.get('mode') === 'signup' ? 'signup' : 'login'
+    searchParams.get('mode') === 'signup' ? 'signup' : 'login',
   )
+  const [signupRole, setSignupRole] = useState<LoginRole>('gestor')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
@@ -142,8 +226,13 @@ export function LoginPage() {
   const onSignupSubmit = async (data: SignupData) => {
     setLoading(true)
     try {
-      await signUp(data.name, data.email, data.password)
-      toast({ title: 'Conta criada!', description: 'Bem-vindo ao AlugaPro. Seu trial de 14 dias começou.' })
+      await signUp(data.name, data.email, data.password, signupRole)
+      toast({
+        title: 'Conta criada!',
+        description: signupRole === 'gestor'
+          ? 'Bem-vindo ao AlugaPro. Seu trial de 14 dias começou.'
+          : 'Conta criada. O sistema verificará seu vínculo com o gestor.',
+      })
     } catch (err) {
       const msg = err instanceof Error ? err.message : ''
       const friendlyMsg = msg.includes('email-already-in-use')
@@ -161,7 +250,7 @@ export function LoginPage() {
     if (isLocked) return
     setGoogleLoading(true)
     try {
-      await signInWithGoogle(pageMode === 'signup' ? 'gestor' : role)
+      await signInWithGoogle(pageMode === 'signup' ? signupRole : role)
     } catch {
       toast({ title: 'Erro ao entrar com Google', description: 'Tente novamente.', variant: 'destructive' })
     } finally {
@@ -191,206 +280,91 @@ export function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
-      <div className="flex w-full max-w-md flex-col items-center">
-        <Card className="w-full shadow-xl">
-          <CardHeader className="text-center">
-            <Link to="/" className="mb-4 inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
-              ← Voltar ao site
-            </Link>
-            <img
-              src="/logo-completa-alugapro.png"
-              alt="AlugaPro - Gestão Inteligente de Aluguéis"
-              className="mx-auto mb-2 w-48"
-            />
-          </CardHeader>
+      <div className={cn(
+        'flex w-full flex-col items-center gap-4',
+        pageMode === 'signup' ? 'max-w-4xl' : 'max-w-md',
+      )}>
 
-          <CardContent>
-            {pageMode === 'login' ? (
-              <>
-                {!forgotMode && (
-                  <Tabs value={role} onValueChange={(v) => setRole(v as LoginRole)} className="mb-4">
-                    <TabsList className="w-full">
-                      <TabsTrigger value="gestor" className="flex-1">Gestor</TabsTrigger>
-                      <TabsTrigger value="inquilino" className="flex-1">Inquilino</TabsTrigger>
-                    </TabsList>
-                  </Tabs>
-                )}
+        {pageMode === 'signup' ? (
+          <div className="grid w-full items-start gap-6 lg:grid-cols-[460px_1fr]">
 
-                {isLocked && (
-                  <div className="mb-4 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
-                    <Clock className="h-4 w-4 shrink-0" />
-                    <span>Muitas tentativas. Aguarde <strong>{secondsLeft}s</strong> para tentar novamente.</span>
-                  </div>
-                )}
+            {/* Left: signup form */}
+            <Card className="w-full shadow-xl">
+              <CardHeader className="text-center pb-2">
+                <Link to="/" className="mb-4 inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
+                  ← Voltar ao site
+                </Link>
+                <img
+                  src="/logo-completa-alugapro.png"
+                  alt="AlugaPro"
+                  className="mx-auto mb-2 w-44"
+                />
+              </CardHeader>
 
-                {!isLocked && failCount >= 3 && (
-                  <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
-                    <AlertTriangle className="h-4 w-4 shrink-0" />
-                    <span>
-                      {attemptsUntilLock > 0
-                        ? `Mais ${attemptsUntilLock} tentativa(s) antes do bloqueio temporário.`
-                        : 'Próxima falha resultará em bloqueio temporário.'}
-                    </span>
-                  </div>
-                )}
-
-                <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">E-mail</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      autoComplete="username"
-                      disabled={isLocked}
-                      {...loginForm.register('email')}
-                    />
-                    {loginForm.formState.errors.email && (
-                      <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
+              <CardContent>
+                {/* Role selector */}
+                <div className="grid grid-cols-2 gap-2 mb-5">
+                  <button
+                    type="button"
+                    onClick={() => setSignupRole('gestor')}
+                    className={cn(
+                      'rounded-xl border-2 p-3 text-left transition-all',
+                      signupRole === 'gestor'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/40',
                     )}
-                  </div>
-
-                  {!forgotMode && (
-                    <div className="space-y-2">
-                      <Label htmlFor="password">Senha</Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          className="pr-10"
-                          autoComplete="current-password"
-                          disabled={isLocked}
-                          {...loginForm.register('password')}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(v => !v)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          tabIndex={-1}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      {loginForm.formState.errors.password && (
-                        <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
-                      )}
-                    </div>
-                  )}
-
-                  {!forgotMode ? (
-                    <>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                        <input
-                          type="checkbox"
-                          checked={remember}
-                          onChange={(e) => setRemember(e.target.checked)}
-                          className="h-4 w-4 rounded border-input accent-primary"
-                        />
-                        Lembrar meu e-mail
-                      </label>
-                      <Button type="submit" className="w-full" disabled={loading || isLocked}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        {isLocked ? `Bloqueado (${secondsLeft}s)` : 'Entrar'}
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => setForgotMode(true)}
-                        className="w-full text-center text-sm text-muted-foreground hover:text-primary"
-                      >
-                        Esqueci minha senha
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <Button type="button" className="w-full" onClick={handleForgot} disabled={loading}>
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Enviar e-mail de recuperação
-                      </Button>
-                      <button
-                        type="button"
-                        onClick={() => setForgotMode(false)}
-                        className="w-full text-center text-sm text-muted-foreground hover:text-primary"
-                      >
-                        Voltar ao login
-                      </button>
-                    </>
-                  )}
-                </form>
-
-                {!forgotMode && (
-                  <>
-                    <div className="my-4 flex items-center gap-3">
-                      <span className="h-px flex-1 bg-border" />
-                      <span className="text-xs text-muted-foreground">ou</span>
-                      <span className="h-px flex-1 bg-border" />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="w-full"
-                      onClick={handleGoogle}
-                      disabled={googleLoading || loading || isLocked}
-                    >
-                      {googleLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ) : (
-                        <span className="mr-2"><GoogleIcon /></span>
-                      )}
-                      Entrar com Google
-                    </Button>
-
-                    {role === 'gestor' && (
-                      <p className="mt-4 text-center text-sm text-muted-foreground">
-                        Não tem uma conta?{' '}
-                        <button
-                          type="button"
-                          onClick={() => setPageMode('signup')}
-                          className="font-medium text-primary hover:underline"
-                        >
-                          Criar conta grátis
-                        </button>
-                      </p>
+                  >
+                    <Building2 className={cn('h-5 w-5 mb-1.5', signupRole === 'gestor' ? 'text-primary' : 'text-muted-foreground')} />
+                    <p className="font-semibold text-sm">Gestor</p>
+                    <p className="text-xs text-muted-foreground leading-tight">Proprietário / Admin</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSignupRole('inquilino')}
+                    className={cn(
+                      'rounded-xl border-2 p-3 text-left transition-all',
+                      signupRole === 'inquilino'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/40',
                     )}
-                  </>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="mb-5 text-center">
-                  <p className="text-sm font-medium text-primary">14 dias grátis · sem cartão de crédito</p>
+                  >
+                    <User className={cn('h-5 w-5 mb-1.5', signupRole === 'inquilino' ? 'text-primary' : 'text-muted-foreground')} />
+                    <p className="font-semibold text-sm">Inquilino</p>
+                    <p className="text-xs text-muted-foreground leading-tight">Locatário</p>
+                  </button>
                 </div>
 
-                <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-4">
-                  <div className="space-y-2">
+                {signupRole === 'gestor' && (
+                  <p className="mb-4 text-center text-sm font-medium text-primary">
+                    14 dias grátis · sem cartão de crédito
+                  </p>
+                )}
+
+                {signupRole === 'inquilino' && (
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>Use o e-mail informado pelo seu gestor no convite. O sistema vinculará sua conta automaticamente.</span>
+                  </div>
+                )}
+
+                <form onSubmit={signupForm.handleSubmit(onSignupSubmit)} className="space-y-3">
+                  <div className="space-y-1.5">
                     <Label htmlFor="su-name">Nome completo</Label>
-                    <Input
-                      id="su-name"
-                      type="text"
-                      placeholder="Seu nome"
-                      autoComplete="name"
-                      {...signupForm.register('name')}
-                    />
+                    <Input id="su-name" type="text" placeholder="Seu nome" autoComplete="name" {...signupForm.register('name')} />
                     {signupForm.formState.errors.name && (
                       <p className="text-xs text-destructive">{signupForm.formState.errors.name.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="su-email">E-mail</Label>
-                    <Input
-                      id="su-email"
-                      type="email"
-                      placeholder="seu@email.com"
-                      autoComplete="email"
-                      {...signupForm.register('email')}
-                    />
+                    <Input id="su-email" type="email" placeholder="seu@email.com" autoComplete="email" {...signupForm.register('email')} />
                     {signupForm.formState.errors.email && (
                       <p className="text-xs text-destructive">{signupForm.formState.errors.email.message}</p>
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="su-password">Senha</Label>
                     <div className="relative">
                       <Input
@@ -415,7 +389,7 @@ export function LoginPage() {
                     )}
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1.5">
                     <Label htmlFor="su-confirm">Confirmar senha</Label>
                     <div className="relative">
                       <Input
@@ -440,9 +414,9 @@ export function LoginPage() {
                     )}
                   </div>
 
-                  <Button type="submit" className="w-full" disabled={loading}>
+                  <Button type="submit" className="w-full mt-2" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Criar conta grátis
+                    {signupRole === 'gestor' ? 'Criar conta grátis' : 'Criar conta'}
                   </Button>
                 </form>
 
@@ -451,45 +425,161 @@ export function LoginPage() {
                   <span className="text-xs text-muted-foreground">ou</span>
                   <span className="h-px flex-1 bg-border" />
                 </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleGoogle}
-                  disabled={googleLoading || loading}
-                >
-                  {googleLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <span className="mr-2"><GoogleIcon /></span>
-                  )}
+                <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={googleLoading || loading}>
+                  {googleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <span className="mr-2"><GoogleIcon /></span>}
                   Cadastrar com Google
                 </Button>
 
                 <p className="mt-4 text-center text-sm text-muted-foreground">
                   Já tem uma conta?{' '}
-                  <button
-                    type="button"
-                    onClick={() => setPageMode('login')}
-                    className="font-medium text-primary hover:underline"
-                  >
+                  <button type="button" onClick={() => setPageMode('login')} className="font-medium text-primary hover:underline">
                     Entrar
                   </button>
                 </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
 
-        <p className="mt-6 text-center text-xs text-muted-foreground">
+            {/* Right: role info card */}
+            <RoleInfoCard selectedRole={signupRole} />
+          </div>
+
+        ) : (
+
+          <Card className="w-full shadow-xl">
+            <CardHeader className="text-center">
+              <Link to="/" className="mb-4 inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
+                ← Voltar ao site
+              </Link>
+              <img
+                src="/logo-completa-alugapro.png"
+                alt="AlugaPro - Gestão Inteligente de Aluguéis"
+                className="mx-auto mb-2 w-48"
+              />
+            </CardHeader>
+
+            <CardContent>
+              {!forgotMode && (
+                <Tabs value={role} onValueChange={(v) => setRole(v as LoginRole)} className="mb-4">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="gestor" className="flex-1">Gestor</TabsTrigger>
+                    <TabsTrigger value="inquilino" className="flex-1">Inquilino</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              )}
+
+              {isLocked && (
+                <div className="mb-4 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                  <Clock className="h-4 w-4 shrink-0" />
+                  <span>Muitas tentativas. Aguarde <strong>{secondsLeft}s</strong> para tentar novamente.</span>
+                </div>
+              )}
+
+              {!isLocked && failCount >= 3 && (
+                <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
+                  <AlertTriangle className="h-4 w-4 shrink-0" />
+                  <span>
+                    {attemptsUntilLock > 0
+                      ? `Mais ${attemptsUntilLock} tentativa(s) antes do bloqueio temporário.`
+                      : 'Próxima falha resultará em bloqueio temporário.'}
+                  </span>
+                </div>
+              )}
+
+              <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="email">E-mail</Label>
+                  <Input id="email" type="email" placeholder="seu@email.com" autoComplete="username" disabled={isLocked} {...loginForm.register('email')} />
+                  {loginForm.formState.errors.email && (
+                    <p className="text-xs text-destructive">{loginForm.formState.errors.email.message}</p>
+                  )}
+                </div>
+
+                {!forgotMode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="password">Senha</Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        className="pr-10"
+                        autoComplete="current-password"
+                        disabled={isLocked}
+                        {...loginForm.register('password')}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                        tabIndex={-1}
+                      >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </button>
+                    </div>
+                    {loginForm.formState.errors.password && (
+                      <p className="text-xs text-destructive">{loginForm.formState.errors.password.message}</p>
+                    )}
+                  </div>
+                )}
+
+                {!forgotMode ? (
+                  <>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                      <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-input accent-primary" />
+                      Lembrar meu e-mail
+                    </label>
+                    <Button type="submit" className="w-full" disabled={loading || isLocked}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      {isLocked ? `Bloqueado (${secondsLeft}s)` : 'Entrar'}
+                    </Button>
+                    <button type="button" onClick={() => setForgotMode(true)} className="w-full text-center text-sm text-muted-foreground hover:text-primary">
+                      Esqueci minha senha
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <Button type="button" className="w-full" onClick={handleForgot} disabled={loading}>
+                      {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Enviar e-mail de recuperação
+                    </Button>
+                    <button type="button" onClick={() => setForgotMode(false)} className="w-full text-center text-sm text-muted-foreground hover:text-primary">
+                      Voltar ao login
+                    </button>
+                  </>
+                )}
+              </form>
+
+              {!forgotMode && (
+                <>
+                  <div className="my-4 flex items-center gap-3">
+                    <span className="h-px flex-1 bg-border" />
+                    <span className="text-xs text-muted-foreground">ou</span>
+                    <span className="h-px flex-1 bg-border" />
+                  </div>
+                  <Button type="button" variant="outline" className="w-full" onClick={handleGoogle} disabled={googleLoading || loading || isLocked}>
+                    {googleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <span className="mr-2"><GoogleIcon /></span>}
+                    Entrar com Google
+                  </Button>
+
+                  {role === 'gestor' && (
+                    <p className="mt-4 text-center text-sm text-muted-foreground">
+                      Não tem uma conta?{' '}
+                      <button type="button" onClick={() => setPageMode('signup')} className="font-medium text-primary hover:underline">
+                        Criar conta grátis
+                      </button>
+                    </p>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        <p className="mt-2 text-center text-xs text-muted-foreground">
           {pageMode === 'signup' ? 'Ao criar a conta, você concorda com os' : 'Ao entrar, você concorda com os'}{' '}
-          <Link to="/termos" className="underline-offset-2 hover:text-primary hover:underline">
-            Termos de Uso
-          </Link>{' '}
+          <Link to="/termos" className="underline-offset-2 hover:text-primary hover:underline">Termos de Uso</Link>{' '}
           e a{' '}
-          <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">
-            Política de Privacidade
-          </Link>.
+          <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">Política de Privacidade</Link>.
         </p>
       </div>
     </div>

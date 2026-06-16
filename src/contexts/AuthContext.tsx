@@ -187,7 +187,7 @@ interface AuthContextValue {
   user: User | null
   loading: boolean
   signIn: (email: string, password: string, intendedRole?: LoginRole) => Promise<void>
-  signUp: (name: string, email: string, password: string) => Promise<void>
+  signUp: (name: string, email: string, password: string, role?: LoginRole) => Promise<void>
   signInWithGoogle: (intendedRole?: LoginRole) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -236,11 +236,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
-  const signUp = async (name: string, email: string, password: string) => {
-    localStorage.setItem(ROLE_HINT_KEY, 'gestor')
+  const signUp = async (name: string, email: string, password: string, role: LoginRole = 'gestor') => {
+    localStorage.setItem(ROLE_HINT_KEY, role)
     const cred = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(cred.user, { displayName: name })
-    setUser(await resolveUserProfile(cred.user, 'gestor'))
+    setUser(await resolveUserProfile(cred.user, role))
   }
 
   const signInWithGoogle = async (intendedRole: LoginRole = 'gestor') => {
