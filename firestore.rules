@@ -7,6 +7,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    // Empresa demo: dados de vitrine acessíveis sem autenticação (uso comercial)
+    function isDemo() {
+      return 'companyId' in resource.data && resource.data.companyId == 'demo-company';
+    }
+
     // Admins reais reconhecidos pelo e-mail do token (não dependem de doc em users/)
     function isAdminEmail() {
       return isAuthenticated() &&
@@ -82,9 +87,9 @@ service cloud.firestore {
 
     // Companies
     match /companies/{companyId} {
-      // Novo gestor precisa ler o próprio slot antes de criar
-      allow read: if isAuthenticated() &&
-        (sameCompany(companyId) || companyId == 'company_' + request.auth.uid);
+      allow read: if companyId == 'demo-company'
+        || (isAuthenticated() &&
+          (sameCompany(companyId) || companyId == 'company_' + request.auth.uid));
       allow create: if isAdmin()
         // Novo gestor criando sua própria empresa (companyId = company_{uid})
         || (isAuthenticated()
@@ -128,8 +133,9 @@ service cloud.firestore {
 
     // Properties
     match /properties/{propertyId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId)
-        && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId));
+      allow read: if isDemo()
+        || (isAuthenticated() && sameCompany(resource.data.companyId)
+          && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId)));
       allow create, update: if isGestor() && sameCompany(request.resource.data.companyId)
         && (isAdminEmail() || subscriptionCanWrite(request.resource.data.companyId));
       allow delete: if isAdmin();
@@ -137,8 +143,9 @@ service cloud.firestore {
 
     // Vehicles
     match /vehicles/{vehicleId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId)
-        && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId));
+      allow read: if isDemo()
+        || (isAuthenticated() && sameCompany(resource.data.companyId)
+          && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId)));
       allow create, update: if isGestor() && sameCompany(request.resource.data.companyId)
         && (isAdminEmail() || subscriptionCanWrite(request.resource.data.companyId));
       allow delete: if isAdmin();
@@ -146,31 +153,32 @@ service cloud.firestore {
 
     // Contract templates (modelos personalizados por empresa)
     match /contractTemplates/{templateId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));
       allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
       allow delete: if isGestor() && sameCompany(resource.data.companyId);
     }
 
     // Owners
     match /owners/{ownerId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));
       allow write: if isGestor() && sameCompany(request.resource.data.companyId);
     }
 
     // Tenants
     match /tenants/{tenantId} {
-      allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) || request.auth.uid == tenantId);
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (sameCompany(resource.data.companyId) || request.auth.uid == tenantId));
       allow create, update: if isGestor();
       allow delete: if isAdmin();
     }
 
     // Contracts
     match /contracts/{contractId} {
-      // G3: use isLinkedTenant so inquilino auth.uid doesn't need to equal tenantId
-      allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) ||
-         isLinkedTenant(resource.data.tenantId));
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (sameCompany(resource.data.companyId) ||
+           isLinkedTenant(resource.data.tenantId)));
 
       allow create: if isGestor();
 
@@ -197,9 +205,10 @@ service cloud.firestore {
 
     // Charges
     match /charges/{chargeId} {
-      allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) ||
-         isLinkedTenant(resource.data.tenantId));
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (sameCompany(resource.data.companyId) ||
+           isLinkedTenant(resource.data.tenantId)));
 
       allow create: if isGestor();
 
@@ -221,16 +230,17 @@ service cloud.firestore {
 
     // Payments
     match /payments/{paymentId} {
-      allow read: if isAuthenticated() &&
-        (sameCompany(resource.data.companyId) ||
-         isLinkedTenant(resource.data.tenantId));
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (sameCompany(resource.data.companyId) ||
+           isLinkedTenant(resource.data.tenantId)));
       allow create, update: if isGestor();
       allow delete: if isAdmin();
     }
 
     // Shared Expenses — membros da empresa leem; o client filtra participantes no portal do inquilino.
     match /sharedExpenses/{expenseId} {
-      allow read: if isAuthenticated() && sameCompany(resource.data.companyId);
+      allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));
       allow create: if isGestor();
       // Gestor: atualização completa.
       // Inquilino: pode anexar comprovante apenas na própria parcela (participants[i].receipt).
@@ -252,9 +262,10 @@ service cloud.firestore {
 
     // Maintenance Requests
     match /maintenanceRequests/{requestId} {
-      allow read: if isAuthenticated() &&
-        (isLinkedTenant(resource.data.tenantId) ||
-         (isProprietario() && sameCompany(resource.data.companyId)));
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (isLinkedTenant(resource.data.tenantId) ||
+           (isProprietario() && sameCompany(resource.data.companyId))));
 
       allow create: if isAuthenticated() && (
         (isProprietario() && sameCompany(request.resource.data.companyId)) ||
