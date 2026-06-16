@@ -6,6 +6,8 @@ import {
   signOut,
   sendPasswordResetEmail,
   onAuthStateChanged,
+  createUserWithEmailAndPassword,
+  updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
@@ -185,6 +187,7 @@ interface AuthContextValue {
   user: User | null
   loading: boolean
   signIn: (email: string, password: string, intendedRole?: LoginRole) => Promise<void>
+  signUp: (name: string, email: string, password: string) => Promise<void>
   signInWithGoogle: (intendedRole?: LoginRole) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
@@ -233,6 +236,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
+  const signUp = async (name: string, email: string, password: string) => {
+    localStorage.setItem(ROLE_HINT_KEY, 'gestor')
+    const cred = await createUserWithEmailAndPassword(auth, email, password)
+    await updateProfile(cred.user, { displayName: name })
+    setUser(await resolveUserProfile(cred.user, 'gestor'))
+  }
+
   const signInWithGoogle = async (intendedRole: LoginRole = 'gestor') => {
     localStorage.setItem(ROLE_HINT_KEY, intendedRole)
     const provider = new GoogleAuthProvider()
@@ -265,7 +275,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signInWithGoogle, logout, resetPassword, updateLocalUser }}>
+    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signUp, signInWithGoogle, logout, resetPassword, updateLocalUser }}>
       {children}
     </AuthContext.Provider>
   )

@@ -67,15 +67,31 @@ export function SubscriptionPage() {
   const statusInfo = STATUS_BADGE[status] ?? STATUS_BADGE.expired
 
   const handleChoosePlan = async (plan: PlanId) => {
+    if (!user?.companyId || !user?.email) return
     setCheckoutLoading(plan)
     try {
-      // Fase 3: aqui chamará /api/checkout com planId e companyId
-      // Por enquanto abre o WhatsApp/e-mail de contato
-      const msg = encodeURIComponent(
-        `Olá! Quero assinar o plano ${PLANS[plan].name} do AlugaPro.\n\nEmpresa: ${user?.companyId}\nE-mail: ${user?.email}`
-      )
-      window.open(`https://wa.me/5500000000000?text=${msg}`, '_blank')
-      toast({ title: 'Redirecionando para o WhatsApp...' })
+      const res = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          planId: plan,
+          companyId: user.companyId,
+          email: user.email,
+        }),
+      })
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error ?? 'Erro ao iniciar checkout')
+      }
+
+      const { checkoutUrl } = await res.json()
+      // Open in new tab — required to avoid App Store in-app payment rules
+      window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
+      toast({ title: 'Redirecionando para o pagamento...', description: 'Uma nova aba foi aberta com o Mercado Pago.' })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Tente novamente.'
+      toast({ title: 'Erro ao iniciar assinatura', description: msg, variant: 'destructive' })
     } finally {
       setCheckoutLoading(null)
     }
@@ -152,7 +168,15 @@ export function SubscriptionPage() {
             </div>
 
             {status === 'active' && sub.providerSubscriptionId && (
-              <Button variant="outline" size="sm" onClick={() => window.open('https://wa.me/5500000000000', '_blank')}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(
+                  `https://www.mercadopago.com.br/subscriptions#from-section=menu`,
+                  '_blank',
+                  'noopener,noreferrer'
+                )}
+              >
                 <CreditCard className="mr-2 h-3.5 w-3.5" />
                 Gerenciar cobrança
                 <ExternalLink className="ml-2 h-3 w-3" />

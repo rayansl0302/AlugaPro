@@ -458,7 +458,7 @@ export function LandingPage() {
                           variant={isPro ? 'default' : 'outline'}
                           asChild
                         >
-                          <Link to="/login">Começar grátis</Link>
+                          <Link to="/login?mode=signup">Começar grátis</Link>
                         </Button>
                       </CardContent>
                     </Card>
@@ -558,7 +558,7 @@ export function LandingPage() {
                         size="sm"
                         asChild
                       >
-                        <Link to="/login">Começar grátis</Link>
+                        <Link to="/login?mode=signup">Começar grátis</Link>
                       </Button>
                     </div>
                   </div>
@@ -636,7 +636,7 @@ export function LandingPage() {
                           className={plan === 'pro' ? 'bg-[#032B61] text-white hover:bg-[#032B61]/90' : ''}
                           asChild
                         >
-                          <Link to="/login">Começar grátis</Link>
+                          <Link to="/login?mode=signup">Começar grátis</Link>
                         </Button>
                       </td>
                     ))}
@@ -684,7 +684,7 @@ export function LandingPage() {
                 className="h-12 bg-white px-8 text-[#032B61] font-semibold hover:bg-white/90"
                 asChild
               >
-                <Link to="/login">
+                <Link to="/login?mode=signup">
                   Criar conta gratuita
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>

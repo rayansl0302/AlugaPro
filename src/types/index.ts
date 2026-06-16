@@ -85,7 +85,7 @@ export interface CompanySubscription {
   companyId: string
   planId: PlanId
   status: SubscriptionStatus
-  provider?: 'asaas' | 'stripe'
+  provider?: 'mercadopago'
   providerCustomerId?: string
   providerSubscriptionId?: string
   trialEndsAt?: Timestamp

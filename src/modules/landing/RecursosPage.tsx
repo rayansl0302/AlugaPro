@@ -315,7 +315,7 @@ export function RecursosPage() {
               className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center"
             >
               <Button size="lg" className="h-12 bg-white px-8 text-[#032B61] font-semibold hover:bg-white/90" asChild>
-                <Link to="/login">
+                <Link to="/login?mode=signup">
                   Criar conta gratuita
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
