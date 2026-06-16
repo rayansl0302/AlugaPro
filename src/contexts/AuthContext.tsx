@@ -16,6 +16,7 @@ import { User, UserRole } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 import { getInviteByEmail } from '@/services/invites'
 import { createTrialSubscription, getSubscription } from '@/services/subscription'
+import { queryClient } from '@/lib/queryClient'
 
 // ── Admins reais (somente estes e-mails recebem o papel de administrador) ──────
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
@@ -256,6 +257,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem(DEMO_SESSION_KEY)
     setUser(null)
     setFirebaseUser(null)
+    queryClient.clear()
     try { await signOut(auth) } catch { /* Firebase may not be configured */ }
   }
 
