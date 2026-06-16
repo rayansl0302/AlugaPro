@@ -22,7 +22,7 @@ export function useSubscription(): SubscriptionInfo {
 
   const companyId = user?.companyId ?? ''
   const isAdmin = user?.role === 'admin'
-  const isDemo = companyId === 'demo-company'
+  const isDemo = companyId === 'alugapro-demo'
 
   const { data: sub, isLoading } = useQuery({
     queryKey: ['subscription', companyId],

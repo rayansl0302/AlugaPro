@@ -9,7 +9,7 @@ service cloud.firestore {
 
     // Empresa demo: dados de vitrine acessíveis sem autenticação (uso comercial)
     function isDemo() {
-      return 'companyId' in resource.data && resource.data.companyId == 'demo-company';
+      return 'companyId' in resource.data && resource.data.companyId == 'alugapro-demo';
     }
 
     // Admins reais reconhecidos pelo e-mail do token (não dependem de doc em users/)
@@ -87,7 +87,7 @@ service cloud.firestore {
 
     // Companies
     match /companies/{companyId} {
-      allow read: if companyId == 'demo-company'
+      allow read: if companyId == 'alugapro-demo'
         || (isAuthenticated() &&
           (sameCompany(companyId) || companyId == 'company_' + request.auth.uid));
       allow create: if isAdmin()

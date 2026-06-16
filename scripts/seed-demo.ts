@@ -43,7 +43,7 @@ async function upsert(col: string, id: string, data: Record<string, unknown>) {
 
 // ─── IDs fixos ───────────────────────────────────────────────────────────────
 
-const COMPANY_ID = 'demo-company'
+const COMPANY_ID = 'alugapro-demo'
 
 const OWN = { carlos: 'demo-owner-carlos', maria: 'demo-owner-maria' }
 const PROP = {

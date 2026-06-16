@@ -7,7 +7,7 @@ import { CompanySubscription, PlanId, PLANS, SubscriptionStatus } from '@/types'
 const TRIAL_DAYS = 14
 
 export async function getSubscription(companyId: string): Promise<CompanySubscription | null> {
-  if (!companyId || companyId === 'demo-company') return null
+  if (!companyId || companyId === 'alugapro-demo') return null
   const snap = await getDoc(doc(db, 'subscriptions', companyId))
   if (!snap.exists()) return null
   return snap.data() as CompanySubscription
