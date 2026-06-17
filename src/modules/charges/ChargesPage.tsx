@@ -7,7 +7,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   Search, CheckCircle, Clock, AlertTriangle, RefreshCw,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus,
-  FileCheck, Eye, MessageSquare, Mail, Bell,
+  FileCheck, Eye, MessageSquare, Mail, Bell, Send,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges, updateCharge, generateChargesForContract, createCharge } from '@/services/charges'
@@ -237,10 +237,18 @@ interface NotifyDropdownProps {
   tenantEmail?: string
   message: string
   emailSubject: string
+  chargeId?: string
+  companyId?: string
+  trigger?: string
   disabled?: boolean
 }
 
-function NotifyDropdown({ tenantWhatsApp, tenantEmail, message, emailSubject, disabled }: NotifyDropdownProps) {
+function NotifyDropdown({
+  tenantWhatsApp, tenantEmail, message, emailSubject,
+  chargeId, companyId, trigger, disabled,
+}: NotifyDropdownProps) {
+  const [sending, setSending] = useState(false)
+
   const handleWhatsApp = () => {
     if (!tenantWhatsApp) {
       toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
@@ -257,18 +265,57 @@ function NotifyDropdown({ tenantWhatsApp, tenantEmail, message, emailSubject, di
     window.location.href = `mailto:${tenantEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(message)}`
   }
 
+  // Envio automático via servidor (Evolution API) — requer EVOLUTION_API configurado
+  const handleAutoSend = async () => {
+    if (!tenantWhatsApp) {
+      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      return
+    }
+    setSending(true)
+    try {
+      const res = await fetch('/api/whatsapp-notify', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-internal-key': import.meta.env.VITE_INTERNAL_API_KEY ?? '',
+        },
+        body: JSON.stringify({
+          phone: tenantWhatsApp,
+          message,
+          chargeId,
+          companyId,
+          trigger: trigger ?? 'manual',
+        }),
+      })
+      if (res.ok) {
+        toast({ title: 'WhatsApp enviado pelo servidor com sucesso.' })
+      } else {
+        const { error } = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+        toast({ title: `Falha: ${error}`, variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: 'Erro de rede ao enviar.', variant: 'destructive' })
+    } finally {
+      setSending(false)
+    }
+  }
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button size="sm" variant="outline" disabled={disabled} className="gap-1.5">
+        <Button size="sm" variant="outline" disabled={disabled || sending} className="gap-1.5">
           <Bell className="h-3.5 w-3.5" />
-          Notificar
+          {sending ? 'Enviando…' : 'Notificar'}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleWhatsApp}>
           <MessageSquare className="mr-2 h-4 w-4 text-green-600" />
-          WhatsApp
+          WhatsApp (abre app)
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleAutoSend}>
+          <Send className="mr-2 h-4 w-4 text-green-700" />
+          WhatsApp automático
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEmail}>
           <Mail className="mr-2 h-4 w-4 text-blue-600" />
@@ -813,6 +860,9 @@ export function ChargesPage() {
                               tenantEmail={tenant?.email}
                               message={chargeNotifyMessage(pendingCharge)}
                               emailSubject={`Cobrança: ${pendingCharge.description} — AlugaPro`}
+                              chargeId={pendingCharge.id}
+                              companyId={pendingCharge.companyId}
+                              trigger="manual"
                             />
                           )
                         })()}
@@ -941,6 +991,12 @@ export function ChargesPage() {
                         {charge.receiptStatus === 'aguardando' && (
                           <Badge variant="warning" className="text-[10px]">Compr. pendente</Badge>
                         )}
+                        {(charge.notificationsSent?.length ?? 0) > 0 && (
+                          <Badge variant="secondary" className="text-[10px] gap-1">
+                            <Send className="h-2.5 w-2.5" />
+                            {charge.notificationsSent!.length} WA enviado{charge.notificationsSent!.length > 1 ? 's' : ''}
+                          </Badge>
+                        )}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -971,6 +1027,9 @@ export function ChargesPage() {
                             tenantEmail={tenants.find((t) => t.id === charge.tenantId)?.email}
                             message={chargeNotifyMessage(charge)}
                             emailSubject={`Cobrança: ${charge.description} — AlugaPro`}
+                            chargeId={charge.id}
+                            companyId={charge.companyId}
+                            trigger="manual"
                           />
                         )}
                       </div>

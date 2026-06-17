@@ -1,0 +1,58 @@
+# Evolution API — serviço WhatsApp para AlugaPro
+#
+# COMO USAR (Railway):
+#   1. Crie um novo projeto no Railway (railway.app)
+#   2. "Deploy from Docker Image" → atendai/evolution-api:v2.1.1
+#   3. Adicione as variáveis de ambiente abaixo no painel do Railway
+#   4. Aguarde o deploy, acesse a URL gerada e faça o QR code
+#   5. Cole a URL e a API Key nas variáveis do Vercel (AlugaPro)
+#
+# PARA RODAR LOCALMENTE (testes):
+#   docker-compose -f docker-compose.evolution.yml up -d
+#   Acesse: http://localhost:8080
+#
+# AUTENTICAÇÃO:
+#   Todas as rotas precisam do header: apikey: <EVOLUTION_API_KEY>
+#   Endpoint de envio: POST /message/sendText/alugapro
+#   Body: { "number": "5511999999999", "text": "sua mensagem" }
+
+version: '3.8'
+
+services:
+  evolution-api:
+    image: atendai/evolution-api:v2.1.1
+    container_name: alugapro-evolution
+    restart: unless-stopped
+    ports:
+      - '8080:8080'
+    environment:
+      # URL pública do serviço (Railway gera automaticamente)
+      SERVER_URL: ${SERVER_URL:-http://localhost:8080}
+
+      # Autenticação — gere uma chave forte (ex: openssl rand -hex 32)
+      AUTHENTICATION_TYPE: apikey
+      AUTHENTICATION_API_KEY: ${EVOLUTION_API_KEY:-trocar_esta_chave}
+
+      # Nome que aparece nos aparelhos conectados do WhatsApp
+      CONFIG_SESSION_PHONE_CLIENT: AlugaPro
+      CONFIG_SESSION_PHONE_NAME: Chrome
+
+      # Logs (ERROR para produção, INFO para debug)
+      LOG_LEVEL: ERROR
+      LOG_COLOR: 'true'
+
+      # Banco de dados — false usa armazenamento em arquivo (suficiente)
+      DATABASE_ENABLED: 'false'
+      REDIS_ENABLED: 'false'
+      RABBITMQ_ENABLED: 'false'
+      WEBHOOK_GLOBAL_ENABLED: 'false'
+
+      # Mantém instâncias ao reiniciar
+      DEL_INSTANCE: 'false'
+
+    volumes:
+      # Armazena credenciais da sessão Baileys — CRÍTICO: nunca apagar
+      - evolution_instances:/evolution/instances
+
+volumes:
+  evolution_instances:
