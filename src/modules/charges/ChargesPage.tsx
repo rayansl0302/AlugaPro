@@ -7,7 +7,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   Search, CheckCircle, Clock, AlertTriangle, RefreshCw,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus,
-  FileCheck, Eye,
+  FileCheck, Eye, MessageSquare, Mail, Bell,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges, updateCharge, generateChargesForContract, createCharge } from '@/services/charges'
@@ -28,6 +28,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { MarkPaidDialog } from './MarkPaidDialog'
 import { MaintenanceEntityPhotos } from '@/components/maintenance/MaintenanceEntityPhotos'
 import {
@@ -207,6 +210,72 @@ function MonthCell({
       <Clock className="h-3.5 w-3.5" />
       <span className="mt-0.5">{isFutureCharge ? 'agendado' : 'pendente'}</span>
     </button>
+  )
+}
+
+// ─── Notification helpers ─────────────────────────────────────────────────────
+
+function buildWhatsAppLink(whatsapp: string, text: string) {
+  return `https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`
+}
+
+function chargeNotifyMessage(charge: Charge): string {
+  const due = charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM/yyyy') : '—'
+  const valor = formatCurrency(charge.totalAmount ?? charge.amount)
+  return (
+    `Olá ${charge.tenantName ?? 'Inquilino'}, você tem uma cobrança pendente:\n` +
+    `📋 *${charge.description}*\n` +
+    `🏠 ${charge.propertyName ?? ''}\n` +
+    `📅 Vencimento: ${due}\n` +
+    `💰 Valor: ${valor}\n\n` +
+    `Por favor, realize o pagamento para evitar encargos. AlugaPro.`
+  )
+}
+
+interface NotifyDropdownProps {
+  tenantWhatsApp?: string
+  tenantEmail?: string
+  message: string
+  emailSubject: string
+  disabled?: boolean
+}
+
+function NotifyDropdown({ tenantWhatsApp, tenantEmail, message, emailSubject, disabled }: NotifyDropdownProps) {
+  const handleWhatsApp = () => {
+    if (!tenantWhatsApp) {
+      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      return
+    }
+    window.open(buildWhatsAppLink(tenantWhatsApp, message), '_blank')
+  }
+
+  const handleEmail = () => {
+    if (!tenantEmail) {
+      toast({ title: 'E-mail não cadastrado para este inquilino.', variant: 'destructive' })
+      return
+    }
+    window.location.href = `mailto:${tenantEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(message)}`
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button size="sm" variant="outline" disabled={disabled} className="gap-1.5">
+          <Bell className="h-3.5 w-3.5" />
+          Notificar
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={handleWhatsApp}>
+          <MessageSquare className="mr-2 h-4 w-4 text-green-600" />
+          WhatsApp
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={handleEmail}>
+          <Mail className="mr-2 h-4 w-4 text-blue-600" />
+          E-mail
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }
 
@@ -608,8 +677,8 @@ export function ChargesPage() {
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
                   Aluguel
                 </div>
-                <div className="w-[112px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-                  Comprovante
+                <div className="w-[140px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
+                  Ações
                 </div>
                 <Button
                   variant="ghost" size="icon" className="h-6 w-6 shrink-0"
@@ -711,8 +780,8 @@ export function ChargesPage() {
                         <p className="text-[10px] text-muted-foreground">dia {contract.dueDay}</p>
                       </div>
 
-                      <div className="w-[112px] shrink-0 flex flex-col items-center justify-center gap-1">
-                        {pendingReceiptCount > 0 ? (
+                      <div className="w-[140px] shrink-0 flex flex-col items-center justify-center gap-1">
+                        {pendingReceiptCount > 0 && (
                           <>
                             <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
                               {pendingReceiptCount} aguardando
@@ -729,7 +798,25 @@ export function ChargesPage() {
                               </Button>
                             )}
                           </>
-                        ) : (
+                        )}
+                        {canManage && (() => {
+                          const tenant = tenants.find((t) => t.id === contract.tenantId)
+                          const pendingCharge = contractChargeMap
+                            ? Array.from(contractChargeMap.values()).find(
+                                (c) => c.status === 'atrasado' || c.status === 'pendente',
+                              )
+                            : undefined
+                          if (!pendingCharge) return null
+                          return (
+                            <NotifyDropdown
+                              tenantWhatsApp={tenant?.whatsapp}
+                              tenantEmail={tenant?.email}
+                              message={chargeNotifyMessage(pendingCharge)}
+                              emailSubject={`Cobrança: ${pendingCharge.description} — AlugaPro`}
+                            />
+                          )
+                        })()}
+                        {!pendingReceiptCount && !canManage && (
                           <span className="text-xs text-muted-foreground/40">—</span>
                         )}
                       </div>
@@ -877,6 +964,14 @@ export function ChargesPage() {
                           <Button size="sm" onClick={() => setPayingCharge(charge)}>
                             <CheckCircle className="mr-1 h-3 w-3" /> Pago
                           </Button>
+                        )}
+                        {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && (
+                          <NotifyDropdown
+                            tenantWhatsApp={tenants.find((t) => t.id === charge.tenantId)?.whatsapp}
+                            tenantEmail={tenants.find((t) => t.id === charge.tenantId)?.email}
+                            message={chargeNotifyMessage(charge)}
+                            emailSubject={`Cobrança: ${charge.description} — AlugaPro`}
+                          />
                         )}
                       </div>
                     </TableCell>
