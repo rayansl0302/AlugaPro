@@ -4,7 +4,7 @@ import { format, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
   Building2, Users, Home, TrendingUp, TrendingDown, Clock,
-  AlertTriangle, Wrench, DollarSign, FileText,
+  AlertTriangle, Wrench, DollarSign, FileText, MessageSquare,
 } from 'lucide-react'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -12,7 +12,9 @@ import {
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
+import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import { getProperties } from '@/services/properties'
 import { getCharges } from '@/services/charges'
@@ -89,6 +91,19 @@ export function DashboardPage() {
   const receivedRevenue = paidCharges.reduce((s, c) => s + c.amount, 0)
   const pendingRevenue = pendingCharges.reduce((s, c) => s + c.amount, 0)
   const openRequests = requests.filter((r) => r.status !== 'finalizado').length
+
+  const sendWhatsApp = (charge: { tenantId: string; tenantName?: string; propertyName?: string; amount: number }) => {
+    const tenant = tenants.find((t) => t.id === charge.tenantId)
+    const msg = encodeURIComponent(
+      `Olá ${charge.tenantName ?? 'Inquilino'}, identificamos uma cobrança em atraso referente a ${charge.propertyName ?? 'seu imóvel'}. ` +
+      `Valor: ${formatCurrency(charge.amount)}. Por favor, entre em contato para regularizar. AlugaPro.`
+    )
+    if (tenant?.whatsapp) {
+      window.open(`https://wa.me/55${tenant.whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
+    } else {
+      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+    }
+  }
 
   const occupancyData = [
     { name: 'Alugados', value: rented },
@@ -278,11 +293,22 @@ export function DashboardPage() {
                     <p className="font-medium">{charge.tenantName}</p>
                     <p className="text-sm text-muted-foreground">{charge.propertyName}</p>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-destructive">{formatCurrency(charge.amount)}</p>
-                    <Badge variant="destructive" className="text-xs">
-                      {charge.daysLate}d de atraso
-                    </Badge>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <p className="font-semibold text-destructive">{formatCurrency(charge.amount)}</p>
+                      <Badge variant="destructive" className="text-xs">
+                        {charge.daysLate}d de atraso
+                      </Badge>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="gap-1.5 border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+                      onClick={() => sendWhatsApp(charge)}
+                    >
+                      <MessageSquare className="h-3.5 w-3.5" />
+                      Notificar
+                    </Button>
                   </div>
                 </div>
               ))}

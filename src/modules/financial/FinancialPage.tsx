@@ -8,8 +8,8 @@ import {
   ResponsiveContainer, LineChart, Line, Legend,
 } from 'recharts'
 import { useAuth } from '@/contexts/AuthContext'
-import { getPayments } from '@/services/payments'
-import { Payment } from '@/types'
+import { getCharges } from '@/services/charges'
+import { Charge } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -39,13 +39,13 @@ export function FinancialPage() {
   const companyId = user?.companyId ?? ''
   const [monthFilter, setMonthFilter] = useState(format(new Date(), 'yyyy-MM'))
 
-  const { data: payments = [], isLoading } = useQuery({
-    queryKey: ['payments', companyId],
-    queryFn: () => getPayments(companyId),
+  const { data: charges = [], isLoading } = useQuery({
+    queryKey: ['charges', companyId],
+    queryFn: () => getCharges(companyId),
     enabled: !!companyId,
   })
 
-  const filtered = payments.filter((p) => p.dueDate?.startsWith(monthFilter))
+  const filtered = charges.filter((p) => p.dueDate?.startsWith(monthFilter))
 
   const pag = usePagination(filtered, 15)
 
@@ -56,9 +56,9 @@ export function FinancialPage() {
   const totalPending = pending.reduce((s, p) => s + p.amount, 0)
   const totalExpected = filtered.reduce((s, p) => s + p.amount, 0)
 
-  // Monthly chart data from all payments
+  // Monthly chart data from all charges
   const monthlyMap: Record<string, { mes: string; recebido: number; pendente: number }> = {}
-  payments.forEach((p) => {
+  charges.forEach((p) => {
     const key = p.dueDate?.slice(0, 7) ?? ''
     if (!key) return
     if (!monthlyMap[key]) {
@@ -166,12 +166,12 @@ export function FinancialPage() {
                       </TableCell>
                     </TableRow>
                   ) : (
-                    pag.pageItems.map((payment) => (
+                    pag.pageItems.map((payment: Charge) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.description}</TableCell>
                         <TableCell>{payment.tenantName || '—'}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          {formatDate(payment.dueDate)}
+                          {payment.dueDate ? formatDate(payment.dueDate) : '—'}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {payment.paidDate ? formatDate(payment.paidDate) : '—'}
