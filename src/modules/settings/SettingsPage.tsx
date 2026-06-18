@@ -1,5 +1,4 @@
-import { Building2, Users, Shield, Palette, Smartphone, ChevronRight } from 'lucide-react'
-import { Link } from 'react-router-dom'
+import { Building2, Users, Shield, Palette } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -30,7 +29,6 @@ export function SettingsPage() {
           <TabsTrigger value="usuarios">Usuários</TabsTrigger>
           <TabsTrigger value="aparencia">Aparência</TabsTrigger>
           <TabsTrigger value="seguranca">Segurança</TabsTrigger>
-          <TabsTrigger value="integracoes">Integrações</TabsTrigger>
         </TabsList>
 
         <TabsContent value="empresa">
@@ -132,33 +130,6 @@ export function SettingsPage() {
                 <Input type="password" placeholder="••••••••" />
               </div>
               <Button>Alterar Senha</Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        <TabsContent value="integracoes">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smartphone className="h-5 w-5" />
-                Integrações
-              </CardTitle>
-              <CardDescription>Conecte serviços externos para automação</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link to="/configuracoes/whatsapp">
-                <div className="flex items-center justify-between rounded-lg border p-4 hover:bg-muted/50 transition-colors cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
-                      <Smartphone className="h-5 w-5 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">WhatsApp Automático</p>
-                      <p className="text-xs text-muted-foreground">Conecte o chip para notificações automáticas</p>
-                    </div>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </div>
-              </Link>
             </CardContent>
           </Card>
         </TabsContent>
