@@ -1,90 +1,96 @@
-/**
- * GET /api/whatsapp-qr
- * Retorna o estado da conexão WhatsApp + QR code se desconectado.
- * Usa https nativo (sem depender de fetch global) para compatibilidade total.
- */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import https from 'https'
-import http from 'http'
-import { URL } from 'url'
-
-const BASE_URL = (process.env.EVOLUTION_API_URL ?? '').replace(/\/$/, '')
-const API_KEY  = process.env.EVOLUTION_API_KEY  ?? ''
-const INSTANCE = process.env.EVOLUTION_INSTANCE ?? 'alugapro'
-
-function httpGet(rawUrl: string, headers: Record<string, string>): Promise<{ status: number; body: string }> {
-  return new Promise((resolve, reject) => {
-    const parsed = new URL(rawUrl)
-    const lib = parsed.protocol === 'https:' ? https : http
-    const req = lib.get(rawUrl, { headers }, (res) => {
-      let body = ''
-      res.on('data', (chunk: Buffer) => { body += chunk.toString() })
-      res.on('end', () => resolve({ status: res.statusCode ?? 0, body }))
-      res.on('error', reject)
-    })
-    req.setTimeout(5_000, () => {
-      req.destroy(new Error('timeout'))
-    })
-    req.on('error', reject)
-  })
-}
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
 
-  if (!BASE_URL || !API_KEY) {
-    return res.status(200).json({ configured: false })
-  }
-
-  const headers = { apikey: API_KEY }
+  const BASE_URL = (process.env.EVOLUTION_API_URL ?? '').replace(/\/$/, '')
+  const API_KEY  = process.env.EVOLUTION_API_KEY  ?? ''
+  const INSTANCE = process.env.EVOLUTION_INSTANCE ?? 'alugapro'
 
   try {
-    // 1. Verifica estado da conexão
-    const stateResp = await httpGet(
-      `${BASE_URL}/instance/connectionState/${INSTANCE}`,
-      headers,
-    )
+    if (!BASE_URL || !API_KEY) {
+      return res.status(200).json({ configured: false })
+    }
 
-    if (stateResp.status >= 400) {
+    // Verifica disponibilidade do fetch (Node 18+)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const globalFetch = (globalThis as any).fetch as typeof fetch | undefined
+    if (!globalFetch) {
       return res.status(200).json({
-        configured: true,
-        connected: false,
-        error: `Evolution API retornou ${stateResp.status}: ${stateResp.body.slice(0, 120)}`,
+        configured: true, connected: false,
+        error: 'fetch não disponível neste runtime. Configure Node 18 no Vercel.',
       })
     }
 
-    const stateData = JSON.parse(stateResp.body)
-    const state: string = stateData.instance?.state ?? stateData.state ?? 'unknown'
+    const headers: Record<string, string> = { apikey: API_KEY }
+
+    // 1. Estado da conexão (timeout 5s)
+    let stateStatus = 0
+    let stateText = ''
+    try {
+      const ctrl = new AbortController()
+      const t = setTimeout(() => ctrl.abort(), 5_000)
+      const r = await globalFetch(`${BASE_URL}/instance/connectionState/${INSTANCE}`, {
+        headers, signal: ctrl.signal,
+      })
+      clearTimeout(t)
+      stateStatus = r.status
+      stateText = await r.text()
+    } catch (e) {
+      const msg = String(e)
+      return res.status(200).json({
+        configured: true, connected: false,
+        error: msg.toLowerCase().includes('abort')
+          ? 'Railway está dormindo — tente novamente em 30s.'
+          : `Falha ao conectar: ${msg}`,
+      })
+    }
+
+    if (stateStatus >= 400) {
+      return res.status(200).json({
+        configured: true, connected: false,
+        error: `Evolution API retornou HTTP ${stateStatus}: ${stateText.slice(0, 120)}`,
+      })
+    }
+
+    let stateData: Record<string, unknown> = {}
+    try { stateData = JSON.parse(stateText) } catch { /* ignora */ }
+
+    const state = String(
+      (stateData.instance as Record<string, unknown>)?.state ?? stateData.state ?? 'unknown',
+    )
 
     if (state === 'open') {
+      const inst = stateData.instance as Record<string, unknown> | undefined
+      const user = inst?.user as Record<string, unknown> | undefined
       return res.status(200).json({
-        configured: true,
-        connected: true,
-        number: stateData.instance?.user?.id ?? stateData.instance?.profileName,
+        configured: true, connected: true,
+        number: user?.id ?? inst?.profileName,
       })
     }
 
-    // 2. Busca QR code
-    const qrResp = await httpGet(
-      `${BASE_URL}/instance/connect/${INSTANCE}`,
-      headers,
-    )
-    const qrData = qrResp.status < 400 ? JSON.parse(qrResp.body) : {}
+    // 2. QR code (timeout 5s)
+    let qrData: Record<string, unknown> = {}
+    try {
+      const ctrl2 = new AbortController()
+      const t2 = setTimeout(() => ctrl2.abort(), 5_000)
+      const r2 = await globalFetch(`${BASE_URL}/instance/connect/${INSTANCE}`, {
+        headers, signal: ctrl2.signal,
+      })
+      clearTimeout(t2)
+      if (r2.ok) qrData = await r2.json()
+    } catch { /* sem QR, retorna vazio */ }
 
-    return res.status(200).json({
-      configured: true,
-      connected: false,
-      state,
-      qrcode: qrData.base64 ?? qrData.qrcode?.base64,
-    })
+    const qrcode =
+      (qrData.base64 as string | undefined) ??
+      ((qrData.qrcode as Record<string, unknown> | undefined)?.base64 as string | undefined)
+
+    return res.status(200).json({ configured: true, connected: false, state, qrcode })
+
   } catch (err) {
-    const msg = String(err)
     return res.status(200).json({
-      configured: true,
-      connected: false,
-      error: msg.includes('timeout')
-        ? 'Railway demorou para responder (serviço pode estar dormindo). Tente novamente em 30s.'
-        : `Erro ao conectar: ${msg}`,
+      configured: true, connected: false,
+      error: `Erro inesperado: ${String(err)}`,
     })
   }
 }
