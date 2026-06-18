@@ -29,7 +29,7 @@ export async function sendWhatsAppMessage(
         'Content-Type': 'application/json',
         'apikey': API_KEY,
       },
-      body: JSON.stringify({ number, text }),
+      body: JSON.stringify({ number, textMessage: { text } }),
     })
 
     if (!res.ok) {
