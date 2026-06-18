@@ -28,6 +28,7 @@ import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
 import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
+import { WhatsAppPage } from '@/modules/settings/WhatsAppPage'
 
 const Spinner = () => (
   <div className="flex h-screen items-center justify-center">
@@ -137,6 +138,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute roles={['admin', 'gestor']}>
                 <SubscriptionPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'configuracoes/whatsapp',
+            element: (
+              <ProtectedRoute roles={['admin']}>
+                <WhatsAppPage />
               </ProtectedRoute>
             ),
           },
