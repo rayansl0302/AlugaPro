@@ -8,6 +8,16 @@ const BASE_URL = (process.env.EVOLUTION_API_URL ?? '').replace(/\/$/, '')
 const API_KEY  = process.env.EVOLUTION_API_KEY  ?? ''
 const INSTANCE = process.env.EVOLUTION_INSTANCE ?? 'alugapro'
 
+async function fetchWithTimeout(url: string, options: RequestInit, ms = 8000) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  try {
+    return await fetch(url, { ...options, signal: controller.signal })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
 
@@ -15,14 +25,25 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     return res.status(200).json({ configured: false })
   }
 
+  const headers = { apikey: API_KEY }
+
   try {
     // 1. Verifica estado da conexão
-    const stateRes = await fetch(`${BASE_URL}/instance/connectionState/${INSTANCE}`, {
-      headers: { apikey: API_KEY },
-    })
-    const stateData = await stateRes.json()
+    const stateRes = await fetchWithTimeout(
+      `${BASE_URL}/instance/connectionState/${INSTANCE}`,
+      { headers },
+    )
 
-    // Compatível com v1 e v2 da Evolution API
+    if (!stateRes.ok) {
+      const body = await stateRes.text().catch(() => '')
+      return res.status(200).json({
+        configured: true,
+        connected: false,
+        error: `Evolution API retornou ${stateRes.status}${body ? ': ' + body.slice(0, 120) : ''}`,
+      })
+    }
+
+    const stateData = await stateRes.json()
     const state: string = stateData.instance?.state ?? stateData.state ?? 'unknown'
 
     if (state === 'open') {
@@ -34,10 +55,11 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     }
 
     // 2. Busca QR code
-    const qrRes = await fetch(`${BASE_URL}/instance/connect/${INSTANCE}`, {
-      headers: { apikey: API_KEY },
-    })
-    const qrData = await qrRes.json()
+    const qrRes = await fetchWithTimeout(
+      `${BASE_URL}/instance/connect/${INSTANCE}`,
+      { headers },
+    )
+    const qrData = qrRes.ok ? await qrRes.json() : {}
 
     return res.status(200).json({
       configured: true,
@@ -46,6 +68,13 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       qrcode: qrData.base64 ?? qrData.qrcode?.base64,
     })
   } catch (err) {
-    return res.status(500).json({ configured: true, connected: false, error: String(err) })
+    const isTimeout = String(err).includes('abort') || String(err).includes('AbortError')
+    return res.status(200).json({
+      configured: true,
+      connected: false,
+      error: isTimeout
+        ? 'Railway demorou para responder (serviço pode estar dormindo). Tente novamente em 30s.'
+        : String(err),
+    })
   }
 }

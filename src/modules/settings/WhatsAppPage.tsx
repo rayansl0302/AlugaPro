@@ -18,11 +18,16 @@ export function WhatsAppPage() {
     setLoading(true)
     try {
       const res = await fetch('/api/whatsapp-qr')
-      const data: WaStatus = await res.json()
-      setStatus(data)
-      setLastUpdate(new Date())
-    } catch {
-      setStatus({ configured: true, connected: false, error: 'Erro ao conectar com o servidor' })
+      const text = await res.text()
+      try {
+        const data: WaStatus = JSON.parse(text)
+        setStatus(data)
+        setLastUpdate(new Date())
+      } catch {
+        setStatus({ configured: true, connected: false, error: `Resposta inválida do servidor (${res.status}): ${text.slice(0, 120)}` })
+      }
+    } catch (err) {
+      setStatus({ configured: true, connected: false, error: `Falha de rede: ${String(err)}` })
     } finally {
       setLoading(false)
     }
