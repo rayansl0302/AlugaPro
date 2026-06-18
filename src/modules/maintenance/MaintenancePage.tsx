@@ -36,6 +36,39 @@ import {
   buildMaintenancePhotoLookups,
   resolveMaintenanceEntityPhotos,
 } from '@/lib/maintenanceEntityPhotos'
+import { Tenant } from '@/types'
+
+// ─── WhatsApp helper ──────────────────────────────────────────────────────────
+const STATUS_LABELS: Record<string, string> = {
+  aberto:       'Aberto',
+  em_analise:   'Em Análise',
+  em_andamento: 'Em Andamento',
+  finalizado:   'Finalizado',
+}
+
+function buildMaintenanceMsg(event: 'criado' | string, title: string, tenantName: string): string {
+  const name = tenantName || 'Inquilino'
+  if (event === 'criado') {
+    return `✅ Olá ${name}! Seu chamado de manutenção foi registrado com sucesso.\n\n📋 *${title}*\n\nEm breve entraremos em contato. AlugaPro.`
+  }
+  const statusLabel = STATUS_LABELS[event] ?? event
+  const emoji = event === 'finalizado' ? '✅' : event === 'em_andamento' ? '🔧' : '🔍'
+  return `${emoji} Olá ${name}! Seu chamado *${title}* teve uma atualização de status:\n\n📌 Novo status: *${statusLabel}*\n\nAlugaPro.`
+}
+
+async function notifyMaintenanceWhatsApp(phone: string | undefined, message: string) {
+  if (!phone) return
+  try {
+    await fetch('/api/whatsapp-notify', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-internal-key': (import.meta.env.VITE_INTERNAL_API_KEY as string) ?? '',
+      },
+      body: JSON.stringify({ phone, message }),
+    })
+  } catch { /* silencioso — não bloqueia o fluxo principal */ }
+}
 
 const categoryLabels: Record<MaintenanceCategory, string> = {
   eletrica: 'Elétrica',
@@ -204,6 +237,16 @@ export function MaintenancePage() {
       })
       qc.invalidateQueries({ queryKey: ['maintenance'] })
       toast({ title: 'Chamado aberto com sucesso.' })
+
+      // Notifica inquilino via WhatsApp
+      const tenant = (tenants as Tenant[]).find((t) => t.id === form.tenantId)
+      if (tenant?.whatsapp) {
+        notifyMaintenanceWhatsApp(
+          tenant.whatsapp,
+          buildMaintenanceMsg('criado', form.title, form.tenantName),
+        )
+      }
+
       setShowForm(false)
     } catch {
       toast({ title: 'Erro ao abrir chamado.', variant: 'destructive' })
@@ -230,6 +273,15 @@ export function MaintenancePage() {
       }
       qc.invalidateQueries({ queryKey: ['maintenance'] })
       toast({ title: 'Status atualizado.' })
+
+      // Notifica inquilino via WhatsApp
+      const tenant = (tenants as Tenant[]).find((t) => t.id === viewingRequest.tenantId)
+      if (tenant?.whatsapp && viewingRequest.title) {
+        notifyMaintenanceWhatsApp(
+          tenant.whatsapp,
+          buildMaintenanceMsg(status, viewingRequest.title, viewingRequest.tenantName ?? tenant.name),
+        )
+      }
     } catch {
       toast({ title: 'Erro ao atualizar status.', variant: 'destructive' })
     } finally {

@@ -21,6 +21,7 @@ export interface ChargeSnapshot {
   propertyName?: string
   description: string
   notificationsSent?: string[]
+  lastNotifiedDate?: string   // YYYY-MM-DD — evita reenvio de atraso no mesmo dia
 }
 
 /** Calcula diferença em dias inteiros entre duas strings YYYY-MM-DD */
@@ -50,13 +51,15 @@ export function getTriggerForToday(
   if (daysUntilDue === 3 && !sent.has('vencimento_3dias')) return 'vencimento_3dias'
   if (daysUntilDue === 1 && !sent.has('vencimento_1dia'))  return 'vencimento_1dia'
 
-  // ─── Pós-vencimento (acumulativo — envia o próximo nível ainda não enviado) ─
+  // ─── Pós-vencimento (envia 1× por dia enquanto em atraso) ───────────────────
   if (daysUntilDue <= 0) {
+    if (charge.lastNotifiedDate === today) return null   // já enviou hoje
+
     const daysLate = Math.abs(daysUntilDue)
-    if (!sent.has('vencido_dia'))                          return 'vencido_dia'
-    if (daysLate >= 3  && !sent.has('vencido_3dias'))      return 'vencido_3dias'
-    if (daysLate >= 7  && !sent.has('vencido_7dias'))      return 'vencido_7dias'
-    if (daysLate >= 15 && !sent.has('vencido_15dias'))     return 'vencido_15dias'
+    if (daysLate >= 15) return 'vencido_15dias'
+    if (daysLate >= 7)  return 'vencido_7dias'
+    if (daysLate >= 3)  return 'vencido_3dias'
+    return 'vencido_dia'
   }
 
   return null

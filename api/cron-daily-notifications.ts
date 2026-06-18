@@ -101,10 +101,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result  = await sendWhatsAppMessage(phone, message)
 
     if (result.ok) {
-      // Registra trigger enviado — evita reenvio nas próximas execuções
       try {
+        const isOverdue = trigger.startsWith('vencido_')
         await adminDb.collection('charges').doc(charge.id).update({
-          notificationsSent: FieldValue.arrayUnion(trigger),
+          // Atraso: salva data de hoje → cron não reenvia até amanhã
+          // Pré-vencimento: registra o marco para não repetir
+          ...(isOverdue
+            ? { lastNotifiedDate: today }
+            : { notificationsSent: FieldValue.arrayUnion(trigger) }),
           updatedAt: FieldValue.serverTimestamp(),
         })
       } catch (err) {
