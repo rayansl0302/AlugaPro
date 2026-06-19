@@ -103,7 +103,7 @@ export function TenantsPage() {
             placeholder="Buscar por nome, CPF ou e-mail..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-72 pl-9"
+            className="w-full pl-9 sm:w-72"
           />
         </div>
         <div className="flex gap-2">

@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -43,9 +43,11 @@ const navItems: NavItem[] = [
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
+  mobileOpen: boolean
+  onMobileClose: () => void
 }
 
-export function Sidebar({ collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
   const { user, logout } = useAuth()
   const { status, daysRemaining, isAdmin } = useSubscription()
   const location = useLocation()
@@ -62,12 +64,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   )
 
   return (
-    <aside
-      className={cn(
-        'flex flex-col border-r bg-card transition-all duration-300 ease-in-out',
-        collapsed ? 'w-16' : 'w-64'
+    <>
+      {/* Backdrop — somente mobile, fecha o drawer ao tocar fora */}
+      {mobileOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={onMobileClose}
+          aria-hidden="true"
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          'fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r bg-card transition-transform duration-300 ease-in-out',
+          mobileOpen && 'translate-x-0',
+          'md:relative md:z-auto md:translate-x-0 md:transition-[width]',
+          collapsed ? 'md:w-16' : 'md:w-64'
+        )}
+      >
       {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!collapsed && (
@@ -77,7 +91,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
         )}
         {collapsed && (
-          <div className="mx-auto flex flex-col items-center gap-1">
+          <div className="mx-auto hidden flex-col items-center gap-1 md:flex">
             <img src="/favicon.png" alt="AlugaPro" className="h-8 w-8 object-contain" />
             <Button variant="ghost" size="icon" onClick={onToggle} className="h-6 w-6" title="Expandir">
               <ChevronRight className="h-4 w-4" />
@@ -85,10 +99,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </div>
         )}
         {!collapsed && (
-          <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
+          <Button variant="ghost" size="icon" onClick={onToggle} className="hidden h-8 w-8 md:flex">
             <ChevronLeft className="h-4 w-4" />
           </Button>
         )}
+        {/* Fechar — somente mobile */}
+        <Button variant="ghost" size="icon" onClick={onMobileClose} className="h-8 w-8 md:hidden">
+          <X className="h-4 w-4" />
+        </Button>
       </div>
 
       {/* Navigation */}
@@ -103,6 +121,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               <NavLink
                 key={item.href}
                 to={item.href}
+                onClick={onMobileClose}
                 title={collapsed ? item.label : undefined}
                 className={cn(
                   'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
@@ -215,6 +234,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           </>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   )
 }

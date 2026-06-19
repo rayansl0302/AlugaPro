@@ -128,7 +128,7 @@ export function OwnersPage() {
             placeholder="Buscar proprietários..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-64 pl-9"
+            className="w-full pl-9 sm:w-64"
           />
         </div>
         <Button onClick={() => { setEditingOwner(null); reset({}); setPhotoUrl(''); setShowForm(true) }}>

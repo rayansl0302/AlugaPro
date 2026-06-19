@@ -1,4 +1,4 @@
-import { Moon, Sun, Search, Zap, AlertTriangle } from 'lucide-react'
+import { Moon, Sun, Search, Zap, AlertTriangle, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,9 +10,10 @@ import { cn } from '@/lib/utils'
 
 interface TopbarProps {
   title: string
+  onMenuClick: () => void
 }
 
-export function Topbar({ title }: TopbarProps) {
+export function Topbar({ title, onMenuClick }: TopbarProps) {
   const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
   const { user } = useAuth()
@@ -31,10 +32,15 @@ export function Topbar({ title }: TopbarProps) {
     'Assinar agora'
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-card px-6">
-      <h1 className="text-xl font-semibold">{title}</h1>
+    <header className="flex h-16 items-center justify-between gap-2 border-b bg-card px-3 sm:px-6">
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <Button variant="ghost" size="icon" className="shrink-0 md:hidden" onClick={onMenuClick}>
+          <Menu className="h-5 w-5" />
+        </Button>
+        <h1 className="truncate text-lg font-semibold sm:text-xl">{title}</h1>
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
         {showUpgrade && (
           <Button
             size="sm"

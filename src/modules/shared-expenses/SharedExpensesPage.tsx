@@ -373,7 +373,7 @@ export function SharedExpensesPage() {
                 placeholder="Buscar despesa ou imóvel..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-64 pl-9"
+                className="w-full pl-9 sm:w-64"
               />
             </div>
             {propertyOptions.length > 1 && (

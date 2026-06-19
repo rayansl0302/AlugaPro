@@ -323,10 +323,10 @@ export function MaintenancePage() {
               placeholder="Buscar chamados..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-64 pl-9"
+              className="w-full pl-9 sm:w-64"
             />
           </div>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex flex-wrap gap-1 overflow-x-auto">
             {(['todos', 'aberto', 'em_analise', 'em_andamento', 'finalizado'] as const).map((s) => (
               <Button
                 key={s}

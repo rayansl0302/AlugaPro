@@ -105,7 +105,7 @@ export function PropertiesPage() {
               placeholder="Buscar imóveis..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-64 pl-9"
+              className="w-full pl-9 sm:w-64"
             />
           </div>
           <div className="flex gap-1 flex-wrap">

@@ -25,6 +25,7 @@ const pageTitles: Record<string, string> = {
 
 export function AdminLayout() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileNavOpen, setMobileNavOpen] = useState(false)
   const location = useLocation()
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
@@ -42,11 +43,13 @@ export function AdminLayout() {
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((v) => !v)}
+        mobileOpen={mobileNavOpen}
+        onMobileClose={() => setMobileNavOpen(false)}
       />
       <div className="flex flex-1 flex-col overflow-hidden">
-        <Topbar title={currentTitle} />
+        <Topbar title={currentTitle} onMenuClick={() => setMobileNavOpen(true)} />
         <SubscriptionBanner />
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-3 sm:p-4 md:p-6">
           <Outlet />
         </main>
       </div>
