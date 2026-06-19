@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { createHmac } from 'crypto'
-import { adminDb, Timestamp } from './_firebase'
+import { adminDb, Timestamp } from './_firebase.js'
 
 const MP_BASE = 'https://api.mercadopago.com'
 

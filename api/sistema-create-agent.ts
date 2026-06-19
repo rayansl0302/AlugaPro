@@ -9,7 +9,7 @@
  * Body: { name, email, password }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { adminAuth, adminDb, Timestamp } from './_firebase'
+import { adminAuth, adminDb, Timestamp } from './_firebase.js'
 
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
 

@@ -5,7 +5,7 @@
  * Body: { phone, text }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { sendWhatsAppMessage, evolutionConfigured } from './_evolution'
+import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {

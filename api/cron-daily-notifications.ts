@@ -9,9 +9,9 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FieldValue } from 'firebase-admin/firestore'
-import { adminDb } from './_firebase'
-import { sendWhatsAppMessage, evolutionConfigured } from './_evolution'
-import { getTriggerForToday, buildMessage, type ChargeSnapshot } from './_notifyLogic'
+import { adminDb } from './_firebase.js'
+import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
+import { getTriggerForToday, buildMessage, type ChargeSnapshot } from './_notifyLogic.js'
 
 interface TenantDoc {
   whatsapp?: string

@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { handleWebhook } from './_webhookHandler'
+import { handleWebhook } from './_webhookHandler.js'
 
 // Webhook para ambiente de PRODUÇÃO — configure no MP: Modo de produção → URL /api/webhook
 export default function handler(req: VercelRequest, res: VercelResponse) {

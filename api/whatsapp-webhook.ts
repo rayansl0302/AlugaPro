@@ -11,7 +11,7 @@
  * envios já são registrados em src/services/salesChat.ts no momento do disparo.
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
-import { adminDb, Timestamp } from './_firebase'
+import { adminDb, Timestamp } from './_firebase.js'
 
 // Time comercial interno — não é uma empresa-cliente do AlugaPro. Fixo por
 // padrão; só sobrescreva via env var se quiser isolar em outro valor.

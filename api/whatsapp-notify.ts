@@ -9,8 +9,8 @@
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FieldValue } from 'firebase-admin/firestore'
-import { adminDb } from './_firebase'
-import { sendWhatsAppMessage, evolutionConfigured } from './_evolution'
+import { adminDb } from './_firebase.js'
+import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
