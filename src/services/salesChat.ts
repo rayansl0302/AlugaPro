@@ -16,22 +16,30 @@ export function normalizePhone(raw: string): string {
 export function subscribeToConversations(
   companyId: string,
   callback: (conversations: SalesConversation[]) => void,
+  onError?: (err: Error) => void,
 ): Unsubscribe {
+  // Sem orderBy aqui de propósito — where + orderBy em campos diferentes
+  // exige índice composto manual no Firestore. Ordena no cliente em vez
+  // disso (lista pequena, custo irrelevante).
   const q = query(
     collection(db, CONVERSATIONS_COL),
     where('companyId', '==', companyId),
-    orderBy('lastMessageAt', 'desc'),
   )
   return onSnapshot(
     q,
-    (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as SalesConversation))),
-    () => callback([]),
+    (snap) => {
+      const list = snap.docs.map((d) => ({ id: d.id, ...d.data() } as SalesConversation))
+      list.sort((a, b) => (b.lastMessageAt?.toMillis?.() ?? 0) - (a.lastMessageAt?.toMillis?.() ?? 0))
+      callback(list)
+    },
+    (err) => { callback([]); onError?.(err) },
   )
 }
 
 export function subscribeToMessages(
   conversationId: string,
   callback: (messages: SalesMessage[]) => void,
+  onError?: (err: Error) => void,
 ): Unsubscribe {
   const q = query(
     collection(db, CONVERSATIONS_COL, conversationId, 'messages'),
@@ -40,7 +48,7 @@ export function subscribeToMessages(
   return onSnapshot(
     q,
     (snap) => callback(snap.docs.map((d) => ({ id: d.id, ...d.data() } as SalesMessage))),
-    () => callback([]),
+    (err) => { callback([]); onError?.(err) },
   )
 }
 

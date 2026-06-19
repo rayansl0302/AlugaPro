@@ -174,13 +174,17 @@ function SistemaChat() {
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    return subscribeToConversations(SALES_COMPANY_ID, setConversations)
+    return subscribeToConversations(SALES_COMPANY_ID, setConversations, (err) => {
+      toast({ title: 'Erro ao carregar conversas.', description: err.message, variant: 'destructive' })
+    })
   }, [])
 
   useEffect(() => {
     if (!selectedId) { setMessages([]); return }
     markConversationRead(selectedId)
-    return subscribeToMessages(selectedId, setMessages)
+    return subscribeToMessages(selectedId, setMessages, (err) => {
+      toast({ title: 'Erro ao carregar mensagens.', description: err.message, variant: 'destructive' })
+    })
   }, [selectedId])
 
   useEffect(() => {
