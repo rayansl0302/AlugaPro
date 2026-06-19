@@ -1,5 +1,6 @@
 import { initializeApp, cert, getApps } from 'firebase-admin/app'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { getAuth } from 'firebase-admin/auth'
 
 if (!getApps().length) {
   initializeApp({
@@ -13,4 +14,5 @@ if (!getApps().length) {
 }
 
 export const adminDb = getFirestore()
+export const adminAuth = getAuth()
 export { Timestamp }

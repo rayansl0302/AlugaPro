@@ -10,10 +10,19 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import {
-  MessageSquare, Send, Plus, Search, ArrowLeft, LogOut, Loader2, CheckCheck, Smartphone,
+  MessageSquare, Send, Plus, Search, ArrowLeft, LogOut, Loader2, CheckCheck, Smartphone, Users, UserPlus,
 } from 'lucide-react'
+import {
+  collection, query, where, getDocs,
+} from 'firebase/firestore'
+import { db } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
+
+// Mesmo valor fixo usado em AuthContext (COMERCIAL_COMPANY_ID) e no webhook
+// (SALES_COMPANY_ID). /sistema não usa o companyId real do usuário logado —
+// admin e comercial sempre operam neste mesmo espaço interno fixo.
+const SALES_COMPANY_ID = 'alugapro-interno'
 
 function formatTime(ts?: { toDate?: () => Date } | null): string {
   if (!ts?.toDate) return ''
@@ -28,13 +37,25 @@ function formatDay(ts?: { toDate?: () => Date } | null): string {
   return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
 }
 
+function GoogleIcon() {
+  return (
+    <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
+      <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84Z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38Z" />
+    </svg>
+  )
+}
+
 // ─── Login mínimo dedicado ao /sistema ─────────────────────────────────────────
 function SistemaLogin() {
-  const { signIn } = useAuth()
+  const { signIn, signInWithGoogle } = useAuth()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
@@ -46,6 +67,18 @@ function SistemaLogin() {
       setError('E-mail ou senha incorretos.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGoogle = async () => {
+    setError('')
+    setGoogleLoading(true)
+    try {
+      await signInWithGoogle()
+    } catch {
+      setError('Não foi possível entrar com Google.')
+    } finally {
+      setGoogleLoading(false)
     }
   }
 
@@ -86,6 +119,23 @@ function SistemaLogin() {
             Entrar
           </Button>
         </form>
+
+        <div className="my-4 flex items-center gap-2">
+          <div className="h-px flex-1 bg-slate-800" />
+          <span className="text-xs text-slate-500">ou</span>
+          <div className="h-px flex-1 bg-slate-800" />
+        </div>
+
+        <Button
+          type="button"
+          variant="outline"
+          disabled={googleLoading}
+          onClick={handleGoogle}
+          className="w-full gap-2 border-slate-700 bg-slate-800 text-white hover:bg-slate-700 hover:text-white"
+        >
+          {googleLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <GoogleIcon />}
+          Entrar com Google
+        </Button>
       </div>
     </div>
   )
@@ -106,8 +156,8 @@ function AccessDenied() {
 
 // ─── Chat principal ────────────────────────────────────────────────────────────
 function SistemaChat() {
-  const { user, logout } = useAuth()
-  const companyId = user?.companyId ?? ''
+  const { user, firebaseUser, logout } = useAuth()
+  const isAdmin = user?.role === 'admin'
   const agent = { id: user!.id, name: user!.name }
 
   const [conversations, setConversations] = useState<SalesConversation[]>([])
@@ -120,12 +170,12 @@ function SistemaChat() {
   const [newPhone, setNewPhone] = useState('')
   const [newName, setNewName] = useState('')
   const [startingChat, setStartingChat] = useState(false)
+  const [showAgents, setShowAgents] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    if (!companyId) return
-    return subscribeToConversations(companyId, setConversations)
-  }, [companyId])
+    return subscribeToConversations(SALES_COMPANY_ID, setConversations)
+  }, [])
 
   useEffect(() => {
     if (!selectedId) { setMessages([]); return }
@@ -164,7 +214,7 @@ function SistemaChat() {
     if (!newPhone.trim() || startingChat) return
     setStartingChat(true)
     try {
-      const id = await startOrGetConversation(companyId, newPhone, newName.trim(), agent)
+      const id = await startOrGetConversation(SALES_COMPANY_ID, newPhone, newName.trim(), agent)
       setSelectedId(id)
       setShowNewChat(false)
       setNewPhone('')
@@ -188,6 +238,17 @@ function SistemaChat() {
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-400">
           <span className="hidden sm:inline">{user?.name}</span>
+          {isAdmin && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowAgents(true)}
+              className="h-8 w-8 text-slate-400 hover:text-white"
+              title="Gerenciar agentes"
+            >
+              <Users className="h-4 w-4" />
+            </Button>
+          )}
           <Button variant="ghost" size="icon" onClick={logout} className="h-8 w-8 text-slate-400 hover:text-white">
             <LogOut className="h-4 w-4" />
           </Button>
@@ -345,7 +406,147 @@ function SistemaChat() {
           </form>
         </DialogContent>
       </Dialog>
+
+      {/* Gestão de agentes — só admin */}
+      {isAdmin && (
+        <AgentManagementDialog
+          open={showAgents}
+          onOpenChange={setShowAgents}
+          firebaseUser={firebaseUser}
+        />
+      )}
     </div>
+  )
+}
+
+// ─── Gestão de agentes (admin) ──────────────────────────────────────────────────
+interface AgentDoc {
+  id: string
+  name: string
+  email: string
+  active?: boolean
+}
+
+function AgentManagementDialog({
+  open, onOpenChange, firebaseUser,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  firebaseUser: { getIdToken: () => Promise<string> } | null
+}) {
+  const [agents, setAgents] = useState<AgentDoc[]>([])
+  const [loadingAgents, setLoadingAgents] = useState(false)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [creating, setCreating] = useState(false)
+  const [formError, setFormError] = useState('')
+
+  const loadAgents = async () => {
+    setLoadingAgents(true)
+    try {
+      const snap = await getDocs(query(collection(db, 'users'), where('role', '==', 'comercial')))
+      setAgents(snap.docs.map((d) => ({ id: d.id, ...d.data() } as AgentDoc)))
+    } catch {
+      toast({ title: 'Erro ao carregar agentes.', variant: 'destructive' })
+    } finally {
+      setLoadingAgents(false)
+    }
+  }
+
+  useEffect(() => {
+    if (open) loadAgents()
+  }, [open])
+
+  const handleCreate = async (e: FormEvent) => {
+    e.preventDefault()
+    if (!firebaseUser) {
+      setFormError('Sessão sem login real do Firebase — use uma conta admin de verdade (não a demo).')
+      return
+    }
+    setFormError('')
+    setCreating(true)
+    try {
+      const idToken = await firebaseUser.getIdToken()
+      const res = await fetch('/api/sistema-create-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ name, email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.ok) {
+        setFormError(data.error || 'Erro ao criar agente.')
+        return
+      }
+      toast({ title: 'Agente criado com sucesso.' })
+      setName(''); setEmail(''); setPassword('')
+      loadAgents()
+    } catch {
+      setFormError('Erro de conexão ao criar agente.')
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" /> Agentes comerciais
+          </DialogTitle>
+        </DialogHeader>
+
+        <div className="max-h-48 space-y-1 overflow-y-auto">
+          {loadingAgents ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            </div>
+          ) : agents.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">Nenhum agente cadastrado ainda.</p>
+          ) : (
+            agents.map((a) => (
+              <div key={a.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+                <div>
+                  <p className="font-medium">{a.name}</p>
+                  <p className="text-xs text-muted-foreground">{a.email}</p>
+                </div>
+                {a.active === false && <span className="text-xs text-destructive">Inativo</span>}
+              </div>
+            ))
+          )}
+        </div>
+
+        <form onSubmit={handleCreate} className="space-y-3 border-t pt-4">
+          <p className="flex items-center gap-1.5 text-sm font-medium">
+            <UserPlus className="h-4 w-4" /> Novo agente
+          </p>
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>E-mail</Label>
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Senha provisória</Label>
+            <Input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              minLength={6}
+              required
+            />
+          </div>
+          {formError && <p className="text-sm text-destructive">{formError}</p>}
+          <Button type="submit" disabled={creating} className="w-full">
+            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Criar agente
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
 
