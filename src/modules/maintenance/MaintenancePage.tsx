@@ -326,7 +326,7 @@ export function MaintenancePage() {
               className="w-full pl-9 sm:w-64"
             />
           </div>
-          <div className="flex flex-wrap gap-1 overflow-x-auto">
+          <div className="flex flex-wrap gap-1">
             {(['todos', 'aberto', 'em_analise', 'em_andamento', 'finalizado'] as const).map((s) => (
               <Button
                 key={s}
