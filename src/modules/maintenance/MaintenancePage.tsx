@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, Wrench, Search, Eye } from 'lucide-react'
+import { Plus, Wrench, Search, Eye, ListFilter, Table2, LayoutGrid, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   getMaintenanceRequests,
@@ -28,6 +28,9 @@ import { toast } from '@/hooks/useToast'
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { MaintenanceCommentsPanel } from '@/components/maintenance/MaintenanceCommentsPanel'
 import { MaintenanceStatusHistoryPanel } from '@/components/maintenance/MaintenanceStatusHistoryPanel'
 import { MaintenanceEntityPhotos } from '@/components/maintenance/MaintenanceEntityPhotos'
@@ -326,34 +329,46 @@ export function MaintenancePage() {
               className="w-full pl-9 sm:w-64"
             />
           </div>
-          <div className="flex flex-wrap gap-1">
-            {(['todos', 'aberto', 'em_analise', 'em_andamento', 'finalizado'] as const).map((s) => (
-              <Button
-                key={s}
-                variant={statusFilter === s ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(s)}
-              >
-                {s === 'todos' ? 'Todos' : statusConfig[s as MaintenanceStatus].label}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <ListFilter className="h-4 w-4" />
+                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as MaintenanceStatus].label}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {(['todos', 'aberto', 'em_analise', 'em_andamento', 'finalizado'] as const).map((s) => (
+                <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
+                  {s === 'todos' ? 'Todos' : statusConfig[s as MaintenanceStatus].label}
+                  {statusFilter === s && <Check className="h-3.5 w-3.5" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            variant={viewMode === 'table' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('table')}
-          >
-            Tabela
-          </Button>
-          <Button
-            variant={viewMode === 'grid' ? 'default' : 'outline'}
-            size="sm"
-            onClick={() => setViewMode('grid')}
-          >
-            Cards
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-2">
+                {viewMode === 'table' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
+                {viewMode === 'table' ? 'Tabela' : 'Cards'}
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => setViewMode('table')} className="justify-between gap-4">
+                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Tabela</span>
+                {viewMode === 'table' && <Check className="h-3.5 w-3.5" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setViewMode('grid')} className="justify-between gap-4">
+                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Cards</span>
+                {viewMode === 'grid' && <Check className="h-3.5 w-3.5" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button onClick={() => setShowForm(true)}>
             <Plus className="mr-2 h-4 w-4" /> Abrir Chamado
           </Button>

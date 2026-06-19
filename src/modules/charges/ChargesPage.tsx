@@ -8,6 +8,7 @@ import {
   Search, CheckCircle, Clock, AlertTriangle, RefreshCw,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus,
   FileCheck, Eye, MessageSquare, Mail, Bell, Send,
+  ListFilter, ChevronDown, Check,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges, updateCharge, generateChargesForContract, createCharge } from '@/services/charges'
@@ -551,18 +552,25 @@ export function ChargesPage() {
                 className="w-full pl-9 sm:w-64"
               />
             </div>
-            <div className="flex gap-1 flex-wrap">
-              {(['todos', 'imovel', 'veiculo'] as const).map((type) => (
-                <Button
-                  key={type}
-                  variant={assetFilter === type ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={() => setAssetFilter(type)}
-                >
-                  {type === 'todos' ? 'Todos' : type === 'imovel' ? 'Imóveis' : 'Veículos'}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="justify-between gap-2">
+                  <span className="flex items-center gap-2">
+                    <ListFilter className="h-4 w-4" />
+                    {assetFilter === 'todos' ? 'Todos' : assetFilter === 'imovel' ? 'Imóveis' : 'Veículos'}
+                  </span>
+                  <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </Button>
-              ))}
-            </div>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                {(['todos', 'imovel', 'veiculo'] as const).map((type) => (
+                  <DropdownMenuItem key={type} onClick={() => setAssetFilter(type)} className="justify-between gap-4">
+                    {type === 'todos' ? 'Todos' : type === 'imovel' ? 'Imóveis' : 'Veículos'}
+                    {assetFilter === type && <Check className="h-3.5 w-3.5" />}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
             {tenantOptions.length > 1 && (
               <Select value={tenantFilter} onValueChange={setTenantFilter}>
                 <SelectTrigger className="w-52">
@@ -612,18 +620,25 @@ export function ChargesPage() {
 
         {/* Status filter — only in list mode */}
         {viewMode === 'list' && (
-          <div className="flex gap-1 flex-wrap">
-            {(['todos', 'pendente', 'atrasado', 'pago', 'cancelado'] as const).map((s) => (
-              <Button
-                key={s}
-                variant={statusFilter === s ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(s)}
-              >
-                {s === 'todos' ? 'Todos' : STATUS_LABEL[s]}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <ListFilter className="h-4 w-4" />
+                  {statusFilter === 'todos' ? 'Todos' : STATUS_LABEL[statusFilter]}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {(['todos', 'pendente', 'atrasado', 'pago', 'cancelado'] as const).map((s) => (
+                <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
+                  {s === 'todos' ? 'Todos' : STATUS_LABEL[s]}
+                  {statusFilter === s && <Check className="h-3.5 w-3.5" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 

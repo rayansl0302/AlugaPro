@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole } from 'lucide-react'
+import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContracts, updateContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
 import { getTenants } from '@/services/tenants'
@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
@@ -155,18 +156,25 @@ export function ContractsPage() {
               className="w-full pl-9 sm:w-64"
             />
           </div>
-          <div className="flex gap-1 flex-wrap">
-            {(['todos', 'ativo', 'renovado', 'encerrado', 'cancelado'] as const).map((s) => (
-              <Button
-                key={s}
-                variant={statusFilter === s ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setStatusFilter(s)}
-              >
-                {s === 'todos' ? 'Todos' : statusConfig[s].label}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  <ListFilter className="h-4 w-4" />
+                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as ContractStatus].label}
+                </span>
+                <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
-            ))}
-          </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              {(['todos', 'ativo', 'renovado', 'encerrado', 'cancelado'] as const).map((s) => (
+                <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
+                  {s === 'todos' ? 'Todos' : statusConfig[s].label}
+                  {statusFilter === s && <Check className="h-3.5 w-3.5" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <Button onClick={() => { setEditingContract(null); setShowForm(true) }}>
           <Plus className="mr-2 h-4 w-4" /> Novo Contrato
