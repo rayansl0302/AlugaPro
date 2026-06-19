@@ -13,7 +13,9 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { adminDb, Timestamp } from './_firebase'
 
-const SALES_COMPANY_ID = process.env.SALES_COMPANY_ID ?? ''
+// Time comercial interno — não é uma empresa-cliente do AlugaPro. Fixo por
+// padrão; só sobrescreva via env var se quiser isolar em outro valor.
+const SALES_COMPANY_ID = process.env.SALES_COMPANY_ID ?? 'alugapro-interno'
 const WEBHOOK_SECRET = process.env.WEBHOOK_SECRET ?? ''
 
 interface EvolutionMessageData {
@@ -33,10 +35,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (WEBHOOK_SECRET && req.query.key !== WEBHOOK_SECRET) {
     return res.status(401).json({ error: 'Unauthorized' })
-  }
-
-  if (!SALES_COMPANY_ID) {
-    return res.status(200).json({ ok: true, skipped: 'SALES_COMPANY_ID não configurada' })
   }
 
   try {
