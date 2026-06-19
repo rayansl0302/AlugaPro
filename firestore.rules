@@ -43,6 +43,15 @@ service cloud.firestore {
       return isGestor() || isRole('proprietario');
     }
 
+    // Agentes comerciais (/sistema) — inbox compartilhado de prospecção
+    function isComercial() {
+      return isAdmin() || isRole('comercial');
+    }
+
+    function canAccessSales() {
+      return isGestor() || isComercial();
+    }
+
     function isInquilinoOf(tenantId) {
       return isAuthenticated() && request.auth.uid == tenantId;
     }
@@ -300,6 +309,21 @@ service cloud.firestore {
       allow read: if isAdmin();
       allow create: if isGestor();
       allow update, delete: if false;
+    }
+
+    // Sistema Comercial (/sistema) — inbox de prospecção via WhatsApp
+    // Mensagens recebidas chegam via webhook com Admin SDK (ignora estas regras).
+    match /salesConversations/{conversationId} {
+      allow read: if isAuthenticated() && canAccessSales() && sameCompany(resource.data.companyId);
+      allow create: if isAuthenticated() && canAccessSales() && sameCompany(request.resource.data.companyId);
+      allow update: if isAuthenticated() && canAccessSales() && sameCompany(resource.data.companyId);
+      allow delete: if isAdmin();
+
+      match /messages/{messageId} {
+        allow read, create: if isAuthenticated() && canAccessSales()
+          && sameCompany(get(/databases/$(database)/documents/salesConversations/$(conversationId)).data.companyId);
+        allow update, delete: if false;
+      }
     }
 
     // Assinaturas de testemunhas (rota pública por token)

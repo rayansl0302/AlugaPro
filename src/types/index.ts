@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore'
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino'
+export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino' | 'comercial'
 
 export type PropertyStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
 export type PropertyType = 'apartamento' | 'casa' | 'kitnet' | 'sala_comercial' | 'galpao' | 'terreno' | 'outro'
@@ -47,6 +47,32 @@ export interface User {
   active: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
+}
+
+// ─── Sistema (chat comercial / prospecção) ────────────────────────────────────
+
+export interface SalesConversation {
+  id: string
+  companyId: string
+  phone: string                 // somente dígitos, com DDI: "5511999998888"
+  contactName?: string
+  lastMessageText: string
+  lastMessageAt: Timestamp
+  lastMessageDirection: 'inbound' | 'outbound'
+  unread: boolean
+  createdBy: string             // uid do agente que iniciou, ou 'cliente' se veio de fora
+  createdByName: string
+  createdAt: Timestamp
+}
+
+export interface SalesMessage {
+  id: string
+  direction: 'inbound' | 'outbound'
+  text: string
+  senderId?: string
+  senderName?: string
+  status?: 'sent' | 'failed'
+  createdAt: Timestamp
 }
 
 // ─── Subscription ────────────────────────────────────────────────────────────

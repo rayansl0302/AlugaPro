@@ -29,6 +29,7 @@ import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
 import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
 import { WhatsAppPage } from '@/modules/settings/WhatsAppPage'
+import { SistemaPage } from '@/modules/sistema/SistemaPage'
 
 const Spinner = () => (
   <div className="flex h-screen items-center justify-center">
@@ -66,6 +67,10 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />,
+  },
+  {
+    path: '/sistema',
+    element: <SistemaPage />,
   },
   {
     path: '/assinar-testemunha/:token',
