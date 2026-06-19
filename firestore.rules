@@ -48,10 +48,6 @@ service cloud.firestore {
       return isAdmin() || isRole('comercial');
     }
 
-    function canAccessSales() {
-      return isGestor() || isComercial();
-    }
-
     function isInquilinoOf(tenantId) {
       return isAuthenticated() && request.auth.uid == tenantId;
     }
@@ -311,17 +307,17 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Sistema Comercial (/sistema) — inbox de prospecção via WhatsApp
+    // Sistema Comercial (/sistema) — inbox interno de prospecção via WhatsApp.
+    // Não é multi-empresa: só isAdmin()/isRole('comercial') entram, sem
+    // depender do campo companyId do doc (que é só um valor fixo de
+    // agrupamento, não uma empresa-cliente real).
     // Mensagens recebidas chegam via webhook com Admin SDK (ignora estas regras).
     match /salesConversations/{conversationId} {
-      allow read: if isAuthenticated() && canAccessSales() && sameCompany(resource.data.companyId);
-      allow create: if isAuthenticated() && canAccessSales() && sameCompany(request.resource.data.companyId);
-      allow update: if isAuthenticated() && canAccessSales() && sameCompany(resource.data.companyId);
+      allow read, create, update: if isAuthenticated() && isComercial();
       allow delete: if isAdmin();
 
       match /messages/{messageId} {
-        allow read, create: if isAuthenticated() && canAccessSales()
-          && sameCompany(get(/databases/$(database)/documents/salesConversations/$(conversationId)).data.companyId);
+        allow read, create: if isAuthenticated() && isComercial();
         allow update, delete: if false;
       }
     }
