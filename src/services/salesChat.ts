@@ -118,11 +118,14 @@ export async function sendSalesMessage(
       },
       body: JSON.stringify({ phone, text }),
     })
-    if (!res.ok) throw new Error('send failed')
-  } catch {
+    const data = await res.json().catch(() => ({ ok: false, error: `HTTP ${res.status}` }))
+    if (!res.ok || !data.ok) {
+      throw new Error(data.error || `HTTP ${res.status}`)
+    }
+  } catch (err) {
     await addDoc(collection(db, CONVERSATIONS_COL, conversationId, 'messages'), {
       direction: 'outbound',
-      text: '⚠️ Falha ao entregar — verifique a conexão do WhatsApp.',
+      text: `⚠️ Falha ao entregar: ${(err as Error).message}`,
       status: 'failed',
       createdAt: serverTimestamp(),
     })
