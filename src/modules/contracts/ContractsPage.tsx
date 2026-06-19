@@ -143,6 +143,80 @@ export function ContractsPage() {
     }
   }
 
+  const renderContractActions = (contract: Contract, signing: ReturnType<typeof getContractSigningStatus>) => (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={contract.locked}
+        onClick={() => { setEditingContract(contract); setShowForm(true) }}
+        title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Editar'}
+      >
+        <Edit className="h-3 w-3" />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={contract.locked}
+        title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Completar dados (locador/locatário)'}
+        onClick={() => { setSignFlowEdit(true); setSigningContract(contract) }}
+      >
+        <Users className="h-3.5 w-3.5" />
+      </Button>
+      {contract.locked ? (
+        <Button variant="ghost" size="sm" className="text-green-600" disabled title="Contrato marcado como completo">
+          <LockKeyhole className="h-3.5 w-3.5" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          title="Marcar como completo (bloqueia edição)"
+          onClick={() => handleMarkComplete(contract)}
+        >
+          <Lock className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      <Button
+        variant="ghost"
+        size="sm"
+        title={
+          signing.state === 'complete'
+            ? 'Contrato assinado — ver/baixar'
+            : signing.state === 'pending'
+              ? `Assinatura pendente — falta(m) ${signing.pendingCount} assinatura(s)`
+              : 'Assinar contrato'
+        }
+        className={
+          signing.state === 'complete'
+            ? 'text-green-600'
+            : signing.state === 'pending'
+              ? 'text-amber-500'
+              : 'text-primary'
+        }
+        onClick={() => { setSignFlowEdit(false); setSigningContract(contract) }}
+      >
+        {signing.state === 'complete'
+          ? <CheckCircle className="h-3.5 w-3.5" />
+          : signing.state === 'pending'
+            ? <Clock className="h-3.5 w-3.5" />
+            : <PenLine className="h-3.5 w-3.5" />
+        }
+      </Button>
+      {contract.status === 'ativo' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground"
+          onClick={() => handleStatusChange(contract, 'encerrado')}
+        >
+          Encerrar
+        </Button>
+      )}
+    </>
+  )
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -208,7 +282,76 @@ export function ContractsPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border">
+        <>
+          {/* Mobile — cards */}
+          <div className="space-y-3 md:hidden">
+            {pag.pageItems.map((contract) => {
+              const sc = statusConfig[contract.status]
+              const signing = getContractSigningStatus(contract)
+              return (
+                <Card key={contract.id}>
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="font-mono text-sm font-medium">{contract.contractNumber}</span>
+                      <Badge variant={sc.variant}>{sc.label}</Badge>
+                    </div>
+                    <div className="space-y-1.5 text-sm">
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Inquilino:</span>
+                        <span className="truncate">{contract.tenantName || '—'}</span>
+                        {contract.tenantId && tenantById[contract.tenantId] && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0 text-muted-foreground"
+                            title="Ver inquilino"
+                            onClick={() => setViewTenant(tenantById[contract.tenantId])}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-muted-foreground">Imóvel/Veículo:</span>
+                        <span className="truncate">
+                          {contract.propertyName || '—'}
+                          {contract.assetType === 'veiculo' && <span className="ml-1 text-xs">(Veículo)</span>}
+                        </span>
+                        {(contract.assetType === 'veiculo'
+                          ? vehicleById[contract.propertyId]
+                          : propertyById[contract.propertyId]) && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 shrink-0"
+                            title="Ver imóvel/veículo"
+                            onClick={() => openContractAsset(contract)}
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                      <p className="text-muted-foreground">
+                        {formatDate(contract.startDate)} — {formatDateOptional(contract.endDate, 'Indeterminado')}
+                      </p>
+                    </div>
+                    <div className="flex items-center justify-between border-t pt-2">
+                      <span className="font-semibold text-primary">{formatCurrency(contract.rentValue)}</span>
+                      <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3" /> Dia {contract.dueDay}
+                      </span>
+                    </div>
+                    <div className="flex flex-wrap gap-1 border-t pt-2">
+                      {renderContractActions(contract, signing)}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+          </div>
+
+          {/* Desktop — tabela */}
+          <div className="hidden rounded-lg border md:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -287,81 +430,7 @@ export function ContractsPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={contract.locked}
-                          onClick={() => { setEditingContract(contract); setShowForm(true) }}
-                          title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Editar'}
-                        >
-                          <Edit className="h-3 w-3" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          disabled={contract.locked}
-                          title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Completar dados (locador/locatário)'}
-                          onClick={() => { setSignFlowEdit(true); setSigningContract(contract) }}
-                        >
-                          <Users className="h-3.5 w-3.5" />
-                        </Button>
-                        {contract.locked ? (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-green-600"
-                            disabled
-                            title="Contrato marcado como completo"
-                          >
-                            <LockKeyhole className="h-3.5 w-3.5" />
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground"
-                            title="Marcar como completo (bloqueia edição)"
-                            onClick={() => handleMarkComplete(contract)}
-                          >
-                            <Lock className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          title={
-                            signing.state === 'complete'
-                              ? 'Contrato assinado — ver/baixar'
-                              : signing.state === 'pending'
-                                ? `Assinatura pendente — falta(m) ${signing.pendingCount} assinatura(s)`
-                                : 'Assinar contrato'
-                          }
-                          className={
-                            signing.state === 'complete'
-                              ? 'text-green-600'
-                              : signing.state === 'pending'
-                                ? 'text-amber-500'
-                                : 'text-primary'
-                          }
-                          onClick={() => { setSignFlowEdit(false); setSigningContract(contract) }}
-                        >
-                          {signing.state === 'complete'
-                            ? <CheckCircle className="h-3.5 w-3.5" />
-                            : signing.state === 'pending'
-                              ? <Clock className="h-3.5 w-3.5" />
-                              : <PenLine className="h-3.5 w-3.5" />
-                          }
-                        </Button>
-                        {contract.status === 'ativo' && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-muted-foreground"
-                            onClick={() => handleStatusChange(contract, 'encerrado')}
-                          >
-                            Encerrar
-                          </Button>
-                        )}
+                        {renderContractActions(contract, signing)}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -369,7 +438,8 @@ export function ContractsPage() {
               })}
             </TableBody>
           </Table>
-        </div>
+          </div>
+        </>
       )}
 
       {!isLoading && filtered.length > 0 && (

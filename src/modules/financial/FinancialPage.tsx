@@ -144,29 +144,64 @@ export function FinancialPage() {
                 <div key={i} className="h-12 animate-pulse rounded bg-muted" />
               ))}
             </div>
+          ) : filtered.length === 0 ? (
+            <div className="rounded-lg border py-8 text-center text-muted-foreground">
+              Nenhum lançamento neste mês
+            </div>
           ) : (
-            <div className="rounded-lg border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Descrição</TableHead>
-                    <TableHead>Inquilino</TableHead>
-                    <TableHead>Vencimento</TableHead>
-                    <TableHead>Pagamento</TableHead>
-                    <TableHead>Forma</TableHead>
-                    <TableHead>Valor</TableHead>
-                    <TableHead>Status</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.length === 0 ? (
+            <>
+              {/* Mobile — cards */}
+              <div className="space-y-3 md:hidden">
+                {pag.pageItems.map((payment: Charge) => (
+                  <Card key={payment.id}>
+                    <CardContent className="space-y-2 p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="min-w-0 truncate font-medium">{payment.description}</p>
+                        <Badge variant={statusVariant[payment.status]} className="shrink-0">
+                          {payment.status === 'pago' ? 'Pago' : payment.status === 'pendente' ? 'Pendente' : payment.status === 'atrasado' ? 'Atrasado' : 'Cancelado'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{payment.tenantName || '—'}</p>
+                      <div className="flex items-end justify-between border-t pt-2">
+                        <div className="space-y-0.5 text-xs text-muted-foreground">
+                          <p>Venc: {payment.dueDate ? formatDate(payment.dueDate) : '—'}</p>
+                          {payment.paidDate && <p>Pago: {formatDate(payment.paidDate)}</p>}
+                          {payment.paymentMethod && <p>{methodLabels[payment.paymentMethod]}</p>}
+                        </div>
+                        <p className="text-base font-semibold">{formatCurrency(payment.amount)}</p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {filtered.length > 0 && (
+                  <Pagination
+                    page={pag.page}
+                    totalPages={pag.totalPages}
+                    total={pag.total}
+                    rangeStart={pag.rangeStart}
+                    rangeEnd={pag.rangeEnd}
+                    onPageChange={pag.setPage}
+                    itemLabel="lançamentos"
+                  />
+                )}
+              </div>
+
+              {/* Desktop — tabela */}
+              <div className="hidden rounded-lg border md:block">
+                <Table>
+                  <TableHeader>
                     <TableRow>
-                      <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        Nenhum lançamento neste mês
-                      </TableCell>
+                      <TableHead>Descrição</TableHead>
+                      <TableHead>Inquilino</TableHead>
+                      <TableHead>Vencimento</TableHead>
+                      <TableHead>Pagamento</TableHead>
+                      <TableHead>Forma</TableHead>
+                      <TableHead>Valor</TableHead>
+                      <TableHead>Status</TableHead>
                     </TableRow>
-                  ) : (
-                    pag.pageItems.map((payment: Charge) => (
+                  </TableHeader>
+                  <TableBody>
+                    {pag.pageItems.map((payment: Charge) => (
                       <TableRow key={payment.id}>
                         <TableCell className="font-medium">{payment.description}</TableCell>
                         <TableCell>{payment.tenantName || '—'}</TableCell>
@@ -188,24 +223,24 @@ export function FinancialPage() {
                           </Badge>
                         </TableCell>
                       </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-              {filtered.length > 0 && (
-                <div className="border-t px-4 py-3">
-                  <Pagination
-                    page={pag.page}
-                    totalPages={pag.totalPages}
-                    total={pag.total}
-                    rangeStart={pag.rangeStart}
-                    rangeEnd={pag.rangeEnd}
-                    onPageChange={pag.setPage}
-                    itemLabel="lançamentos"
-                  />
-                </div>
-              )}
-            </div>
+                    ))}
+                  </TableBody>
+                </Table>
+                {filtered.length > 0 && (
+                  <div className="border-t px-4 py-3">
+                    <Pagination
+                      page={pag.page}
+                      totalPages={pag.totalPages}
+                      total={pag.total}
+                      rangeStart={pag.rangeStart}
+                      rangeEnd={pag.rangeEnd}
+                      onPageChange={pag.setPage}
+                      itemLabel="lançamentos"
+                    />
+                  </div>
+                )}
+              </div>
+            </>
           )}
         </TabsContent>
 

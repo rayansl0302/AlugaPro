@@ -151,66 +151,126 @@ export function OwnersPage() {
           </Button>
         </div>
       ) : (
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Proprietário</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pag.pageItems.map((owner) => (
-                <TableRow key={owner.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
+        <>
+          {/* Mobile — cards */}
+          <div className="space-y-3 md:hidden">
+            {pag.pageItems.map((owner) => (
+              <Card key={owner.id}>
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <Avatar className="h-10 w-10 shrink-0">
                         <AvatarImage src={owner.photoUrl} />
                         <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs dark:bg-indigo-900 dark:text-indigo-300">
                           {getInitials(owner.name)}
                         </AvatarFallback>
                       </Avatar>
-                      <span className="font-medium">{owner.name}</span>
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{owner.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {owner.cpf ? formatCPF(owner.cpf) : 'CPF não informado'}
+                        </p>
+                      </div>
                     </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {owner.cpf ? formatCPF(owner.cpf) : '—'}
-                  </TableCell>
-                  <TableCell>
-                    <div className="space-y-0.5 text-xs text-muted-foreground">
-                      {owner.phone && <p>{formatPhone(owner.phone)}</p>}
-                      {owner.email && <p className="truncate max-w-40">{owner.email}</p>}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" onClick={() => {
+                    <div className="flex shrink-0 gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
                           setEditingOwner(owner)
                           reset({ name: owner.name, cpf: owner.cpf ?? '', email: owner.email ?? '', phone: owner.phone ?? '', whatsapp: owner.whatsapp ?? '' })
                           setPhotoUrl(owner.photoUrl ?? '')
                           setShowForm(true)
-                        }}>
-                        <Edit className="h-3 w-3" />
+                        }}
+                      >
+                        <Edit className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
-                        size="sm"
-                        className="text-destructive hover:text-destructive"
+                        size="icon"
+                        className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => {
                           if (confirm('Remover proprietário?')) deleteMutation.mutate(owner.id)
                         }}
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
-                  </TableCell>
+                  </div>
+                  {(owner.phone || owner.email) && (
+                    <div className="mt-3 space-y-0.5 border-t pt-3 text-xs text-muted-foreground">
+                      {owner.phone && <p>{formatPhone(owner.phone)}</p>}
+                      {owner.email && <p className="truncate">{owner.email}</p>}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Desktop — tabela */}
+          <div className="hidden rounded-lg border md:block">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Proprietário</TableHead>
+                  <TableHead>CPF</TableHead>
+                  <TableHead>Contato</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {pag.pageItems.map((owner) => (
+                  <TableRow key={owner.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={owner.photoUrl} />
+                          <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs dark:bg-indigo-900 dark:text-indigo-300">
+                            {getInitials(owner.name)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{owner.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {owner.cpf ? formatCPF(owner.cpf) : '—'}
+                    </TableCell>
+                    <TableCell>
+                      <div className="space-y-0.5 text-xs text-muted-foreground">
+                        {owner.phone && <p>{formatPhone(owner.phone)}</p>}
+                        {owner.email && <p className="truncate max-w-40">{owner.email}</p>}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button variant="ghost" size="sm" onClick={() => {
+                            setEditingOwner(owner)
+                            reset({ name: owner.name, cpf: owner.cpf ?? '', email: owner.email ?? '', phone: owner.phone ?? '', whatsapp: owner.whatsapp ?? '' })
+                            setPhotoUrl(owner.photoUrl ?? '')
+                            setShowForm(true)
+                          }}>
+                          <Edit className="h-3 w-3" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => {
+                            if (confirm('Remover proprietário?')) deleteMutation.mutate(owner.id)
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {!isLoading && filtered.length > 0 && (
