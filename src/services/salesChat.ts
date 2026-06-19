@@ -8,9 +8,10 @@ import { SalesConversation, SalesMessage } from '@/types'
 const CONVERSATIONS_COL = 'salesConversations'
 
 export function normalizePhone(raw: string): string {
+  // Checa o tamanho (não só prefixo "55") porque DDD 55 existe (RS) —
+  // um número local de Santa Maria já "começa com 55" sem ter o DDI.
   const digits = raw.replace(/\D/g, '')
-  if (digits.startsWith('55')) return digits
-  return '55' + digits
+  return digits.length >= 12 ? digits : '55' + digits
 }
 
 export function subscribeToConversations(

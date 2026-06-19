@@ -26,8 +26,11 @@ export async function sendWhatsAppMessage(
       return { ok: false, error: 'fetch não disponível neste runtime (Node < 18)' }
     }
 
-    // Normaliza para formato internacional 55 + DDD + número
-    const number = '55' + phone.replace(/\D/g, '')
+    // Normaliza para formato internacional 55 + DDD + número.
+    // Checa o tamanho (não só prefixo "55") porque DDD 55 existe (RS) —
+    // um número local de Santa Maria já "começa com 55" sem ter o DDI.
+    const cleaned = phone.replace(/\D/g, '')
+    const number = cleaned.length >= 12 ? cleaned : '55' + cleaned
 
     const ctrl = new AbortController()
     const timer = setTimeout(() => ctrl.abort(), 8_000)
