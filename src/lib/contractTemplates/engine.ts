@@ -1,7 +1,8 @@
-import { ContractAssetType, ContractTemplateClause, ImovelSigningData, VeiculoSigningData } from '@/types'
+import { ContractAssetType, ContractTemplateClause, ImovelSigningData, VeiculoSigningData, EquipamentoSigningData } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { buildImovelBlocks, ContractBlock } from './imovel'
 import { buildVeiculoBlocks } from './veiculo'
+import { buildEquipamentoBlocks } from './equipamento'
 
 // ── Sentinelas para valores numéricos calculados dentro dos templates ─────────
 // São substituídos por variáveis {{...}} ao derivar o modelo padrão editável.
@@ -155,14 +156,57 @@ const tokenVeiculoCtx = {
   monthlyInterest: MI_SENTINEL,
 }
 
+const tokenEquipamentoData: EquipamentoSigningData = {
+  locador: tokenParty('locador'),
+  locatario: tokenParty('locatario'),
+  equipamento: {
+    descricao: T('equipamento.descricao'),
+    marca: T('equipamento.marca'),
+    modelo: T('equipamento.modelo'),
+    numeroSerie: T('equipamento.numeroSerie'),
+    estadoGeral: T('equipamento.estadoGeral'),
+    acessorios: T('equipamento.acessorios'),
+  },
+  financeiro: {
+    valorDiario: T('financeiro.valorDiario'),
+    valorSemanal: T('financeiro.valorSemanal'),
+    valorMensal: T('financeiro.valorMensal'),
+    caucaoValor: T('financeiro.caucaoValor'),
+    pixKey: T('financeiro.pixKey'),
+    banco: T('financeiro.banco'),
+  },
+  prazo: {
+    dataRetiradaFormatada: T('prazo.dataRetirada'),
+    dataDevolucaoFormatada: T('prazo.dataDevolucao'),
+  },
+  testemunha1: { name: T('test1.name'), cpf: T('test1.cpf'), rg: T('test1.rg') },
+  testemunha2: { name: T('test2.name'), cpf: T('test2.cpf'), rg: T('test2.rg') },
+  foro: T('foro'),
+  cidade: T('cidade'),
+  dataContrato: T('dataContrato'),
+}
+
+const tokenEquipamentoCtx = {
+  contractNumber: T('contractNumber'),
+  rentValue: RENT_SENTINEL,
+  cautionValue: CAUTION_SENTINEL,
+  lateFee: LATEFEE_SENTINEL,
+  monthlyInterest: MI_SENTINEL,
+}
+
 let imovelDefaults: ContractTemplateClause[] | null = null
 let veiculoDefaults: ContractTemplateClause[] | null = null
+let equipamentoDefaults: ContractTemplateClause[] | null = null
 
 // Cláusulas padrão do sistema, derivadas das funções oficiais de geração.
 export function getDefaultClauses(assetType: ContractAssetType): ContractTemplateClause[] {
   if (assetType === 'veiculo') {
     if (!veiculoDefaults) veiculoDefaults = blocksToClauses(buildVeiculoBlocks(tokenVeiculoData, tokenVeiculoCtx))
     return cloneClauses(veiculoDefaults)
+  }
+  if (assetType === 'equipamento') {
+    if (!equipamentoDefaults) equipamentoDefaults = blocksToClauses(buildEquipamentoBlocks(tokenEquipamentoData, tokenEquipamentoCtx))
+    return cloneClauses(equipamentoDefaults)
   }
   if (!imovelDefaults) imovelDefaults = blocksToClauses(buildImovelBlocks(tokenImovelData, tokenImovelCtx))
   return cloneClauses(imovelDefaults)
@@ -184,6 +228,14 @@ export interface ImovelCtx {
 }
 
 export interface VeiculoCtx {
+  contractNumber: string
+  rentValue: number
+  cautionValue?: number
+  lateFee: number
+  monthlyInterest: number
+}
+
+export interface EquipamentoCtx {
   contractNumber: string
   rentValue: number
   cautionValue?: number
@@ -271,6 +323,33 @@ function resolveVeiculoVars(d: VeiculoSigningData, ctx: VeiculoCtx): Record<stri
   }
 }
 
+function resolveEquipamentoVars(d: EquipamentoSigningData, ctx: EquipamentoCtx): Record<string, string> {
+  return {
+    'locador.name': d.locador.name,
+    'locatario.name': d.locatario.name,
+    'equipamento.descricao': d.equipamento.descricao,
+    'equipamento.marca': d.equipamento.marca,
+    'equipamento.modelo': d.equipamento.modelo,
+    'equipamento.numeroSerie': d.equipamento.numeroSerie,
+    'equipamento.estadoGeral': d.equipamento.estadoGeral,
+    'equipamento.acessorios': d.equipamento.acessorios,
+    'financeiro.valorDiario': d.financeiro.valorDiario ?? '',
+    'financeiro.valorSemanal': d.financeiro.valorSemanal ?? '',
+    'financeiro.valorMensal': d.financeiro.valorMensal ?? formatCurrency(ctx.rentValue),
+    'financeiro.caucaoValor': d.financeiro.caucaoValor ?? (ctx.cautionValue ? formatCurrency(ctx.cautionValue) : ''),
+    'financeiro.pixKey': d.financeiro.pixKey ?? '',
+    'financeiro.banco': d.financeiro.banco ?? '',
+    'prazo.dataRetirada': d.prazo.dataRetiradaFormatada,
+    'prazo.dataDevolucao': d.prazo.dataDevolucaoFormatada,
+    foro: d.foro,
+    cidade: d.cidade,
+    dataContrato: d.dataContrato,
+    contractNumber: ctx.contractNumber,
+    multa: `${ctx.lateFee}%`,
+    juros: `${ctx.monthlyInterest}% ao mês`,
+  }
+}
+
 function interpolate(text: string, vars: Record<string, string>): string {
   return text.replace(/\{\{\s*([\w.]+)\s*\}\}/g, (_, k: string) => vars[k] ?? '')
 }
@@ -310,6 +389,15 @@ export function renderCustomVeiculo(
 ): ContractBlock[] {
   const full = buildVeiculoBlocks(d, ctx)
   return composeWithCustomClauses(full, renderClauses(clauses, resolveVeiculoVars(d, ctx)))
+}
+
+export function renderCustomEquipamento(
+  clauses: ContractTemplateClause[],
+  d: EquipamentoSigningData,
+  ctx: EquipamentoCtx
+): ContractBlock[] {
+  const full = buildEquipamentoBlocks(d, ctx)
+  return composeWithCustomClauses(full, renderClauses(clauses, resolveEquipamentoVars(d, ctx)))
 }
 
 function composeWithCustomClauses(full: ContractBlock[], clauseBlocks: ContractBlock[]): ContractBlock[] {

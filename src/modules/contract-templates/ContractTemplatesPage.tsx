@@ -21,9 +21,10 @@ import { toast } from '@/hooks/useToast'
 const assetLabel: Record<ContractAssetType, string> = {
   imovel: 'Imóvel',
   veiculo: 'Veículo',
+  equipamento: 'Equipamento',
 }
 
-const VARIABLE_HELP = '{{valorAluguel}}, {{caucao}}, {{multa}}, {{juros}}, {{diaVencimento}}, {{indiceReajuste}}, {{foro}}, {{imovel.endereco}}, {{veiculo.placa}}...'
+const VARIABLE_HELP = '{{valorAluguel}}, {{caucao}}, {{multa}}, {{juros}}, {{diaVencimento}}, {{indiceReajuste}}, {{foro}}, {{imovel.endereco}}, {{veiculo.placa}}, {{equipamento.descricao}}...'
 
 interface EditorState {
   id?: string
@@ -119,6 +120,7 @@ export function ContractTemplatesPage() {
         <TabsList>
           <TabsTrigger value="imovel">Imóvel</TabsTrigger>
           <TabsTrigger value="veiculo">Veículo</TabsTrigger>
+          <TabsTrigger value="equipamento">Equipamento</TabsTrigger>
         </TabsList>
       </Tabs>
 

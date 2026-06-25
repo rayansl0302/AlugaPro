@@ -118,6 +118,11 @@ export function generateVehicleCode(): string {
   return `VEI-${random}`
 }
 
+export function generateEquipmentCode(): string {
+  const random = Math.floor(Math.random() * 90000) + 10000
+  return `EQP-${random}`
+}
+
 export function truncate(str: string, length = 50): string {
   if (str.length <= length) return str
   return str.slice(0, length) + '...'

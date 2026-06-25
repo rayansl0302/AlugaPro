@@ -238,6 +238,37 @@ export interface Vehicle {
   updatedAt: Timestamp
 }
 
+// ─── Equipment (Equipamento) ──────────────────────────────────────────────────
+
+export type EquipmentStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
+export type EquipmentType =
+  | 'betoneira' | 'andaime' | 'compressor' | 'furadeira' | 'martelete'
+  | 'gerador' | 'guincho' | 'compactador' | 'outro'
+
+export interface Equipment {
+  id: string
+  companyId: string
+  code: string
+  name: string
+  brand?: string
+  model: string
+  type: EquipmentType
+  status: EquipmentStatus
+  ownerId: string
+  ownerName?: string
+  serialNumber?: string
+  rentValue: number
+  cautionValue?: number
+  purchaseValue?: number
+  photos?: string[]
+  notes?: string
+  activeContractId?: string
+  activeTenantId?: string
+  activeTenantName?: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
 // ─── Tenant (Inquilino) ────────────────────────────────────────────────────────
 
 export interface Tenant {
@@ -264,7 +295,7 @@ export interface Tenant {
 
 // ─── Contract (Contrato) ─────────────────────────────────────────────────────
 
-export type ContractAssetType = 'imovel' | 'veiculo'
+export type ContractAssetType = 'imovel' | 'veiculo' | 'equipamento'
 
 export interface Contract {
   id: string
@@ -570,7 +601,37 @@ export interface VeiculoSigningData {
   dataContrato: string
 }
 
-export type ContractSigningData = ImovelSigningData | VeiculoSigningData
+export interface EquipamentoSigningData {
+  locador: SigningParty
+  locatario: SigningParty
+  equipamento: {
+    descricao: string
+    marca: string
+    modelo: string
+    numeroSerie: string
+    estadoGeral: string
+    acessorios: string
+  }
+  financeiro: {
+    valorDiario?: string
+    valorSemanal?: string
+    valorMensal?: string
+    caucaoValor?: string
+    pixKey?: string
+    banco?: string
+  }
+  prazo: {
+    dataRetiradaFormatada: string
+    dataDevolucaoFormatada: string
+  }
+  testemunha1?: { name: string; cpf: string; rg: string }
+  testemunha2?: { name: string; cpf: string; rg: string }
+  foro: string
+  cidade: string
+  dataContrato: string
+}
+
+export type ContractSigningData = ImovelSigningData | VeiculoSigningData | EquipamentoSigningData
 
 // Add these fields to Contract (stored in Firestore alongside existing fields):
 // signingData?: ContractSigningData

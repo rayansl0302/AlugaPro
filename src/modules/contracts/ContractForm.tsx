@@ -14,6 +14,7 @@ import {
 import { generateChargesForContract } from '@/services/charges'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
+import { getEquipments } from '@/services/equipments'
 import { getTenants } from '@/services/tenants'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -24,7 +25,7 @@ import { toast } from '@/hooks/useToast'
 
 const schema = z
   .object({
-    assetType: z.enum(['imovel', 'veiculo']).default('imovel'),
+    assetType: z.enum(['imovel', 'veiculo', 'equipamento']).default('imovel'),
     propertyId: z.string().min(1, 'Selecione o imóvel ou veículo'),
     propertyName: z.string().optional(),
     tenantId: z.string().min(1, 'Selecione o inquilino'),
@@ -94,6 +95,11 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
     queryFn: () => getVehicles(companyId),
     enabled: !!companyId,
   })
+  const { data: equipments = [] } = useQuery({
+    queryKey: ['equipments', companyId],
+    queryFn: () => getEquipments(companyId),
+    enabled: !!companyId,
+  })
   const { data: tenants = [] } = useQuery({
     queryKey: ['tenants', companyId],
     queryFn: () => getTenants(companyId),
@@ -126,6 +132,17 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
       if (!contract) {
         setValue('rentValue', v.rentValue)
         if (v.cautionValue) setValue('cautionValue', v.cautionValue)
+      }
+    } else if (assetType === 'equipamento') {
+      const eq = equipments.find((item) => item.id === assetId)
+      if (!eq) return
+      setValue('propertyId', eq.id)
+      setValue('propertyName', `${eq.name} — ${eq.model}`)
+      setValue('ownerId', eq.ownerId)
+      setValue('ownerName', eq.ownerName ?? '')
+      if (!contract) {
+        setValue('rentValue', eq.rentValue)
+        if (eq.cautionValue) setValue('cautionValue', eq.cautionValue)
       }
     } else {
       const p = properties.find((item) => item.id === assetId)
@@ -215,20 +232,31 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
             <SelectContent>
               <SelectItem value="imovel">Imóvel</SelectItem>
               <SelectItem value="veiculo">Veículo</SelectItem>
+              <SelectItem value="equipamento">Equipamento</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
-          <Label>{assetType === 'veiculo' ? 'Veículo *' : 'Imóvel *'}</Label>
+          <Label>
+            {assetType === 'veiculo' ? 'Veículo *' : assetType === 'equipamento' ? 'Equipamento *' : 'Imóvel *'}
+          </Label>
           <Select value={watch('propertyId') || ''} onValueChange={handleAssetSelect}>
             <SelectTrigger>
-              <SelectValue placeholder={assetType === 'veiculo' ? 'Selecione o veículo' : 'Selecione o imóvel'} />
+              <SelectValue placeholder={
+                assetType === 'veiculo' ? 'Selecione o veículo'
+                  : assetType === 'equipamento' ? 'Selecione o equipamento'
+                  : 'Selecione o imóvel'
+              } />
             </SelectTrigger>
             <SelectContent className="max-h-60">
               {assetType === 'veiculo'
                 ? vehicles.map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} — {v.plate}</SelectItem>
+                  ))
+                : assetType === 'equipamento'
+                ? equipments.map((eq) => (
+                    <SelectItem key={eq.id} value={eq.id}>{eq.name} — {eq.model}</SelectItem>
                   ))
                 : properties.map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name} — {p.code}</SelectItem>

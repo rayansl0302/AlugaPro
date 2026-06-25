@@ -12,6 +12,7 @@ import {
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { getVehicles } from '@/services/vehicles'
+import { getEquipments } from '@/services/equipments'
 import { MaintenanceRequest, MaintenanceCategory, MaintenanceStatus } from '@/types'
 import { formatDate } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -39,7 +40,13 @@ import {
   buildMaintenancePhotoLookups,
   resolveMaintenanceEntityPhotos,
 } from '@/lib/maintenanceEntityPhotos'
-import { Tenant } from '@/types'
+import { Tenant, ContractAssetType } from '@/types'
+
+const ASSET_TYPE_LABEL: Record<ContractAssetType, string> = {
+  imovel: 'Imóvel',
+  veiculo: 'Veículo',
+  equipamento: 'Equipamento',
+}
 
 // ─── WhatsApp helper ──────────────────────────────────────────────────────────
 const STATUS_LABELS: Record<string, string> = {
@@ -152,9 +159,15 @@ export function MaintenancePage() {
     enabled: !!companyId,
   })
 
+  const { data: equipments = [] } = useQuery({
+    queryKey: ['equipments', companyId],
+    queryFn: () => getEquipments(companyId),
+    enabled: !!companyId,
+  })
+
   const photoLookups = useMemo(
-    () => buildMaintenancePhotoLookups(properties, vehicles, tenants),
-    [properties, vehicles, tenants],
+    () => buildMaintenancePhotoLookups(properties, vehicles, tenants, equipments),
+    [properties, vehicles, tenants, equipments],
   )
 
   const filtered = requests.filter((r) => {
@@ -171,7 +184,7 @@ export function MaintenancePage() {
   const renderRequestCard = (request: MaintenanceRequest) => {
     const sc = statusConfig[request.status]
     const entityPhotos = resolveMaintenanceEntityPhotos(request, photoLookups)
-    const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+    const assetLabel = ASSET_TYPE_LABEL[entityPhotos.assetType ?? 'imovel']
     return (
       <Card key={request.id} className="overflow-hidden">
         <CardHeader className="pb-3">
@@ -583,7 +596,7 @@ export function MaintenancePage() {
 
           {viewingRequest && (() => {
             const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
-            const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+            const assetLabel = ASSET_TYPE_LABEL[entityPhotos.assetType ?? 'imovel']
             return (
             <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4 overflow-y-auto pr-1">

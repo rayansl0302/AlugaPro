@@ -3,10 +3,11 @@ import {
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
-import { Contract, ContractAssetType, Property, Vehicle } from '@/types'
+import { Contract, ContractAssetType, Property, Vehicle, Equipment } from '@/types'
 import { generateContractNumber } from '@/lib/utils'
 import { updateProperty } from './properties'
 import { updateVehicle } from './vehicles'
+import { updateEquipment } from './equipments'
 import { updateTenant } from './tenants'
 
 const COL = 'contracts'
@@ -30,6 +31,14 @@ export async function linkContractToAsset(
     }
     if (opts.setRented) patch.status = 'alugado'
     await updateVehicle(ref.assetId, patch)
+  } else if (ref.assetType === 'equipamento') {
+    const patch: Partial<Equipment> = {
+      activeContractId: opts.contractId,
+      activeTenantId: opts.tenantId,
+      activeTenantName: opts.tenantName ?? '',
+    }
+    if (opts.setRented) patch.status = 'alugado'
+    await updateEquipment(ref.assetId, patch)
   } else {
     const patch: Partial<Property> = {
       activeContractId: opts.contractId,
@@ -59,6 +68,8 @@ export async function releaseContractAsset(ref: AssetRef, tenantId?: string): Pr
   }
   if (ref.assetType === 'veiculo') {
     await updateVehicle(ref.assetId, cleared)
+  } else if (ref.assetType === 'equipamento') {
+    await updateEquipment(ref.assetId, cleared)
   } else {
     await updateProperty(ref.assetId, cleared)
   }

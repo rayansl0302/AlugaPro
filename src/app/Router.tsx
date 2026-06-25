@@ -6,6 +6,7 @@ import { LoginPage } from '@/modules/auth/LoginPage'
 import { DashboardPage } from '@/modules/dashboard/DashboardPage'
 import { PropertiesPage } from '@/modules/properties/PropertiesPage'
 import { VehiclesPage } from '@/modules/vehicles/VehiclesPage'
+import { EquipmentsPage } from '@/modules/equipment/EquipmentsPage'
 import { TenantsPage } from '@/modules/tenants/TenantsPage'
 import { ContractsPage } from '@/modules/contracts/ContractsPage'
 import { ContractTemplatesPage } from '@/modules/contract-templates/ContractTemplatesPage'
@@ -119,6 +120,7 @@ const router = createBrowserRouter([
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'imoveis', element: <PropertiesPage /> },
           { path: 'veiculos', element: <VehiclesPage /> },
+          { path: 'equipamentos', element: <EquipmentsPage /> },
           { path: 'proprietarios', element: <OwnersPage /> },
           { path: 'inquilinos', element: <TenantsPage /> },
           { path: 'contratos', element: <ContractsPage /> },

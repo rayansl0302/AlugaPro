@@ -5,9 +5,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ChevronRight, ChevronLeft, FileText, Camera, PenLine,
   CheckCircle, Download, Loader2, User, Building2, Car, X,
-  Copy, RefreshCw, Clock, Mail, Send, Eye,
+  Copy, RefreshCw, Clock, Mail, Send, Eye, HardHat,
 } from 'lucide-react'
-import { Contract, Owner, Tenant, Vehicle, Property, ImovelSigningData, VeiculoSigningData, SigningParty, ContractWitness } from '@/types'
+import { Contract, Owner, Tenant, Vehicle, Property, Equipment, ImovelSigningData, VeiculoSigningData, EquipamentoSigningData, SigningParty, ContractWitness } from '@/types'
 import { updateContract } from '@/services/contracts'
 import { uploadContractDocument, uploadContractPDF } from '@/services/storage'
 import { createWitnessRequest, getWitnessRequest, generateWitnessToken } from '@/services/witnessSignatures'
@@ -16,7 +16,8 @@ import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { getContractSigningStatus } from '@/lib/contractSigning'
 import { buildImovelBlocks } from '@/lib/contractTemplates/imovel'
 import { buildVeiculoBlocks } from '@/lib/contractTemplates/veiculo'
-import { renderCustomImovel, renderCustomVeiculo } from '@/lib/contractTemplates/engine'
+import { buildEquipamentoBlocks } from '@/lib/contractTemplates/equipamento'
+import { renderCustomImovel, renderCustomVeiculo, renderCustomEquipamento } from '@/lib/contractTemplates/engine'
 import { getContractTemplates } from '@/services/contractTemplates'
 import { generateContractPDF, contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
 import { formatCurrency, formatDate, maskCPF, maskPhone } from '@/lib/utils'
@@ -38,6 +39,7 @@ interface Props {
   tenant?: Tenant
   property?: Property
   vehicle?: Vehicle
+  equipment?: Equipment
   initialEdit?: boolean
   onClose: () => void
 }
@@ -72,11 +74,19 @@ interface VeiculoForm {
   cnhValidade: string
 }
 
+interface EquipamentoForm {
+  descricao: string
+  numeroSerie: string
+  estadoGeral: string
+  acessorios: string
+}
+
 interface ComplementaryForm {
   locador: PartyForm
   locatario: PartyForm
   imovel: ImovelForm
   veiculo: VeiculoForm
+  equipamento: EquipamentoForm
   valorExtenso: string
   pixKey: string
   banco: string
@@ -146,6 +156,7 @@ function makeEmptyForm(): ComplementaryForm {
     locatario: emptyParty(),
     imovel: { endereco: '', tipo: '', areaConstruida: '', areaTotal: '', matricula: '', cartorio: '', comodos: '', vagas: '', mobilia: '' },
     veiculo: { cnh: '', cnhCategoria: 'B', cnhValidade: '' },
+    equipamento: { descricao: '', numeroSerie: '', estadoGeral: 'Bom estado de uso e conservação', acessorios: '' },
     valorExtenso: '', pixKey: '', banco: '', agencia: '', conta: '',
     prazoExtenso: '', indiceReajuste: 'IGPM', foro: '', cidade: '',
     testemunha1Name: '', testemunha1Email: '',
@@ -305,9 +316,10 @@ function PartyFormFields({ label, value, onChange }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ContractSignFlow({ open, contract, owner, tenant, property, vehicle, initialEdit, onClose }: Props) {
+export function ContractSignFlow({ open, contract, owner, tenant, property, vehicle, equipment, initialEdit, onClose }: Props) {
   const qc = useQueryClient()
   const isVeiculo = contract?.assetType === 'veiculo'
+  const isEquipamento = contract?.assetType === 'equipamento'
 
   const [step, setStep] = useState(0)
   const [saving, setSaving] = useState(false)
@@ -332,7 +344,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     enabled: !!contract?.companyId,
   })
   const availableTemplates = contractTemplates.filter(
-    (t) => t.assetType === (isVeiculo ? 'veiculo' : 'imovel')
+    (t) => t.assetType === (isVeiculo ? 'veiculo' : isEquipamento ? 'equipamento' : 'imovel')
   )
 
   // Populate form whenever a new contract is selected
@@ -356,6 +368,12 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         comodos: '', vagas: '', mobilia: '',
       },
       veiculo: { cnh: '', cnhCategoria: 'B', cnhValidade: '' },
+      equipamento: {
+        descricao: equipment?.name ?? '',
+        numeroSerie: equipment?.serialNumber ?? '',
+        estadoGeral: 'Bom estado de uso e conservação',
+        acessorios: '',
+      },
       valorExtenso: '',
       pixKey: owner?.bankAccount?.pixKey ?? '',
       banco: owner?.bankAccount?.bank ?? '',
@@ -418,7 +436,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     address: p.address, phone: p.phone, email: p.email,
   })
 
-  const buildSigningData = (): ImovelSigningData | VeiculoSigningData => {
+  const buildSigningData = (): ImovelSigningData | VeiculoSigningData | EquipamentoSigningData => {
     if (!contract) throw new Error('No contract selected')
     const base = {
       locador: toParty(form.locador),
@@ -454,6 +472,23 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       } as VeiculoSigningData
     }
 
+    if (isEquipamento) {
+      return {
+        ...base,
+        locatario: toParty(form.locatario),
+        equipamento: {
+          descricao: form.equipamento.descricao || equipment?.name || '',
+          marca: equipment?.brand ?? '',
+          modelo: equipment?.model ?? '',
+          numeroSerie: form.equipamento.numeroSerie || equipment?.serialNumber || '',
+          estadoGeral: form.equipamento.estadoGeral,
+          acessorios: form.equipamento.acessorios,
+        },
+        financeiro: { ...base.financeiro, valorMensal: formatCurrency(contract.rentValue), caucaoValor: contract.cautionValue ? formatCurrency(contract.cautionValue) : undefined },
+        prazo: { dataRetiradaFormatada: formatDate(contract.startDate), dataDevolucaoFormatada: contract.endDate ? formatDate(contract.endDate) : 'Indefinido' },
+      } as EquipamentoSigningData
+    }
+
     return {
       ...base,
       locatario: toParty(form.locatario),
@@ -481,6 +516,17 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         blocks = chosenTemplate
           ? renderCustomVeiculo(chosenTemplate.clauses, signingData as VeiculoSigningData, veiculoCtx)
           : buildVeiculoBlocks(signingData as VeiculoSigningData, veiculoCtx)
+      } else if (isEquipamento) {
+        const equipamentoCtx = {
+          contractNumber: contract.contractNumber,
+          rentValue: contract.rentValue,
+          cautionValue: contract.cautionValue,
+          lateFee: contract.lateFee,
+          monthlyInterest: contract.monthlyInterest,
+        }
+        blocks = chosenTemplate
+          ? renderCustomEquipamento(chosenTemplate.clauses, signingData as EquipamentoSigningData, equipamentoCtx)
+          : buildEquipamentoBlocks(signingData as EquipamentoSigningData, equipamentoCtx)
       } else {
         const imovelCtx = {
           contractNumber: contract.contractNumber,
@@ -565,6 +611,8 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       // Testemunhas assinam remotamente: cria a solicitação por token e envia o link por e-mail
       const objeto = isVeiculo
         ? `${vehicle?.brand ?? ''} ${vehicle?.model ?? ''}`.trim()
+        : isEquipamento
+        ? (equipment?.name || form.equipamento.descricao || '')
         : (form.imovel.endereco || property?.name || '')
       let emailFails = 0
       await Promise.all(witnesses.filter((w) => w.status !== 'signed').map(async (w) => {
@@ -626,14 +674,18 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         address: p.address, phone: maskPhone(p.phone), email: p.email,
       })
       const fin = sd.financeiro as { valorExtenso?: string; pixKey?: string; banco?: string; agencia?: string; conta?: string }
-      const imovel = !isVeiculo ? (sd as ImovelSigningData).imovel : undefined
+      const imovel = (!isVeiculo && !isEquipamento) ? (sd as ImovelSigningData).imovel : undefined
       const veiculoLat = isVeiculo ? (sd as VeiculoSigningData).locatario : undefined
+      const equipamentoData = isEquipamento ? (sd as EquipamentoSigningData).equipamento : undefined
       setForm((f) => ({
         ...f,
         locador: partyToForm(sd.locador),
         locatario: partyToForm(sd.locatario),
         imovel: imovel ? { ...imovel } : f.imovel,
         veiculo: veiculoLat ? { cnh: veiculoLat.cnh, cnhCategoria: veiculoLat.cnhCategoria, cnhValidade: veiculoLat.cnhValidade } : f.veiculo,
+        equipamento: equipamentoData
+          ? { descricao: equipamentoData.descricao, numeroSerie: equipamentoData.numeroSerie, estadoGeral: equipamentoData.estadoGeral, acessorios: equipamentoData.acessorios }
+          : f.equipamento,
         valorExtenso: fin.valorExtenso ?? '',
         pixKey: fin.pixKey ?? '',
         banco: fin.banco ?? '',
@@ -1054,7 +1106,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                     </div>
                   )}
 
-                  {!isVeiculo && (
+                  {!isVeiculo && !isEquipamento && (
                     <div className="space-y-3">
                       <p className="text-sm font-semibold text-primary border-b pb-1 flex items-center gap-1.5"><Building2 className="h-4 w-4" /> Imóvel</p>
                       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -1074,6 +1126,45 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                             <Input value={form.imovel[key]} onChange={(e) => setForm((f) => ({ ...f, imovel: { ...f.imovel, [key]: e.target.value } }))} />
                           </div>
                         ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {isEquipamento && (
+                    <div className="space-y-3">
+                      <p className="text-sm font-semibold text-primary border-b pb-1 flex items-center gap-1.5"><HardHat className="h-4 w-4" /> Equipamento</p>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Descrição</Label>
+                          <Input
+                            placeholder={equipment?.name ?? 'Ex: Betoneira 400L'}
+                            value={form.equipamento.descricao}
+                            onChange={(e) => setForm((f) => ({ ...f, equipamento: { ...f.equipamento, descricao: e.target.value } }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Nº de Série / Patrimônio</Label>
+                          <Input
+                            placeholder={equipment?.serialNumber ?? ''}
+                            value={form.equipamento.numeroSerie}
+                            onChange={(e) => setForm((f) => ({ ...f, equipamento: { ...f.equipamento, numeroSerie: e.target.value } }))}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Estado geral na entrega</Label>
+                          <Input
+                            value={form.equipamento.estadoGeral}
+                            onChange={(e) => setForm((f) => ({ ...f, equipamento: { ...f.equipamento, estadoGeral: e.target.value } }))}
+                          />
+                        </div>
+                        <div className="space-y-1 sm:col-span-2">
+                          <Label className="text-xs">Acessórios entregues</Label>
+                          <Input
+                            placeholder="Ex: cabo de alimentação, manual, estojo"
+                            value={form.equipamento.acessorios}
+                            onChange={(e) => setForm((f) => ({ ...f, equipamento: { ...f.equipamento, acessorios: e.target.value } }))}
+                          />
+                        </div>
                       </div>
                     </div>
                   )}
@@ -1191,7 +1282,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                       <div className="text-muted-foreground">Nº do contrato</div><div className="font-medium">{contract.contractNumber}</div>
                       <div className="text-muted-foreground">Locador</div><div className="font-medium">{form.locador.name}</div>
                       <div className="text-muted-foreground">Locatário</div><div className="font-medium">{form.locatario.name}</div>
-                      <div className="text-muted-foreground">Objeto</div><div className="font-medium">{isVeiculo ? `${vehicle?.brand} ${vehicle?.model}` : form.imovel.endereco || property?.name}</div>
+                      <div className="text-muted-foreground">Objeto</div><div className="font-medium">{isVeiculo ? `${vehicle?.brand} ${vehicle?.model}` : isEquipamento ? (equipment?.name ?? form.equipamento.descricao) : (form.imovel.endereco || property?.name)}</div>
                       <div className="text-muted-foreground">Valor</div><div className="font-medium">{formatCurrency(contract.rentValue)}</div>
                       <div className="text-muted-foreground">Vigência</div><div className="font-medium">{formatDate(contract.startDate)} — {contract.endDate ? formatDate(contract.endDate) : 'Indeterminado'}</div>
                       <div className="text-muted-foreground">Docs Locador</div><div className={docsLocador[0] && docsLocador[1] ? 'text-green-600 font-medium' : 'text-yellow-600'}>{docsLocador[0] && docsLocador[1] ? '✓ Anexadas' : '⚠ Incompleto'}</div>

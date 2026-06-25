@@ -6,7 +6,8 @@ import { getContracts, updateContract, linkContractToAsset, releaseContractAsset
 import { getTenants } from '@/services/tenants'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
-import { Contract, ContractStatus, Property, Tenant, Vehicle } from '@/types'
+import { getEquipments } from '@/services/equipments'
+import { Contract, ContractStatus, Property, Tenant, Vehicle, Equipment } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { getContractSigningStatus } from '@/lib/contractSigning'
 import { Button } from '@/components/ui/button'
@@ -24,6 +25,7 @@ import { ContractSignFlow } from './ContractSignFlow'
 import { TenantDetail } from '../tenants/TenantDetail'
 import { PropertyDetail } from '../properties/PropertyDetail'
 import { VehicleDetail } from '../vehicles/VehicleDetail'
+import { EquipmentDetail } from '../equipment/EquipmentDetail'
 
 const statusConfig: Record<ContractStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'secondary' | 'destructive' }> = {
   ativo: { label: 'Ativo', variant: 'success' },
@@ -45,6 +47,7 @@ export function ContractsPage() {
   const [viewTenant, setViewTenant] = useState<Tenant | null>(null)
   const [viewProperty, setViewProperty] = useState<Property | null>(null)
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null)
+  const [viewEquipment, setViewEquipment] = useState<Equipment | null>(null)
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', companyId],
@@ -70,6 +73,12 @@ export function ContractsPage() {
     enabled: !!companyId,
   })
 
+  const { data: equipments = [] } = useQuery({
+    queryKey: ['equipments', companyId],
+    queryFn: () => getEquipments(companyId),
+    enabled: !!companyId,
+  })
+
   const tenantById = useMemo(() => {
     const map: Record<string, Tenant> = {}
     tenants.forEach((t) => { map[t.id] = t })
@@ -88,10 +97,21 @@ export function ContractsPage() {
     return map
   }, [vehicles])
 
+  const equipmentById = useMemo(() => {
+    const map: Record<string, Equipment> = {}
+    equipments.forEach((eq) => { map[eq.id] = eq })
+    return map
+  }, [equipments])
+
   const openContractAsset = (contract: Contract) => {
     if (contract.assetType === 'veiculo') {
       const vehicle = vehicleById[contract.propertyId]
       if (vehicle) setViewVehicle(vehicle)
+      return
+    }
+    if (contract.assetType === 'equipamento') {
+      const equipment = equipmentById[contract.propertyId]
+      if (equipment) setViewEquipment(equipment)
       return
     }
     const property = propertyById[contract.propertyId]
@@ -312,19 +332,22 @@ export function ContractsPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Imóvel/Veículo:</span>
+                        <span className="text-muted-foreground">Imóvel/Veículo/Equipamento:</span>
                         <span className="truncate">
                           {contract.propertyName || '—'}
                           {contract.assetType === 'veiculo' && <span className="ml-1 text-xs">(Veículo)</span>}
+                          {contract.assetType === 'equipamento' && <span className="ml-1 text-xs">(Equipamento)</span>}
                         </span>
                         {(contract.assetType === 'veiculo'
                           ? vehicleById[contract.propertyId]
+                          : contract.assetType === 'equipamento'
+                          ? equipmentById[contract.propertyId]
                           : propertyById[contract.propertyId]) && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            title="Ver imóvel/veículo"
+                            title="Ver imóvel/veículo/equipamento"
                             onClick={() => openContractAsset(contract)}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -397,15 +420,20 @@ export function ContractsPage() {
                           {contract.assetType === 'veiculo' && (
                             <span className="ml-1 text-xs">(Veículo)</span>
                           )}
+                          {contract.assetType === 'equipamento' && (
+                            <span className="ml-1 text-xs">(Equipamento)</span>
+                          )}
                         </span>
                         {(contract.assetType === 'veiculo'
                           ? vehicleById[contract.propertyId]
+                          : contract.assetType === 'equipamento'
+                          ? equipmentById[contract.propertyId]
                           : propertyById[contract.propertyId]) && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            title="Ver imóvel/veículo"
+                            title="Ver imóvel/veículo/equipamento"
                             onClick={() => openContractAsset(contract)}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -497,6 +525,15 @@ export function ContractsPage() {
         </DialogContent>
       </Dialog>
 
+      <Dialog open={!!viewEquipment} onOpenChange={() => setViewEquipment(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Detalhes do Equipamento</DialogTitle>
+          </DialogHeader>
+          {viewEquipment && <EquipmentDetail equipment={viewEquipment} />}
+        </DialogContent>
+      </Dialog>
+
       <ContractSignFlow
         open={!!signingContract}
         contract={signingContract}
@@ -505,8 +542,9 @@ export function ContractsPage() {
           ? { id: signingContract.ownerId, name: signingContract.ownerName ?? '', cpf: '', companyId, active: true, createdAt: signingContract.createdAt, updatedAt: signingContract.updatedAt }
           : undefined}
         tenant={signingContract ? tenantById[signingContract.tenantId] : undefined}
-        property={signingContract?.assetType !== 'veiculo' ? (signingContract ? propertyById[signingContract.propertyId] : undefined) : undefined}
+        property={(!signingContract || signingContract.assetType === 'veiculo' || signingContract.assetType === 'equipamento') ? undefined : propertyById[signingContract.propertyId]}
         vehicle={signingContract?.assetType === 'veiculo' ? (signingContract ? vehicleById[signingContract.propertyId] : undefined) : undefined}
+        equipment={signingContract?.assetType === 'equipamento' ? (signingContract ? equipmentById[signingContract.propertyId] : undefined) : undefined}
         onClose={() => { setSigningContract(null); setSignFlowEdit(false) }}
       />
     </div>

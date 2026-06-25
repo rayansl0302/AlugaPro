@@ -16,6 +16,7 @@ import { getContracts } from '@/services/contracts'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { getVehicles } from '@/services/vehicles'
+import { getEquipments } from '@/services/equipments'
 import { Charge, Contract, ContractAssetType } from '@/types'
 import { formatCurrency, getDaysLate } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -44,6 +45,13 @@ import {
 
 type ViewMode = 'timeline' | 'list'
 type AssetFilter = 'todos' | ContractAssetType
+
+const ASSET_FILTER_LABEL: Record<AssetFilter, string> = {
+  todos: 'Todos',
+  imovel: 'Imóveis',
+  veiculo: 'Veículos',
+  equipamento: 'Equipamentos',
+}
 
 const STATUS_VARIANT = {
   pendente: 'warning',
@@ -381,9 +389,15 @@ export function ChargesPage() {
     enabled: !!companyId,
   })
 
+  const { data: equipments = [] } = useQuery({
+    queryKey: ['equipments', companyId],
+    queryFn: () => getEquipments(companyId),
+    enabled: !!companyId,
+  })
+
   const photoLookups = useMemo(
-    () => buildMaintenancePhotoLookups(properties, vehicles, tenants),
-    [properties, vehicles, tenants],
+    () => buildMaintenancePhotoLookups(properties, vehicles, tenants, equipments),
+    [properties, vehicles, tenants, equipments],
   )
 
   const contractById = useMemo(
@@ -557,15 +571,15 @@ export function ChargesPage() {
                 <Button variant="outline" size="sm" className="justify-between gap-2">
                   <span className="flex items-center gap-2">
                     <ListFilter className="h-4 w-4" />
-                    {assetFilter === 'todos' ? 'Todos' : assetFilter === 'imovel' ? 'Imóveis' : 'Veículos'}
+                    {ASSET_FILTER_LABEL[assetFilter]}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
-                {(['todos', 'imovel', 'veiculo'] as const).map((type) => (
+                {(['todos', 'imovel', 'veiculo', 'equipamento'] as const).map((type) => (
                   <DropdownMenuItem key={type} onClick={() => setAssetFilter(type)} className="justify-between gap-4">
-                    {type === 'todos' ? 'Todos' : type === 'imovel' ? 'Imóveis' : 'Veículos'}
+                    {ASSET_FILTER_LABEL[type]}
                     {assetFilter === type && <Check className="h-3.5 w-3.5" />}
                   </DropdownMenuItem>
                 ))}
@@ -734,7 +748,7 @@ export function ChargesPage() {
               {/* Month header with navigation */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
                 <div className="w-[240px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Inquilino / Imóvel / Veículo
+                  Inquilino / Bem
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
                   Aluguel
@@ -944,7 +958,7 @@ export function ChargesPage() {
               <TableRow>
                 <TableHead>Descrição</TableHead>
                 <TableHead>Inquilino</TableHead>
-                <TableHead>Imóvel / Veículo</TableHead>
+                <TableHead>Bem</TableHead>
                 <TableHead>Vencimento</TableHead>
                 <TableHead>Valor</TableHead>
                 <TableHead>Status</TableHead>

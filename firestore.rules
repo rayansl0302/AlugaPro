@@ -156,6 +156,16 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Equipments
+    match /equipments/{equipmentId} {
+      allow read: if isDemo()
+        || (isAuthenticated() && sameCompany(resource.data.companyId)
+          && (isAdminEmail() || subscriptionHasAccess(resource.data.companyId)));
+      allow create, update: if isGestor() && sameCompany(request.resource.data.companyId)
+        && (isAdminEmail() || subscriptionCanWrite(request.resource.data.companyId));
+      allow delete: if isAdmin();
+    }
+
     // Contract templates (modelos personalizados por empresa)
     match /contractTemplates/{templateId} {
       allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));

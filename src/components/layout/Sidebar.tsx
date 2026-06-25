@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -25,6 +25,7 @@ const navItems: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
   { label: 'Imóveis', href: '/imoveis', icon: Building2 },
   { label: 'Veículos', href: '/veiculos', icon: Car },
+  { label: 'Equipamentos', href: '/equipamentos', icon: HardHat },
   { label: 'Proprietários', href: '/proprietarios', icon: Home },
   { label: 'Inquilinos', href: '/inquilinos', icon: Users },
   { label: 'Contratos', href: '/contratos', icon: FileText },
