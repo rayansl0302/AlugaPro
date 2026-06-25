@@ -26,6 +26,7 @@ import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
 import { RecursosPage } from '@/modules/landing/RecursosPage'
+import { AfiliadosPage } from '@/modules/landing/AfiliadosPage'
 import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
@@ -111,6 +112,7 @@ const router = createBrowserRouter([
     children: [
       { index: true, element: <LandingPage /> },
       { path: 'recursos', element: <RecursosPage /> },
+      { path: 'afiliados', element: <AfiliadosPage /> },
       {
         element: (
           <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>

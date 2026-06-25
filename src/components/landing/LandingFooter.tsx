@@ -63,6 +63,11 @@ export function LandingFooter() {
                   Para quem é
                 </a>
               </li>
+              <li>
+                <Link to="/afiliados" className="transition-colors hover:text-[#032B61]">
+                  Programa de afiliados
+                </Link>
+              </li>
             </ul>
           </motion.div>
 

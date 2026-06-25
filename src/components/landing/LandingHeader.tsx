@@ -13,6 +13,7 @@ const NAV_LINKS = [
   { label: 'Como funciona', href: '#como-funciona' },
   { label: 'Preços', href: '#precos' },
   { label: 'Para quem', href: '#para-quem' },
+  { label: 'Afiliados', href: '/afiliados' },
 ]
 
 export function LandingHeader() {
