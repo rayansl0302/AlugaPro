@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Gift, DollarSign, Repeat, Home, Building2, Megaphone, Briefcase,
+  Gift, DollarSign, Repeat, Users, Building2, Megaphone, Briefcase,
   Share2, Zap, UserCheck, Wallet, CheckCircle2, ArrowRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -48,24 +48,24 @@ const accentMap = {
 
 const AUDIENCES = [
   {
-    icon: Home,
-    title: 'Corretores de imóveis',
-    description: 'Já em contato direto com proprietários — indique o AlugaPro durante o próprio atendimento.',
-  },
-  {
-    icon: Building2,
-    title: 'Imobiliárias e administradoras',
-    description: 'Ofereça o sistema aos proprietários da sua carteira como um diferencial de gestão.',
-  },
-  {
-    icon: Megaphone,
-    title: 'Influenciadores do mercado imobiliário',
-    description: 'Recomende para sua audiência e transforme conteúdo em renda recorrente.',
+    icon: Users,
+    title: 'Qualquer pessoa',
+    description: 'Não precisa ser corretor nem ter experiência em vendas. Se você conhece alguém que aluga imóveis, veículos ou equipamentos, já pode indicar.',
   },
   {
     icon: Briefcase,
-    title: 'Profissionais do setor',
-    description: 'Advogados, contadores e despachantes que atendem proprietários também podem indicar.',
+    title: 'Vendedores e profissionais liberais',
+    description: 'Vendedores profissionais, advogados, contadores e despachantes também participam — não há nenhuma restrição.',
+  },
+  {
+    icon: Building2,
+    title: 'Corretores e imobiliárias',
+    description: 'Já em contato direto com proprietários — indique o AlugaPro durante o próprio atendimento.',
+  },
+  {
+    icon: Megaphone,
+    title: 'Influenciadores e criadores de conteúdo',
+    description: 'De qualquer nicho, não só do mercado imobiliário — recomende para sua audiência e transforme isso em renda recorrente.',
   },
 ]
 
@@ -112,8 +112,9 @@ export function AfiliadosPage() {
               variants={fadeInUp}
               className="mt-5 text-lg leading-relaxed text-muted-foreground"
             >
-              Você conhece corretores, imobiliárias, proprietários ou administradoras de aluguel?
-              Indique o AlugaPro e receba por cada cliente ativo — sem precisar ser vendedor profissional.
+              Qualquer pessoa pode indicar — corretor, vendedor profissional, influenciador ou simplesmente
+              quem conhece um proprietário de imóveis, veículos ou equipamentos. Indique o AlugaPro e
+              receba por cada cliente ativo.
             </motion.p>
 
             <motion.div
@@ -205,12 +206,13 @@ export function AfiliadosPage() {
                 Para quem é o programa
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Não é preciso ser vendedor profissional — só conhecer quem administra aluguéis.
+                Não importa a sua profissão. Vale para corretores, vendedores profissionais,
+                influenciadores ou qualquer pessoa que conheça um proprietário de imóveis, veículos ou equipamentos.
               </motion.p>
               <motion.div variants={fadeInUp} className="mt-5 flex justify-center">
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                   <CheckCircle2 className="mr-1.5 h-3 w-3" />
-                  Sem exclusividade, sem meta, sem contrato de vendedor
+                  Aberto a todos — inclusive vendedores profissionais
                 </Badge>
               </motion.div>
             </motion.div>
