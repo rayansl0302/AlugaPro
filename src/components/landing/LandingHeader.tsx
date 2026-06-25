@@ -23,7 +23,9 @@ export function LandingHeader() {
   const systemHref = user
     ? user.role === 'inquilino'
       ? '/portal'
-      : '/dashboard'
+      : user.role === 'afiliado'
+        ? '/painel-afiliado'
+        : '/dashboard'
     : '/login'
 
   const systemLabel = user ? 'Ir para o painel' : 'Acessar sistema'

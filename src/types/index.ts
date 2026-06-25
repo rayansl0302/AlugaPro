@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore'
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino' | 'comercial'
+export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino' | 'comercial' | 'afiliado'
 
 export type PropertyStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
 export type PropertyType = 'apartamento' | 'casa' | 'kitnet' | 'sala_comercial' | 'galpao' | 'terreno' | 'outro'
@@ -38,6 +38,7 @@ export interface User {
   email: string
   role: UserRole
   tenantId?: string
+  referralCode?: string
   phone?: string
   whatsapp?: string
   phoneVerified?: boolean
@@ -374,6 +375,19 @@ export interface ContractWarning {
   reason: string
   evidencePhotos?: string[]
   evidenceAudio?: string[]
+  createdAt: Timestamp
+}
+
+// ─── AffiliateReferral (Indicação do programa de afiliados) ──────────────────
+// Vincula uma empresa nova ao código de indicação do afiliado que a trouxe.
+// Documento indexado pelo próprio companyId (uma indicação por empresa),
+// criado uma única vez no cadastro do gestor e nunca editado depois.
+
+export interface AffiliateReferral {
+  id: string
+  code: string
+  companyId: string
+  companyName: string
   createdAt: Timestamp
 }
 

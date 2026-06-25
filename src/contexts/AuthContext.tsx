@@ -16,6 +16,7 @@ import { User, UserRole } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 import { getInviteByEmail } from '@/services/invites'
 import { createTrialSubscription, getSubscription } from '@/services/subscription'
+import { createReferral } from '@/services/affiliateReferrals'
 import { queryClient } from '@/lib/queryClient'
 
 // ── Admins reais (somente estes e-mails recebem o papel de administrador) ──────
@@ -28,7 +29,23 @@ const ROLE_HINT_KEY = 'alugapro_role_hint'
 // de clientes reais. Precisa bater com SALES_COMPANY_ID nas envs do Vercel.
 const COMERCIAL_COMPANY_ID = 'alugapro-interno'
 
-type LoginRole = 'gestor' | 'inquilino'
+// Afiliados do programa de indicação — pessoa física/jurídica externa que
+// indica o AlugaPro, não é uma empresa-cliente. Mesmo racional do comercial:
+// companyId fixo independente do doc, nunca mistura com dados de clientes.
+const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
+
+// Caracteres sem 0/O e 1/I para evitar confusão ao compartilhar o código por voz/texto
+const REFERRAL_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function generateReferralCode(length = 6): string {
+  let code = ''
+  for (let i = 0; i < length; i++) {
+    code += REFERRAL_CODE_CHARS[Math.floor(Math.random() * REFERRAL_CODE_CHARS.length)]
+  }
+  return code
+}
+
+type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
 
 function isAdminEmail(email?: string | null) {
   return !!email && ADMIN_EMAILS.includes(email.toLowerCase())
@@ -48,6 +65,7 @@ function baseProfile(
     role,
     companyId,
     tenantId: docData?.tenantId,
+    referralCode: docData?.referralCode,
     phone: docData?.phone,
     whatsapp: docData?.whatsapp,
     phoneVerified: docData?.phoneVerified ?? false,
@@ -62,7 +80,7 @@ function baseProfile(
 // Resolve o perfil do usuário autenticado, na ordem:
 // 1) e-mail admin → admin; 2) doc users/{uid} existente; 3) convite criado
 // pelo gestor (vincula empresa/inquilino); 4) fallback pela aba escolhida.
-async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Promise<User> {
+async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole, refCode?: string): Promise<User> {
   let docData: Partial<User> | null = null
   try {
     const snap = await getDoc(doc(db, 'users', fbUser.uid))
@@ -79,7 +97,9 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Pro
     const profileId =
       docData.role === 'inquilino' && docData.tenantId ? docData.tenantId : fbUser.uid
     const companyId =
-      docData.role === 'comercial' ? COMERCIAL_COMPANY_ID : (docData.companyId ?? 'demo-company')
+      docData.role === 'comercial' ? COMERCIAL_COMPANY_ID
+      : docData.role === 'afiliado' ? AFFILIATE_COMPANY_ID
+      : (docData.companyId ?? 'demo-company')
     return baseProfile(fbUser, profileId, docData.role, companyId, docData)
   }
 
@@ -142,11 +162,38 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole): Pro
       // Cria trial se ainda não existe assinatura
       const existingSub = await getSubscription(companyId)
       if (!existingSub) await createTrialSubscription(companyId)
+      // Vincula ao afiliado que indicou, se veio de um link de indicação
+      if (refCode) {
+        try {
+          await createReferral(companyId, refCode.toUpperCase(), fbUser.displayName ?? fbUser.email ?? 'Empresa')
+        } catch {
+          // Código inválido ou regra bloqueou — não impede o cadastro do gestor
+        }
+      }
     } catch {
       // Firebase não configurado ou regra bloqueou — cai no fallback
       return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
     }
     return baseProfile(fbUser, fbUser.uid, 'gestor', companyId, docData)
+  }
+
+  // Novo afiliado sem convite: cria o próprio doc com um código de indicação único
+  if (hintRole === 'afiliado') {
+    const code = docData?.referralCode ?? generateReferralCode()
+    try {
+      await setDoc(doc(db, 'users', fbUser.uid), {
+        name: fbUser.displayName ?? fbUser.email ?? 'Usuário',
+        email: fbUser.email ?? '',
+        role: 'afiliado',
+        companyId: AFFILIATE_COMPANY_ID,
+        referralCode: code,
+        active: true,
+        updatedAt: serverTimestamp(),
+      }, { merge: true })
+    } catch {
+      return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
+    }
+    return baseProfile(fbUser, fbUser.uid, 'afiliado', AFFILIATE_COMPANY_ID, { ...docData, referralCode: code })
   }
 
   return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
@@ -196,8 +243,8 @@ interface AuthContextValue {
   user: User | null
   loading: boolean
   signIn: (email: string, password: string, intendedRole?: LoginRole) => Promise<void>
-  signUp: (name: string, email: string, password: string, role?: LoginRole) => Promise<void>
-  signInWithGoogle: (intendedRole?: LoginRole) => Promise<void>
+  signUp: (name: string, email: string, password: string, role?: LoginRole, refCode?: string) => Promise<void>
+  signInWithGoogle: (intendedRole?: LoginRole, refCode?: string) => Promise<void>
   logout: () => Promise<void>
   resetPassword: (email: string) => Promise<void>
   updateLocalUser: (patch: Partial<User>) => void
@@ -246,19 +293,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password)
   }
 
-  const signUp = async (name: string, email: string, password: string, role: LoginRole = 'gestor') => {
+  const signUp = async (name: string, email: string, password: string, role: LoginRole = 'gestor', refCode?: string) => {
     localStorage.setItem(ROLE_HINT_KEY, role)
     const cred = await createUserWithEmailAndPassword(auth, email, password)
     await updateProfile(cred.user, { displayName: name })
-    setUser(await resolveUserProfile(cred.user, role))
+    setUser(await resolveUserProfile(cred.user, role, refCode))
   }
 
-  const signInWithGoogle = async (intendedRole: LoginRole = 'gestor') => {
+  const signInWithGoogle = async (intendedRole: LoginRole = 'gestor', refCode?: string) => {
     localStorage.setItem(ROLE_HINT_KEY, intendedRole)
     const provider = new GoogleAuthProvider()
     provider.setCustomParameters({ prompt: 'select_account' })
     const cred = await signInWithPopup(auth, provider)
-    setUser(await resolveUserProfile(cred.user, intendedRole))
+    setUser(await resolveUserProfile(cred.user, intendedRole, refCode))
   }
 
   const logout = async () => {

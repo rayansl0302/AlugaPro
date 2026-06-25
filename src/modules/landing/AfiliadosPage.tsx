@@ -4,25 +4,12 @@ import {
   Gift, DollarSign, Repeat, Users, Building2, Megaphone, Briefcase,
   Share2, Zap, UserCheck, Wallet, CheckCircle2, ArrowRight,
 } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
-import {
-  fadeInUp, fadeInLeft, fadeInRight, scaleIn,
-  staggerContainer, viewportOnce, easeTransition,
-} from '@/lib/motion'
-
-const AFFILIATE_EMAIL = 'suporte@alugapro.com.br'
-
-function handleApply() {
-  const subject = encodeURIComponent('Quero ser afiliado AlugaPro')
-  const body = encodeURIComponent(
-    'Olá! Tenho interesse em participar do programa de afiliados do AlugaPro.\n\n' +
-    'Nome:\nTelefone/WhatsApp:\nComo atuo (corretor, imobiliária, influenciador, outro):\n'
-  )
-  window.location.href = `mailto:${AFFILIATE_EMAIL}?subject=${subject}&body=${body}`
-}
+import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from '@/lib/motion'
 
 const PAYMENT_PLANS = [
   {
@@ -77,6 +64,10 @@ const STEPS = [
 ]
 
 export function AfiliadosPage() {
+  const { user } = useAuth()
+  const ctaHref = user?.role === 'afiliado' ? '/painel-afiliado' : '/login?mode=signup&tab=afiliado'
+  const ctaLabel = user?.role === 'afiliado' ? 'Ir para o meu painel' : 'Quero ser afiliado'
+
   return (
     <div className="min-h-screen bg-white text-foreground">
       <LandingHeader />
@@ -124,10 +115,12 @@ export function AfiliadosPage() {
               <Button
                 size="lg"
                 className="h-11 bg-[#032B61] px-6 text-white hover:bg-[#032B61]/90"
-                onClick={handleApply}
+                asChild
               >
-                Quero ser afiliado
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to={ctaHref}>
+                  {ctaLabel}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-11 border-slate-300 text-[#032B61] hover:bg-slate-50" asChild>
                 <a href="#como-funciona">Ver como funciona</a>
@@ -326,10 +319,12 @@ export function AfiliadosPage() {
               <Button
                 size="lg"
                 className="h-12 bg-white px-8 text-[#032B61] font-semibold hover:bg-white/90"
-                onClick={handleApply}
+                asChild
               >
-                Quero ser afiliado
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <Link to={ctaHref}>
+                  {ctaLabel}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60" asChild>
                 <Link to="/recursos">Conhecer a plataforma</Link>

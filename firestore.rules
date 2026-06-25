@@ -85,9 +85,27 @@ service cloud.firestore {
 
     // Subscriptions
     match /subscriptions/{companyId} {
-      allow read: if isAdmin() || sameCompany(companyId);
+      allow read: if isAdmin() || sameCompany(companyId)
+        || (isRole('afiliado')
+            && exists(/databases/$(database)/documents/affiliateReferrals/$(companyId))
+            && get(/databases/$(database)/documents/affiliateReferrals/$(companyId)).data.code == getUserData().referralCode);
       allow write: if isAdminEmail();
       allow create: if sameCompany(companyId) && isGestor();
+    }
+
+    // Affiliate Referrals — vincula uma empresa nova ao código do afiliado que
+    // a indicou. Documento indexado pelo próprio companyId (uma indicação por
+    // empresa), criado uma única vez no cadastro do gestor; nunca editado depois.
+    match /affiliateReferrals/{companyId} {
+      allow read: if isAdmin()
+        || sameCompany(companyId)
+        || (isRole('afiliado') && getUserData().referralCode == resource.data.code);
+      allow create: if isAuthenticated()
+        && companyId == 'company_' + request.auth.uid
+        && request.resource.data.companyId == companyId
+        && request.resource.data.code is string
+        && request.resource.data.code.size() > 0;
+      allow update, delete: if false;
     }
 
     // Companies
@@ -112,6 +130,11 @@ service cloud.firestore {
       allow create: if request.auth.uid == userId
         && request.resource.data.role == 'gestor'
         && request.resource.data.companyId == 'company_' + request.auth.uid
+        && request.resource.data.active == true;
+      // Novo afiliado: auto-registro sem convite, recebe código de indicação próprio
+      allow create: if request.auth.uid == userId
+        && request.resource.data.role == 'afiliado'
+        && request.resource.data.companyId == 'alugapro-afiliados'
         && request.resource.data.active == true;
       // O usuário convidado materializa o próprio doc conforme o convite criado
       // pelo gestor — sem poder escolher empresa ou papel arbitrários.

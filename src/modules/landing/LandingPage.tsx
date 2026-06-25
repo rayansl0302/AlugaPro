@@ -165,7 +165,9 @@ export function LandingPage() {
   const primaryHref = user
     ? user.role === 'inquilino'
       ? '/portal'
-      : '/dashboard'
+      : user.role === 'afiliado'
+        ? '/painel-afiliado'
+        : '/dashboard'
     : '/login'
 
   const primaryLabel = user ? 'Abrir painel' : 'Começar agora'

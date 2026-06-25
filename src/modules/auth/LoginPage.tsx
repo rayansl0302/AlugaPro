@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useSearchParams, Link } from 'react-router-dom'
-import { Loader2, Eye, EyeOff, AlertTriangle, Clock, Building2, User, Info, CheckCircle } from 'lucide-react'
+import { Loader2, Eye, EyeOff, AlertTriangle, Clock, Building2, User, Info, CheckCircle, Gift } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,7 +13,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/useToast'
 import { cn } from '@/lib/utils'
 
-type LoginRole = 'gestor' | 'inquilino'
+type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
 
 function GoogleIcon() {
   return (
@@ -78,6 +78,13 @@ const INQUILINO_FEATURES = [
   'Notificações de vencimento',
 ]
 
+const AFILIADO_FEATURES = [
+  'Código de indicação próprio',
+  'Painel com suas indicações',
+  'R$ 100 por cliente ativo ou 20% recorrente',
+  'Sem meta, sem exclusividade',
+]
+
 function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
   return (
     <Card className="hidden lg:flex flex-col h-fit shadow-xl">
@@ -139,6 +146,32 @@ function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
             <span>Use o e-mail informado pelo seu gestor no convite. O sistema vinculará automaticamente ao seu contrato.</span>
           </div>
         </div>
+
+        <div className={cn(
+          'rounded-xl border-2 p-4 transition-all duration-200',
+          selectedRole === 'afiliado' ? 'border-primary bg-primary/5' : 'border-border opacity-60',
+        )}>
+          <div className="flex items-center gap-2.5 mb-3">
+            <div className={cn(
+              'rounded-lg p-1.5 transition-colors',
+              selectedRole === 'afiliado' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground',
+            )}>
+              <Gift className="h-4 w-4" />
+            </div>
+            <div>
+              <p className="font-semibold text-sm">Afiliado</p>
+              <p className="text-xs text-muted-foreground">Indica o AlugaPro e ganha por cliente ativo</p>
+            </div>
+          </div>
+          <ul className="space-y-1.5">
+            {AFILIADO_FEATURES.map(f => (
+              <li key={f} className="flex items-start gap-2 text-sm">
+                <CheckCircle className={cn('h-3.5 w-3.5 mt-0.5 shrink-0', selectedRole === 'afiliado' ? 'text-primary' : 'text-muted-foreground')} />
+                <span>{f}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       </CardContent>
     </Card>
   )
@@ -147,17 +180,21 @@ function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
 export function LoginPage() {
   const { user, signIn, signUp, signInWithGoogle, resetPassword } = useAuth()
   const [searchParams] = useSearchParams()
+  const refCode = searchParams.get('ref') ?? undefined
+  const tabParam = searchParams.get('tab')
   const [pageMode, setPageMode] = useState<'login' | 'signup'>(
-    searchParams.get('mode') === 'signup' ? 'signup' : 'login',
+    searchParams.get('mode') === 'signup' || !!refCode ? 'signup' : 'login',
   )
-  const [signupRole, setSignupRole] = useState<LoginRole>('gestor')
+  const [signupRole, setSignupRole] = useState<LoginRole>(
+    tabParam === 'afiliado' ? 'afiliado' : 'gestor',
+  )
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
   const [role, setRole] = useState<LoginRole>(
-    searchParams.get('tab') === 'inquilino' ? 'inquilino' : 'gestor',
+    tabParam === 'inquilino' ? 'inquilino' : tabParam === 'afiliado' ? 'afiliado' : 'gestor',
   )
 
   const rememberedEmail = loadRememberedEmail()
@@ -194,7 +231,11 @@ export function LoginPage() {
   })
 
   if (user) {
-    return <Navigate to={user.role === 'inquilino' ? '/portal' : '/dashboard'} replace />
+    const dest =
+      user.role === 'inquilino' ? '/portal'
+      : user.role === 'afiliado' ? '/painel-afiliado'
+      : '/dashboard'
+    return <Navigate to={dest} replace />
   }
 
   const onLoginSubmit = async (data: LoginData) => {
@@ -226,11 +267,13 @@ export function LoginPage() {
   const onSignupSubmit = async (data: SignupData) => {
     setLoading(true)
     try {
-      await signUp(data.name, data.email, data.password, signupRole)
+      await signUp(data.name, data.email, data.password, signupRole, signupRole === 'gestor' ? refCode : undefined)
       toast({
         title: 'Conta criada!',
         description: signupRole === 'gestor'
           ? 'Bem-vindo ao AlugaPro. Seu trial de 14 dias começou.'
+          : signupRole === 'afiliado'
+          ? 'Conta de afiliado criada! Seu código de indicação já está disponível no painel.'
           : 'Conta criada. O sistema verificará seu vínculo com o gestor.',
       })
     } catch (err) {
@@ -250,7 +293,8 @@ export function LoginPage() {
     if (isLocked) return
     setGoogleLoading(true)
     try {
-      await signInWithGoogle(pageMode === 'signup' ? signupRole : role)
+      const effectiveRole = pageMode === 'signup' ? signupRole : role
+      await signInWithGoogle(effectiveRole, pageMode === 'signup' && effectiveRole === 'gestor' ? refCode : undefined)
     } catch {
       toast({ title: 'Erro ao entrar com Google', description: 'Tente novamente.', variant: 'destructive' })
     } finally {
@@ -302,8 +346,15 @@ export function LoginPage() {
               </CardHeader>
 
               <CardContent>
+                {refCode && signupRole === 'gestor' && (
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300">
+                    <Gift className="h-4 w-4 shrink-0 mt-0.5" />
+                    <span>Você foi indicado por um parceiro AlugaPro!</span>
+                  </div>
+                )}
+
                 {/* Role selector */}
-                <div className="grid grid-cols-2 gap-2 mb-5">
+                <div className="grid grid-cols-3 gap-2 mb-5">
                   <button
                     type="button"
                     onClick={() => setSignupRole('gestor')}
@@ -332,11 +383,31 @@ export function LoginPage() {
                     <p className="font-semibold text-sm">Inquilino</p>
                     <p className="text-xs text-muted-foreground leading-tight">Locatário</p>
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setSignupRole('afiliado')}
+                    className={cn(
+                      'rounded-xl border-2 p-3 text-left transition-all',
+                      signupRole === 'afiliado'
+                        ? 'border-primary bg-primary/5'
+                        : 'border-border hover:border-muted-foreground/40',
+                    )}
+                  >
+                    <Gift className={cn('h-5 w-5 mb-1.5', signupRole === 'afiliado' ? 'text-primary' : 'text-muted-foreground')} />
+                    <p className="font-semibold text-sm">Afiliado</p>
+                    <p className="text-xs text-muted-foreground leading-tight">Indique e ganhe</p>
+                  </button>
                 </div>
 
                 {signupRole === 'gestor' && (
                   <p className="mb-4 text-center text-sm font-medium text-primary">
                     14 dias grátis · sem cartão de crédito
+                  </p>
+                )}
+
+                {signupRole === 'afiliado' && (
+                  <p className="mb-4 text-center text-sm font-medium text-primary">
+                    Cadastro grátis · receba seu código na hora
                   </p>
                 )}
 
@@ -463,6 +534,7 @@ export function LoginPage() {
                   <TabsList className="w-full">
                     <TabsTrigger value="gestor" className="flex-1">Gestor</TabsTrigger>
                     <TabsTrigger value="inquilino" className="flex-1">Inquilino</TabsTrigger>
+                    <TabsTrigger value="afiliado" className="flex-1">Afiliado</TabsTrigger>
                   </TabsList>
                 </Tabs>
               )}
@@ -561,10 +633,14 @@ export function LoginPage() {
                     Entrar com Google
                   </Button>
 
-                  {role === 'gestor' && (
+                  {(role === 'gestor' || role === 'afiliado') && (
                     <p className="mt-4 text-center text-sm text-muted-foreground">
                       Não tem uma conta?{' '}
-                      <button type="button" onClick={() => setPageMode('signup')} className="font-medium text-primary hover:underline">
+                      <button
+                        type="button"
+                        onClick={() => { setSignupRole(role); setPageMode('signup') }}
+                        className="font-medium text-primary hover:underline"
+                      >
                         Criar conta grátis
                       </button>
                     </p>

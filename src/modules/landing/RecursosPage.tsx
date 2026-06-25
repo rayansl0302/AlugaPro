@@ -120,7 +120,7 @@ export function RecursosPage() {
   const { user } = useAuth()
 
   const primaryHref = user
-    ? user.role === 'inquilino' ? '/portal' : '/dashboard'
+    ? user.role === 'inquilino' ? '/portal' : user.role === 'afiliado' ? '/painel-afiliado' : '/dashboard'
     : '/login'
 
   return (

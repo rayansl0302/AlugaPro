@@ -22,6 +22,7 @@ import { SettingsPage } from '@/modules/settings/SettingsPage'
 import { OwnersPage } from '@/modules/owners/OwnersPage'
 import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
 import { TenantContractsPage } from '@/modules/tenant-portal/TenantContractsPage'
+import { AffiliatePanel } from '@/modules/affiliate/AffiliatePanel'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
@@ -66,6 +67,18 @@ function TenantRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>
 }
 
+function AffiliateRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth()
+  if (loading) return (
+    <div className="flex h-screen items-center justify-center">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  )
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'afiliado') return <Navigate to="/dashboard" replace />
+  return <>{children}</>
+}
+
 const router = createBrowserRouter([
   {
     path: '/login',
@@ -90,6 +103,14 @@ const router = createBrowserRouter([
       { index: true, element: <TenantPortal /> },
       { path: 'contratos', element: <TenantContractsPage /> },
     ],
+  },
+  {
+    path: '/painel-afiliado',
+    element: (
+      <AffiliateRoute>
+        <AffiliatePanel />
+      </AffiliateRoute>
+    ),
   },
   {
     path: '/perfil',
