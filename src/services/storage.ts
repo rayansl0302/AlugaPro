@@ -87,6 +87,16 @@ export async function uploadEquipmentPhoto(
   return uploadFile(file, path)
 }
 
+export async function uploadWarningEvidence(
+  companyId: string,
+  warningId: string,
+  file: File
+): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `companies/${companyId}/warnings/${warningId}/${Date.now()}.${ext}`
+  return uploadFile(file, path)
+}
+
 export async function uploadTenantPhoto(
   companyId: string,
   tenantId: string,

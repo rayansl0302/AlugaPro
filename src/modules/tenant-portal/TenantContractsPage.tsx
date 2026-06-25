@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   FileText, Search, Eye, Download, Calendar, DollarSign,
   CheckCircle, PenLine, Car, Building2, Loader2, User,
+  FileWarning, ShieldAlert, Music,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContractsByTenant } from '@/services/contracts'
@@ -10,7 +11,8 @@ import { getProperties, getProperty } from '@/services/properties'
 import { getVehicles, getVehicle } from '@/services/vehicles'
 import { getOwners, getOwner } from '@/services/owners'
 import { getTenant } from '@/services/tenants'
-import { Contract, ContractStatus, Owner, Property, PropertyType, ReadjustmentIndex, Vehicle } from '@/types'
+import { getWarningsByTenant } from '@/services/warnings'
+import { Contract, ContractStatus, ContractWarning, Owner, Property, PropertyType, ReadjustmentIndex, Vehicle } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { getContractSigningStatus } from '@/lib/contractSigning'
@@ -29,6 +31,7 @@ import { Pagination } from '@/components/ui/pagination'
 import { toast } from '@/hooks/useToast'
 import { usePagination } from '@/hooks/usePagination'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
 import {
   Accordion,
   AccordionContent,
@@ -66,6 +69,8 @@ const propertyTypeLabels: Record<PropertyType, string> = {
 
 type StatusFilter = ContractStatus | 'todos' | 'ativos'
 
+const RESCISSION_THRESHOLD = 4
+
 function contractAssetLabel(contract: Contract) {
   return contract.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
 }
@@ -85,6 +90,7 @@ function ContractCard({
   property,
   vehicle,
   owner,
+  warnings,
   onViewProperty,
   onViewVehicle,
   onViewOwner,
@@ -94,12 +100,15 @@ function ContractCard({
   property?: Property
   vehicle?: Vehicle
   owner?: Owner
+  warnings: ContractWarning[]
   onViewProperty: (contract: Contract, property?: Property) => void
   onViewVehicle: (contract: Contract, vehicle?: Vehicle) => void
   onViewOwner: (contract: Contract, owner?: Owner) => void
 }) {
   const { viewContract, downloadContract, isContractLoading } = useTenantContractActions()
+  const [lightbox, setLightbox] = useState<{ photos: string[]; index: number } | null>(null)
   const signing = getContractSigningStatus(contract)
+  const atRisk = warnings.length >= RESCISSION_THRESHOLD
   const entityPhotos = resolveChargeEntityPhotos(
     {
       tenantId: contract.tenantId,
@@ -136,6 +145,12 @@ function ContractCard({
                   <Badge variant="success" className="gap-1">
                     <CheckCircle className="h-3 w-3" />
                     Assinado
+                  </Badge>
+                )}
+                {warnings.length > 0 && (
+                  <Badge variant={atRisk ? 'destructive' : 'warning'} className="gap-1">
+                    <FileWarning className="h-3 w-3" />
+                    {warnings.length} advertência{warnings.length > 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>
@@ -292,7 +307,59 @@ function ContractCard({
             </p>
           )}
         </div>
+
+        {warnings.length > 0 && (
+          <div className="border-t px-4 py-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2 flex items-center gap-1.5">
+              <FileWarning className="h-3.5 w-3.5" />
+              Advertências ({warnings.length})
+            </p>
+            {atRisk && (
+              <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive flex items-center gap-1.5">
+                <ShieldAlert className="h-3.5 w-3.5 shrink-0" />
+                Limite de {RESCISSION_THRESHOLD} advertências atingido — conforme cláusula contratual, o proprietário pode rescindir o contrato imediatamente, sem devolução dos valores já pagos.
+              </p>
+            )}
+            {warnings.map((w) => (
+              <div key={w.id} className="rounded-lg border p-3">
+                {w.clauseReference && (
+                  <p className="text-xs font-medium text-primary">{w.clauseReference}</p>
+                )}
+                <p className="text-sm">{w.reason}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatDate(w.createdAt?.toDate ? w.createdAt.toDate().toISOString() : new Date().toISOString())} — por {w.issuedByName}
+                </p>
+                {((w.evidencePhotos?.length ?? 0) > 0 || (w.evidenceAudio?.length ?? 0) > 0) && (
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {(w.evidencePhotos ?? []).map((url, idx) => (
+                      <button
+                        key={url}
+                        type="button"
+                        onClick={() => setLightbox({ photos: w.evidencePhotos ?? [], index: idx })}
+                        className="h-12 w-12 overflow-hidden rounded-md border"
+                      >
+                        <img src={url} alt="Prova" className="h-full w-full object-cover" />
+                      </button>
+                    ))}
+                    {(w.evidenceAudio?.length ?? 0) > 0 && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Music className="h-3.5 w-3.5" /> {w.evidenceAudio?.length} áudio(s)
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
         </AccordionContent>
+
+        <PhotoLightbox
+          photos={lightbox?.photos ?? []}
+          open={!!lightbox}
+          startIndex={lightbox?.index ?? 0}
+          onClose={() => setLightbox(null)}
+        />
     </AccordionItem>
   )
 }
@@ -337,6 +404,21 @@ export function TenantContractsPage() {
     queryFn: () => getOwners(companyId),
     enabled: !!companyId,
   })
+
+  const { data: warnings = [] } = useQuery({
+    queryKey: ['warnings', companyId, tenantId],
+    queryFn: () => getWarningsByTenant(companyId, tenantId),
+    enabled: !!companyId && !!tenantId,
+  })
+
+  const warningsByContract = useMemo(() => {
+    const map: Record<string, ContractWarning[]> = {}
+    warnings.forEach((w) => {
+      if (!map[w.contractId]) map[w.contractId] = []
+      map[w.contractId].push(w)
+    })
+    return map
+  }, [warnings])
 
   const propertyById = useMemo(() => {
     const map: Record<string, Property> = {}
@@ -544,6 +626,7 @@ export function TenantContractsPage() {
                   property={propertyById[contract.propertyId]}
                   vehicle={vehicleById[contract.propertyId]}
                   owner={ownerById[contract.ownerId]}
+                  warnings={warningsByContract[contract.id] ?? []}
                   onViewProperty={openPropertyView}
                   onViewVehicle={openVehicleView}
                   onViewOwner={openOwnerView}

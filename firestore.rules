@@ -303,6 +303,19 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Warnings (Advertências) — notificação formal do proprietário ao inquilino
+    // por descumprimento contratual. Registro imutável (sem update), só delete
+    // pelo admin em caso de engano.
+    match /warnings/{warningId} {
+      allow read: if isDemo()
+        || (isAuthenticated() &&
+          (isLinkedTenant(resource.data.tenantId) ||
+           (isProprietario() && sameCompany(resource.data.companyId))));
+      allow create: if isProprietario() && sameCompany(request.resource.data.companyId);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
     // Notifications
     match /notifications/{notificationId} {
       allow read: if isAuthenticated() &&

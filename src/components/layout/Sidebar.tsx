@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -33,6 +33,7 @@ const navItems: NavItem[] = [
   { label: 'Financeiro', href: '/financeiro', icon: CreditCard },
   { label: 'Cobranças', href: '/cobrancas', icon: DollarSign },
   { label: 'Inadimplência', href: '/inadimplencia', icon: AlertTriangle },
+  { label: 'Advertências', href: '/advertencias', icon: FileWarning },
   { label: 'Despesas Compartilhadas', href: '/despesas', icon: DollarSign },
   { label: 'Chamados', href: '/chamados', icon: Wrench },
   { label: 'Notificações', href: '/notificacoes', icon: Bell },

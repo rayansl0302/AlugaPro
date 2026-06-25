@@ -1,12 +1,14 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContracts, updateContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
 import { getTenants } from '@/services/tenants'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
 import { getEquipments } from '@/services/equipments'
+import { getWarningsByCompany } from '@/services/warnings'
 import { Contract, ContractStatus, Property, Tenant, Vehicle, Equipment } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { getContractSigningStatus } from '@/lib/contractSigning'
@@ -78,6 +80,18 @@ export function ContractsPage() {
     queryFn: () => getEquipments(companyId),
     enabled: !!companyId,
   })
+
+  const { data: warnings = [] } = useQuery({
+    queryKey: ['warnings', companyId],
+    queryFn: () => getWarningsByCompany(companyId),
+    enabled: !!companyId,
+  })
+
+  const warningCountByContract = useMemo(() => {
+    const map: Record<string, number> = {}
+    warnings.forEach((w) => { map[w.contractId] = (map[w.contractId] ?? 0) + 1 })
+    return map
+  }, [warnings])
 
   const tenantById = useMemo(() => {
     const map: Record<string, Tenant> = {}
@@ -313,7 +327,17 @@ export function ContractsPage() {
                   <CardContent className="space-y-3 p-4">
                     <div className="flex items-start justify-between gap-2">
                       <span className="font-mono text-sm font-medium">{contract.contractNumber}</span>
-                      <Badge variant={sc.variant}>{sc.label}</Badge>
+                      <div className="flex items-center gap-1.5">
+                        {warningCountByContract[contract.id] > 0 && (
+                          <Link to="/advertencias" title="Ver advertências">
+                            <Badge variant={warningCountByContract[contract.id] >= 4 ? 'destructive' : 'warning'} className="gap-1">
+                              <FileWarning className="h-3 w-3" />
+                              {warningCountByContract[contract.id]}
+                            </Badge>
+                          </Link>
+                        )}
+                        <Badge variant={sc.variant}>{sc.label}</Badge>
+                      </div>
                     </div>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex items-center gap-1">
@@ -454,7 +478,17 @@ export function ContractsPage() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={sc.variant}>{sc.label}</Badge>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={sc.variant}>{sc.label}</Badge>
+                        {warningCountByContract[contract.id] > 0 && (
+                          <Link to="/advertencias" title="Ver advertências">
+                            <Badge variant={warningCountByContract[contract.id] >= 4 ? 'destructive' : 'warning'} className="gap-1">
+                              <FileWarning className="h-3 w-3" />
+                              {warningCountByContract[contract.id]}
+                            </Badge>
+                          </Link>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">

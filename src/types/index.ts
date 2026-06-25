@@ -354,6 +354,29 @@ export interface Contract {
   updatedAt: Timestamp
 }
 
+// ─── ContractWarning (Advertência) ────────────────────────────────────────────
+// Notificação formal do proprietário/gestor ao inquilino por descumprimento
+// de cláusula contratual. Registro imutável, com provas anexadas.
+
+export interface ContractWarning {
+  id: string
+  companyId: string
+  contractId: string
+  contractNumber?: string
+  tenantId: string
+  tenantName?: string
+  ownerId?: string
+  propertyId?: string
+  propertyName?: string
+  issuedById: string
+  issuedByName: string
+  clauseReference?: string
+  reason: string
+  evidencePhotos?: string[]
+  evidenceAudio?: string[]
+  createdAt: Timestamp
+}
+
 // ─── ContractTemplate (Modelo de Contrato) ───────────────────────────────────
 
 export interface ContractTemplateClause {

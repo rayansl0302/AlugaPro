@@ -134,7 +134,7 @@ export function buildImovelBlocks(d: ImovelSigningData, contract: {
   // CLÁUSULA 8
   clause('CLÁUSULA 8ª', 'DA SUBLOCAÇÃO E DA CESSÃO')
   sub('8.1', `É expressamente vedada a sublocação total ou parcial do imóvel, o empréstimo a terceiros, a cessão ou transferência dos direitos desta locação, sem prévia e expressa autorização escrita do LOCADOR, nos termos do art. 13 da Lei nº 8.245/1991.`)
-  sub('8.2', `O descumprimento do disposto nesta cláusula constituirá infração contratual grave, sujeitando o LOCATÁRIO às penalidades previstas na Cláusula 13ª deste instrumento, além de autorizar o LOCADOR a pleitear o desfazimento da locação por infração legal ou contratual.`)
+  sub('8.2', `O descumprimento do disposto nesta cláusula constituirá infração contratual grave, sujeitando o LOCATÁRIO às penalidades previstas na Cláusula 14ª deste instrumento, além de autorizar o LOCADOR a pleitear o desfazimento da locação por infração legal ou contratual.`)
   space()
 
   // CLÁUSULA 9
@@ -160,39 +160,48 @@ export function buildImovelBlocks(d: ImovelSigningData, contract: {
   space()
 
   // CLÁUSULA 12
-  clause('CLÁUSULA 12ª', 'DA RESCISÃO')
-  sub('12.1', `A rescisão antecipada do contrato pelo LOCATÁRIO, antes do término do prazo ajustado, implicará o pagamento de multa proporcional ao período faltante para o término do contrato, calculada conforme a fórmula legal, nos termos da Súmula nº 178 do STJ e do art. 413 do Código Civil.`)
-  sub('12.2', `Nos termos do art. 4º, parágrafo único, da Lei nº 8.245/1991, se a rescisão for motivada por transferência do LOCATÁRIO por seu empregador para cidade diversa daquela do imóvel locado, a multa não será devida, desde que a comunicação seja feita com prazo mínimo de trinta (30) dias.`)
-  sub('12.3', `O LOCADOR poderá rescindir o contrato imediatamente nas seguintes hipóteses: (a) falta de pagamento do aluguel e encargos; (b) infração legal ou contratual; (c) realização de reparação urgente determinada pelo Poder Público que não possa aguardar o término da locação; (d) utilização do imóvel para fins não residenciais.`)
-  sub('12.4', `A rescisão por culpa do LOCATÁRIO gera direito ao LOCADOR de reter a garantia prestada, sem prejuízo de ação indenizatória pelos danos sofridos.`)
+  clause('CLÁUSULA 12ª', 'DAS ADVERTÊNCIAS E DA RESCISÃO POR REITERAÇÃO DE INFRAÇÕES')
+  sub('12.1', `Sempre que o LOCATÁRIO descumprir qualquer cláusula deste contrato ou dispositivo legal aplicável à locação, o LOCADOR poderá formalizar advertência escrita ao LOCATÁRIO, com indicação da cláusula contratual infringida, da infração praticada e da data de ocorrência, instruída com provas do fato, tais como fotografias e, quando houver, gravações de áudio.`)
+  sub('12.2', `As advertências serão registradas e numeradas sequencialmente em sistema próprio de gestão da locação, permanecendo disponíveis para consulta tanto do LOCADOR quanto do LOCATÁRIO, e constituem prova do histórico de infrações cometidas durante a vigência do contrato.`)
+  sub('12.3', `Ao ser atingido o número de quatro (04) advertências registradas, fica caracterizada a reiteração de infrações contratuais, autorizando o LOCADOR, a seu exclusivo critério, a promover a rescisão imediata deste contrato, independentemente de notificação judicial ou extrajudicial adicional, sem que assista ao LOCATÁRIO direito a devolução ou compensação dos valores já pagos a título de aluguel, encargos ou qualquer outra verba decorrente deste contrato.`)
+  sub('12.4', `O LOCATÁRIO poderá apresentar contestação por escrito a qualquer advertência recebida, no prazo de cinco (05) dias corridos contados de seu recebimento, sem que isso suspenda a contagem das advertências já registradas até manifestação do LOCADOR ou, havendo litígio, decisão do Poder Judiciário.`)
+  sub('12.5', `As advertências e as respectivas provas anexadas integram a documentação do contrato e poderão ser apresentadas em juízo como prova do descumprimento contratual reiterado pelo LOCATÁRIO, para instruir ação de despejo, cobrança ou indenização, nos termos dos arts. 369 e 405 do Código de Processo Civil.`)
   space()
 
   // CLÁUSULA 13
-  clause('CLÁUSULA 13ª', 'DA INADIMPLÊNCIA')
-  sub('13.1', `O não pagamento do aluguel e demais encargos nos prazos estipulados acarretará: (a) multa moratória de ${multa}; (b) juros de mora de ${juros}; (c) correção monetária pelo IPCA; (d) inclusão do nome do LOCATÁRIO em órgãos de proteção ao crédito, quando legalmente permitida; (e) ajuizamento de ação de despejo por falta de pagamento; (f) execução da garantia locatícia.`)
-  sub('13.2', `A cobrança extrajudicial e judicial das dívidas decorrentes deste contrato implicará ao devedor o pagamento de todos os custos incorridos pelo LOCADOR, incluindo honorários advocatícios de vinte por cento (20%) sobre o valor do débito total.`)
-  sub('13.3', `O atraso no pagamento por mais de uma vez, ainda que pago com a multa e juros cabíveis, poderá ser considerado, a critério do LOCADOR, como infração contratual reiterada, autorizando a rescisão do contrato por infração às cláusulas.`)
+  clause('CLÁUSULA 13ª', 'DA RESCISÃO')
+  sub('13.1', `A rescisão antecipada do contrato pelo LOCATÁRIO, antes do término do prazo ajustado, implicará o pagamento de multa proporcional ao período faltante para o término do contrato, calculada conforme a fórmula legal, nos termos da Súmula nº 178 do STJ e do art. 413 do Código Civil.`)
+  sub('13.2', `Nos termos do art. 4º, parágrafo único, da Lei nº 8.245/1991, se a rescisão for motivada por transferência do LOCATÁRIO por seu empregador para cidade diversa daquela do imóvel locado, a multa não será devida, desde que a comunicação seja feita com prazo mínimo de trinta (30) dias.`)
+  sub('13.3', `O LOCADOR poderá rescindir o contrato imediatamente nas seguintes hipóteses: (a) falta de pagamento do aluguel e encargos; (b) infração legal ou contratual; (c) realização de reparação urgente determinada pelo Poder Público que não possa aguardar o término da locação; (d) utilização do imóvel para fins não residenciais; (e) acúmulo de quatro (04) ou mais advertências registradas nos termos da Cláusula 12ª, hipótese em que a rescisão prescinde da devolução dos valores já pagos, conforme ali disposto.`)
+  sub('13.4', `A rescisão por culpa do LOCATÁRIO gera direito ao LOCADOR de reter a garantia prestada, sem prejuízo de ação indenizatória pelos danos sofridos.`)
   space()
 
   // CLÁUSULA 14
-  clause('CLÁUSULA 14ª', 'DA RESPONSABILIDADE CIVIL')
-  sub('14.1', `O LOCATÁRIO responde integralmente por todos os prejuízos e danos causados ao imóvel durante a vigência da locação, sejam materiais, morais ou de qualquer outra natureza, exceto aqueles decorrentes de caso fortuito, força maior ou desgaste natural comprovado.`)
-  sub('14.2', `Respondem solidariamente com o LOCATÁRIO pelos danos: o fiador, se houver; e os condôminos do imóvel, quanto aos danos praticados em partes comuns do condomínio.`)
-  sub('14.3', `A responsabilidade do LOCATÁRIO persiste mesmo após a entrega das chaves, caso os danos sejam constatados na vistoria final ou nos dias subsequentes à desocupação, até o limite de trinta (30) dias.`)
+  clause('CLÁUSULA 14ª', 'DA INADIMPLÊNCIA')
+  sub('14.1', `O não pagamento do aluguel e demais encargos nos prazos estipulados acarretará: (a) multa moratória de ${multa}; (b) juros de mora de ${juros}; (c) correção monetária pelo IPCA; (d) inclusão do nome do LOCATÁRIO em órgãos de proteção ao crédito, quando legalmente permitida; (e) ajuizamento de ação de despejo por falta de pagamento; (f) execução da garantia locatícia.`)
+  sub('14.2', `A cobrança extrajudicial e judicial das dívidas decorrentes deste contrato implicará ao devedor o pagamento de todos os custos incorridos pelo LOCADOR, incluindo honorários advocatícios de vinte por cento (20%) sobre o valor do débito total.`)
+  sub('14.3', `O atraso no pagamento por mais de uma vez, ainda que pago com a multa e juros cabíveis, poderá ser considerado, a critério do LOCADOR, como infração contratual reiterada, autorizando a rescisão do contrato por infração às cláusulas.`)
   space()
 
   // CLÁUSULA 15
-  clause('CLÁUSULA 15ª', 'DA ASSINATURA DIGITAL E AUTENTICIDADE')
-  sub('15.1', `As partes concordam expressamente que o presente contrato seja celebrado com assinatura eletrônica, na forma da Medida Provisória nº 2.200-2/2001, art. 10, § 2º, dispensando o uso de certificados digitais ICP-Brasil, dada a expressa concordância das partes com essa modalidade.`)
-  sub('15.2', `A identidade das partes é verificada pelos documentos de identificação pessoal com foto, fotografados e anexados ao presente instrumento, constituindo prova de autoria das assinaturas apostas neste contrato.`)
-  sub('15.3', `As assinaturas manuscritas digitalizadas, capturadas em dispositivo eletrônico no momento da celebração deste contrato, possuem validade jurídica plena nos termos da legislação vigente, sendo consideradas meio de prova hábil perante qualquer juízo ou tribunal.`)
-  sub('15.4', `O contrato assinado eletronicamente, juntamente com os registros de identidade e metadados (data, hora e dispositivo de assinatura), será armazenado em nuvem segura e poderá ser apresentado como prova em juízo, nos termos dos arts. 439 e 440 do Código de Processo Civil.`)
+  clause('CLÁUSULA 15ª', 'DA RESPONSABILIDADE CIVIL')
+  sub('15.1', `O LOCATÁRIO responde integralmente por todos os prejuízos e danos causados ao imóvel durante a vigência da locação, sejam materiais, morais ou de qualquer outra natureza, exceto aqueles decorrentes de caso fortuito, força maior ou desgaste natural comprovado.`)
+  sub('15.2', `Respondem solidariamente com o LOCATÁRIO pelos danos: o fiador, se houver; e os condôminos do imóvel, quanto aos danos praticados em partes comuns do condomínio.`)
+  sub('15.3', `A responsabilidade do LOCATÁRIO persiste mesmo após a entrega das chaves, caso os danos sejam constatados na vistoria final ou nos dias subsequentes à desocupação, até o limite de trinta (30) dias.`)
   space()
 
   // CLÁUSULA 16
-  clause('CLÁUSULA 16ª', 'DO FORO')
-  sub('16.1', `As partes elegem o Foro da Comarca de ${d.foro} para dirimir quaisquer dúvidas ou litígios oriundos deste contrato, com renúncia expressa a qualquer outro foro, por mais privilegiado que seja, nos termos do art. 63 do Código de Processo Civil.`)
-  sub('16.2', `Antes de recorrer ao Poder Judiciário, as partes comprometem-se a buscar solução extrajudicial através de mediação ou conciliação, sem que isso implique renúncia ao direito de ação judicial.`)
+  clause('CLÁUSULA 16ª', 'DA ASSINATURA DIGITAL E AUTENTICIDADE')
+  sub('16.1', `As partes concordam expressamente que o presente contrato seja celebrado com assinatura eletrônica, na forma da Medida Provisória nº 2.200-2/2001, art. 10, § 2º, dispensando o uso de certificados digitais ICP-Brasil, dada a expressa concordância das partes com essa modalidade.`)
+  sub('16.2', `A identidade das partes é verificada pelos documentos de identificação pessoal com foto, fotografados e anexados ao presente instrumento, constituindo prova de autoria das assinaturas apostas neste contrato.`)
+  sub('16.3', `As assinaturas manuscritas digitalizadas, capturadas em dispositivo eletrônico no momento da celebração deste contrato, possuem validade jurídica plena nos termos da legislação vigente, sendo consideradas meio de prova hábil perante qualquer juízo ou tribunal.`)
+  sub('16.4', `O contrato assinado eletronicamente, juntamente com os registros de identidade e metadados (data, hora e dispositivo de assinatura), será armazenado em nuvem segura e poderá ser apresentado como prova em juízo, nos termos dos arts. 439 e 440 do Código de Processo Civil.`)
+  space()
+
+  // CLÁUSULA 17
+  clause('CLÁUSULA 17ª', 'DO FORO')
+  sub('17.1', `As partes elegem o Foro da Comarca de ${d.foro} para dirimir quaisquer dúvidas ou litígios oriundos deste contrato, com renúncia expressa a qualquer outro foro, por mais privilegiado que seja, nos termos do art. 63 do Código de Processo Civil.`)
+  sub('17.2', `Antes de recorrer ao Poder Judiciário, as partes comprometem-se a buscar solução extrajudicial através de mediação ou conciliação, sem que isso implique renúncia ao direito de ação judicial.`)
   space()
 
   // Assinatura

@@ -13,6 +13,7 @@ import { ContractTemplatesPage } from '@/modules/contract-templates/ContractTemp
 import { FinancialPage } from '@/modules/financial/FinancialPage'
 import { ChargesPage } from '@/modules/charges/ChargesPage'
 import { DefaultersPage } from '@/modules/defaulters/DefaultersPage'
+import { WarningsPage } from '@/modules/warnings/WarningsPage'
 import { SharedExpensesPage } from '@/modules/shared-expenses/SharedExpensesPage'
 import { MaintenancePage } from '@/modules/maintenance/MaintenancePage'
 import { NotificationsPage } from '@/modules/notifications/NotificationsPage'
@@ -128,6 +129,7 @@ const router = createBrowserRouter([
           { path: 'financeiro', element: <FinancialPage /> },
           { path: 'cobrancas', element: <ChargesPage /> },
           { path: 'inadimplencia', element: <DefaultersPage /> },
+          { path: 'advertencias', element: <WarningsPage /> },
           { path: 'despesas', element: <SharedExpensesPage /> },
           { path: 'chamados', element: <MaintenancePage /> },
           { path: 'notificacoes', element: <NotificationsPage /> },
