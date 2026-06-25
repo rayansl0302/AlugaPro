@@ -4,7 +4,7 @@ import { Plus, Search, HardHat, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table
 import { useAuth } from '@/contexts/AuthContext'
 import { getEquipments, deleteEquipment } from '@/services/equipments'
 import { getTenants } from '@/services/tenants'
-import { Tenant, Equipment, EquipmentStatus, EquipmentType } from '@/types'
+import { Tenant, Equipment, EquipmentStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -28,17 +28,6 @@ const statusConfig: Record<EquipmentStatus, { label: string; variant: 'success' 
   encerrado: { label: 'Encerrado', variant: 'destructive' },
 }
 
-const typeLabels: Record<EquipmentType, string> = {
-  betoneira: 'Betoneira',
-  andaime: 'Andaime',
-  compressor: 'Compressor',
-  furadeira: 'Furadeira',
-  martelete: 'Martelete',
-  gerador: 'Gerador',
-  guincho: 'Guincho',
-  compactador: 'Compactador',
-  outro: 'Outro',
-}
 
 export function EquipmentsPage() {
   const { user } = useAuth()
@@ -83,6 +72,7 @@ export function EquipmentsPage() {
   const filtered = equipments.filter((eq) => {
     const matchSearch =
       eq.name.toLowerCase().includes(search.toLowerCase()) ||
+      eq.type.toLowerCase().includes(search.toLowerCase()) ||
       (eq.brand ?? '').toLowerCase().includes(search.toLowerCase()) ||
       eq.model.toLowerCase().includes(search.toLowerCase()) ||
       (eq.serialNumber ?? '').toLowerCase().includes(search.toLowerCase()) ||
@@ -229,7 +219,7 @@ export function EquipmentsPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{typeLabels[equipment.type]}</TableCell>
+                    <TableCell className="text-muted-foreground">{equipment.type}</TableCell>
                     <TableCell className="font-mono text-sm">{equipment.serialNumber || '—'}</TableCell>
                     <TableCell className="font-semibold text-primary">{formatCurrency(equipment.rentValue)}</TableCell>
                     <TableCell>
@@ -308,7 +298,7 @@ export function EquipmentsPage() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{equipment.name}</p>
                       <p className="text-xs text-muted-foreground">
-                        {typeLabels[equipment.type]}
+                        {equipment.type}
                       </p>
                     </div>
                     <p className="shrink-0 font-bold text-primary">

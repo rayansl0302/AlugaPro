@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { DollarSign, User, Tag, HardHat, Hash } from 'lucide-react'
-import { Equipment, EquipmentStatus, EquipmentType } from '@/types'
+import { Equipment, EquipmentStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
@@ -11,18 +11,6 @@ const statusConfig: Record<EquipmentStatus, { label: string; variant: 'success' 
   reservado: { label: 'Reservado', variant: 'warning' },
   manutencao: { label: 'Manutenção', variant: 'secondary' },
   encerrado: { label: 'Encerrado', variant: 'destructive' },
-}
-
-const typeLabels: Record<EquipmentType, string> = {
-  betoneira: 'Betoneira',
-  andaime: 'Andaime',
-  compressor: 'Compressor',
-  furadeira: 'Furadeira',
-  martelete: 'Martelete',
-  gerador: 'Gerador',
-  guincho: 'Guincho',
-  compactador: 'Compactador',
-  outro: 'Outro',
 }
 
 export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
@@ -62,7 +50,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
           <Tag className="h-5 w-5 text-muted-foreground" />
           <div>
             <p className="text-xs text-muted-foreground">Tipo</p>
-            <p className="font-medium">{typeLabels[equipment.type]}</p>
+            <p className="font-medium">{equipment.type}</p>
           </div>
         </div>
         {equipment.serialNumber && (

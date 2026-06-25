@@ -241,9 +241,9 @@ export interface Vehicle {
 // ─── Equipment (Equipamento) ──────────────────────────────────────────────────
 
 export type EquipmentStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
-export type EquipmentType =
-  | 'betoneira' | 'andaime' | 'compressor' | 'furadeira' | 'martelete'
-  | 'gerador' | 'guincho' | 'compactador' | 'outro'
+// Categoria livre (texto) — não se restringe a ferramentas/máquinas de obra.
+// Veja EQUIPMENT_TYPE_SUGGESTIONS para a lista de sugestões exibidas no formulário.
+export type EquipmentType = string
 
 export interface Equipment {
   id: string
@@ -268,6 +268,22 @@ export interface Equipment {
   createdAt: Timestamp
   updatedAt: Timestamp
 }
+
+// Sugestões exibidas no formulário (autocomplete) — o usuário pode digitar
+// qualquer categoria, não se limita a esta lista. Cobre múltiplos domínios:
+// obra, eventos/eletrônicos, eletrodomésticos/mobiliário, agro, médico etc.
+export const EQUIPMENT_TYPE_SUGGESTIONS = [
+  // Ferramentas e máquinas de obra
+  'Betoneira', 'Andaime', 'Compressor', 'Furadeira', 'Martelete',
+  'Gerador', 'Guincho', 'Compactador', 'Rompedor', 'Lixadeira',
+  // Eventos, eletrônicos e informática
+  'Notebook', 'Projetor', 'Câmera', 'Equipamento de som', 'Iluminação para eventos',
+  'Tenda/Gazebo', 'Mesa e cadeiras',
+  // Eletrodomésticos e mobiliário
+  'Ar-condicionado', 'Geladeira', 'Fogão industrial', 'Freezer', 'Móveis',
+  // Outros
+  'Equipamento agrícola', 'Equipamento médico/hospitalar', 'Outro',
+] as const
 
 // ─── Tenant (Inquilino) ────────────────────────────────────────────────────────
 

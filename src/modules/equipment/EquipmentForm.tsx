@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Equipment, EquipmentStatus, EquipmentType } from '@/types'
+import { Equipment, EquipmentStatus, EquipmentType, EQUIPMENT_TYPE_SUGGESTIONS } from '@/types'
 import { createEquipment, updateEquipment } from '@/services/equipments'
 import { getOwners } from '@/services/owners'
 import { uploadEquipmentPhoto } from '@/services/storage'
@@ -20,7 +20,7 @@ const schema = z.object({
   name: z.string().min(1, 'Nome obrigatório'),
   brand: z.string().optional(),
   model: z.string().min(1, 'Modelo obrigatório'),
-  type: z.enum(['betoneira', 'andaime', 'compressor', 'furadeira', 'martelete', 'gerador', 'guincho', 'compactador', 'outro']),
+  type: z.string().min(1, 'Tipo obrigatório'),
   status: z.enum(['disponivel', 'alugado', 'reservado', 'manutencao', 'encerrado']),
   rentValue: z.coerce.number().min(1, 'Valor obrigatório'),
   cautionValue: z.coerce.number().optional(),
@@ -64,7 +64,7 @@ export function EquipmentForm({ equipment, companyId, onSuccess }: Props) {
           serialNumber: equipment.serialNumber,
           notes: equipment.notes,
         }
-      : { status: 'disponivel', type: 'betoneira' },
+      : { status: 'disponivel', type: '' },
   })
 
   const { data: owners = [] } = useQuery({
@@ -117,23 +117,16 @@ export function EquipmentForm({ equipment, companyId, onSuccess }: Props) {
 
         <div className="space-y-2">
           <Label>Tipo *</Label>
-          <Select
-            value={watch('type')}
-            onValueChange={(v) => setValue('type', v as EquipmentType)}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="betoneira">Betoneira</SelectItem>
-              <SelectItem value="andaime">Andaime</SelectItem>
-              <SelectItem value="compressor">Compressor</SelectItem>
-              <SelectItem value="furadeira">Furadeira</SelectItem>
-              <SelectItem value="martelete">Martelete</SelectItem>
-              <SelectItem value="gerador">Gerador</SelectItem>
-              <SelectItem value="guincho">Guincho</SelectItem>
-              <SelectItem value="compactador">Compactador</SelectItem>
-              <SelectItem value="outro">Outro</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input
+            list="equipment-type-suggestions"
+            placeholder="Ex: Betoneira, Notebook, Ar-condicionado..."
+            {...register('type')}
+          />
+          <datalist id="equipment-type-suggestions">
+            {EQUIPMENT_TYPE_SUGGESTIONS.map((t) => <option key={t} value={t} />)}
+          </datalist>
+          {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
+          <p className="text-xs text-muted-foreground">Digite livremente — não se limita à lista de sugestões.</p>
         </div>
 
         <div className="space-y-2">
