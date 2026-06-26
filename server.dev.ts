@@ -71,18 +71,6 @@ const server = http.createServer(async (req, res) => {
       const { default: handler } = await import('./api/asaas-create-subaccount.js')
       return handler(vReq as never, vRes as never)
     }
-    if (url.startsWith('/api/verify-preapproval')) {
-      const { default: handler } = await import('./api/verify-preapproval.js')
-      return handler(vReq as never, vRes as never)
-    }
-    if (url.startsWith('/api/webhook-test')) {
-      const { default: handler } = await import('./api/webhook-test.js')
-      return handler(vReq as never, vRes as never)
-    }
-    if (url.startsWith('/api/webhook')) {
-      const { default: handler } = await import('./api/webhook.js')
-      return handler(vReq as never, vRes as never)
-    }
     res.writeHead(404)
     res.end(JSON.stringify({ error: 'Not found' }))
   } catch (err) {
