@@ -13,12 +13,9 @@ const PLANS: Record<string, { name: string; amount: number }> = {
   business: { name: 'AlugaPro Business', amount: 129 },
 }
 
-// Mesma lógica de faixas usada no painel de afiliado (src/modules/affiliate/AffiliatePanel.tsx)
-function commissionRateForActiveCount(activeCount: number): number {
-  if (activeCount >= 10) return 10
-  if (activeCount >= 5) return 7
-  return 5
-}
+// Taxa fixa de comissão do programa de afiliados (mesmo valor em
+// AffiliatePanel.tsx e AfiliadosPage.tsx)
+const AFFILIATE_COMMISSION_RATE = 7
 
 // Verifica se a empresa foi indicada por um afiliado e, se o afiliado já
 // completou o cadastro de recebimento (tem walletId), monta o split.
@@ -29,18 +26,10 @@ async function resolveAffiliateSplit(companyId: string): Promise<AsaasSplit[] | 
 
   const usersSnap = await adminDb.collection('users').where('referralCode', '==', code).limit(1).get()
   if (usersSnap.empty) return undefined
-  const affiliate = usersSnap.docs[0].data()
-  const walletId = affiliate.asaasWalletId as string | undefined
+  const walletId = usersSnap.docs[0].data().asaasWalletId as string | undefined
   if (!walletId) return undefined
 
-  const allRefs = await adminDb.collection('affiliateReferrals').where('code', '==', code).get()
-  let activeCount = 0
-  for (const doc of allRefs.docs) {
-    const subSnap = await adminDb.doc(`subscriptions/${doc.id}`).get()
-    if (subSnap.data()?.status === 'active') activeCount++
-  }
-
-  return [{ walletId, percentualValue: commissionRateForActiveCount(activeCount) }]
+  return [{ walletId, percentualValue: AFFILIATE_COMMISSION_RATE }]
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {

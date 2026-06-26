@@ -1,6 +1,6 @@
 import { LegalLayout, LegalSection } from '@/components/legal/LegalLayout'
 
-const UPDATED_AT = '25 de junho de 2026'
+const UPDATED_AT = '26 de junho de 2026'
 
 export function TermsPage() {
   return (
@@ -101,7 +101,7 @@ export function TermsPage() {
           clientes ativos resultantes da indicação, nas seguintes condições:
         </p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>a comissão é recorrente, variando de 5% a 10% sobre o valor da mensalidade do cliente indicado, conforme a quantidade de clientes ativos na carteira do afiliado;</li>
+          <li>a comissão é recorrente, de 7% sobre o valor da mensalidade do cliente indicado, enquanto ele permanecer ativo;</li>
           <li>o pagamento da comissão somente é devido após o cliente indicado permanecer ativo por, no mínimo, 15 (quinze) dias consecutivos;</li>
           <li>para receber pagamentos, o afiliado deve completar o cadastro de verificação de identidade, fornecendo CPF, chave PIX e os documentos solicitados na plataforma;</li>
           <li>o AlugaPro pode revisar, suspender ou recusar o pagamento de comissões em casos de indícios de fraude, indicações inválidas, dados de verificação incorretos ou descumprimento destes Termos;</li>

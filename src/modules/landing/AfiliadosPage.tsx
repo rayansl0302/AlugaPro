@@ -11,10 +11,12 @@ import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from '@/lib/motion'
 
-const COMMISSION_TIERS = [
-  { range: '1 a 4 clientes ativos', rate: '5%' },
-  { range: '5 a 9 clientes ativos', rate: '7%' },
-  { range: '10 ou mais clientes ativos', rate: '10%' },
+const AFFILIATE_COMMISSION_RATE = 7
+
+const COMMISSION_PERKS = [
+  'Pago automaticamente, direto na sua conta',
+  'Sem limite de indicações',
+  'Renda recorrente, mês a mês',
 ]
 
 const AUDIENCES = [
@@ -44,7 +46,7 @@ const STEPS = [
   { step: '01', icon: Share2, title: 'Indique', description: 'Apresente o AlugaPro para alguém que administra aluguéis de imóveis, veículos ou equipamentos.' },
   { step: '02', icon: Zap, title: 'Teste grátis', description: 'Seu indicado testa a plataforma por 14 dias, sem cartão de crédito e sem compromisso.' },
   { step: '03', icon: UserCheck, title: 'Cliente ativo', description: 'Quando ele assina um plano pago, a indicação é confirmada e fica registrada no seu nome.' },
-  { step: '04', icon: Wallet, title: 'Você recebe', description: 'Receba de 5% a 10% de comissão recorrente sobre a mensalidade, a partir de 15 dias de cliente ativo.' },
+  { step: '04', icon: Wallet, title: 'Você recebe', description: `Receba ${AFFILIATE_COMMISSION_RATE}% de comissão recorrente sobre a mensalidade, a partir de 15 dias de cliente ativo.` },
 ]
 
 export function AfiliadosPage() {
@@ -127,8 +129,8 @@ export function AfiliadosPage() {
                 Como você ganha
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Comissão recorrente de 5% a 10% sobre a mensalidade — a taxa sobe conforme sua carteira de
-                clientes ativos cresce.
+                Comissão recorrente de {AFFILIATE_COMMISSION_RATE}% sobre a mensalidade de cada cliente
+                ativo indicado por você.
               </motion.p>
             </motion.div>
 
@@ -146,16 +148,16 @@ export function AfiliadosPage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                   <Percent className="h-6 w-6" />
                 </span>
-                <h3 className="mt-5 text-2xl font-bold text-emerald-700">Comissão recorrente por nível</h3>
+                <h3 className="mt-5 text-2xl font-bold text-emerald-700">{AFFILIATE_COMMISSION_RATE}% de comissão recorrente</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  Quanto mais clientes ativos você tem na carteira, maior a sua taxa — mês a mês, enquanto
-                  cada cliente continuar ativo.
+                  Todo mês, enquanto o cliente que você indicou continuar ativo, você recebe sua parte —
+                  sem precisar fazer nada além de manter seus dados de recebimento em dia.
                 </p>
                 <ul className="mt-6 space-y-2.5">
-                  {COMMISSION_TIERS.map((tier) => (
-                    <li key={tier.range} className="flex items-center justify-between gap-2.5 rounded-lg bg-white/70 px-4 py-2.5 text-sm text-slate-700">
-                      <span>{tier.range}</span>
-                      <span className="font-bold text-emerald-700">{tier.rate}</span>
+                  {COMMISSION_PERKS.map((perk) => (
+                    <li key={perk} className="flex items-start gap-2.5 text-sm text-slate-700">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-700" />
+                      {perk}
                     </li>
                   ))}
                 </ul>

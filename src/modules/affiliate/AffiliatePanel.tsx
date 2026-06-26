@@ -45,11 +45,9 @@ const DEMO_REFERRALS: ReferralWithStatus[] = [
   { id: 'demo-ref-4', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-vistaverde', companyName: 'Residencial Vista Verde', createdAt: daysAgo(90), status: 'canceled' },
 ]
 
-function getCommissionRate(activeCount: number): number {
-  if (activeCount >= 10) return 10
-  if (activeCount >= 5) return 7
-  return 5
-}
+// Taxa fixa de comissão do programa de afiliados (mesmo valor em
+// api/checkout.ts e AfiliadosPage.tsx)
+const AFFILIATE_COMMISSION_RATE = 7
 
 function eligibility(r: ReferralWithStatus): { label: string; variant: 'success' | 'outline' } | null {
   if (r.status !== 'active' || !r.activeSince) return null
@@ -113,7 +111,6 @@ export function AffiliatePanel() {
 
   const activeCount = referrals.filter((r) => r.status === 'active').length
   const trialCount = referrals.filter((r) => r.status === 'trialing').length
-  const commissionRate = getCommissionRate(activeCount)
 
   const copy = async (value: string, which: 'code' | 'link') => {
     try {
@@ -450,10 +447,10 @@ export function AffiliatePanel() {
         <div className="rounded-xl border border-[#032B61]/10 bg-[#032B61]/5 p-4 text-sm text-[#032B61]">
           <p className="font-medium">Como funciona o pagamento</p>
           <p className="mt-1 text-[#032B61]/80">
-            Sua comissão recorrente é de <strong>{commissionRate}%</strong> sobre a mensalidade de cada
-            cliente ativo — a taxa sobe de 5% para 10% conforme o número de clientes ativos na sua
-            carteira cresce. O pagamento começa a contar apenas após o cliente indicado completar 15 dias
-            ativo. Mantenha seus dados de recebimento em dia para não atrasar o pagamento.
+            Sua comissão recorrente é de <strong>{AFFILIATE_COMMISSION_RATE}%</strong> sobre a mensalidade
+            de cada cliente ativo indicado por você. O pagamento começa a contar apenas após o cliente
+            indicado completar 15 dias ativo. Mantenha seus dados de recebimento em dia para não atrasar
+            o pagamento.
           </p>
         </div>
       </main>
