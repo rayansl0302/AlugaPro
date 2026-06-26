@@ -180,7 +180,7 @@ function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
 export function LoginPage() {
   const { user, signIn, signUp, signInWithGoogle, resetPassword } = useAuth()
   const [searchParams] = useSearchParams()
-  const refCode = searchParams.get('ref') ?? undefined
+  const [refCode, setRefCode] = useState(searchParams.get('ref') ?? '')
   const tabParam = searchParams.get('tab')
   const [pageMode, setPageMode] = useState<'login' | 'signup'>(
     searchParams.get('mode') === 'signup' || !!refCode ? 'signup' : 'login',
@@ -267,7 +267,7 @@ export function LoginPage() {
   const onSignupSubmit = async (data: SignupData) => {
     setLoading(true)
     try {
-      await signUp(data.name, data.email, data.password, signupRole, signupRole === 'gestor' ? refCode : undefined)
+      await signUp(data.name, data.email, data.password, signupRole, signupRole === 'gestor' ? (refCode.trim() || undefined) : undefined)
       toast({
         title: 'Conta criada!',
         description: signupRole === 'gestor'
@@ -294,7 +294,7 @@ export function LoginPage() {
     setGoogleLoading(true)
     try {
       const effectiveRole = pageMode === 'signup' ? signupRole : role
-      await signInWithGoogle(effectiveRole, pageMode === 'signup' && effectiveRole === 'gestor' ? refCode : undefined)
+      await signInWithGoogle(effectiveRole, pageMode === 'signup' && effectiveRole === 'gestor' ? (refCode.trim() || undefined) : undefined)
     } catch {
       toast({ title: 'Erro ao entrar com Google', description: 'Tente novamente.', variant: 'destructive' })
     } finally {
@@ -434,6 +434,19 @@ export function LoginPage() {
                       <p className="text-xs text-destructive">{signupForm.formState.errors.email.message}</p>
                     )}
                   </div>
+
+                  {signupRole === 'gestor' && (
+                    <div className="space-y-1.5">
+                      <Label htmlFor="su-refcode">Código de indicação (opcional)</Label>
+                      <Input
+                        id="su-refcode"
+                        type="text"
+                        placeholder="Ex: MARINA"
+                        value={refCode}
+                        onChange={(e) => setRefCode(e.target.value.toUpperCase())}
+                      />
+                    </div>
+                  )}
 
                   <div className="space-y-1.5">
                     <Label htmlFor="su-password">Senha</Label>

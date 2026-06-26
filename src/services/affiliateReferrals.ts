@@ -1,10 +1,15 @@
 import {
-  collection, doc, setDoc, getDocs, query, where, serverTimestamp,
+  collection, doc, getDoc, setDoc, getDocs, query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { AffiliateReferral } from '@/types'
 
 const COL = 'affiliateReferrals'
+
+export async function getReferral(companyId: string): Promise<AffiliateReferral | null> {
+  const snap = await getDoc(doc(db, COL, companyId))
+  return snap.exists() ? ({ id: snap.id, ...snap.data() } as AffiliateReferral) : null
+}
 
 export async function getReferralsByCode(code: string): Promise<AffiliateReferral[]> {
   const q = query(collection(db, COL), where('code', '==', code))

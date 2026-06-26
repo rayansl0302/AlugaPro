@@ -1,7 +1,11 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
-import { ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone, Zap, CreditCard, AlertTriangle } from 'lucide-react'
+import {
+  ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone, Zap, CreditCard,
+  AlertTriangle, Gift,
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { usePhoneVerification } from '@/hooks/usePhoneVerification'
@@ -14,6 +18,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/useToast'
 import { PLANS } from '@/types'
+import { getReferral, createReferral } from '@/services/affiliateReferrals'
 
 const RECAPTCHA_ID = 'recaptcha-profile-container'
 
@@ -29,6 +34,93 @@ const SUB_STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'wa
   canceled:  { label: 'Cancelado',          variant: 'warning' },
   expired:   { label: 'Expirado',           variant: 'secondary' },
   demo:      { label: 'Admin',              variant: 'secondary' },
+}
+
+function AffiliateCodeCard({ companyId, status, name, email }: {
+  companyId: string
+  status: string
+  name: string
+  email: string
+}) {
+  const qc = useQueryClient()
+  const [code, setCode] = useState('')
+  const [linking, setLinking] = useState(false)
+
+  const { data: referral, isLoading } = useQuery({
+    queryKey: ['affiliateReferral', companyId],
+    queryFn: () => getReferral(companyId),
+    enabled: !!companyId,
+  })
+
+  const canLink = status !== 'active'
+
+  const handleLink = async () => {
+    const trimmed = code.trim().toUpperCase()
+    if (!trimmed) {
+      toast({ title: 'Informe um código de indicação.', variant: 'destructive' })
+      return
+    }
+    if (!confirm(`Vincular o código "${trimmed}" à sua conta? Essa vinculação é permanente e não pode ser desfeita ou alterada depois.`)) {
+      return
+    }
+    setLinking(true)
+    try {
+      await createReferral(companyId, trimmed, name || email || 'Empresa')
+      toast({ title: 'Código de indicação vinculado!' })
+      qc.invalidateQueries({ queryKey: ['affiliateReferral', companyId] })
+    } catch {
+      toast({ title: 'Não foi possível vincular esse código.', description: 'Verifique se ele está correto e tente novamente.', variant: 'destructive' })
+    } finally {
+      setLinking(false)
+    }
+  }
+
+  if (isLoading) return null
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Gift className="h-4 w-4" /> Código de indicação
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {referral ? (
+          <div className="flex items-center gap-3 rounded-lg border p-3">
+            <ShieldCheck className="h-5 w-5 shrink-0 text-green-600" />
+            <div>
+              <p className="font-medium">Vinculado: {referral.code}</p>
+              <p className="text-xs text-muted-foreground">Essa vinculação é permanente e não pode ser alterada.</p>
+            </div>
+          </div>
+        ) : canLink ? (
+          <>
+            <p className="text-sm text-muted-foreground">
+              Foi indicado por alguém? Informe o código de indicação dele. A vinculação é única e
+              definitiva — não poderá ser alterada depois.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                placeholder="Ex: MARINA"
+                disabled={linking}
+              />
+              <Button onClick={handleLink} disabled={linking || !code.trim()}>
+                {linking && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Vincular
+              </Button>
+            </div>
+          </>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Não é possível vincular um código de indicação depois que a assinatura se torna ativa.
+            Isso só fica disponível novamente numa próxima renovação.
+          </p>
+        )}
+      </CardContent>
+    </Card>
+  )
 }
 
 export function ProfilePage() {
@@ -208,6 +300,10 @@ export function ProfilePage() {
               )}
             </CardContent>
           </Card>
+        )}
+
+        {user.role === 'gestor' && status !== 'demo' && (
+          <AffiliateCodeCard companyId={user.companyId} status={status} name={user.name} email={user.email} />
         )}
 
         <Card>

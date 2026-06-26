@@ -34,17 +34,6 @@ const COMERCIAL_COMPANY_ID = 'alugapro-interno'
 // companyId fixo independente do doc, nunca mistura com dados de clientes.
 const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
 
-// Caracteres sem 0/O e 1/I para evitar confusão ao compartilhar o código por voz/texto
-const REFERRAL_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
-
-function generateReferralCode(length = 6): string {
-  let code = ''
-  for (let i = 0; i < length; i++) {
-    code += REFERRAL_CODE_CHARS[Math.floor(Math.random() * REFERRAL_CODE_CHARS.length)]
-  }
-  return code
-}
-
 type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
 
 function isAdminEmail(email?: string | null) {
@@ -177,23 +166,22 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole, refC
     return baseProfile(fbUser, fbUser.uid, 'gestor', companyId, docData)
   }
 
-  // Novo afiliado sem convite: cria o próprio doc com um código de indicação único
+  // Novo afiliado sem convite: o servidor gera e garante um código de indicação
+  // único (o cliente não tem permissão de listar outros usuários por referralCode)
   if (hintRole === 'afiliado') {
-    const code = docData?.referralCode ?? generateReferralCode()
     try {
-      await setDoc(doc(db, 'users', fbUser.uid), {
-        name: fbUser.displayName ?? fbUser.email ?? 'Usuário',
-        email: fbUser.email ?? '',
-        role: 'afiliado',
-        companyId: AFFILIATE_COMPANY_ID,
-        referralCode: code,
-        active: true,
-        updatedAt: serverTimestamp(),
-      }, { merge: true })
+      const idToken = await fbUser.getIdToken()
+      const res = await fetch('/api/create-affiliate-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+        body: JSON.stringify({ name: fbUser.displayName ?? fbUser.email ?? 'Usuário', email: fbUser.email ?? '' }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error ?? 'Erro ao criar perfil de afiliado')
+      return baseProfile(fbUser, fbUser.uid, 'afiliado', AFFILIATE_COMPANY_ID, { ...docData, referralCode: data.referralCode })
     } catch {
       return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)
     }
-    return baseProfile(fbUser, fbUser.uid, 'afiliado', AFFILIATE_COMPANY_ID, { ...docData, referralCode: code })
   }
 
   return baseProfile(fbUser, fbUser.uid, hintRole, 'demo-company', docData)

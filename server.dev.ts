@@ -71,6 +71,10 @@ const server = http.createServer(async (req, res) => {
       const { default: handler } = await import('./api/asaas-create-subaccount.js')
       return handler(vReq as never, vRes as never)
     }
+    if (url.startsWith('/api/create-affiliate-profile')) {
+      const { default: handler } = await import('./api/create-affiliate-profile.js')
+      return handler(vReq as never, vRes as never)
+    }
     res.writeHead(404)
     res.end(JSON.stringify({ error: 'Not found' }))
   } catch (err) {

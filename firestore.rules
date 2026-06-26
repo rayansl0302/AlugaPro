@@ -93,9 +93,12 @@ service cloud.firestore {
       allow create: if sameCompany(companyId) && isGestor();
     }
 
-    // Affiliate Referrals — vincula uma empresa nova ao código do afiliado que
-    // a indicou. Documento indexado pelo próprio companyId (uma indicação por
-    // empresa), criado uma única vez no cadastro do gestor; nunca editado depois.
+    // Affiliate Referrals — vincula uma empresa a um único código de afiliado,
+    // pra sempre. Documento indexado pelo próprio companyId (uma indicação por
+    // empresa) — só pode ser criado uma vez (update/delete sempre false) e só
+    // enquanto a assinatura não estiver "active" (evita vincular um código
+    // depois que a empresa já é cliente pagante; continua liberado em trial,
+    // past_due, canceled ou expired — ou seja, também numa renovação).
     match /affiliateReferrals/{companyId} {
       allow read: if isAdmin()
         || sameCompany(companyId)
@@ -104,7 +107,9 @@ service cloud.firestore {
         && companyId == 'company_' + request.auth.uid
         && request.resource.data.companyId == companyId
         && request.resource.data.code is string
-        && request.resource.data.code.size() > 0;
+        && request.resource.data.code.size() > 0
+        && (!exists(/databases/$(database)/documents/subscriptions/$(companyId))
+            || get(/databases/$(database)/documents/subscriptions/$(companyId)).data.status != 'active');
       allow update, delete: if false;
     }
 
@@ -130,11 +135,6 @@ service cloud.firestore {
       allow create: if request.auth.uid == userId
         && request.resource.data.role == 'gestor'
         && request.resource.data.companyId == 'company_' + request.auth.uid
-        && request.resource.data.active == true;
-      // Novo afiliado: auto-registro sem convite, recebe código de indicação próprio
-      allow create: if request.auth.uid == userId
-        && request.resource.data.role == 'afiliado'
-        && request.resource.data.companyId == 'alugapro-afiliados'
         && request.resource.data.active == true;
       // O usuário convidado materializa o próprio doc conforme o convite criado
       // pelo gestor — sem poder escolher empresa ou papel arbitrários.
