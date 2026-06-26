@@ -121,6 +121,10 @@ export function SubscriptionPage() {
         throw new Error(data.error ?? 'Erro ao iniciar checkout')
       }
 
+      if (data.affiliateApplied) {
+        toast({ title: 'Código de indicação validado com sucesso!', description: 'A comissão do afiliado será aplicada nesta assinatura.' })
+      }
+
       // Abre em nova aba — necessário para evitar regras de pagamento in-app das lojas
       window.open(data.checkoutUrl, '_blank', 'noopener,noreferrer')
       toast({ title: 'Redirecionando para o pagamento...', description: 'Uma nova aba foi aberta para você concluir o pagamento.' })

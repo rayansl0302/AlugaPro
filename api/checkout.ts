@@ -114,7 +114,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { merge: true }
     )
 
-    return res.status(200).json({ checkoutUrl: firstPayment.invoiceUrl })
+    return res.status(200).json({ checkoutUrl: firstPayment.invoiceUrl, affiliateApplied: !!split })
   } catch (err) {
     console.error('[checkout] error:', err)
     return res.status(500).json({

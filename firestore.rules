@@ -149,7 +149,7 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['phone', 'whatsapp', 'phoneVerified', 'phoneVerifiedAt',
                       'cpf', 'pixKey', 'documentPhotoUrl', 'documentSelfieUrl', 'kycSubmittedAt',
-                      'address', 'monthlyIncome', 'updatedAt'])
+                      'address', 'monthlyIncome', 'asaasWalletId', 'updatedAt'])
         && request.resource.data.role == resource.data.role
         && request.resource.data.companyId == resource.data.companyId;
     }

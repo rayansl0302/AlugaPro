@@ -67,10 +67,6 @@ const server = http.createServer(async (req, res) => {
       const { default: handler } = await import('./api/asaas-webhook.js')
       return handler(vReq as never, vRes as never)
     }
-    if (url.startsWith('/api/asaas-create-subaccount')) {
-      const { default: handler } = await import('./api/asaas-create-subaccount.js')
-      return handler(vReq as never, vRes as never)
-    }
     if (url.startsWith('/api/create-affiliate-profile')) {
       const { default: handler } = await import('./api/create-affiliate-profile.js')
       return handler(vReq as never, vRes as never)
@@ -86,5 +82,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[dev-api] API server running at http://localhost:${PORT}`)
-  console.log('[dev-api] Proxying: /api/checkout  /api/asaas-webhook  /api/verify-asaas-subscription  /api/asaas-create-subaccount')
+  console.log('[dev-api] Proxying: /api/checkout  /api/asaas-webhook  /api/verify-asaas-subscription  /api/create-affiliate-profile')
 })

@@ -98,25 +98,3 @@ export async function getPayment(id: string): Promise<AsaasPayment> {
   return asaasFetch<AsaasPayment>(`/payments/${id}`)
 }
 
-export interface AsaasSubaccount {
-  id: string
-  walletId: string
-  apiKey: string
-}
-
-// Cria uma subconta Asaas em nome do afiliado — necessário para obter o
-// walletId usado no split de pagamento. Usa a API key principal (secreta);
-// nunca deve ser chamada a partir do navegador.
-export async function createSubaccount(input: {
-  name: string
-  email: string
-  cpfCnpj: string
-  mobilePhone: string
-  incomeValue: number
-  address: string
-  addressNumber: string
-  province: string
-  postalCode: string
-}): Promise<AsaasSubaccount> {
-  return asaasFetch<AsaasSubaccount>('/accounts', { method: 'POST', body: input })
-}
