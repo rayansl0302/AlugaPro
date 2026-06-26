@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getReferralsByCode } from '@/services/affiliateReferrals'
 import { getSubscription } from '@/services/subscription'
 import { uploadAffiliateDocument } from '@/services/storage'
+import { useViaCEP } from '@/hooks/useViaCEP'
 import { AffiliateReferral, SubscriptionStatus } from '@/types'
 import { formatDate, maskCPF } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -78,7 +79,31 @@ export function AffiliatePanel() {
   const [pixKey, setPixKey] = useState(user?.pixKey ?? '')
   const [documentPhotoUrl, setDocumentPhotoUrl] = useState(user?.documentPhotoUrl ?? '')
   const [documentSelfieUrl, setDocumentSelfieUrl] = useState(user?.documentSelfieUrl ?? '')
+  const [phone, setPhone] = useState(user?.phone ?? '')
+  const [street, setStreet] = useState(user?.address?.street ?? '')
+  const [addressNumber, setAddressNumber] = useState(user?.address?.number ?? '')
+  const [neighborhood, setNeighborhood] = useState(user?.address?.neighborhood ?? '')
+  const [city, setCity] = useState(user?.address?.city ?? '')
+  const [state, setState] = useState(user?.address?.state ?? '')
+  const [postalCode, setPostalCode] = useState(user?.address?.zipCode ?? '')
+  const [monthlyIncome, setMonthlyIncome] = useState(user?.monthlyIncome ? String(user.monthlyIncome) : '')
   const [savingKyc, setSavingKyc] = useState(false)
+  const [creatingWallet, setCreatingWallet] = useState(false)
+  const { fetchCEP, loading: cepLoading } = useViaCEP()
+
+  const handlePostalCodeChange = async (value: string) => {
+    const formatted = value.replace(/\D/g, '').replace(/^(\d{5})(\d)/, '$1-$2').slice(0, 9)
+    setPostalCode(formatted)
+    const digits = formatted.replace(/\D/g, '')
+    if (digits.length !== 8) return
+    const result = await fetchCEP(digits)
+    if (result) {
+      setStreet(result.logradouro)
+      setNeighborhood(result.bairro)
+      setCity(result.localidade)
+      setState(result.uf)
+    }
+  }
 
   const { data: referrals = [], isLoading } = useQuery({
     queryKey: ['affiliateReferrals', code],
@@ -106,27 +131,71 @@ export function AffiliatePanel() {
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
-  const kycComplete = !!(user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl)
+  const kycComplete = !!(
+    user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl && user?.asaasWalletId
+  )
 
   const handleSaveKyc = async () => {
     const cpfDigits = cpf.replace(/\D/g, '')
-    if (cpfDigits.length !== 11 || !pixKey.trim() || !documentPhotoUrl || !documentSelfieUrl) {
-      toast({ title: 'Preencha CPF, chave PIX e as duas fotos antes de salvar.', variant: 'destructive' })
+    const incomeNumber = Number(monthlyIncome.replace(/\D/g, ''))
+    if (
+      cpfDigits.length !== 11 || !pixKey.trim() || !documentPhotoUrl || !documentSelfieUrl ||
+      !phone.trim() || !street.trim() || !addressNumber.trim() || !neighborhood.trim() ||
+      !city.trim() || !state.trim() || postalCode.replace(/\D/g, '').length !== 8 || !incomeNumber
+    ) {
+      toast({ title: 'Preencha todos os campos — CPF, PIX, fotos, telefone, endereço e renda mensal — antes de salvar.', variant: 'destructive' })
       return
     }
     setSavingKyc(true)
-    const patch = { cpf: cpfDigits, pixKey: pixKey.trim(), documentPhotoUrl, documentSelfieUrl }
+    const patch = {
+      cpf: cpfDigits,
+      pixKey: pixKey.trim(),
+      documentPhotoUrl,
+      documentSelfieUrl,
+      phone: phone.replace(/\D/g, ''),
+      address: { street: street.trim(), number: addressNumber.trim(), neighborhood: neighborhood.trim(), city: city.trim(), state: state.trim(), zipCode: postalCode.replace(/\D/g, '') },
+      monthlyIncome: incomeNumber,
+    }
     try {
       const uid = auth.currentUser?.uid
       if (uid) {
         await setDoc(doc(db, 'users', uid), { ...patch, kycSubmittedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true })
       }
       updateLocalUser({ ...patch, kycSubmittedAt: Timestamp.now() })
-      toast({ title: 'Dados de recebimento salvos!' })
+
+      if (!user?.asaasWalletId && uid) {
+        setCreatingWallet(true)
+        const idToken = await auth.currentUser?.getIdToken()
+        const res = await fetch('/api/asaas-create-subaccount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+          body: JSON.stringify({
+            name: user?.name,
+            email: user?.email,
+            cpfCnpj: cpfDigits,
+            mobilePhone: phone.replace(/\D/g, ''),
+            incomeValue: incomeNumber,
+            street: street.trim(),
+            addressNumber: addressNumber.trim(),
+            neighborhood: neighborhood.trim(),
+            postalCode: postalCode.replace(/\D/g, ''),
+          }),
+        })
+        const data = await res.json()
+        if (res.ok && data.walletId) {
+          updateLocalUser({ asaasWalletId: data.walletId })
+          toast({ title: 'Dados de recebimento salvos! Conta de pagamento criada.' })
+        } else {
+          toast({ title: 'Dados salvos, mas a conta de pagamento falhou.', description: data.error ?? 'Tente salvar novamente.', variant: 'destructive' })
+        }
+      } else {
+        toast({ title: 'Dados de recebimento salvos!' })
+      }
     } catch {
       toast({ title: 'Erro ao salvar. Tente novamente.', variant: 'destructive' })
     } finally {
       setSavingKyc(false)
+      setCreatingWallet(false)
     }
   }
 
@@ -219,6 +288,59 @@ export function AffiliatePanel() {
                   placeholder="CPF, e-mail, telefone ou chave aleatória"
                 />
               </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-phone">Telefone (com DDD)</Label>
+                <Input
+                  id="kyc-phone"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="(00) 00000-0000"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-income">Renda ou faturamento mensal aproximado</Label>
+                <Input
+                  id="kyc-income"
+                  inputMode="numeric"
+                  value={monthlyIncome}
+                  onChange={(e) => setMonthlyIncome(e.target.value.replace(/\D/g, ''))}
+                  placeholder="2000"
+                />
+                <p className="text-[11px] text-muted-foreground">Exigido pela Asaas para criar sua conta de recebimento.</p>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-cep">CEP</Label>
+                <Input
+                  id="kyc-cep"
+                  value={postalCode}
+                  onChange={(e) => handlePostalCodeChange(e.target.value)}
+                  placeholder="00000-000"
+                  maxLength={9}
+                />
+                {cepLoading && <p className="text-[11px] text-muted-foreground">Buscando endereço...</p>}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-number">Número</Label>
+                <Input id="kyc-number" value={addressNumber} onChange={(e) => setAddressNumber(e.target.value)} placeholder="123" />
+              </div>
+              <div className="space-y-1.5 sm:col-span-2">
+                <Label htmlFor="kyc-street">Rua</Label>
+                <Input id="kyc-street" value={street} onChange={(e) => setStreet(e.target.value)} placeholder="Rua das Flores" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-neighborhood">Bairro</Label>
+                <Input id="kyc-neighborhood" value={neighborhood} onChange={(e) => setNeighborhood(e.target.value)} placeholder="Centro" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-city">Cidade / UF</Label>
+                <div className="flex gap-2">
+                  <Input id="kyc-city" value={city} onChange={(e) => setCity(e.target.value)} placeholder="São Paulo" />
+                  <Input value={state} onChange={(e) => setState(e.target.value.toUpperCase())} placeholder="SP" maxLength={2} className="w-16" />
+                </div>
+              </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
@@ -240,7 +362,7 @@ export function AffiliatePanel() {
 
             <Button onClick={handleSaveKyc} disabled={savingKyc}>
               {savingKyc && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar dados
+              {creatingWallet ? 'Criando conta de recebimento...' : 'Salvar dados'}
             </Button>
           </CardContent>
         </Card>

@@ -59,6 +59,18 @@ const server = http.createServer(async (req, res) => {
       const { default: handler } = await import('./api/checkout.js')
       return handler(vReq as never, vRes as never)
     }
+    if (url.startsWith('/api/verify-asaas-subscription')) {
+      const { default: handler } = await import('./api/verify-asaas-subscription.js')
+      return handler(vReq as never, vRes as never)
+    }
+    if (url.startsWith('/api/asaas-webhook')) {
+      const { default: handler } = await import('./api/asaas-webhook.js')
+      return handler(vReq as never, vRes as never)
+    }
+    if (url.startsWith('/api/asaas-create-subaccount')) {
+      const { default: handler } = await import('./api/asaas-create-subaccount.js')
+      return handler(vReq as never, vRes as never)
+    }
     if (url.startsWith('/api/verify-preapproval')) {
       const { default: handler } = await import('./api/verify-preapproval.js')
       return handler(vReq as never, vRes as never)
@@ -82,5 +94,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[dev-api] API server running at http://localhost:${PORT}`)
-  console.log('[dev-api] Proxying: /api/checkout  /api/webhook')
+  console.log('[dev-api] Proxying: /api/checkout  /api/asaas-webhook  /api/verify-asaas-subscription  /api/asaas-create-subaccount')
 })

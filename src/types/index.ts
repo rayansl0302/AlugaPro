@@ -44,6 +44,10 @@ export interface User {
   documentPhotoUrl?: string
   documentSelfieUrl?: string
   kycSubmittedAt?: Timestamp
+  address?: Address
+  monthlyIncome?: number
+  asaasWalletId?: string
+  asaasSubaccountId?: string
   phone?: string
   whatsapp?: string
   phoneVerified?: boolean
@@ -117,7 +121,7 @@ export interface CompanySubscription {
   companyId: string
   planId: PlanId
   status: SubscriptionStatus
-  provider?: 'mercadopago'
+  provider?: 'mercadopago' | 'asaas'
   providerCustomerId?: string
   providerSubscriptionId?: string
   trialEndsAt?: Timestamp
@@ -145,6 +149,7 @@ export interface Company {
   address?: string
   logo?: string
   ownerId?: string
+  asaasCustomerId?: string
   createdAt: Timestamp
 }
 

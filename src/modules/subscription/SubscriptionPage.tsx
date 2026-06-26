@@ -4,12 +4,15 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { PLANS, PlanId } from '@/types'
 import { getDaysRemaining } from '@/services/subscription'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, maskCPF } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle, Zap, Building2, BarChart3, ExternalLink, CreditCard, AlertTriangle, Loader2 } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { CheckCircle, Zap, Building2, BarChart3, AlertTriangle, Loader2 } from 'lucide-react'
 import { toast } from '@/hooks/useToast'
 
 const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
@@ -65,24 +68,24 @@ export function SubscriptionPage() {
   const [checkoutLoading, setCheckoutLoading] = useState<PlanId | null>(null)
   const [verifying, setVerifying] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
+  const [pendingPlan, setPendingPlan] = useState<PlanId | null>(null)
+  const [cpfCnpj, setCpfCnpj] = useState('')
 
-  // When MP redirects back with ?preapproval_id=xxx, verify and update subscription
+  // Quando a Asaas redireciona de volta com ?asaas_redirect=1, verifica e atualiza a assinatura
   useEffect(() => {
-    const preapprovalId = searchParams.get('preapproval_id')
-    if (!preapprovalId || !user?.companyId || verifying) return
+    if (!searchParams.get('asaas_redirect') || !user?.companyId || verifying) return
 
     setVerifying(true)
-    fetch('/api/verify-preapproval', {
+    fetch('/api/verify-asaas-subscription', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ preapprovalId, companyId: user.companyId }),
+      body: JSON.stringify({ companyId: user.companyId }),
     })
       .then(r => r.json())
       .then(data => {
         if (data.status === 'active') {
           toast({ title: 'Assinatura ativada!', description: 'Seu plano está ativo.' })
         }
-        // Remove query param from URL
         setSearchParams({}, { replace: true })
       })
       .catch(() => toast({ title: 'Erro ao verificar assinatura', variant: 'destructive' }))
@@ -92,7 +95,7 @@ export function SubscriptionPage() {
   const daysLeft = sub ? getDaysRemaining(sub) : 0
   const statusInfo = STATUS_BADGE[status] ?? STATUS_BADGE.expired
 
-  const handleChoosePlan = async (plan: PlanId) => {
+  const startCheckout = async (plan: PlanId, documentNumber?: string) => {
     if (!user?.companyId || !user?.email) return
     setCheckoutLoading(plan)
     try {
@@ -103,24 +106,43 @@ export function SubscriptionPage() {
           planId: plan,
           companyId: user.companyId,
           email: user.email,
+          ...(documentNumber ? { cpfCnpj: documentNumber } : {}),
         }),
       })
 
+      const data = await res.json().catch(() => ({}))
+
       if (!res.ok) {
-        const err = await res.json().catch(() => ({}))
-        throw new Error(err.error ?? 'Erro ao iniciar checkout')
+        if (data.error === 'cpf_cnpj_required') {
+          setPendingPlan(plan)
+          setCheckoutLoading(null)
+          return
+        }
+        throw new Error(data.error ?? 'Erro ao iniciar checkout')
       }
 
-      const { checkoutUrl } = await res.json()
-      // Open in new tab — required to avoid App Store in-app payment rules
-      window.open(checkoutUrl, '_blank', 'noopener,noreferrer')
-      toast({ title: 'Redirecionando para o pagamento...', description: 'Uma nova aba foi aberta com o Mercado Pago.' })
+      // Abre em nova aba — necessário para evitar regras de pagamento in-app das lojas
+      window.open(data.checkoutUrl, '_blank', 'noopener,noreferrer')
+      toast({ title: 'Redirecionando para o pagamento...', description: 'Uma nova aba foi aberta para você concluir o pagamento.' })
+      setPendingPlan(null)
+      setCpfCnpj('')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Tente novamente.'
       toast({ title: 'Erro ao iniciar assinatura', description: msg, variant: 'destructive' })
     } finally {
       setCheckoutLoading(null)
     }
+  }
+
+  const handleChoosePlan = (plan: PlanId) => startCheckout(plan)
+
+  const handleConfirmDocument = () => {
+    const digits = cpfCnpj.replace(/\D/g, '')
+    if (digits.length !== 11 && digits.length !== 14) {
+      toast({ title: 'Informe um CPF ou CNPJ válido.', variant: 'destructive' })
+      return
+    }
+    if (pendingPlan) startCheckout(pendingPlan, digits)
   }
 
   return (
@@ -208,21 +230,6 @@ export function SubscriptionPage() {
               </div>
             </div>
 
-            {status === 'active' && sub.providerSubscriptionId && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => window.open(
-                  `https://www.mercadopago.com.br/subscriptions#from-section=menu`,
-                  '_blank',
-                  'noopener,noreferrer'
-                )}
-              >
-                <CreditCard className="mr-2 h-3.5 w-3.5" />
-                Gerenciar cobrança
-                <ExternalLink className="ml-2 h-3 w-3" />
-              </Button>
-            )}
           </CardContent>
         </Card>
       )}
@@ -304,6 +311,33 @@ export function SubscriptionPage() {
         O pagamento é processado exclusivamente pelo site para evitar taxas de lojas de aplicativos.
         Se estiver no app mobile, o botão "Assinar agora" abrirá o navegador do seu celular.
       </p>
+
+      <Dialog open={!!pendingPlan} onOpenChange={(open) => !open && setPendingPlan(null)}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Confirme seu CPF ou CNPJ</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Precisamos do CPF (pessoa física) ou CNPJ (empresa) para gerar a cobrança. Isso só será pedido uma vez.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="checkout-document">CPF ou CNPJ</Label>
+            <Input
+              id="checkout-document"
+              value={cpfCnpj}
+              onChange={(e) => setCpfCnpj(e.target.value.replace(/\D/g, '').length <= 11 ? maskCPF(e.target.value) : e.target.value)}
+              placeholder="000.000.000-00"
+              autoFocus
+            />
+          </div>
+          <DialogFooter>
+            <Button onClick={handleConfirmDocument} disabled={!!checkoutLoading}>
+              {checkoutLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Continuar para pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
