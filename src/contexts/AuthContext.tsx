@@ -23,15 +23,10 @@ import { queryClient } from '@/lib/queryClient'
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
 const ROLE_HINT_KEY = 'alugapro_role_hint'
 
-// Time comercial interno (/sistema) — não é uma empresa-cliente do AlugaPro,
-// é o time de prospecção do próprio AlugaPro. companyId fixo independente
-// do que estiver salvo no doc do Firestore, para nunca misturar com dados
-// de clientes reais. Precisa bater com SALES_COMPANY_ID nas envs do Vercel.
-const COMERCIAL_COMPANY_ID = 'alugapro-interno'
-
 // Afiliados do programa de indicação — pessoa física/jurídica externa que
-// indica o AlugaPro, não é uma empresa-cliente. Mesmo racional do comercial:
-// companyId fixo independente do doc, nunca mistura com dados de clientes.
+// indica o AlugaPro, não é uma empresa-cliente. companyId fixo independente
+// do que estiver salvo no doc do Firestore, para nunca misturar com dados
+// de clientes reais.
 const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
 
 type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
@@ -86,8 +81,7 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole, refC
     const profileId =
       docData.role === 'inquilino' && docData.tenantId ? docData.tenantId : fbUser.uid
     const companyId =
-      docData.role === 'comercial' ? COMERCIAL_COMPANY_ID
-      : docData.role === 'afiliado' ? AFFILIATE_COMPANY_ID
+      docData.role === 'afiliado' ? AFFILIATE_COMPANY_ID
       : (docData.companyId ?? 'demo-company')
     return baseProfile(fbUser, profileId, docData.role, companyId, docData)
   }

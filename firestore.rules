@@ -43,11 +43,6 @@ service cloud.firestore {
       return isGestor() || isRole('proprietario');
     }
 
-    // Agentes comerciais (/sistema) — inbox compartilhado de prospecção
-    function isComercial() {
-      return isAdmin() || isRole('comercial');
-    }
-
     function isInquilinoOf(tenantId) {
       return isAuthenticated() && request.auth.uid == tenantId;
     }
@@ -355,20 +350,6 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
-    // Sistema Comercial (/sistema) — inbox interno de prospecção via WhatsApp.
-    // Não é multi-empresa: só isAdmin()/isRole('comercial') entram, sem
-    // depender do campo companyId do doc (que é só um valor fixo de
-    // agrupamento, não uma empresa-cliente real).
-    // Mensagens recebidas chegam via webhook com Admin SDK (ignora estas regras).
-    match /salesConversations/{conversationId} {
-      allow read, create, update: if isAuthenticated() && isComercial();
-      allow delete: if isAdmin();
-
-      match /messages/{messageId} {
-        allow read, create: if isAuthenticated() && isComercial();
-        allow update, delete: if false;
-      }
-    }
 
     // Assinaturas de testemunhas (rota pública por token)
     // O token aleatório é o ID do documento e funciona como segredo do link.
