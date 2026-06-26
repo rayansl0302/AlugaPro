@@ -78,6 +78,14 @@ export async function createSubscription(input: {
   return asaasFetch<AsaasSubscription>('/subscriptions', { method: 'POST', body: input })
 }
 
+// Ativa o split numa assinatura já existente — só vale pras cobranças
+// futuras geradas a partir de agora, nunca retroage nas já emitidas.
+// Usado pelo cron pra aplicar a comissão de afiliado só depois do período
+// de carência (não na assinatura inteira desde o primeiro pagamento).
+export async function updateSubscriptionSplit(id: string, split: AsaasSplit[]): Promise<AsaasSubscription> {
+  return asaasFetch<AsaasSubscription>(`/subscriptions/${id}`, { method: 'PUT', body: { split } })
+}
+
 export async function getSubscription(id: string): Promise<AsaasSubscription> {
   return asaasFetch<AsaasSubscription>(`/subscriptions/${id}`)
 }

@@ -61,7 +61,7 @@ async function fetchReferralsWithStatus(code: string): Promise<ReferralWithStatu
   return Promise.all(
     referrals.map(async (r) => {
       const sub = await getSubscription(r.companyId)
-      return { ...r, status: sub?.status, activeSince: sub?.status === 'active' ? sub.currentPeriodStart : undefined }
+      return { ...r, status: sub?.status, activeSince: sub?.status === 'active' ? sub.activatedAt : undefined }
     }),
   )
 }

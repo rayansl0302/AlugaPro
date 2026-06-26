@@ -52,27 +52,6 @@ export async function updateSubscriptionStatus(
   await updateDoc(doc(db, 'subscriptions', companyId), patch)
 }
 
-// Chamado pelo app após um webhook confirmar pagamento (Fase 3)
-export async function activateSubscription(
-  companyId: string,
-  planId: PlanId,
-  providerCustomerId: string,
-  providerSubscriptionId: string,
-  periodEnd: Timestamp,
-) {
-  const now = Timestamp.now()
-  await updateDoc(doc(db, 'subscriptions', companyId), {
-    status: 'active',
-    planId,
-    provider: 'asaas',
-    providerCustomerId,
-    providerSubscriptionId,
-    currentPeriodStart: now,
-    currentPeriodEnd: periodEnd,
-    limits: PLANS[planId].limits,
-    updatedAt: serverTimestamp(),
-  })
-}
 
 // Verifica se o trial expirou e atualiza o status se necessário
 export async function checkAndExpireTrial(sub: CompanySubscription): Promise<SubscriptionStatus> {

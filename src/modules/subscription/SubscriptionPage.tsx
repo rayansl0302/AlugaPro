@@ -122,7 +122,7 @@ export function SubscriptionPage() {
       }
 
       if (data.affiliateApplied) {
-        toast({ title: 'Código de indicação validado com sucesso!', description: 'A comissão do afiliado será aplicada nesta assinatura.' })
+        toast({ title: 'Código de indicação validado com sucesso!', description: 'A comissão do afiliado será ativada após o período de carência de 15 dias.' })
       }
 
       // Abre em nova aba — necessário para evitar regras de pagamento in-app das lojas

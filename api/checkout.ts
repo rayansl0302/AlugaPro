@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { adminDb, Timestamp } from './_firebase.js'
 import {
   findCustomerByExternalReference, createCustomer, createSubscription,
-  getFirstPaymentForSubscription, AsaasSplit,
+  getFirstPaymentForSubscription,
 } from './_asaas.js'
 
 const APP_URL = process.env.VITE_APP_URL ?? 'https://alugapro.com.br'
@@ -13,23 +13,20 @@ const PLANS: Record<string, { name: string; amount: number }> = {
   business: { name: 'AlugaPro Business', amount: 129 },
 }
 
-// Taxa fixa de comissão do programa de afiliados (mesmo valor em
-// AffiliatePanel.tsx e AfiliadosPage.tsx)
-const AFFILIATE_COMMISSION_RATE = 7
-
-// Verifica se a empresa foi indicada por um afiliado e, se o afiliado já
-// completou o cadastro de recebimento (tem walletId), monta o split.
-async function resolveAffiliateSplit(companyId: string): Promise<AsaasSplit[] | undefined> {
+// Verifica se a empresa foi indicada por um afiliado que já tem carteira de
+// recebimento cadastrada. NÃO monta o split aqui — ele só é ativado pelo cron
+// depois do período de carência (api/cron-daily-notifications.ts), pra não
+// repassar comissão sobre um pagamento que pode ser reembolsado pelo direito
+// de arrependimento do CDC (art. 49, 7 dias). Usado só pra informar o
+// gestor, no toast de confirmação, que a indicação é válida.
+async function hasValidAffiliateReferral(companyId: string): Promise<boolean> {
   const refSnap = await adminDb.doc(`affiliateReferrals/${companyId}`).get()
   const code = refSnap.data()?.code as string | undefined
-  if (!code) return undefined
+  if (!code) return false
 
   const usersSnap = await adminDb.collection('users').where('referralCode', '==', code).limit(1).get()
-  if (usersSnap.empty) return undefined
-  const walletId = usersSnap.docs[0].data().asaasWalletId as string | undefined
-  if (!walletId) return undefined
-
-  return [{ walletId, percentualValue: AFFILIATE_COMMISSION_RATE }]
+  if (usersSnap.empty) return false
+  return !!usersSnap.docs[0].data().asaasWalletId
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -81,7 +78,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await companyRef.set({ asaasCustomerId }, { merge: true })
     }
 
-    const split = await resolveAffiliateSplit(companyId)
+    const affiliateApplied = await hasValidAffiliateReferral(companyId)
     const plan = PLANS[planId]
     const nextDueDate = new Date().toISOString().split('T')[0]
 
@@ -93,7 +90,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       cycle: 'MONTHLY',
       description: plan.name,
       externalReference: companyId,
-      split,
       callback: { successUrl: `${APP_URL}/configuracoes/assinatura?asaas_redirect=1`, autoRedirect: true },
     })
 
@@ -114,7 +110,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       { merge: true }
     )
 
-    return res.status(200).json({ checkoutUrl: firstPayment.invoiceUrl, affiliateApplied: !!split })
+    return res.status(200).json({ checkoutUrl: firstPayment.invoiceUrl, affiliateApplied })
   } catch (err) {
     console.error('[checkout] error:', err)
     return res.status(500).json({

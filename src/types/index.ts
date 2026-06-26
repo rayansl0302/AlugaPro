@@ -128,6 +128,13 @@ export interface CompanySubscription {
   currentPeriodStart: Timestamp
   currentPeriodEnd: Timestamp
   cancelAtPeriodEnd: boolean
+  // Marca a primeira vez que a assinatura ficou "active" de fato (pagamento
+  // confirmado) — diferente de currentPeriodStart, que é redefinido a cada
+  // ciclo. Usado pra calcular o período de carência da comissão de afiliado.
+  activatedAt?: Timestamp
+  // Presente quando o cron já decidiu o destino do split de afiliado pra
+  // essa assinatura (ativou ou não) — evita reprocessar todo dia.
+  affiliateSplitProcessedAt?: Timestamp
   limits: PlanLimits
   usage: {
     propertyCount: number

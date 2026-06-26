@@ -56,18 +56,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const newStatus = PAYMENT_STATUS_MAP[payment.status]
     const periodEnd = Timestamp.fromMillis(Date.now() + 30 * 24 * 60 * 60 * 1000)
 
-    await adminDb.doc(`subscriptions/${companyId}`).set(
-      {
-        status: newStatus,
-        provider: 'asaas',
-        providerSubscriptionId: payment.subscription ?? null,
-        currentPeriodEnd: periodEnd,
-        cancelAtPeriodEnd: newStatus === 'canceled',
-        pendingPlanId: null,
-        updatedAt: Timestamp.now(),
-      },
-      { merge: true }
-    )
+    const subRef = adminDb.doc(`subscriptions/${companyId}`)
+    const patch: Record<string, unknown> = {
+      status: newStatus,
+      provider: 'asaas',
+      providerSubscriptionId: payment.subscription ?? null,
+      currentPeriodEnd: periodEnd,
+      cancelAtPeriodEnd: newStatus === 'canceled',
+      pendingPlanId: null,
+      updatedAt: Timestamp.now(),
+    }
+
+    if (newStatus === 'active') {
+      // activatedAt só é gravado na primeira vez — marca o início real do
+      // período de carência da comissão de afiliado (15 dias), que não deve
+      // ser redefinido a cada pagamento mensal recorrente.
+      const existing = await subRef.get()
+      if (!existing.data()?.activatedAt) {
+        patch.activatedAt = Timestamp.now()
+      }
+    } else if (newStatus === 'canceled') {
+      // Cancelou/reembolsou — limpa pra que uma futura reativação reinicie
+      // o período de carência do zero, em vez de herdar uma data antiga.
+      patch.activatedAt = null
+      patch.affiliateSplitProcessedAt = null
+    }
+
+    await subRef.set(patch, { merge: true })
 
     console.info(`[asaas-webhook] ${companyId} → ${newStatus} (event: ${event})`)
     return res.status(200).json({ ok: true })
