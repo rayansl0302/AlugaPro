@@ -1,6 +1,6 @@
 import { LegalLayout, LegalSection } from '@/components/legal/LegalLayout'
 
-const UPDATED_AT = '14 de junho de 2026'
+const UPDATED_AT = '25 de junho de 2026'
 
 export function PrivacyPolicyPage() {
   return (
@@ -34,38 +34,59 @@ export function PrivacyPolicyPage() {
         <ul className="list-disc space-y-1 pl-5">
           <li><strong>Identificação:</strong> nome, CPF, CNPJ, foto, documentos de identificação;</li>
           <li><strong>Contato:</strong> e-mail, telefone, WhatsApp, endereço;</li>
-          <li><strong>Conta:</strong> credenciais de acesso, perfil, papel (gestor, inquilino, admin);</li>
+          <li><strong>Conta:</strong> credenciais de acesso, perfil, papel (gestor, inquilino, afiliado, admin);</li>
           <li><strong>Contratuais e financeiros:</strong> contratos, valores, cobranças, comprovantes, histórico de pagamentos;</li>
-          <li><strong>Patrimoniais:</strong> dados de imóveis, veículos e informações de locação;</li>
+          <li><strong>Patrimoniais:</strong> dados de imóveis, veículos, equipamentos e informações de locação;</li>
           <li><strong>Técnicos:</strong> logs de acesso, endereço IP, identificadores de dispositivo, cookies essenciais;</li>
           <li><strong>Comunicação:</strong> registros de notificações enviadas (e-mail, SMS, push, quando habilitados).</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="4. Finalidades do Tratamento">
+      <LegalSection title="4. Dados do Programa de Afiliados">
+        <p>
+          Para participar do Programa de Afiliados e receber comissões, coletamos dados adicionais
+          necessários à validação de identidade e ao pagamento:
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>CPF;</li>
+          <li>chave PIX para recebimento dos valores;</li>
+          <li>foto de documento de identificação com foto (RG, CNH ou similar);</li>
+          <li>foto do afiliado segurando o documento de identificação, para confirmação de titularidade.</li>
+        </ul>
+        <p>
+          Esses dados são tratados com a finalidade específica de prevenir fraudes, confirmar a
+          identidade do afiliado e viabilizar o pagamento de comissões, com base no consentimento do
+          titular e no cumprimento de obrigações legais aplicáveis a operações financeiras. O acesso é
+          restrito à equipe responsável pela validação e pagamento de afiliados, e os documentos não são
+          utilizados para qualquer outra finalidade.
+        </p>
+      </LegalSection>
+
+      <LegalSection title="5. Finalidades do Tratamento">
         <p>Os dados são utilizados para:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>autenticar usuários e controlar permissões de acesso;</li>
           <li>operar funcionalidades de gestão de locações e portal do inquilino;</li>
           <li>gerar, assinar e armazenar contratos e documentos relacionados;</li>
           <li>processar cobranças, registrar pagamentos e acompanhar inadimplência;</li>
+          <li>validar identidade e processar pagamentos de comissões do programa de afiliados;</li>
           <li>enviar comunicações operacionais e alertas configurados;</li>
           <li>melhorar segurança, desempenho e experiência de uso;</li>
           <li>cumprir obrigações legais e responder a solicitações de autoridades.</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="5. Bases Legais (LGPD)">
+      <LegalSection title="6. Bases Legais (LGPD)">
         <p>O tratamento de dados pessoais fundamenta-se, conforme o caso, em:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>execução de contrato ou procedimentos preliminares;</li>
           <li>cumprimento de obrigação legal ou regulatória;</li>
           <li>legítimo interesse, com avaliação de impacto e medidas de minimização;</li>
-          <li>consentimento do titular, quando exigido (ex.: verificação de telefone, comunicações opcionais).</li>
+          <li>consentimento do titular, quando exigido (ex.: verificação de telefone, documentos do programa de afiliados, comunicações opcionais).</li>
         </ul>
       </LegalSection>
 
-      <LegalSection title="6. Compartilhamento de Dados">
+      <LegalSection title="7. Compartilhamento de Dados">
         <p>
           Os dados podem ser compartilhados com prestadores de serviço essenciais à operação da
           plataforma, tais como hospedagem em nuvem, autenticação, envio de e-mails, armazenamento
@@ -78,7 +99,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="7. Armazenamento e Segurança">
+      <LegalSection title="8. Armazenamento e Segurança">
         <p>
           Adotamos medidas técnicas e organizacionais para proteger os dados, incluindo controle de
           acesso por perfil, regras de segurança em banco de dados, comunicação criptografada (HTTPS)
@@ -91,7 +112,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Retenção dos Dados">
+      <LegalSection title="9. Retenção dos Dados">
         <p>
           Os dados são mantidos pelo tempo necessário para cumprir as finalidades descritas, obrigações
           legais, exercício regular de direitos e resolução de disputas. Após esse período, poderão
@@ -99,7 +120,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Direitos do Titular">
+      <LegalSection title="10. Direitos do Titular">
         <p>Conforme a LGPD, você pode solicitar:</p>
         <ul className="list-disc space-y-1 pl-5">
           <li>confirmação da existência de tratamento;</li>
@@ -117,7 +138,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="10. Cookies e Tecnologias Similares">
+      <LegalSection title="11. Cookies e Tecnologias Similares">
         <p>
           Utilizamos cookies e armazenamento local estritamente necessários para autenticação,
           preferências de interface (como tema) e funcionamento da aplicação. Não utilizamos cookies
@@ -125,7 +146,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="11. Dados de Menores">
+      <LegalSection title="12. Dados de Menores">
         <p>
           A plataforma não é destinada a menores de 18 anos. Não coletamos intencionalmente dados de
           crianças e adolescentes. Caso identifiquemos tal situação, adotaremos medidas para
@@ -133,7 +154,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="12. Transferência Internacional">
+      <LegalSection title="13. Transferência Internacional">
         <p>
           Alguns provedores de infraestrutura podem processar dados fora do Brasil. Nesses casos,
           exigimos salvaguardas contratuais e técnicas compatíveis com a LGPD para proteção dos
@@ -141,7 +162,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="13. Alterações desta Política">
+      <LegalSection title="14. Alterações desta Política">
         <p>
           Esta Política pode ser atualizada para refletir mudanças legais, técnicas ou operacionais.
           A data da última revisão será indicada no topo da página. Recomendamos consulta periódica
@@ -149,7 +170,7 @@ export function PrivacyPolicyPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="14. Contato">
+      <LegalSection title="15. Contato">
         <p>
           Para dúvidas, solicitações ou reclamações relacionadas à privacidade e proteção de dados,
           entre em contato pelo e-mail{' '}

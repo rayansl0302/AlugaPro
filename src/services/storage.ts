@@ -116,3 +116,13 @@ export async function uploadOwnerPhoto(
   const path = `companies/${companyId}/owners/${ownerId}/photo_${Date.now()}.${ext}`
   return uploadFile(file, path)
 }
+
+export async function uploadAffiliateDocument(
+  affiliateId: string,
+  slot: 'document' | 'selfie',
+  file: File
+): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `affiliates/${affiliateId}/${slot}_${Date.now()}.${ext}`
+  return uploadFile(file, path)
+}

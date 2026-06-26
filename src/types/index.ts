@@ -39,6 +39,11 @@ export interface User {
   role: UserRole
   tenantId?: string
   referralCode?: string
+  cpf?: string
+  pixKey?: string
+  documentPhotoUrl?: string
+  documentSelfieUrl?: string
+  kycSubmittedAt?: Timestamp
   phone?: string
   whatsapp?: string
   phoneVerified?: boolean

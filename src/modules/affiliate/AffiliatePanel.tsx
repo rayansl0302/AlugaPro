@@ -1,18 +1,29 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Copy, Check, Share2, Gift, Users, UserCheck, Clock, LogOut } from 'lucide-react'
+import { doc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore'
+import {
+  Copy, Check, Share2, Gift, Users, UserCheck, Clock, LogOut, Loader2, ShieldCheck, ShieldAlert,
+} from 'lucide-react'
+import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getReferralsByCode } from '@/services/affiliateReferrals'
 import { getSubscription } from '@/services/subscription'
+import { uploadAffiliateDocument } from '@/services/storage'
 import { AffiliateReferral, SubscriptionStatus } from '@/types'
-import { formatDate } from '@/lib/utils'
+import { formatDate, maskCPF } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { toast } from '@/hooks/useToast'
 
-type ReferralWithStatus = AffiliateReferral & { status?: SubscriptionStatus }
+const COMMISSION_WAIT_DAYS = 15
+const DEMO_REFERRAL_CODE = 'MARINA'
+
+type ReferralWithStatus = AffiliateReferral & { status?: SubscriptionStatus; activeSince?: Timestamp }
 
 const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' }> = {
   trialing: { label: 'Em teste', variant: 'warning' },
@@ -22,21 +33,52 @@ const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; variant: 'succe
   expired: { label: 'Expirado', variant: 'secondary' },
 }
 
+function daysAgo(n: number): Timestamp {
+  return Timestamp.fromMillis(Date.now() - n * 86_400_000)
+}
+
+const DEMO_REFERRALS: ReferralWithStatus[] = [
+  { id: 'demo-ref-1', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-costa', companyName: 'Imobiliária Costa & Cia', createdAt: daysAgo(35), status: 'active', activeSince: daysAgo(20) },
+  { id: 'demo-ref-2', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-boavista', companyName: 'Administradora Boa Vista', createdAt: daysAgo(19), status: 'active', activeSince: daysAgo(5) },
+  { id: 'demo-ref-3', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-almeida', companyName: 'João Pedro Almeida', createdAt: daysAgo(6), status: 'trialing' },
+  { id: 'demo-ref-4', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-vistaverde', companyName: 'Residencial Vista Verde', createdAt: daysAgo(90), status: 'canceled' },
+]
+
+function getCommissionRate(activeCount: number): number {
+  if (activeCount >= 10) return 10
+  if (activeCount >= 5) return 7
+  return 5
+}
+
+function eligibility(r: ReferralWithStatus): { label: string; variant: 'success' | 'outline' } | null {
+  if (r.status !== 'active' || !r.activeSince) return null
+  const daysSince = Math.floor((Date.now() - r.activeSince.toMillis()) / 86_400_000)
+  if (daysSince >= COMMISSION_WAIT_DAYS) return { label: 'Elegível p/ comissão', variant: 'success' }
+  return { label: `Comissão em ${COMMISSION_WAIT_DAYS - daysSince}d`, variant: 'outline' }
+}
+
 async function fetchReferralsWithStatus(code: string): Promise<ReferralWithStatus[]> {
+  if (code === DEMO_REFERRAL_CODE) return DEMO_REFERRALS
   const referrals = await getReferralsByCode(code)
   return Promise.all(
     referrals.map(async (r) => {
       const sub = await getSubscription(r.companyId)
-      return { ...r, status: sub?.status }
+      return { ...r, status: sub?.status, activeSince: sub?.status === 'active' ? sub.currentPeriodStart : undefined }
     }),
   )
 }
 
 export function AffiliatePanel() {
-  const { user, logout } = useAuth()
+  const { user, logout, updateLocalUser } = useAuth()
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   const code = user?.referralCode ?? ''
   const link = `${window.location.origin}/login?mode=signup&ref=${code}`
+
+  const [cpf, setCpf] = useState(user?.cpf ?? '')
+  const [pixKey, setPixKey] = useState(user?.pixKey ?? '')
+  const [documentPhotoUrl, setDocumentPhotoUrl] = useState(user?.documentPhotoUrl ?? '')
+  const [documentSelfieUrl, setDocumentSelfieUrl] = useState(user?.documentSelfieUrl ?? '')
+  const [savingKyc, setSavingKyc] = useState(false)
 
   const { data: referrals = [], isLoading } = useQuery({
     queryKey: ['affiliateReferrals', code],
@@ -46,6 +88,7 @@ export function AffiliatePanel() {
 
   const activeCount = referrals.filter((r) => r.status === 'active').length
   const trialCount = referrals.filter((r) => r.status === 'trialing').length
+  const commissionRate = getCommissionRate(activeCount)
 
   const copy = async (value: string, which: 'code' | 'link') => {
     try {
@@ -61,6 +104,30 @@ export function AffiliatePanel() {
   const shareWhatsApp = () => {
     const text = `Conheça o AlugaPro, o sistema que uso para gestão de aluguéis: ${link}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
+  }
+
+  const kycComplete = !!(user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl)
+
+  const handleSaveKyc = async () => {
+    const cpfDigits = cpf.replace(/\D/g, '')
+    if (cpfDigits.length !== 11 || !pixKey.trim() || !documentPhotoUrl || !documentSelfieUrl) {
+      toast({ title: 'Preencha CPF, chave PIX e as duas fotos antes de salvar.', variant: 'destructive' })
+      return
+    }
+    setSavingKyc(true)
+    const patch = { cpf: cpfDigits, pixKey: pixKey.trim(), documentPhotoUrl, documentSelfieUrl }
+    try {
+      const uid = auth.currentUser?.uid
+      if (uid) {
+        await setDoc(doc(db, 'users', uid), { ...patch, kycSubmittedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true })
+      }
+      updateLocalUser({ ...patch, kycSubmittedAt: Timestamp.now() })
+      toast({ title: 'Dados de recebimento salvos!' })
+    } catch {
+      toast({ title: 'Erro ao salvar. Tente novamente.', variant: 'destructive' })
+    } finally {
+      setSavingKyc(false)
+    }
   }
 
   return (
@@ -114,6 +181,67 @@ export function AffiliatePanel() {
                 Compartilhar
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className={kycComplete ? 'border-emerald-200' : 'border-amber-200'}>
+          <CardContent className="space-y-4 p-6">
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="text-sm font-semibold">Dados para recebimento</h2>
+              {kycComplete ? (
+                <Badge variant="success" className="gap-1"><ShieldCheck className="h-3 w-3" /> Verificação enviada</Badge>
+              ) : (
+                <Badge variant="warning" className="gap-1"><ShieldAlert className="h-3 w-3" /> Pendente</Badge>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Para receber suas comissões, precisamos confirmar sua identidade. Usamos esses dados apenas
+              para validação e pagamento, conforme nossa{' '}
+              <Link to="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+            </p>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-cpf">CPF</Label>
+                <Input
+                  id="kyc-cpf"
+                  value={cpf}
+                  onChange={(e) => setCpf(maskCPF(e.target.value))}
+                  placeholder="000.000.000-00"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-pix">Chave PIX</Label>
+                <Input
+                  id="kyc-pix"
+                  value={pixKey}
+                  onChange={(e) => setPixKey(e.target.value)}
+                  placeholder="CPF, e-mail, telefone ou chave aleatória"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <MultiPhotoUpload
+                label="Foto do documento (RG, CNH ou similar)"
+                value={documentPhotoUrl ? [documentPhotoUrl] : []}
+                onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'document', file)}
+                onChange={(urls) => setDocumentPhotoUrl(urls[0] ?? '')}
+                max={1}
+              />
+              <MultiPhotoUpload
+                label="Foto sua segurando o documento"
+                value={documentSelfieUrl ? [documentSelfieUrl] : []}
+                onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'selfie', file)}
+                onChange={(urls) => setDocumentSelfieUrl(urls[0] ?? '')}
+                max={1}
+              />
+            </div>
+
+            <Button onClick={handleSaveKyc} disabled={savingKyc}>
+              {savingKyc && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar dados
+            </Button>
           </CardContent>
         </Card>
 
@@ -176,6 +304,7 @@ export function AffiliatePanel() {
               <ul className="divide-y">
                 {referrals.map((r) => {
                   const sc = r.status ? STATUS_CONFIG[r.status] : null
+                  const elig = eligibility(r)
                   return (
                     <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
                       <div className="min-w-0">
@@ -184,7 +313,10 @@ export function AffiliatePanel() {
                           {r.createdAt?.toDate ? formatDate(r.createdAt.toDate()) : '—'}
                         </p>
                       </div>
-                      {sc ? <Badge variant={sc.variant}>{sc.label}</Badge> : <Badge variant="outline">—</Badge>}
+                      <div className="flex shrink-0 flex-col items-end gap-1">
+                        {sc ? <Badge variant={sc.variant}>{sc.label}</Badge> : <Badge variant="outline">—</Badge>}
+                        {elig && <Badge variant={elig.variant} className="text-[10px]">{elig.label}</Badge>}
+                      </div>
                     </li>
                   )
                 })}
@@ -196,10 +328,10 @@ export function AffiliatePanel() {
         <div className="rounded-xl border border-[#032B61]/10 bg-[#032B61]/5 p-4 text-sm text-[#032B61]">
           <p className="font-medium">Como funciona o pagamento</p>
           <p className="mt-1 text-[#032B61]/80">
-            Você recebe R$ 100 por cliente ativo ou 20% de comissão recorrente, conforme combinado com o time AlugaPro.
-            Entre em contato pelo{' '}
-            <a href="mailto:suporte@alugapro.com.br" className="underline">suporte@alugapro.com.br</a> para combinar o
-            modelo e receber.
+            Sua comissão recorrente é de <strong>{commissionRate}%</strong> sobre a mensalidade de cada
+            cliente ativo — a taxa sobe de 5% para 10% conforme o número de clientes ativos na sua
+            carteira cresce. O pagamento começa a contar apenas após o cliente indicado completar 15 dias
+            ativo. Mantenha seus dados de recebimento em dia para não atrasar o pagamento.
           </p>
         </div>
       </main>

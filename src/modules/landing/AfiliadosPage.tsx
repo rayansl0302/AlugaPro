@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import {
-  Gift, DollarSign, Repeat, Users, Building2, Megaphone, Briefcase,
+  Gift, Percent, Clock, Users, Building2, Megaphone, Briefcase,
   Share2, Zap, UserCheck, Wallet, CheckCircle2, ArrowRight,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -11,27 +11,11 @@ import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from '@/lib/motion'
 
-const PAYMENT_PLANS = [
-  {
-    icon: DollarSign,
-    title: 'R$ 100 por cliente ativo',
-    description: 'Pagamento único assim que a pessoa ou empresa indicada se tornar um cliente ativo no AlugaPro.',
-    perks: ['Pago após a confirmação da assinatura', 'Sem limite de indicações', 'Ideal para indicações pontuais'],
-    accent: 'emerald' as const,
-  },
-  {
-    icon: Repeat,
-    title: '20% recorrente',
-    description: 'Comissão de 20% sobre o valor da mensalidade, repassada todos os meses enquanto o cliente continuar ativo.',
-    perks: ['Renda recorrente, mês a mês', 'Cresce junto com sua carteira de indicações', 'Ideal para quem indica em volume'],
-    accent: 'blue' as const,
-  },
+const COMMISSION_TIERS = [
+  { range: '1 a 4 clientes ativos', rate: '5%' },
+  { range: '5 a 9 clientes ativos', rate: '7%' },
+  { range: '10 ou mais clientes ativos', rate: '10%' },
 ]
-
-const accentMap = {
-  emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: 'bg-emerald-100 text-emerald-700' },
-  blue: { bg: 'bg-blue-50', text: 'text-blue-700', border: 'border-blue-200', icon: 'bg-blue-100 text-blue-700' },
-}
 
 const AUDIENCES = [
   {
@@ -60,7 +44,7 @@ const STEPS = [
   { step: '01', icon: Share2, title: 'Indique', description: 'Apresente o AlugaPro para alguém que administra aluguéis de imóveis, veículos ou equipamentos.' },
   { step: '02', icon: Zap, title: 'Teste grátis', description: 'Seu indicado testa a plataforma por 14 dias, sem cartão de crédito e sem compromisso.' },
   { step: '03', icon: UserCheck, title: 'Cliente ativo', description: 'Quando ele assina um plano pago, a indicação é confirmada e fica registrada no seu nome.' },
-  { step: '04', icon: Wallet, title: 'Você recebe', description: 'Escolha entre R$ 100 por cliente ativo ou 20% de comissão recorrente todo mês.' },
+  { step: '04', icon: Wallet, title: 'Você recebe', description: 'Receba de 5% a 10% de comissão recorrente sobre a mensalidade, a partir de 15 dias de cliente ativo.' },
 ]
 
 export function AfiliadosPage() {
@@ -143,44 +127,63 @@ export function AfiliadosPage() {
                 Como você ganha
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Você escolhe o modelo de comissão com o time AlugaPro no momento da indicação.
+                Comissão recorrente de 5% a 10% sobre a mensalidade — a taxa sobe conforme sua carteira de
+                clientes ativos cresce.
               </motion.p>
             </motion.div>
 
             <motion.div
-              className="mt-12 grid gap-6 sm:grid-cols-2"
+              className="mt-12 grid gap-6 lg:grid-cols-[1.2fr_1fr]"
               variants={staggerContainer(0.15)}
               initial="hidden"
               whileInView="visible"
               viewport={viewportOnce}
             >
-              {PAYMENT_PLANS.map((plan) => {
-                const Icon = plan.icon
-                const accent = accentMap[plan.accent]
-                return (
-                  <motion.div
-                    key={plan.title}
-                    variants={scaleIn}
-                    whileHover={{ scale: 1.02 }}
-                    transition={{ type: 'spring', stiffness: 200 }}
-                    className={`rounded-2xl border ${accent.border} ${accent.bg} p-8`}
-                  >
-                    <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${accent.icon}`}>
-                      <Icon className="h-6 w-6" />
-                    </span>
-                    <h3 className={`mt-5 text-2xl font-bold ${accent.text}`}>{plan.title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-600">{plan.description}</p>
-                    <ul className="mt-6 space-y-2.5">
-                      {plan.perks.map((perk) => (
-                        <li key={perk} className="flex items-start gap-2.5 text-sm text-slate-700">
-                          <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${accent.text}`} />
-                          {perk}
-                        </li>
-                      ))}
-                    </ul>
-                  </motion.div>
-                )
-              })}
+              <motion.div
+                variants={scaleIn}
+                className="rounded-2xl border border-emerald-200 bg-emerald-50 p-8"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <Percent className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 text-2xl font-bold text-emerald-700">Comissão recorrente por nível</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  Quanto mais clientes ativos você tem na carteira, maior a sua taxa — mês a mês, enquanto
+                  cada cliente continuar ativo.
+                </p>
+                <ul className="mt-6 space-y-2.5">
+                  {COMMISSION_TIERS.map((tier) => (
+                    <li key={tier.range} className="flex items-center justify-between gap-2.5 rounded-lg bg-white/70 px-4 py-2.5 text-sm text-slate-700">
+                      <span>{tier.range}</span>
+                      <span className="font-bold text-emerald-700">{tier.rate}</span>
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+
+              <motion.div
+                variants={scaleIn}
+                className="rounded-2xl border border-blue-200 bg-blue-50 p-8"
+              >
+                <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
+                  <Clock className="h-6 w-6" />
+                </span>
+                <h3 className="mt-5 text-2xl font-bold text-blue-700">15 dias de carência</h3>
+                <p className="mt-3 text-sm leading-relaxed text-slate-600">
+                  O pagamento da comissão começa a contar apenas depois que o cliente indicado completa
+                  15 dias consecutivos como cliente ativo — garantindo que a indicação realmente vingou.
+                </p>
+                <ul className="mt-6 space-y-2.5">
+                  <li className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                    Sem burocracia — a contagem é automática no seu painel
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm text-slate-700">
+                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                    Você acompanha o status de cada indicação em tempo real
+                  </li>
+                </ul>
+              </motion.div>
             </motion.div>
           </div>
         </section>

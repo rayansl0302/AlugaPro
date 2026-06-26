@@ -234,6 +234,17 @@ const DEMO_USERS: Record<string, User> = {
     createdAt: Timestamp.now(),
     updatedAt: Timestamp.now(),
   },
+  'afiliado@alugapro.com': {
+    id: 'demo-afiliado',
+    name: 'Marina Indicadora',
+    email: 'afiliado@alugapro.com',
+    role: 'afiliado',
+    companyId: 'alugapro-demo',
+    referralCode: 'MARINA',
+    active: true,
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(),
+  },
 }
 const DEMO_PASSWORD = 'demo1234'
 const DEMO_SESSION_KEY = 'alugapro_demo_user'

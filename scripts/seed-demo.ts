@@ -53,8 +53,9 @@ const PROP = {
   sala:   'demo-prop-sala',
 }
 const VEH = { civic: 'demo-veh-civic', corolla: 'demo-veh-corolla' }
+const EQP = { betoneira: 'demo-eqp-betoneira', gerador: 'demo-eqp-gerador' }
 const TEN = { roberto: 'demo-tenant-roberto', fernanda: 'demo-tenant-fernanda', pedro: 'demo-tenant-pedro' }
-const CON = { apto: 'demo-contract-apto', casa: 'demo-contract-casa', civic: 'demo-contract-civic' }
+const CON = { apto: 'demo-contract-apto', casa: 'demo-contract-casa', civic: 'demo-contract-civic', betoneira: 'demo-contract-betoneira' }
 
 // ─── Empresa ─────────────────────────────────────────────────────────────────
 
@@ -88,6 +89,10 @@ async function seedUsers() {
   await upsert('users', 'demo-inquilino', {
     ...base, id: 'demo-inquilino', name: 'Roberto Alves', email: 'inquilino@alugapro.com',
     role: 'inquilino', tenantId: TEN.roberto, phone: '(11) 98888-1111', createdAt: ts(-180),
+  })
+  await upsert('users', 'demo-afiliado', {
+    ...base, id: 'demo-afiliado', name: 'Marina Indicadora', email: 'afiliado@alugapro.com',
+    role: 'afiliado', referralCode: 'MARINA', phone: '(11) 95555-3344', createdAt: ts(-90),
   })
 }
 
@@ -194,6 +199,36 @@ async function seedVehicles() {
   })
 }
 
+// ─── Equipamentos ─────────────────────────────────────────────────────────────
+
+async function seedEquipments() {
+  console.log('\n🛠️  Equipments')
+  const base = { companyId: COMPANY_ID, updatedAt: ts() }
+
+  await upsert('equipments', EQP.betoneira, {
+    ...base, id: EQP.betoneira,
+    code: 'EQP-001', name: 'Betoneira 400L', brand: 'CSM', model: '400L Trifásica',
+    type: 'Betoneira', status: 'alugado',
+    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
+    serialNumber: 'CSM400-88213',
+    rentValue: 450, cautionValue: 900, purchaseValue: 6200,
+    activeContractId: CON.betoneira, activeTenantId: TEN.pedro, activeTenantName: 'Pedro Henrique Souza',
+    notes: 'Revisão do motor feita em janeiro/2025.',
+    createdAt: ts(-60),
+  })
+
+  await upsert('equipments', EQP.gerador, {
+    ...base, id: EQP.gerador,
+    code: 'EQP-002', name: 'Gerador de Energia 5kVA', brand: 'Toyama', model: 'TG6500CXE-DF',
+    type: 'Gerador de energia', status: 'disponivel',
+    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
+    serialNumber: 'TY6500-44102',
+    rentValue: 280, cautionValue: 560, purchaseValue: 4500,
+    notes: 'Ideal para eventos e obras sem rede elétrica.',
+    createdAt: ts(-40),
+  })
+}
+
 // ─── Inquilinos ───────────────────────────────────────────────────────────────
 
 async function seedTenants() {
@@ -269,6 +304,17 @@ async function seedContracts() {
     rentValue: 3200, dueDay: 15, cautionValue: 6400,
     createdAt: ts(-90),
   })
+
+  await upsert('contracts', CON.betoneira, {
+    ...base, id: CON.betoneira,
+    contractNumber: 'CT-2024-004', assetType: 'equipamento',
+    propertyId: EQP.betoneira, propertyName: 'Betoneira 400L',
+    tenantId: TEN.pedro, tenantName: 'Pedro Henrique Souza',
+    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
+    startDate: dateStr(-60), endDate: dateStr(120),
+    rentValue: 450, dueDay: 20, cautionValue: 900,
+    createdAt: ts(-60),
+  })
 }
 
 // ─── Cobranças ────────────────────────────────────────────────────────────────
@@ -328,6 +374,23 @@ async function seedCharges() {
       status: isPaid ? 'pago' : 'pendente',
       ...(isPaid && { paidDate: dateStr(dueOffset + 3), paidAmount: 3200, paymentMethod: 'pix' }),
       totalAmount: 3200, createdAt: ts(dueOffset - 5), updatedAt: ts(isPaid ? dueOffset + 3 : 0),
+    })
+  }
+
+  // Contrato Betoneira: 2 meses → 1 paga + 1 pendente
+  for (let i = 0; i < 2; i++) {
+    const dueOffset = -60 + i * 30 + 20   // vence dia 20
+    const isPaid = i < 1
+    charges.push({
+      id: `demo-charge-betoneira-${i + 1}`,
+      companyId: COMPANY_ID, contractId: CON.betoneira,
+      propertyId: EQP.betoneira, propertyName: 'Betoneira 400L',
+      tenantId: TEN.pedro, tenantName: 'Pedro Henrique Souza',
+      type: 'aluguel', description: `Aluguel ${i + 1}º mês`,
+      amount: 450, dueDate: dateStr(dueOffset),
+      status: isPaid ? 'pago' : 'pendente',
+      ...(isPaid && { paidDate: dateStr(dueOffset + 1), paidAmount: 450, paymentMethod: 'pix' }),
+      totalAmount: 450, createdAt: ts(dueOffset - 5), updatedAt: ts(isPaid ? dueOffset + 1 : 0),
     })
   }
 
@@ -444,6 +507,7 @@ async function main() {
   await seedOwners()
   await seedProperties()
   await seedVehicles()
+  await seedEquipments()
   await seedTenants()
   await seedContracts()
   await seedCharges()

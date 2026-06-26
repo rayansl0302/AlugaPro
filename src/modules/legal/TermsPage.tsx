@@ -1,6 +1,6 @@
 import { LegalLayout, LegalSection } from '@/components/legal/LegalLayout'
 
-const UPDATED_AT = '14 de junho de 2026'
+const UPDATED_AT = '25 de junho de 2026'
 
 export function TermsPage() {
   return (
@@ -13,14 +13,14 @@ export function TermsPage() {
         </p>
         <p>
           Estes termos constituem um acordo entre você (usuário) e o AlugaPro, aplicável a gestores,
-          administradores, proprietários, inquilinos e demais perfis habilitados na plataforma.
+          administradores, proprietários, inquilinos, afiliados e demais perfis habilitados na plataforma.
         </p>
       </LegalSection>
 
       <LegalSection title="2. Definições">
         <p>
-          <strong>Plataforma:</strong> sistema AlugaPro, incluindo painel web, portal do inquilino
-          e funcionalidades de gestão de locações.
+          <strong>Plataforma:</strong> sistema AlugaPro, incluindo painel web, portal do inquilino,
+          painel de afiliados e funcionalidades de gestão de locações.
         </p>
         <p>
           <strong>Usuário:</strong> pessoa física ou jurídica cadastrada com login e senha, ou
@@ -50,10 +50,11 @@ export function TermsPage() {
       <LegalSection title="4. Uso Permitido">
         <p>Você concorda em utilizar o AlugaPro apenas para fins lícitos relacionados à gestão de locações, incluindo:</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>cadastro e administração de imóveis, veículos, proprietários e inquilinos;</li>
+          <li>cadastro e administração de imóveis, veículos, equipamentos, proprietários e inquilinos;</li>
           <li>geração, assinatura e armazenamento de contratos;</li>
           <li>controle de cobranças, pagamentos e inadimplência;</li>
-          <li>comunicação operacional entre as partes envolvidas na locação.</li>
+          <li>comunicação operacional entre as partes envolvidas na locação;</li>
+          <li>indicação de novos clientes por meio do Programa de Afiliados.</li>
         </ul>
         <p>É vedado utilizar a plataforma para atividades fraudulentas, ilegais, que violem direitos de terceiros ou que comprometam a segurança do sistema.</p>
       </LegalSection>
@@ -94,7 +95,21 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="8. Propriedade Intelectual">
+      <LegalSection title="8. Programa de Afiliados">
+        <p>
+          O Programa de Afiliados permite que qualquer pessoa indique o AlugaPro e receba comissão por
+          clientes ativos resultantes da indicação, nas seguintes condições:
+        </p>
+        <ul className="list-disc space-y-1 pl-5">
+          <li>a comissão é recorrente, variando de 5% a 10% sobre o valor da mensalidade do cliente indicado, conforme a quantidade de clientes ativos na carteira do afiliado;</li>
+          <li>o pagamento da comissão somente é devido após o cliente indicado permanecer ativo por, no mínimo, 15 (quinze) dias consecutivos;</li>
+          <li>para receber pagamentos, o afiliado deve completar o cadastro de verificação de identidade, fornecendo CPF, chave PIX e os documentos solicitados na plataforma;</li>
+          <li>o AlugaPro pode revisar, suspender ou recusar o pagamento de comissões em casos de indícios de fraude, indicações inválidas, dados de verificação incorretos ou descumprimento destes Termos;</li>
+          <li>as condições de comissionamento podem ser ajustadas mediante aviso prévio razoável aos afiliados ativos.</li>
+        </ul>
+      </LegalSection>
+
+      <LegalSection title="9. Propriedade Intelectual">
         <p>
           A marca, layout, código, identidade visual e funcionalidades do AlugaPro são protegidos por
           legislação de propriedade intelectual. É proibida a reprodução, engenharia reversa ou
@@ -106,7 +121,7 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="9. Disponibilidade e Limitação de Responsabilidade">
+      <LegalSection title="10. Disponibilidade e Limitação de Responsabilidade">
         <p>
           Empregamos esforços razoáveis para manter a plataforma disponível e segura, porém não
           garantimos funcionamento ininterrupto ou livre de erros.
@@ -119,7 +134,7 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="10. Suspensão e Encerramento">
+      <LegalSection title="11. Suspensão e Encerramento">
         <p>
           Podemos suspender ou encerrar contas em caso de violação destes Termos, suspeita de fraude,
           ordem legal ou risco à segurança da plataforma e de outros usuários.
@@ -130,7 +145,7 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="11. Alterações destes Termos">
+      <LegalSection title="12. Alterações destes Termos">
         <p>
           Estes Termos podem ser atualizados periodicamente. Alterações relevantes serão comunicadas
           por meios razoáveis, como aviso na plataforma ou por e-mail. O uso continuado após a
@@ -138,7 +153,7 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="12. Legislação e Foro">
+      <LegalSection title="13. Legislação e Foro">
         <p>
           Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro
           da comarca do domicílio do usuário consumidor, quando aplicável, ou outro foro competente
@@ -146,7 +161,7 @@ export function TermsPage() {
         </p>
       </LegalSection>
 
-      <LegalSection title="13. Contato">
+      <LegalSection title="14. Contato">
         <p>
           Dúvidas sobre estes Termos podem ser enviadas para{' '}
           <a href="mailto:suporte@alugapro.com.br" className="text-primary underline-offset-2 hover:underline">
