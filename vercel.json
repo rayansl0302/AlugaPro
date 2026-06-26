@@ -13,6 +13,10 @@
       "destination": "/api/$1"
     },
     {
+      "source": "/webhooks/asaas",
+      "destination": "/api/asaas-webhook"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
