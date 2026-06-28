@@ -46,8 +46,7 @@ export function buildTerrenoBlocks(d: TerrenoSigningData): ContractBlock[] {
   // CLÁUSULA 1 — OBJETO
   clause('CLÁUSULA 1ª', 'DO OBJETO')
   sub('1.1', `O presente contrato tem por objeto a cessão de direitos possessórios do terreno ${d.terrenoCoordenadas ? `localizado nas coordenadas ${d.terrenoCoordenadas}, ` : ''}situado na ${d.terrenoEndereco}.`)
-  sub('1.2', d.terrenoDescricao)
-  sub('1.3', 'Situação: terreno destinado a futuro processo de usucapião pela COMPRADORA.')
+  sub('1.2', `Situação: ${d.terrenoDescricao}`)
   space()
 
   // CLÁUSULA 2 — PREÇO E FORMA DE PAGAMENTO

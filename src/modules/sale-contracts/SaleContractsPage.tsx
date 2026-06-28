@@ -369,7 +369,7 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
                 <Input value={editTerrenoEndereco} onChange={(e) => setEditTerrenoEndereco(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Descrição</Label>
+                <Label className="text-xs">Situação (não repita endereço/coordenadas)</Label>
                 <Input value={editTerrenoDescricao} onChange={(e) => setEditTerrenoDescricao(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
@@ -663,8 +663,8 @@ export function SaleContractsPage() {
                 <Input id="terreno-endereco" value={terrenoEndereco} onChange={(e) => setTerrenoEndereco(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="terreno-descricao" className="text-xs">Descrição (situação, finalidade, observações)</Label>
-                <Input id="terreno-descricao" value={terrenoDescricao} onChange={(e) => setTerrenoDescricao(e.target.value)} placeholder="Ex: terreno destinado a futuro processo de usucapião pela compradora." />
+                <Label htmlFor="terreno-descricao" className="text-xs">Situação (NÃO repita endereço/coordenadas — só fatos adicionais)</Label>
+                <Input id="terreno-descricao" value={terrenoDescricao} onChange={(e) => setTerrenoDescricao(e.target.value)} placeholder="Ex: terreno destinado a futuro processo de usucapião pela compradora, onde já há uma casa construída por ela." />
               </div>
               <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor="terreno-coordenadas" className="text-xs">Coordenadas (opcional)</Label>
