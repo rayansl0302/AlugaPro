@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, addDoc, query, orderBy, serverTimestamp,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, query, orderBy, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { SaleContract, SaleSignatureRequest } from '@/types'
@@ -57,6 +57,20 @@ export async function getSaleSignatureRequest(token: string): Promise<SaleSignat
   const snap = await getDoc(doc(db, SALE_SIGNATURES_COL, token))
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() } as SaleSignatureRequest
+}
+
+// Atualiza só os campos de contexto (nomes/objeto/valor) de uma solicitação
+// ainda pendente — usado quando o admin edita um contrato e precisa
+// refletir os dados novos em links já enviados, sem tocar em status/assinatura.
+export async function updateSaleSignatureSnapshot(
+  token: string,
+  data: { signerName: string; vendedorName: string; compradorName: string; objeto: string; valor: string }
+): Promise<void> {
+  await updateDoc(doc(db, SALE_SIGNATURES_COL, token), data)
+}
+
+export async function deleteSaleSignatureRequest(token: string): Promise<void> {
+  await deleteDoc(doc(db, SALE_SIGNATURES_COL, token))
 }
 
 export async function submitSaleSignature(

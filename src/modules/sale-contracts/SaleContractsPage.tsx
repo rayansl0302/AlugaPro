@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  Copy, Check, Loader2, FileText, CheckCircle, Clock, RefreshCw, Download, Landmark,
+  Copy, Check, Loader2, FileText, CheckCircle, Clock, RefreshCw, Download, Landmark, Pencil, X,
 } from 'lucide-react'
 import {
   getSaleContracts, createSaleContract, updateSaleContract,
   generateSaleSignToken, createSaleSignatureRequest, getSaleSignatureRequest,
+  updateSaleSignatureSnapshot, deleteSaleSignatureRequest,
 } from '@/services/saleContracts'
 import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
@@ -108,39 +109,43 @@ const ROLE_LABELS: Record<SaleContractSignerRole, string> = {
   testemunha2: '2ª Testemunha',
 }
 
-function PartyFields({ idPrefix, title, value, onChange }: {
+function PartyFields({ idPrefix, title, value, onChange, disabled }: {
   idPrefix: string
   title: string
   value: SaleContractParty
   onChange: (v: SaleContractParty) => void
+  disabled?: boolean
 }) {
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold">{title}</p>
+      <p className="text-sm font-semibold">
+        {title}
+        {disabled && <span className="ml-2 text-xs font-normal text-muted-foreground">(já assinou — dados travados)</span>}
+      </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 sm:col-span-2">
           <Label htmlFor={`${idPrefix}-name`} className="text-xs">Nome completo</Label>
-          <Input id={`${idPrefix}-name`} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} />
+          <Input id={`${idPrefix}-name`} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} disabled={disabled} />
         </div>
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-nationality`} className="text-xs">Nacionalidade</Label>
-          <Input id={`${idPrefix}-nationality`} value={value.nationality} onChange={(e) => onChange({ ...value, nationality: e.target.value })} placeholder="brasileiro(a)" />
+          <Input id={`${idPrefix}-nationality`} value={value.nationality} onChange={(e) => onChange({ ...value, nationality: e.target.value })} placeholder="brasileiro(a)" disabled={disabled} />
         </div>
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-marital`} className="text-xs">Estado civil</Label>
-          <Input id={`${idPrefix}-marital`} value={value.maritalStatus} onChange={(e) => onChange({ ...value, maritalStatus: e.target.value })} placeholder="solteiro(a)" />
+          <Input id={`${idPrefix}-marital`} value={value.maritalStatus} onChange={(e) => onChange({ ...value, maritalStatus: e.target.value })} placeholder="solteiro(a)" disabled={disabled} />
         </div>
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-cpf`} className="text-xs">CPF</Label>
-          <Input id={`${idPrefix}-cpf`} value={value.cpf} onChange={(e) => onChange({ ...value, cpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" />
+          <Input id={`${idPrefix}-cpf`} value={value.cpf} onChange={(e) => onChange({ ...value, cpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" disabled={disabled} />
         </div>
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-rg`} className="text-xs">RG</Label>
-          <Input id={`${idPrefix}-rg`} value={value.rg} onChange={(e) => onChange({ ...value, rg: maskRG(e.target.value) })} placeholder="00.000.000-0" />
+          <Input id={`${idPrefix}-rg`} value={value.rg} onChange={(e) => onChange({ ...value, rg: maskRG(e.target.value) })} placeholder="00.000.000-0" disabled={disabled} />
         </div>
         <div className="space-y-1 sm:col-span-2">
           <Label htmlFor={`${idPrefix}-address`} className="text-xs">Endereço completo</Label>
-          <Input id={`${idPrefix}-address`} value={value.address} onChange={(e) => onChange({ ...value, address: e.target.value })} />
+          <Input id={`${idPrefix}-address`} value={value.address} onChange={(e) => onChange({ ...value, address: e.target.value })} disabled={disabled} />
         </div>
       </div>
     </div>
@@ -152,6 +157,20 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
   const [generating, setGenerating] = useState(false)
   const [previewing, setPreviewing] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [editVendedor, setEditVendedor] = useState<SaleContractParty>(contract.vendedor)
+  const [editComprador, setEditComprador] = useState<SaleContractParty>(contract.comprador)
+  const [editTerrenoDescricao, setEditTerrenoDescricao] = useState(contract.terrenoDescricao)
+  const [editTerrenoEndereco, setEditTerrenoEndereco] = useState(contract.terrenoEndereco)
+  const [editTerrenoCoordenadas, setEditTerrenoCoordenadas] = useState(contract.terrenoCoordenadas ?? '')
+  const [editPrecoValor, setEditPrecoValor] = useState(formatCurrency(contract.precoValor))
+  const [editPrecoExtenso, setEditPrecoExtenso] = useState(contract.precoExtenso)
+  const [editFormaPagamento, setEditFormaPagamento] = useState(contract.formaPagamento)
+  const [editForo, setEditForo] = useState(contract.foro)
+  const [editCidade, setEditCidade] = useState(contract.cidade)
+  const [editTestemunha1Nome, setEditTestemunha1Nome] = useState(contract.signers.find((s) => s.role === 'testemunha1')?.name ?? '')
+  const [editTestemunha2Nome, setEditTestemunha2Nome] = useState(contract.signers.find((s) => s.role === 'testemunha2')?.name ?? '')
 
   const signLink = (token: string) => `${window.location.origin}/assinar-venda/${token}`
 
@@ -226,6 +245,213 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
     }
   }
 
+  const vendedorSigner = contract.signers.find((s) => s.role === 'vendedor')
+  const compradorSigner = contract.signers.find((s) => s.role === 'comprador')
+  const testemunha1Signer = contract.signers.find((s) => s.role === 'testemunha1')
+  const testemunha2Signer = contract.signers.find((s) => s.role === 'testemunha2')
+
+  const startEditing = () => {
+    setEditVendedor(contract.vendedor)
+    setEditComprador(contract.comprador)
+    setEditTerrenoDescricao(contract.terrenoDescricao)
+    setEditTerrenoEndereco(contract.terrenoEndereco)
+    setEditTerrenoCoordenadas(contract.terrenoCoordenadas ?? '')
+    setEditPrecoValor(formatCurrency(contract.precoValor))
+    setEditPrecoExtenso(contract.precoExtenso)
+    setEditFormaPagamento(contract.formaPagamento)
+    setEditForo(contract.foro)
+    setEditCidade(contract.cidade)
+    setEditTestemunha1Nome(testemunha1Signer?.name ?? '')
+    setEditTestemunha2Nome(testemunha2Signer?.name ?? '')
+    setEditing(true)
+  }
+
+  // Testemunha que já assinou fica travada (não pode trocar nome nem remover);
+  // as outras combinações (vazio->nome, nome->vazio, nome->outro nome) são
+  // tratadas como criar/remover/renomear o signatário daquele papel.
+  const reconcileWitness = (
+    role: 'testemunha1' | 'testemunha2',
+    existing: SaleContractSigner | undefined,
+    name: string,
+  ): SaleContractSigner | null => {
+    if (existing?.status === 'signed') return existing
+    const trimmed = name.trim()
+    if (!trimmed) return null
+    if (existing) return { ...existing, name: trimmed }
+    return { role, token: generateSaleSignToken(), name: trimmed, status: 'pending' }
+  }
+
+  const handleSaveEdit = async () => {
+    const precoNumber = Number(editPrecoValor.replace(/\D/g, '')) / 100
+    if (
+      !editVendedor.name || !editVendedor.cpf || !editComprador.name || !editComprador.cpf ||
+      !editTerrenoEndereco || !editTerrenoDescricao || !precoNumber || !editFormaPagamento || !editForo || !editCidade
+    ) {
+      toast({ title: 'Preencha os dados obrigatórios de vendedor, comprador, terreno, preço, foro e cidade.', variant: 'destructive' })
+      return
+    }
+
+    setSavingEdit(true)
+    try {
+      const finalVendedor = vendedorSigner?.status === 'signed' ? contract.vendedor : editVendedor
+      const finalComprador = compradorSigner?.status === 'signed' ? contract.comprador : editComprador
+
+      const updatedVendedorSigner = vendedorSigner?.status === 'signed' ? vendedorSigner : { ...vendedorSigner!, name: finalVendedor.name }
+      const updatedCompradorSigner = compradorSigner?.status === 'signed' ? compradorSigner : { ...compradorSigner!, name: finalComprador.name }
+      const t1 = reconcileWitness('testemunha1', testemunha1Signer, editTestemunha1Nome)
+      const t2 = reconcileWitness('testemunha2', testemunha2Signer, editTestemunha2Nome)
+      const newSigners = [updatedVendedorSigner, updatedCompradorSigner, t1, t2].filter((s): s is SaleContractSigner => !!s)
+
+      await updateSaleContract(contract.id, {
+        vendedor: finalVendedor,
+        comprador: finalComprador,
+        terrenoDescricao: editTerrenoDescricao,
+        terrenoEndereco: editTerrenoEndereco,
+        ...(editTerrenoCoordenadas ? { terrenoCoordenadas: editTerrenoCoordenadas } : {}),
+        precoValor: precoNumber,
+        precoExtenso: editPrecoExtenso,
+        formaPagamento: editFormaPagamento,
+        foro: editForo,
+        cidade: editCidade,
+        signers: newSigners,
+      })
+
+      // Remove o link de quem foi tirado da lista de testemunhas
+      const removedTokens = contract.signers
+        .filter((s) => s.status !== 'signed' && !newSigners.some((ns) => ns.token === s.token))
+        .map((s) => s.token)
+      await Promise.all(removedTokens.map((token) => deleteSaleSignatureRequest(token)))
+
+      // Cria o link de quem entrou agora, e atualiza o contexto (nomes/objeto/
+      // valor) de quem já tinha link mas ainda não assinou.
+      const objeto = `Terreno em ${editTerrenoEndereco}`
+      const valor = formatCurrency(precoNumber)
+      await Promise.all(newSigners.map(async (s) => {
+        const isNew = !contract.signers.some((old) => old.token === s.token)
+        if (isNew) {
+          await createSaleSignatureRequest(s.token, {
+            saleContractId: contract.id, contractNumber: contract.contractNumber, role: s.role,
+            signerName: s.name, vendedorName: finalVendedor.name, compradorName: finalComprador.name,
+            objeto, valor,
+          })
+        } else if (s.status !== 'signed') {
+          await updateSaleSignatureSnapshot(s.token, {
+            signerName: s.name, vendedorName: finalVendedor.name, compradorName: finalComprador.name, objeto, valor,
+          })
+        }
+      }))
+
+      onRefresh()
+      setEditing(false)
+      toast({ title: 'Contrato atualizado.' })
+    } catch {
+      toast({ title: 'Erro ao salvar as alterações.', variant: 'destructive' })
+    } finally {
+      setSavingEdit(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base">Editando {contract.contractNumber}</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <PartyFields idPrefix={`edit-vendedor-${contract.id}`} title="Vendedor" value={editVendedor} onChange={setEditVendedor} disabled={vendedorSigner?.status === 'signed'} />
+          <PartyFields idPrefix={`edit-comprador-${contract.id}`} title="Comprador(a)" value={editComprador} onChange={setEditComprador} disabled={compradorSigner?.status === 'signed'} />
+
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Terreno</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Endereço do terreno</Label>
+                <Input value={editTerrenoEndereco} onChange={(e) => setEditTerrenoEndereco(e.target.value)} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Descrição</Label>
+                <Input value={editTerrenoDescricao} onChange={(e) => setEditTerrenoDescricao(e.target.value)} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Coordenadas (opcional)</Label>
+                <Input value={editTerrenoCoordenadas} onChange={(e) => setEditTerrenoCoordenadas(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Preço e pagamento</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Valor (R$)</Label>
+                <Input
+                  inputMode="numeric"
+                  value={editPrecoValor}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, '')
+                    setEditPrecoValor(digits ? formatCurrency(Number(digits) / 100) : '')
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Valor por extenso</Label>
+                <Input value={editPrecoExtenso} onChange={(e) => setEditPrecoExtenso(e.target.value)} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">Forma de pagamento</Label>
+                <Input value={editFormaPagamento} onChange={(e) => setEditFormaPagamento(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Foro e local</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">Comarca (foro)</Label>
+                <Input value={editForo} onChange={(e) => setEditForo(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Cidade da assinatura</Label>
+                <Input value={editCidade} onChange={(e) => setEditCidade(e.target.value)} />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <p className="text-sm font-semibold">Testemunhas (opcional)</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label className="text-xs">
+                  1ª Testemunha — nome
+                  {testemunha1Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">(já assinou — travada)</span>}
+                </Label>
+                <Input value={editTestemunha1Nome} onChange={(e) => setEditTestemunha1Nome(e.target.value)} disabled={testemunha1Signer?.status === 'signed'} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">
+                  2ª Testemunha — nome
+                  {testemunha2Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">(já assinou — travada)</span>}
+                </Label>
+                <Input value={editTestemunha2Nome} onChange={(e) => setEditTestemunha2Nome(e.target.value)} disabled={testemunha2Signer?.status === 'signed'} />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button onClick={handleSaveEdit} disabled={savingEdit}>
+              {savingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar alterações
+            </Button>
+            <Button variant="ghost" onClick={() => setEditing(false)} disabled={savingEdit}>
+              <X className="mr-1.5 h-4 w-4" /> Cancelar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader className="pb-3">
@@ -267,6 +493,11 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
             {refreshing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />} Atualizar status
           </Button>
+          {contract.status !== 'assinado' && (
+            <Button variant="outline" size="sm" onClick={startEditing}>
+              <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
+            </Button>
+          )}
           <Button variant="outline" size="sm" onClick={handlePreview} disabled={previewing}>
             {previewing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} Pré-visualizar
           </Button>
