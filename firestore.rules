@@ -371,5 +371,31 @@ service cloud.firestore {
             && request.resource.data.locatarioName   == resource.data.locatarioName);
       allow delete: if isAdmin();
     }
+
+    // ─── Sale Contracts (Compra e Venda de Terreno) — ferramenta interna do admin ──
+    // Não é multi-tenant: sem companyId, só isAdmin() acessa o doc principal.
+    match /saleContracts/{saleContractId} {
+      allow read, create, update, delete: if isAdmin();
+    }
+
+    // O token aleatório é o ID do documento e funciona como segredo do link.
+    // Paralelo a witnessSignatures, mas genérico por papel (vendedor/comprador/
+    // testemunha1/testemunha2) e protegido por isAdmin() em vez de isGestor()/
+    // sameCompany(), já que só o admin gera contratos de terreno.
+    match /saleSignatures/{token} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if isAdmin()
+        || (resource.data.status == 'pending'
+            && request.resource.data.status == 'signed'
+            && request.resource.data.saleContractId == resource.data.saleContractId
+            && request.resource.data.contractNumber  == resource.data.contractNumber
+            && request.resource.data.role            == resource.data.role
+            && request.resource.data.signerName      == resource.data.signerName
+            && request.resource.data.vendedorName    == resource.data.vendedorName
+            && request.resource.data.compradorName   == resource.data.compradorName);
+      allow delete: if isAdmin();
+    }
   }
 }

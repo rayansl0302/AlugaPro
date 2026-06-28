@@ -117,6 +117,28 @@ export async function uploadOwnerPhoto(
   return uploadFile(file, path)
 }
 
+export async function uploadSaleContractPDF(
+  saleContractId: string,
+  blob: Blob,
+  contractNumber?: string,
+): Promise<string> {
+  const namePart = contractNumber ? slugify(contractNumber) : saleContractId
+  const fileName = `contrato-${namePart}-assinado`
+  const path = `sale-contracts/${saleContractId}/${fileName}_${Date.now()}.pdf`
+  const file = new File([blob], `${fileName}.pdf`, { type: 'application/pdf' })
+  return uploadFile(file, path, `${fileName}-${Date.now()}.pdf`)
+}
+
+export async function uploadSaleSignatureDocument(
+  token: string,
+  slot: 'front' | 'back' | 'selfie',
+  file: File,
+): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `sale-contracts/signatures/${token}/${slot}_${Date.now()}.${ext}`
+  return uploadFile(file, path)
+}
+
 export async function uploadAffiliateDocument(
   affiliateId: string,
   slot: 'document' | 'selfie',

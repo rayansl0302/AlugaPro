@@ -433,6 +433,100 @@ export interface WitnessSignatureRequest {
   signedAt?: string
 }
 
+// ─── SaleContract (Contrato de Compra e Venda de Terreno) ────────────────────
+// Ferramenta interna do admin — não é recurso multi-tenant da SaaS, por isso
+// não tem companyId. Mecânica de assinatura pública (token na URL) é a mesma
+// de WitnessSignatureRequest, generalizada pros 4 papéis possíveis.
+
+export type SaleContractSignerRole = 'vendedor' | 'comprador' | 'testemunha1' | 'testemunha2'
+
+export interface SaleContractParty {
+  name: string
+  nationality: string
+  maritalStatus: string
+  cpf: string
+  rg: string
+  address: string
+}
+
+export interface SaleContractSigner {
+  role: SaleContractSignerRole
+  token: string
+  name: string
+  cpf?: string
+  rg?: string
+  signature?: string
+  documentFrontUrl?: string
+  documentBackUrl?: string
+  documentSelfieUrl?: string
+  status: 'pending' | 'signed'
+  signedAt?: string
+}
+
+export interface SaleContract {
+  id: string
+  contractNumber: string
+  vendedor: SaleContractParty
+  comprador: SaleContractParty
+  terrenoDescricao: string
+  terrenoEndereco: string
+  terrenoCoordenadas?: string
+  precoValor: number
+  precoExtenso: string
+  formaPagamento: string
+  foro: string
+  cidade: string
+  dataContrato: string
+  signers: SaleContractSigner[]
+  signedPdfUrl?: string
+  status: 'rascunho' | 'pendente' | 'assinado'
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+// Dados pra montagem do corpo do contrato (buildTerrenoBlocks) — mesmo
+// racional de ImovelSigningData, sem os campos de locação que não se
+// aplicam a uma venda única (sem prazo, sem aluguel, sem reajuste).
+export interface TerrenoSigningData {
+  contractNumber: string
+  vendedor: SaleContractParty
+  comprador: SaleContractParty
+  terrenoDescricao: string
+  terrenoEndereco: string
+  terrenoCoordenadas?: string
+  precoValor: number
+  precoExtenso: string
+  formaPagamento: string
+  foro: string
+  cidade: string
+  dataContrato: string
+  testemunha1?: { name: string; cpf: string; rg: string }
+  testemunha2?: { name: string; cpf: string; rg: string }
+}
+
+// Documento público (coleção saleSignatures) acessado pelo token na URL.
+// Paralelo a WitnessSignatureRequest, mas genérico por papel e sem companyId.
+export interface SaleSignatureRequest {
+  id?: string
+  saleContractId: string
+  contractNumber: string
+  role: SaleContractSignerRole
+  signerName: string
+  vendedorName: string
+  compradorName: string
+  objeto: string
+  valor: string
+  status: 'pending' | 'signed'
+  signature?: string
+  cpf?: string
+  rg?: string
+  documentFrontUrl?: string
+  documentBackUrl?: string
+  documentSelfieUrl?: string
+  createdAt?: string
+  signedAt?: string
+}
+
 // ─── Payment (Pagamento) ──────────────────────────────────────────────────────
 
 export interface Payment {

@@ -2,7 +2,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning, Landmark,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -39,6 +39,7 @@ const navItems: NavItem[] = [
   { label: 'Notificações', href: '/notificacoes', icon: Bell },
   { label: 'Relatórios', href: '/relatorios', icon: BarChart3 },
   { label: 'Meu Perfil', href: '/perfil', icon: UserCircle },
+  { label: 'Contratos de Terreno', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
   { label: 'Configurações', href: '/configuracoes', icon: Settings, roles: ['admin'] },
 ]
 

@@ -108,6 +108,12 @@ export function generateContractNumber(): string {
   return `CTR-${year}-${random}`
 }
 
+export function generateSaleContractNumber(): string {
+  const year = new Date().getFullYear()
+  const random = Math.floor(Math.random() * 9000) + 1000
+  return `TER-${year}-${random}`
+}
+
 export function generatePropertyCode(): string {
   const random = Math.floor(Math.random() * 90000) + 10000
   return `IMV-${random}`

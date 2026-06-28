@@ -284,6 +284,9 @@ export interface PDFWitness {
   cpf?: string
   rg?: string
   signature?: string
+  documentFrontUrl?: string
+  documentBackUrl?: string
+  documentSelfieUrl?: string
 }
 
 export interface ContractPDFInput {
@@ -341,4 +344,210 @@ export function contractPDFToBlob(doc: jsPDF): Blob {
 
 export function downloadContractPDF(doc: jsPDF, filename: string) {
   doc.save(filename)
+}
+
+// ─── Sale contract (compra e venda de terreno) ────────────────────────────────
+// Mesmo corpo (drawBlocks) do contrato de locação, mas página de assinaturas
+// com labels VENDEDOR/COMPRADOR em vez de LOCADOR/LOCATÁRIO e sem página de
+// documentos (esse fluxo não captura foto de RG/CNH, só assinatura+CPF+RG).
+
+function addSaleSignaturePage(
+  doc: jsPDF,
+  s: PDFState,
+  vendedorName: string,
+  vendedorSig: string | undefined,
+  compradorName: string,
+  compradorSig: string | undefined,
+  testemunha1?: PDFWitness,
+  testemunha2?: PDFWitness,
+  dataAssinatura?: string,
+) {
+  doc.addPage()
+  s.y = s.margin
+
+  addSectionHeader(doc, s, 'ASSINATURAS')
+  s.y += 6
+
+  const colW = (s.contentW - 10) / 2
+  const sigH = 40
+
+  const drawSig = (x: number, name: string, label: string, sigData?: string) => {
+    if (sigData) {
+      try {
+        doc.addImage(sigData, 'PNG', x, s.y, colW, sigH)
+      } catch {
+        doc.setDrawColor(180, 180, 180)
+        doc.rect(x, s.y, colW, sigH)
+      }
+    } else {
+      doc.setDrawColor(180, 180, 180)
+      doc.rect(x, s.y, colW, sigH)
+    }
+    doc.setFontSize(9)
+    doc.line(x, s.y + sigH + 8, x + colW, s.y + sigH + 8)
+    doc.setFont('helvetica', 'bold')
+    doc.text(name, x + colW / 2, s.y + sigH + 14, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.text(label, x + colW / 2, s.y + sigH + 19, { align: 'center' })
+  }
+
+  drawSig(s.margin, vendedorName, 'VENDEDOR', vendedorSig)
+  drawSig(s.margin + colW + 10, compradorName, 'COMPRADOR(A)', compradorSig)
+  s.y += sigH + 26
+
+  if (testemunha1 || testemunha2) {
+    s.y += 8
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.text('TESTEMUNHAS:', s.margin, s.y)
+    s.y += 4
+    doc.setFont('helvetica', 'normal')
+
+    const drawWitness = (x: number, w?: PDFWitness) => {
+      if (!w) return
+      if (w.signature) {
+        try {
+          doc.addImage(w.signature, 'PNG', x, s.y, colW, sigH)
+        } catch {
+          doc.setDrawColor(180, 180, 180)
+          doc.rect(x, s.y, colW, sigH)
+        }
+      } else {
+        doc.setFontSize(8)
+        doc.setTextColor(180, 130, 0)
+        doc.setFont('helvetica', 'italic')
+        doc.text('Aguardando assinatura eletrônica', x + colW / 2, s.y + sigH / 2, { align: 'center' })
+        doc.setTextColor(0, 0, 0)
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(9)
+      }
+      doc.line(x, s.y + sigH + 6, x + colW, s.y + sigH + 6)
+      doc.setFontSize(9)
+      doc.text(`${w.name}`, x + colW / 2, s.y + sigH + 11, { align: 'center' })
+      doc.text(`CPF: ${w.cpf ?? ''}  RG: ${w.rg ?? ''}`, x + colW / 2, s.y + sigH + 16, { align: 'center' })
+    }
+
+    drawWitness(s.margin, testemunha1)
+    drawWitness(s.margin + colW + 10, testemunha2)
+    s.y += sigH + 24
+  }
+
+  s.y += 10
+  doc.setFontSize(8)
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'italic')
+  const ts = dataAssinatura ?? new Date().toLocaleString('pt-BR')
+  doc.text(`Assinado eletronicamente em ${ts} — Válido nos termos da MP nº 2.200-2/2001, Art. 10, §2º.`, s.margin, s.y)
+  s.y += 5
+  doc.text('A autenticidade deste documento pode ser verificada pelos registros de identidade e assinaturas eletrônicas anexados.', s.margin, s.y)
+  doc.setTextColor(0, 0, 0)
+  doc.setFont('helvetica', 'normal')
+}
+
+// Mesmo layout de renderDocSection, mas pra 3 fotos (frente/verso/segurando)
+// em vez de 2 — usado pra cada assinante (vendedor/comprador/testemunhas).
+function renderSaleDocSection(doc: jsPDF, s: PDFState, label: string, signer: PDFWitness) {
+  const photos: Array<{ url?: string; caption: string }> = [
+    { url: signer.documentFrontUrl, caption: 'Documento (frente)' },
+    { url: signer.documentBackUrl, caption: 'Documento (verso)' },
+    { url: signer.documentSelfieUrl, caption: `${signer.name} segurando o documento` },
+  ]
+
+  addSectionHeader(doc, s, label)
+  s.y += 4
+
+  const colW = (s.contentW - 6) / 2
+  const imgH = 55
+
+  for (let i = 0; i < photos.length; i++) {
+    const { url, caption } = photos[i]
+    const x = s.margin + (i % 2) * (colW + 6)
+
+    if (url) {
+      try {
+        const fmt = url.startsWith('data:image/png') ? 'PNG' : 'JPEG'
+        doc.addImage(url, fmt, x, s.y, colW, imgH)
+      } catch {
+        doc.setDrawColor(180, 180, 180)
+        doc.rect(x, s.y, colW, imgH)
+      }
+    } else {
+      doc.setDrawColor(180, 180, 180)
+      doc.rect(x, s.y, colW, imgH)
+      doc.setFontSize(9)
+      doc.setTextColor(150, 150, 150)
+      doc.text('Não enviada', x + colW / 2, s.y + imgH / 2, { align: 'center' })
+      doc.setTextColor(0, 0, 0)
+    }
+
+    doc.setFontSize(9)
+    doc.setFont('helvetica', 'italic')
+    doc.text(caption, x + colW / 2, s.y + imgH + 5, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(10)
+
+    if (i % 2 === 1) s.y += imgH + 12
+  }
+
+  if (photos.length % 2 !== 0) s.y += imgH + 12
+}
+
+function addSaleDocumentsPage(
+  doc: jsPDF,
+  s: PDFState,
+  vendedor: PDFWitness,
+  comprador: PDFWitness,
+  testemunha1?: PDFWitness,
+  testemunha2?: PDFWitness,
+) {
+  const signers: Array<{ label: string; signer: PDFWitness }> = [
+    { label: `DOCUMENTOS DO VENDEDOR — ${vendedor.name}`, signer: vendedor },
+    { label: `DOCUMENTOS DO COMPRADOR(A) — ${comprador.name}`, signer: comprador },
+  ]
+  if (testemunha1) signers.push({ label: `DOCUMENTOS DA TESTEMUNHA — ${testemunha1.name}`, signer: testemunha1 })
+  if (testemunha2) signers.push({ label: `DOCUMENTOS DA TESTEMUNHA — ${testemunha2.name}`, signer: testemunha2 })
+
+  for (const { label, signer } of signers) {
+    doc.addPage()
+    s.y = s.margin
+    renderSaleDocSection(doc, s, label, signer)
+  }
+}
+
+export interface SaleContractPDFInput {
+  blocks: ContractBlock[]
+  contractNumber: string
+  vendedor: PDFWitness
+  comprador: PDFWitness
+  testemunha1?: PDFWitness
+  testemunha2?: PDFWitness
+  dataAssinatura?: string
+}
+
+export function generateSaleContractPDF(input: SaleContractPDFInput): jsPDF {
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(10)
+  doc.setTextColor(0, 0, 0)
+
+  const s = newState()
+
+  drawBlocks(doc, s, input.blocks)
+
+  addSaleDocumentsPage(doc, s, input.vendedor, input.comprador, input.testemunha1, input.testemunha2)
+
+  addSaleSignaturePage(
+    doc, s,
+    input.vendedor.name,
+    input.vendedor.signature,
+    input.comprador.name,
+    input.comprador.signature,
+    input.testemunha1,
+    input.testemunha2,
+    input.dataAssinatura,
+  )
+
+  addPageNumbers(doc)
+
+  return doc
 }

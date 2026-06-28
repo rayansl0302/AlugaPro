@@ -33,6 +33,8 @@ import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
 import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
 import { WhatsAppPage } from '@/modules/settings/WhatsAppPage'
+import { SaleContractsPage } from '@/modules/sale-contracts/SaleContractsPage'
+import { SaleSignPage } from '@/modules/sale-sign/SaleSignPage'
 
 const Spinner = () => (
   <div className="flex h-screen items-center justify-center">
@@ -86,6 +88,10 @@ const router = createBrowserRouter([
   {
     path: '/assinar-testemunha/:token',
     element: <WitnessSignPage />,
+  },
+  {
+    path: '/assinar-venda/:token',
+    element: <SaleSignPage />,
   },
   {
     path: '/portal',
@@ -173,6 +179,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute roles={['admin']}>
                 <WhatsAppPage />
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'contratos-terreno',
+            element: (
+              <ProtectedRoute roles={['admin']}>
+                <SaleContractsPage />
               </ProtectedRoute>
             ),
           },
