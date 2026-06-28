@@ -9,7 +9,7 @@ import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { maskCPF } from '@/lib/utils'
+import { maskCPF, maskRG } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
 
 type Status = 'loading' | 'ready' | 'already' | 'notfound' | 'done'
@@ -155,7 +155,7 @@ export function SaleSignPage() {
                 </div>
                 <div className="space-y-1">
                   <Label className="text-xs">Seu RG</Label>
-                  <Input value={rg} onChange={(e) => setRg(e.target.value)} placeholder="0000000" />
+                  <Input value={rg} onChange={(e) => setRg(maskRG(e.target.value))} placeholder="00.000.000-0" />
                 </div>
               </div>
 

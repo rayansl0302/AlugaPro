@@ -11,7 +11,7 @@ import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
 import { generateSaleContractPDF, contractPDFToBlob, PDFWitness } from '@/lib/contractPDF'
 import { SaleContract, SaleContractParty, SaleContractSigner, SaleContractSignerRole } from '@/types'
-import { generateSaleContractNumber, formatCurrency, formatDate, maskCPF } from '@/lib/utils'
+import { generateSaleContractNumber, formatCurrency, formatDate, maskCPF, maskRG } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -33,6 +33,71 @@ async function urlToDataURL(url: string | undefined): Promise<string | undefined
     reader.onloadend = () => resolve(reader.result as string)
     reader.onerror = reject
     reader.readAsDataURL(blob)
+  })
+}
+
+function openBlankTab(): Window | null {
+  // Abre a aba já no clique (síncrono) pra não cair no bloqueio de pop-up —
+  // o PDF é montado depois, de forma assíncrona, e só então redireciona.
+  return window.open('', '_blank')
+}
+
+interface SaleContractPdfData {
+  contractNumber: string
+  vendedor: SaleContractParty
+  comprador: SaleContractParty
+  terrenoDescricao: string
+  terrenoEndereco: string
+  terrenoCoordenadas?: string
+  precoValor: number
+  precoExtenso: string
+  formaPagamento: string
+  foro: string
+  cidade: string
+  dataContrato: string
+  signers: SaleContractSigner[]
+}
+
+async function buildSaleContractPdf(input: SaleContractPdfData) {
+  const vendedorSigner = input.signers.find((s) => s.role === 'vendedor')
+  const compradorSigner = input.signers.find((s) => s.role === 'comprador')
+  const t1 = input.signers.find((s) => s.role === 'testemunha1')
+  const t2 = input.signers.find((s) => s.role === 'testemunha2')
+
+  const blocks = buildTerrenoBlocks({
+    contractNumber: input.contractNumber,
+    vendedor: input.vendedor,
+    comprador: input.comprador,
+    terrenoDescricao: input.terrenoDescricao,
+    terrenoEndereco: input.terrenoEndereco,
+    terrenoCoordenadas: input.terrenoCoordenadas,
+    precoValor: input.precoValor,
+    precoExtenso: input.precoExtenso,
+    formaPagamento: input.formaPagamento,
+    foro: input.foro,
+    cidade: input.cidade,
+    dataContrato: input.dataContrato,
+    testemunha1: t1 ? { name: t1.name, cpf: t1.cpf ?? '', rg: t1.rg ?? '' } : undefined,
+    testemunha2: t2 ? { name: t2.name, cpf: t2.cpf ?? '', rg: t2.rg ?? '' } : undefined,
+  })
+
+  const toPdfWitness = async (name: string, s?: SaleContractSigner): Promise<PDFWitness> => ({
+    name,
+    cpf: s?.cpf,
+    rg: s?.rg,
+    signature: s?.signature,
+    documentFrontUrl: await urlToDataURL(s?.documentFrontUrl),
+    documentBackUrl: await urlToDataURL(s?.documentBackUrl),
+    documentSelfieUrl: await urlToDataURL(s?.documentSelfieUrl),
+  })
+
+  return generateSaleContractPDF({
+    blocks,
+    contractNumber: input.contractNumber,
+    vendedor: await toPdfWitness(input.vendedor.name, vendedorSigner),
+    comprador: await toPdfWitness(input.comprador.name, compradorSigner),
+    testemunha1: t1 ? await toPdfWitness(t1.name, t1) : undefined,
+    testemunha2: t2 ? await toPdfWitness(t2.name, t2) : undefined,
   })
 }
 
@@ -71,7 +136,7 @@ function PartyFields({ idPrefix, title, value, onChange }: {
         </div>
         <div className="space-y-1">
           <Label htmlFor={`${idPrefix}-rg`} className="text-xs">RG</Label>
-          <Input id={`${idPrefix}-rg`} value={value.rg} onChange={(e) => onChange({ ...value, rg: e.target.value })} />
+          <Input id={`${idPrefix}-rg`} value={value.rg} onChange={(e) => onChange({ ...value, rg: maskRG(e.target.value) })} placeholder="00.000.000-0" />
         </div>
         <div className="space-y-1 sm:col-span-2">
           <Label htmlFor={`${idPrefix}-address`} className="text-xs">Endereço completo</Label>
@@ -85,6 +150,7 @@ function PartyFields({ idPrefix, title, value, onChange }: {
 function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onRefresh: () => void }) {
   const [refreshing, setRefreshing] = useState(false)
   const [generating, setGenerating] = useState(false)
+  const [previewing, setPreviewing] = useState(false)
   const [copiedToken, setCopiedToken] = useState<string | null>(null)
 
   const signLink = (token: string) => `${window.location.origin}/assinar-venda/${token}`
@@ -132,47 +198,7 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
   const handleGeneratePdf = async () => {
     setGenerating(true)
     try {
-      const vendedorSigner = contract.signers.find((s) => s.role === 'vendedor')
-      const compradorSigner = contract.signers.find((s) => s.role === 'comprador')
-      const t1 = contract.signers.find((s) => s.role === 'testemunha1')
-      const t2 = contract.signers.find((s) => s.role === 'testemunha2')
-
-      const blocks = buildTerrenoBlocks({
-        contractNumber: contract.contractNumber,
-        vendedor: contract.vendedor,
-        comprador: contract.comprador,
-        terrenoDescricao: contract.terrenoDescricao,
-        terrenoEndereco: contract.terrenoEndereco,
-        terrenoCoordenadas: contract.terrenoCoordenadas,
-        precoValor: contract.precoValor,
-        precoExtenso: contract.precoExtenso,
-        formaPagamento: contract.formaPagamento,
-        foro: contract.foro,
-        cidade: contract.cidade,
-        dataContrato: contract.dataContrato,
-        testemunha1: t1 ? { name: t1.name, cpf: t1.cpf ?? '', rg: t1.rg ?? '' } : undefined,
-        testemunha2: t2 ? { name: t2.name, cpf: t2.cpf ?? '', rg: t2.rg ?? '' } : undefined,
-      })
-
-      const toPdfWitness = async (name: string, s?: SaleContractSigner): Promise<PDFWitness> => ({
-        name,
-        cpf: s?.cpf,
-        rg: s?.rg,
-        signature: s?.signature,
-        documentFrontUrl: await urlToDataURL(s?.documentFrontUrl),
-        documentBackUrl: await urlToDataURL(s?.documentBackUrl),
-        documentSelfieUrl: await urlToDataURL(s?.documentSelfieUrl),
-      })
-
-      const pdf = generateSaleContractPDF({
-        blocks,
-        contractNumber: contract.contractNumber,
-        vendedor: await toPdfWitness(contract.vendedor.name, vendedorSigner),
-        comprador: await toPdfWitness(contract.comprador.name, compradorSigner),
-        testemunha1: t1 ? await toPdfWitness(t1.name, t1) : undefined,
-        testemunha2: t2 ? await toPdfWitness(t2.name, t2) : undefined,
-      })
-
+      const pdf = await buildSaleContractPdf(contract)
       const blob = contractPDFToBlob(pdf)
       const url = await uploadSaleContractPDF(contract.id, blob, contract.contractNumber)
       await updateSaleContract(contract.id, { signedPdfUrl: url, status: 'assinado' })
@@ -182,6 +208,21 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       toast({ title: 'Erro ao gerar o PDF final.', variant: 'destructive' })
     } finally {
       setGenerating(false)
+    }
+  }
+
+  const handlePreview = async () => {
+    const win = openBlankTab()
+    setPreviewing(true)
+    try {
+      const pdf = await buildSaleContractPdf(contract)
+      const blob = contractPDFToBlob(pdf)
+      if (win) win.location.href = URL.createObjectURL(blob)
+    } catch {
+      win?.close()
+      toast({ title: 'Erro ao gerar a prévia.', variant: 'destructive' })
+    } finally {
+      setPreviewing(false)
     }
   }
 
@@ -226,6 +267,9 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
             {refreshing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />} Atualizar status
           </Button>
+          <Button variant="outline" size="sm" onClick={handlePreview} disabled={previewing}>
+            {previewing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} Pré-visualizar
+          </Button>
           <Button size="sm" onClick={handleGeneratePdf} disabled={!allSigned || generating}>
             {generating ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} Gerar PDF final
           </Button>
@@ -259,6 +303,7 @@ export function SaleContractsPage() {
   const [testemunha1Nome, setTestemunha1Nome] = useState('')
   const [testemunha2Nome, setTestemunha2Nome] = useState('')
   const [creating, setCreating] = useState(false)
+  const [previewingForm, setPreviewingForm] = useState(false)
 
   const resetForm = () => {
     setVendedor(emptyParty)
@@ -267,6 +312,45 @@ export function SaleContractsPage() {
     setPrecoValor(''); setPrecoExtenso(''); setFormaPagamento('')
     setForo(''); setCidade('')
     setTestemunha1Nome(''); setTestemunha2Nome('')
+  }
+
+  const buildFormSigners = (): SaleContractSigner[] => {
+    const signers: SaleContractSigner[] = [
+      { role: 'vendedor', token: 'preview', name: vendedor.name, cpf: vendedor.cpf, rg: vendedor.rg, status: 'pending' },
+      { role: 'comprador', token: 'preview', name: comprador.name, cpf: comprador.cpf, rg: comprador.rg, status: 'pending' },
+    ]
+    if (testemunha1Nome.trim()) signers.push({ role: 'testemunha1', token: 'preview', name: testemunha1Nome.trim(), status: 'pending' })
+    if (testemunha2Nome.trim()) signers.push({ role: 'testemunha2', token: 'preview', name: testemunha2Nome.trim(), status: 'pending' })
+    return signers
+  }
+
+  const handlePreviewForm = async () => {
+    if (!vendedor.name || !comprador.name) {
+      toast({ title: 'Preencha ao menos o nome do vendedor e do comprador para pré-visualizar.', variant: 'destructive' })
+      return
+    }
+    const win = openBlankTab()
+    setPreviewingForm(true)
+    try {
+      const precoNumber = Number(precoValor.replace(/\D/g, '')) / 100
+      const pdf = await buildSaleContractPdf({
+        contractNumber: 'PRÉVIA',
+        vendedor, comprador,
+        terrenoDescricao, terrenoEndereco,
+        terrenoCoordenadas: terrenoCoordenadas || undefined,
+        precoValor: precoNumber, precoExtenso, formaPagamento,
+        foro, cidade,
+        dataContrato: formatDate(new Date().toISOString(), "dd 'de' MMMM 'de' yyyy"),
+        signers: buildFormSigners(),
+      })
+      const blob = contractPDFToBlob(pdf)
+      if (win) win.location.href = URL.createObjectURL(blob)
+    } catch {
+      win?.close()
+      toast({ title: 'Erro ao gerar a prévia.', variant: 'destructive' })
+    } finally {
+      setPreviewingForm(false)
+    }
   }
 
   const handleGenerate = async () => {
@@ -413,10 +497,16 @@ export function SaleContractsPage() {
             </div>
           </div>
 
-          <Button onClick={handleGenerate} disabled={creating}>
-            {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Gerar contrato
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handlePreviewForm} disabled={previewingForm}>
+              {previewingForm ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+              Pré-visualizar
+            </Button>
+            <Button onClick={handleGenerate} disabled={creating}>
+              {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Gerar contrato
+            </Button>
+          </div>
         </CardContent>
       </Card>
 
