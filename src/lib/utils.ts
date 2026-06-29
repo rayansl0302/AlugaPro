@@ -59,16 +59,17 @@ export function maskCPF(value: string): string {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2')
 }
 
-// RG varia de formato por estado, mas o padrão XX.XXX.XXX-X (SP) é o mais
-// usado e reconhecido nacionalmente — dígito verificador pode ser "X".
+// RG varia de formato por estado: a maioria usa XX.XXX.XXX-X (8 dígitos +
+// 1 verificador, que pode ser "X"), mas alguns estados (ex: Bahia) usam
+// XX.XXX.XXX-XX, com 2 dígitos verificadores. Aceita os dois.
 export function maskRG(value: string): string {
   return value
     .replace(/[^\dXx]/g, '')
-    .slice(0, 9)
+    .slice(0, 10)
     .toUpperCase()
     .replace(/(\d{2})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
-    .replace(/(\d{3})([\dX]{1,1})$/, '$1-$2')
+    .replace(/(\d{3})([\dX]{1,2})$/, '$1-$2')
 }
 
 export function maskPhone(value: string): string {
