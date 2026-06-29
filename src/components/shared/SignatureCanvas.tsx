@@ -13,82 +13,95 @@ interface Props {
 
 export function SignatureCanvas({ onConfirm, onClear, value, label, className }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [drawing, setDrawing] = useState(false)
+  const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
+  const drawingRef = useRef(false)
   const [hasStrokes, setHasStrokes] = useState(false)
   const [confirmed, setConfirmed] = useState(!!value)
-  const lastPos = useRef<{ x: number; y: number } | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    // Set resolution for retina
-    const dpr = window.devicePixelRatio || 1
-    const rect = canvas.getBoundingClientRect()
-    canvas.width = rect.width * dpr
-    canvas.height = rect.height * dpr
-    ctx.scale(dpr, dpr)
-    ctx.strokeStyle = '#1e293b'
-    ctx.lineWidth = 2
-    ctx.lineCap = 'round'
-    ctx.lineJoin = 'round'
 
-    // If there's an existing value, draw it as image
-    if (value) {
-      const img = new Image()
-      img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
-      img.src = value
+    const setup = () => {
+      const rect = canvas.getBoundingClientRect()
+      // Se o layout ainda não assentou (rect zerado), tenta de novo no
+      // próximo frame em vez de inicializar um buffer de tamanho errado.
+      if (rect.width === 0 || rect.height === 0) {
+        requestAnimationFrame(setup)
+        return
+      }
+      const dpr = window.devicePixelRatio || 1
+      canvas.width = rect.width * dpr
+      canvas.height = rect.height * dpr
+      const ctx = canvas.getContext('2d')
+      if (!ctx) return
+      ctx.scale(dpr, dpr)
+      ctx.strokeStyle = '#1e293b'
+      ctx.lineWidth = 2.5
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      ctxRef.current = ctx
+
+      if (value) {
+        const img = new Image()
+        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
+        img.src = value
+      }
     }
+    setup()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const getPos = (e: React.MouseEvent | React.TouchEvent, canvas: HTMLCanvasElement) => {
+  const getPos = (e: React.PointerEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect()
-    if ('touches' in e) {
-      const t = e.touches[0]
-      return { x: t.clientX - rect.left, y: t.clientY - rect.top }
-    }
-    return { x: (e as React.MouseEvent).clientX - rect.left, y: (e as React.MouseEvent).clientY - rect.top }
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top }
   }
 
-  const startDraw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
+  // Pointer capture mantém o traço seguindo o mesmo dedo/ponteiro mesmo se
+  // ele sair momentaneamente da área do canvas — sem isso, qualquer
+  // pequeno desvio durante a assinatura corta o traço no meio (é
+  // exatamente o que causa a sensação de "quebra entre letras").
+  const startDraw = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     if (confirmed) return
     const canvas = canvasRef.current
-    if (!canvas) return
-    e.preventDefault()
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-    setDrawing(true)
+    const ctx = ctxRef.current
+    if (!canvas || !ctx) return
+    // setPointerCapture pode falhar em alguns navegadores/cenários — não
+    // deve impedir o desenho de funcionar, só perde a robustez extra.
+    try { canvas.setPointerCapture(e.pointerId) } catch { /* segue sem capture */ }
+    drawingRef.current = true
     setHasStrokes(true)
     const pos = getPos(e, canvas)
-    lastPos.current = pos
     ctx.beginPath()
     ctx.moveTo(pos.x, pos.y)
+    // Garante que um toque rápido sem arrastar (ex: o pingo de um "i")
+    // deixe uma marca visível — beginPath+moveTo isolados não desenham nada.
+    ctx.lineTo(pos.x + 0.01, pos.y + 0.01)
+    ctx.stroke()
   }, [confirmed])
 
-  const draw = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!drawing || confirmed) return
+  const draw = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current || confirmed) return
     const canvas = canvasRef.current
-    if (!canvas) return
-    e.preventDefault()
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const ctx = ctxRef.current
+    if (!canvas || !ctx) return
     const pos = getPos(e, canvas)
     ctx.lineTo(pos.x, pos.y)
     ctx.stroke()
-    lastPos.current = pos
-  }, [drawing, confirmed])
+  }, [confirmed])
 
-  const endDraw = useCallback(() => {
-    setDrawing(false)
-    lastPos.current = null
+  const endDraw = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    drawingRef.current = false
+    try {
+      const canvas = canvasRef.current
+      if (canvas?.hasPointerCapture(e.pointerId)) canvas.releasePointerCapture(e.pointerId)
+    } catch { /* sem capture ativo — nada a liberar */ }
   }, [])
 
   const clear = () => {
     const canvas = canvasRef.current
-    if (!canvas) return
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
+    const ctx = ctxRef.current
+    if (!canvas || !ctx) return
     const dpr = window.devicePixelRatio || 1
     const rect = canvas.getBoundingClientRect()
     ctx.clearRect(0, 0, rect.width * dpr, rect.height * dpr)
@@ -117,13 +130,10 @@ export function SignatureCanvas({ onConfirm, onClear, value, label, className }:
           ref={canvasRef}
           className="block w-full touch-none"
           style={{ height: 140 }}
-          onMouseDown={startDraw}
-          onMouseMove={draw}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw}
-          onTouchMove={draw}
-          onTouchEnd={endDraw}
+          onPointerDown={startDraw}
+          onPointerMove={draw}
+          onPointerUp={endDraw}
+          onPointerCancel={endDraw}
         />
         {!hasStrokes && !confirmed && (
           <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
