@@ -1,6 +1,6 @@
 import { useRef, useEffect, useState, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
-import { RotateCcw, CheckCircle } from 'lucide-react'
+import { RotateCcw, CheckCircle, Maximize2, Minimize2, RotateCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface Props {
@@ -11,46 +11,113 @@ interface Props {
   className?: string
 }
 
+interface Snapshot {
+  dataUrl: string
+  width: number
+  height: number
+}
+
 export function SignatureCanvas({ onConfirm, onClear, value, label, className }: Props) {
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const ctxRef = useRef<CanvasRenderingContext2D | null>(null)
   const drawingRef = useRef(false)
+  const hasStrokesRef = useRef(false)
   const [hasStrokes, setHasStrokes] = useState(false)
   const [confirmed, setConfirmed] = useState(!!value)
+  const [isFullscreen, setIsFullscreen] = useState(false)
+  const [isPortrait, setIsPortrait] = useState(window.innerWidth < window.innerHeight)
 
-  useEffect(() => {
+  // (Re)dimensiona o buffer interno do canvas pro tamanho real renderizado.
+  // Se vier um "preserve" (snapshot do que já estava desenhado), redesenha
+  // mantendo a proporção original em vez de esticar — importante ao
+  // entrar/sair da tela cheia, onde o formato do canvas muda bastante.
+  const setupCanvas = useCallback((preserve: Snapshot | null) => {
     const canvas = canvasRef.current
     if (!canvas) return
-
-    const setup = () => {
-      const rect = canvas.getBoundingClientRect()
-      // Se o layout ainda não assentou (rect zerado), tenta de novo no
-      // próximo frame em vez de inicializar um buffer de tamanho errado.
-      if (rect.width === 0 || rect.height === 0) {
-        requestAnimationFrame(setup)
-        return
-      }
-      const dpr = window.devicePixelRatio || 1
-      canvas.width = rect.width * dpr
-      canvas.height = rect.height * dpr
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      ctx.scale(dpr, dpr)
-      ctx.strokeStyle = '#1e293b'
-      ctx.lineWidth = 2.5
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
-      ctxRef.current = ctx
-
-      if (value) {
-        const img = new Image()
-        img.onload = () => ctx.drawImage(img, 0, 0, rect.width, rect.height)
-        img.src = value
-      }
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width === 0 || rect.height === 0) {
+      requestAnimationFrame(() => setupCanvas(preserve))
+      return
     }
-    setup()
+    const dpr = window.devicePixelRatio || 1
+    canvas.width = rect.width * dpr
+    canvas.height = rect.height * dpr
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    ctx.scale(dpr, dpr)
+    ctx.strokeStyle = '#1e293b'
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctxRef.current = ctx
+
+    const source = preserve ?? (value ? { dataUrl: value, width: rect.width, height: rect.height } : null)
+    if (source) {
+      const img = new Image()
+      img.onload = () => {
+        const scale = Math.min(rect.width / source.width, rect.height / source.height, 1)
+        const w = source.width * scale
+        const h = source.height * scale
+        ctx.drawImage(img, (rect.width - w) / 2, (rect.height - h) / 2, w, h)
+      }
+      img.src = source.dataUrl
+    }
+  }, [value])
+
+  useEffect(() => {
+    setupCanvas(null)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Mantém uma ref sincronizada com hasStrokes — o listener nativo de
+  // fullscreenchange (abaixo) é registrado uma única vez no mount, então
+  // não pode depender de um closure sobre o state, que ficaria obsoleto.
+  useEffect(() => {
+    hasStrokesRef.current = hasStrokes
+  }, [hasStrokes])
+
+  // Sincroniza com saídas nativas da tela cheia (Esc, gesto do sistema).
+  useEffect(() => {
+    const handler = () => {
+      // Saída nativa (Esc, gesto do sistema) — tenta capturar antes de
+      // atualizar o estado, mesmo que o navegador já tenha começado a
+      // encolher a viewport (melhor um esforço tardio que nenhum).
+      pendingSnapshotRef.current = captureSnapshot()
+      setIsFullscreen(!!document.fullscreenElement)
+    }
+    document.addEventListener('fullscreenchange', handler)
+    return () => document.removeEventListener('fullscreenchange', handler)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
+    const handler = () => setIsPortrait(window.innerWidth < window.innerHeight)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+
+  // Snapshot capturado SINCRONAMENTE no clique de entrar/sair da tela cheia,
+  // antes do CSS mudar de tamanho — se capturasse dentro do efeito (depois
+  // do re-render), o retângulo já estaria no tamanho novo, descasado da
+  // imagem antiga, e a escala saía errada.
+  const pendingSnapshotRef = useRef<Snapshot | null>(null)
+
+  const captureSnapshot = (): Snapshot | null => {
+    const canvas = canvasRef.current
+    if (!canvas || !hasStrokesRef.current) return null
+    const rect = canvas.getBoundingClientRect()
+    return { dataUrl: canvas.toDataURL('image/png'), width: rect.width, height: rect.height }
+  }
+
+  // Redimensiona o canvas sempre que entra/sai da tela cheia, preservando o
+  // que já tinha sido desenhado (sem isso o usuário perderia a assinatura
+  // em andamento só por pedir mais espaço pra desenhar).
+  useEffect(() => {
+    setupCanvas(pendingSnapshotRef.current)
+    pendingSnapshotRef.current = null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFullscreen])
 
   const getPos = (e: React.PointerEvent, canvas: HTMLCanvasElement) => {
     const rect = canvas.getBoundingClientRect()
@@ -110,26 +177,55 @@ export function SignatureCanvas({ onConfirm, onClear, value, label, className }:
     onClear?.()
   }
 
-  const confirm = () => {
+  const confirm = async () => {
     const canvas = canvasRef.current
     if (!canvas) return
     const dataUrl = canvas.toDataURL('image/png')
     onConfirm(dataUrl)
     setConfirmed(true)
+    if (isFullscreen) await exitFullscreen()
+  }
+
+  // Tela cheia + paisagem são só reforço — funcionam quando o navegador
+  // suporta (a maioria no Android; iOS recente em parte), mas o layout
+  // expandido via CSS (isFullscreen) já dá mais espaço de qualquer forma,
+  // mesmo sem suporte a nenhuma das duas APIs.
+  const enterFullscreen = async () => {
+    pendingSnapshotRef.current = captureSnapshot()
+    try { await wrapperRef.current?.requestFullscreen() } catch { /* sem suporte — segue só com CSS */ }
+    try { await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> })?.lock?.('landscape') } catch { /* sem suporte (ex: iOS) */ }
+    setIsFullscreen(true)
+  }
+
+  const exitFullscreen = async () => {
+    pendingSnapshotRef.current = captureSnapshot()
+    try { if (document.fullscreenElement) await document.exitFullscreen() } catch { /* já não estava */ }
+    try { (screen.orientation as ScreenOrientation & { unlock?: () => void })?.unlock?.() } catch { /* nada a desfazer */ }
+    setIsFullscreen(false)
   }
 
   return (
-    <div className={cn('space-y-2', className)}>
+    <div
+      ref={wrapperRef}
+      className={cn(
+        isFullscreen ? 'fixed inset-0 z-[100] flex flex-col gap-2 bg-background p-3' : cn('space-y-2', className),
+      )}
+    >
       {label && <p className="text-sm font-medium">{label}</p>}
+      {isFullscreen && isPortrait && (
+        <p className="flex items-center gap-1.5 text-xs text-amber-600">
+          <RotateCw className="h-3.5 w-3.5" /> Gire o celular pra ter mais espaço pra assinar.
+        </p>
+      )}
       <div className={cn(
-        'relative rounded-xl border-2 transition-colors',
+        'relative flex-1 rounded-xl border-2 transition-colors',
         confirmed ? 'border-green-400 bg-green-50/50' : 'border-dashed border-muted-foreground/30 bg-muted/20',
         !confirmed && 'cursor-crosshair',
       )}>
         <canvas
           ref={canvasRef}
-          className="block w-full touch-none"
-          style={{ height: 140 }}
+          className={cn('block touch-none', isFullscreen ? 'h-full w-full' : 'w-full')}
+          style={isFullscreen ? undefined : { height: 140 }}
           onPointerDown={startDraw}
           onPointerMove={draw}
           onPointerUp={endDraw}
@@ -148,7 +244,7 @@ export function SignatureCanvas({ onConfirm, onClear, value, label, className }:
           </div>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button type="button" variant="outline" size="sm" onClick={clear} disabled={!hasStrokes && !confirmed}>
           <RotateCcw className="mr-1.5 h-3.5 w-3.5" /> Limpar
         </Button>
@@ -157,6 +253,17 @@ export function SignatureCanvas({ onConfirm, onClear, value, label, className }:
             <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Confirmar assinatura
           </Button>
         )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          className={isFullscreen ? undefined : 'ml-auto'}
+          onClick={isFullscreen ? exitFullscreen : enterFullscreen}
+        >
+          {isFullscreen
+            ? <><Minimize2 className="mr-1.5 h-3.5 w-3.5" /> Sair da tela cheia</>
+            : <><Maximize2 className="mr-1.5 h-3.5 w-3.5" /> Tela cheia</>}
+        </Button>
       </div>
     </div>
   )
