@@ -59,12 +59,13 @@ export async function getSaleSignatureRequest(token: string): Promise<SaleSignat
   return { id: snap.id, ...snap.data() } as SaleSignatureRequest
 }
 
-// Atualiza só os campos de contexto (nomes/objeto/valor) de uma solicitação
-// ainda pendente — usado quando o admin edita um contrato e precisa
-// refletir os dados novos em links já enviados, sem tocar em status/assinatura.
+// Atualiza só os campos de contexto (nomes/objeto/valor/cpf/rg pré-preenchido)
+// de uma solicitação ainda pendente — usado quando o admin edita um contrato
+// e precisa refletir os dados novos em links já enviados, sem tocar em
+// status/assinatura.
 export async function updateSaleSignatureSnapshot(
   token: string,
-  data: { signerName: string; vendedorName: string; compradorName: string; objeto: string; valor: string }
+  data: { signerName: string; vendedorName: string; compradorName: string; objeto: string; valor: string; cpf?: string; rg?: string }
 ): Promise<void> {
   await updateDoc(doc(db, SALE_SIGNATURES_COL, token), data)
 }

@@ -45,6 +45,8 @@ export function SaleSignPage() {
           return
         }
         setRequest(data)
+        if (data.cpf) setCpf(maskCPF(data.cpf))
+        if (data.rg) setRg(maskRG(data.rg))
         setStatus(data.status === 'signed' ? 'already' : 'ready')
       })
       .catch(() => setStatus('notfound'))

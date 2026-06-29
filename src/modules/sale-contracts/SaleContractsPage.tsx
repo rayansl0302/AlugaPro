@@ -170,7 +170,11 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
   const [editForo, setEditForo] = useState(contract.foro)
   const [editCidade, setEditCidade] = useState(contract.cidade)
   const [editTestemunha1Nome, setEditTestemunha1Nome] = useState(contract.signers.find((s) => s.role === 'testemunha1')?.name ?? '')
+  const [editTestemunha1Cpf, setEditTestemunha1Cpf] = useState(contract.signers.find((s) => s.role === 'testemunha1')?.cpf ?? '')
+  const [editTestemunha1Rg, setEditTestemunha1Rg] = useState(contract.signers.find((s) => s.role === 'testemunha1')?.rg ?? '')
   const [editTestemunha2Nome, setEditTestemunha2Nome] = useState(contract.signers.find((s) => s.role === 'testemunha2')?.name ?? '')
+  const [editTestemunha2Cpf, setEditTestemunha2Cpf] = useState(contract.signers.find((s) => s.role === 'testemunha2')?.cpf ?? '')
+  const [editTestemunha2Rg, setEditTestemunha2Rg] = useState(contract.signers.find((s) => s.role === 'testemunha2')?.rg ?? '')
 
   const signLink = (token: string) => `${window.location.origin}/assinar-venda/${token}`
 
@@ -262,7 +266,11 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
     setEditForo(contract.foro)
     setEditCidade(contract.cidade)
     setEditTestemunha1Nome(testemunha1Signer?.name ?? '')
+    setEditTestemunha1Cpf(testemunha1Signer?.cpf ?? '')
+    setEditTestemunha1Rg(testemunha1Signer?.rg ?? '')
     setEditTestemunha2Nome(testemunha2Signer?.name ?? '')
+    setEditTestemunha2Cpf(testemunha2Signer?.cpf ?? '')
+    setEditTestemunha2Rg(testemunha2Signer?.rg ?? '')
     setEditing(true)
   }
 
@@ -273,12 +281,19 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
     role: 'testemunha1' | 'testemunha2',
     existing: SaleContractSigner | undefined,
     name: string,
+    cpf: string,
+    rg: string,
   ): SaleContractSigner | null => {
     if (existing?.status === 'signed') return existing
-    const trimmed = name.trim()
-    if (!trimmed) return null
-    if (existing) return { ...existing, name: trimmed }
-    return { role, token: generateSaleSignToken(), name: trimmed, status: 'pending' }
+    const trimmedName = name.trim()
+    if (!trimmedName) return null
+    const base = existing ?? { role, token: generateSaleSignToken(), status: 'pending' as const }
+    return {
+      ...base,
+      name: trimmedName,
+      ...(cpf.trim() ? { cpf: cpf.trim() } : {}),
+      ...(rg.trim() ? { rg: rg.trim() } : {}),
+    }
   }
 
   const handleSaveEdit = async () => {
@@ -296,10 +311,14 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       const finalVendedor = vendedorSigner?.status === 'signed' ? contract.vendedor : editVendedor
       const finalComprador = compradorSigner?.status === 'signed' ? contract.comprador : editComprador
 
-      const updatedVendedorSigner = vendedorSigner?.status === 'signed' ? vendedorSigner : { ...vendedorSigner!, name: finalVendedor.name }
-      const updatedCompradorSigner = compradorSigner?.status === 'signed' ? compradorSigner : { ...compradorSigner!, name: finalComprador.name }
-      const t1 = reconcileWitness('testemunha1', testemunha1Signer, editTestemunha1Nome)
-      const t2 = reconcileWitness('testemunha2', testemunha2Signer, editTestemunha2Nome)
+      const updatedVendedorSigner = vendedorSigner?.status === 'signed'
+        ? vendedorSigner
+        : { ...vendedorSigner!, name: finalVendedor.name, ...(finalVendedor.cpf ? { cpf: finalVendedor.cpf } : {}), ...(finalVendedor.rg ? { rg: finalVendedor.rg } : {}) }
+      const updatedCompradorSigner = compradorSigner?.status === 'signed'
+        ? compradorSigner
+        : { ...compradorSigner!, name: finalComprador.name, ...(finalComprador.cpf ? { cpf: finalComprador.cpf } : {}), ...(finalComprador.rg ? { rg: finalComprador.rg } : {}) }
+      const t1 = reconcileWitness('testemunha1', testemunha1Signer, editTestemunha1Nome, editTestemunha1Cpf, editTestemunha1Rg)
+      const t2 = reconcileWitness('testemunha2', testemunha2Signer, editTestemunha2Nome, editTestemunha2Cpf, editTestemunha2Rg)
       const newSigners = [updatedVendedorSigner, updatedCompradorSigner, t1, t2].filter((s): s is SaleContractSigner => !!s)
 
       await updateSaleContract(contract.id, {
@@ -333,10 +352,12 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
             saleContractId: contract.id, contractNumber: contract.contractNumber, role: s.role,
             signerName: s.name, vendedorName: finalVendedor.name, compradorName: finalComprador.name,
             objeto, valor,
+            ...(s.cpf ? { cpf: s.cpf } : {}), ...(s.rg ? { rg: s.rg } : {}),
           })
         } else if (s.status !== 'signed') {
           await updateSaleSignatureSnapshot(s.token, {
             signerName: s.name, vendedorName: finalVendedor.name, compradorName: finalComprador.name, objeto, valor,
+            ...(s.cpf ? { cpf: s.cpf } : {}), ...(s.rg ? { rg: s.rg } : {}),
           })
         }
       }))
@@ -435,6 +456,22 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
                 </Label>
                 <Input value={editTestemunha2Nome} onChange={(e) => setEditTestemunha2Nome(e.target.value)} disabled={testemunha2Signer?.status === 'signed'} />
               </div>
+              <div className="space-y-1">
+                <Label className="text-xs">1ª Testemunha — CPF (opcional)</Label>
+                <Input value={editTestemunha1Cpf} onChange={(e) => setEditTestemunha1Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" disabled={testemunha1Signer?.status === 'signed'} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">2ª Testemunha — CPF (opcional)</Label>
+                <Input value={editTestemunha2Cpf} onChange={(e) => setEditTestemunha2Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" disabled={testemunha2Signer?.status === 'signed'} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">1ª Testemunha — RG (opcional)</Label>
+                <Input value={editTestemunha1Rg} onChange={(e) => setEditTestemunha1Rg(maskRG(e.target.value))} placeholder="00.000.000-0" disabled={testemunha1Signer?.status === 'signed'} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">2ª Testemunha — RG (opcional)</Label>
+                <Input value={editTestemunha2Rg} onChange={(e) => setEditTestemunha2Rg(maskRG(e.target.value))} placeholder="00.000.000-0" disabled={testemunha2Signer?.status === 'signed'} />
+              </div>
             </div>
           </div>
 
@@ -532,7 +569,11 @@ export function SaleContractsPage() {
   const [foro, setForo] = useState('')
   const [cidade, setCidade] = useState('')
   const [testemunha1Nome, setTestemunha1Nome] = useState('')
+  const [testemunha1Cpf, setTestemunha1Cpf] = useState('')
+  const [testemunha1Rg, setTestemunha1Rg] = useState('')
   const [testemunha2Nome, setTestemunha2Nome] = useState('')
+  const [testemunha2Cpf, setTestemunha2Cpf] = useState('')
+  const [testemunha2Rg, setTestemunha2Rg] = useState('')
   const [creating, setCreating] = useState(false)
   const [previewingForm, setPreviewingForm] = useState(false)
 
@@ -542,7 +583,8 @@ export function SaleContractsPage() {
     setTerrenoDescricao(''); setTerrenoEndereco(''); setTerrenoCoordenadas('')
     setPrecoValor(''); setPrecoExtenso(''); setFormaPagamento('')
     setForo(''); setCidade('')
-    setTestemunha1Nome(''); setTestemunha2Nome('')
+    setTestemunha1Nome(''); setTestemunha1Cpf(''); setTestemunha1Rg('')
+    setTestemunha2Nome(''); setTestemunha2Cpf(''); setTestemunha2Rg('')
   }
 
   const buildFormSigners = (): SaleContractSigner[] => {
@@ -550,8 +592,8 @@ export function SaleContractsPage() {
       { role: 'vendedor', token: 'preview', name: vendedor.name, cpf: vendedor.cpf, rg: vendedor.rg, status: 'pending' },
       { role: 'comprador', token: 'preview', name: comprador.name, cpf: comprador.cpf, rg: comprador.rg, status: 'pending' },
     ]
-    if (testemunha1Nome.trim()) signers.push({ role: 'testemunha1', token: 'preview', name: testemunha1Nome.trim(), status: 'pending' })
-    if (testemunha2Nome.trim()) signers.push({ role: 'testemunha2', token: 'preview', name: testemunha2Nome.trim(), status: 'pending' })
+    if (testemunha1Nome.trim()) signers.push({ role: 'testemunha1', token: 'preview', name: testemunha1Nome.trim(), cpf: testemunha1Cpf, rg: testemunha1Rg, status: 'pending' })
+    if (testemunha2Nome.trim()) signers.push({ role: 'testemunha2', token: 'preview', name: testemunha2Nome.trim(), cpf: testemunha2Cpf, rg: testemunha2Rg, status: 'pending' })
     return signers
   }
 
@@ -600,11 +642,23 @@ export function SaleContractsPage() {
       const dataContrato = formatDate(new Date().toISOString(), "dd 'de' MMMM 'de' yyyy")
 
       const signers: SaleContractSigner[] = [
-        { role: 'vendedor', token: generateSaleSignToken(), name: vendedor.name, status: 'pending' },
-        { role: 'comprador', token: generateSaleSignToken(), name: comprador.name, status: 'pending' },
+        { role: 'vendedor', token: generateSaleSignToken(), name: vendedor.name, ...(vendedor.cpf ? { cpf: vendedor.cpf } : {}), ...(vendedor.rg ? { rg: vendedor.rg } : {}), status: 'pending' },
+        { role: 'comprador', token: generateSaleSignToken(), name: comprador.name, ...(comprador.cpf ? { cpf: comprador.cpf } : {}), ...(comprador.rg ? { rg: comprador.rg } : {}), status: 'pending' },
       ]
-      if (testemunha1Nome.trim()) signers.push({ role: 'testemunha1', token: generateSaleSignToken(), name: testemunha1Nome.trim(), status: 'pending' })
-      if (testemunha2Nome.trim()) signers.push({ role: 'testemunha2', token: generateSaleSignToken(), name: testemunha2Nome.trim(), status: 'pending' })
+      if (testemunha1Nome.trim()) {
+        signers.push({
+          role: 'testemunha1', token: generateSaleSignToken(), name: testemunha1Nome.trim(),
+          ...(testemunha1Cpf.trim() ? { cpf: testemunha1Cpf.trim() } : {}), ...(testemunha1Rg.trim() ? { rg: testemunha1Rg.trim() } : {}),
+          status: 'pending',
+        })
+      }
+      if (testemunha2Nome.trim()) {
+        signers.push({
+          role: 'testemunha2', token: generateSaleSignToken(), name: testemunha2Nome.trim(),
+          ...(testemunha2Cpf.trim() ? { cpf: testemunha2Cpf.trim() } : {}), ...(testemunha2Rg.trim() ? { rg: testemunha2Rg.trim() } : {}),
+          status: 'pending',
+        })
+      }
 
       const contractData = {
         contractNumber,
@@ -630,6 +684,8 @@ export function SaleContractsPage() {
         compradorName: comprador.name,
         objeto,
         valor,
+        ...(s.cpf ? { cpf: s.cpf } : {}),
+        ...(s.rg ? { rg: s.rg } : {}),
       })))
 
       qc.invalidateQueries({ queryKey: ['saleContracts'] })
@@ -725,8 +781,27 @@ export function SaleContractsPage() {
                 <Label htmlFor="testemunha2-nome" className="text-xs">2ª Testemunha — nome</Label>
                 <Input id="testemunha2-nome" value={testemunha2Nome} onChange={(e) => setTestemunha2Nome(e.target.value)} />
               </div>
+              <div className="space-y-1">
+                <Label htmlFor="testemunha1-cpf" className="text-xs">1ª Testemunha — CPF (opcional)</Label>
+                <Input id="testemunha1-cpf" value={testemunha1Cpf} onChange={(e) => setTestemunha1Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="testemunha2-cpf" className="text-xs">2ª Testemunha — CPF (opcional)</Label>
+                <Input id="testemunha2-cpf" value={testemunha2Cpf} onChange={(e) => setTestemunha2Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="testemunha1-rg" className="text-xs">1ª Testemunha — RG (opcional)</Label>
+                <Input id="testemunha1-rg" value={testemunha1Rg} onChange={(e) => setTestemunha1Rg(maskRG(e.target.value))} placeholder="00.000.000-0" />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="testemunha2-rg" className="text-xs">2ª Testemunha — RG (opcional)</Label>
+                <Input id="testemunha2-rg" value={testemunha2Rg} onChange={(e) => setTestemunha2Rg(maskRG(e.target.value))} placeholder="00.000.000-0" />
+              </div>
             </div>
           </div>
+          <p className="text-xs text-muted-foreground">
+            CPF e RG das testemunhas são opcionais aqui — se não preencher, a própria testemunha informa ao assinar pelo link.
+          </p>
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePreviewForm} disabled={previewingForm}>
