@@ -42,7 +42,7 @@ export function PhotoLightbox({ photos, open, startIndex = 0, onClose }: PhotoLi
           <img
             src={photos[index]}
             alt={`Foto ${index + 1} de ${photos.length}`}
-            className="max-h-[70vh] w-full object-contain"
+            className="max-h-[70dvh] w-full object-contain"
           />
           {multiple && (
             <>

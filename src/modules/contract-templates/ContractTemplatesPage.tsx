@@ -200,7 +200,7 @@ export function ContractTemplatesPage() {
 
       {/* Editor */}
       <Dialog open={!!editor} onOpenChange={(open) => { if (!open) setEditor(null) }}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{editor?.id ? 'Editar modelo' : 'Novo modelo personalizado'}</DialogTitle>
           </DialogHeader>
@@ -218,7 +218,7 @@ export function ContractTemplatesPage() {
 
       {/* Preview */}
       <Dialog open={!!preview} onOpenChange={(open) => { if (!open) setPreview(null) }}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="max-w-2xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{preview?.name}</DialogTitle>
           </DialogHeader>

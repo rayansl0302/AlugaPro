@@ -114,14 +114,15 @@ export function MarkPaidDialog({ charge, companyId, onClose, onSuccess }: Props)
 
   return (
     <Dialog open={!!charge} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
+      <DialogContent className="flex max-h-[90dvh] max-w-md flex-col gap-0 p-0">
+        <DialogHeader className="shrink-0 border-b px-6 py-4">
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
             Registrar Pagamento
           </DialogTitle>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto px-6 py-5">
         <div className="space-y-5">
           {/* Resumo da cobrança */}
           <div className="rounded-lg border bg-muted/30 p-4 space-y-2 text-sm">
@@ -228,8 +229,9 @@ export function MarkPaidDialog({ charge, companyId, onClose, onSuccess }: Props)
             label="Comprovante (opcional)"
           />
         </div>
+        </div>
 
-        <DialogFooter className="gap-2 pt-2">
+        <DialogFooter className="shrink-0 gap-2 border-t px-6 py-4">
           <Button variant="outline" onClick={onClose} disabled={saving}>
             Cancelar
           </Button>

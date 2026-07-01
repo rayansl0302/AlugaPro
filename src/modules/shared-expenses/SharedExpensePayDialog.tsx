@@ -165,7 +165,7 @@ export function SharedExpensePayDialog({
           </div>
         </div>
 
-        <div className="space-y-2 max-h-[55vh] overflow-y-auto pr-1">
+        <div className="space-y-2 max-h-[60dvh] overflow-y-auto pr-2">
           {expense.participants.map((p, idx) => (
             <div key={idx} className="rounded-lg border p-3 space-y-2">
               <div className="flex items-center justify-between gap-2">

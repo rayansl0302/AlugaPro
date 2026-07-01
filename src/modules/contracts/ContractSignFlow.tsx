@@ -904,7 +904,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
   return (
     <>
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[92vh] flex flex-col p-0 gap-0">
+      <DialogContent className="max-w-2xl max-h-[92dvh] flex flex-col p-0 gap-0">
         {contract ? ((contract.signedAt && !editMode) ? (
           <>
             <DialogHeader className="px-6 py-4 border-b shrink-0">
