@@ -176,7 +176,7 @@ export function LandingPage() {
   const secondaryIsAnchor = !!user
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="light min-h-screen bg-white text-foreground">
       <LandingHeader />
 
       <main>
