@@ -589,7 +589,7 @@ export function MaintenancePage() {
           }
         }}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+        <DialogContent className="flex max-h-[90dvh] max-w-4xl flex-col">
           <DialogHeader>
             <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
@@ -598,8 +598,11 @@ export function MaintenancePage() {
             const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
             const assetLabel = ASSET_TYPE_LABEL[entityPhotos.assetType ?? 'imovel']
             return (
-            <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
-              <div className="space-y-4 overflow-y-auto pr-1">
+            // Mobile: scroll único para todo o conteúdo empilhado.
+            // Desktop: overflow oculto aqui — cada coluna do grid tem seu próprio scroll.
+            <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
+              <div className="grid gap-6 lg:grid-cols-[1fr_300px] lg:h-full">
+              <div className="space-y-4 lg:overflow-y-auto lg:pr-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={statusConfig[viewingRequest.status].variant}>
                     {statusConfig[viewingRequest.status].label}
@@ -668,6 +671,7 @@ export function MaintenancePage() {
                 inputId="gestor-comment"
                 placeholder="Responda ao inquilino ou registre uma observação..."
               />
+            </div>
             </div>
             )
           })()}
