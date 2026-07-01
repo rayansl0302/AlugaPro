@@ -35,7 +35,7 @@ export function PropertyDetail({ property }: { property: Property }) {
             <p className="font-bold">{formatCurrency(property.rentValue)}</p>
           </div>
         </div>
-        {property.cautionValue && (
+        {!!property.cautionValue && (
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <DollarSign className="h-5 w-5 text-muted-foreground" />
             <div>
