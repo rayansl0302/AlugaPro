@@ -124,7 +124,7 @@ export function RecursosPage() {
     : '/login'
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="light min-h-screen bg-white text-foreground">
       <LandingHeader />
 
       <main>

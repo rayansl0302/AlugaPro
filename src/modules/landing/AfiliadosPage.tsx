@@ -55,7 +55,7 @@ export function AfiliadosPage() {
   const ctaLabel = user?.role === 'afiliado' ? 'Ir para o meu painel' : 'Quero ser afiliado'
 
   return (
-    <div className="min-h-screen bg-white text-foreground">
+    <div className="light min-h-screen bg-white text-foreground">
       <LandingHeader />
 
       <main>
