@@ -44,3 +44,9 @@ resources/ios/
 
 .vercel
 .env*
+
+# Keystore de assinatura Android — NUNCA versionar (se perder, não dá pra
+# atualizar o app publicado; se vazar, qualquer um pode assinar como você)
+*.jks
+*.keystore
+alugapro-keystore/

@@ -31,6 +31,7 @@ import { RecursosPage } from '@/modules/landing/RecursosPage'
 import { AfiliadosPage } from '@/modules/landing/AfiliadosPage'
 import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
+import { AccountDeletionPage } from '@/modules/legal/AccountDeletionPage'
 import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
 import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
 import { WhatsAppPage } from '@/modules/settings/WhatsAppPage'
@@ -129,6 +130,10 @@ const router = createBrowserRouter([
   {
     path: '/politica-de-privacidade',
     element: <PrivacyPolicyPage />,
+  },
+  {
+    path: '/exclusao-de-conta',
+    element: <AccountDeletionPage />,
   },
   {
     path: '/',
