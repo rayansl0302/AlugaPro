@@ -14,7 +14,7 @@ const LIST_ITEMS = [
 export function LandingHeroPreview() {
   return (
     <motion.div
-      className="relative w-full max-w-[480px] lg:ml-auto"
+      className="relative w-full min-w-0 max-w-[480px] lg:ml-auto"
       animate={{ y: [0, -10, 0] }}
       transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
     >

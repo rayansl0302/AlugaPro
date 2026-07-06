@@ -190,8 +190,8 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/30">
-      <header className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur dark:bg-gray-900/90">
+    <div className="light pb-safe min-h-screen bg-muted/30">
+      <header className="pt-safe sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)} title="Voltar">
             <ArrowLeft className="h-4 w-4" />

@@ -1,4 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -132,9 +133,19 @@ const router = createBrowserRouter([
   {
     path: '/',
     children: [
-      { index: true, element: <LandingPage /> },
-      { path: 'recursos', element: <RecursosPage /> },
-      { path: 'afiliados', element: <AfiliadosPage /> },
+      // No app nativo (Android/iOS) não existe "site" — a experiência é só
+      // login + sistema autenticado (+ termos/privacidade). As páginas
+      // públicas de marketing (landing, recursos, afiliados) só existem na
+      // versão web.
+      Capacitor.isNativePlatform()
+        ? { index: true, element: <Navigate to="/login" replace /> }
+        : { index: true, element: <LandingPage /> },
+      ...(Capacitor.isNativePlatform()
+        ? []
+        : [
+            { path: 'recursos', element: <RecursosPage /> },
+            { path: 'afiliados', element: <AfiliadosPage /> },
+          ]),
       {
         element: (
           <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>

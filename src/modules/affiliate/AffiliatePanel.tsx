@@ -143,8 +143,8 @@ export function AffiliatePanel() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <header className="sticky top-0 z-10 border-b border-[#032B61]/10 bg-white shadow-sm">
+    <div className="pb-safe min-h-screen bg-slate-50">
+      <header className="pt-safe sticky top-0 z-10 border-b border-[#032B61]/10 bg-white shadow-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link to="/painel-afiliado" className="flex items-center">
             <img src="/logo-completa-horizontal-alugapro.png" alt="AlugaPro" className="h-8 w-auto object-contain" />

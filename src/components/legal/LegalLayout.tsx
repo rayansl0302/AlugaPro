@@ -11,7 +11,7 @@ interface LegalLayoutProps {
 
 export function LegalLayout({ title, updatedAt, children }: LegalLayoutProps) {
   return (
-    <div className="min-h-screen bg-slate-50 text-foreground">
+    <div className="light pb-safe min-h-screen bg-slate-50 text-foreground">
       <LandingHeader />
 
       <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">

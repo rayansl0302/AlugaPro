@@ -32,7 +32,7 @@ export function LandingHeader() {
 
   return (
     <motion.header
-      className="sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-lg"
+      className="pt-safe sticky top-0 z-50 border-b border-slate-200/80 bg-white/90 backdrop-blur-lg"
       initial={{ y: -24, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={easeTransition}

@@ -141,7 +141,7 @@ function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
               </li>
             ))}
           </ul>
-          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>Use o e-mail informado pelo seu gestor no convite. O sistema vinculará automaticamente ao seu contrato.</span>
           </div>
@@ -295,8 +295,9 @@ export function LoginPage() {
     try {
       const effectiveRole = pageMode === 'signup' ? signupRole : role
       await signInWithGoogle(effectiveRole, pageMode === 'signup' && effectiveRole === 'gestor' ? (refCode.trim() || undefined) : undefined)
-    } catch {
-      toast({ title: 'Erro ao entrar com Google', description: 'Tente novamente.', variant: 'destructive' })
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      toast({ title: 'Erro ao entrar com Google', description: msg || 'Tente novamente.', variant: 'destructive' })
     } finally {
       setGoogleLoading(false)
     }
@@ -323,7 +324,7 @@ export function LoginPage() {
   const attemptsUntilLock = LOCKOUT_RULES[0].after - failCount
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div className="light pt-safe pb-safe flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <div className={cn(
         'flex w-full flex-col items-center gap-4',
         pageMode === 'signup' ? 'max-w-4xl' : 'max-w-md',
@@ -347,7 +348,7 @@ export function LoginPage() {
 
               <CardContent>
                 {refCode && signupRole === 'gestor' && (
-                  <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300">
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
                     <Gift className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>Você foi indicado por um parceiro AlugaPro!</span>
                   </div>
@@ -412,7 +413,7 @@ export function LoginPage() {
                 )}
 
                 {signupRole === 'inquilino' && (
-                  <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700 dark:bg-blue-950/30 dark:border-blue-800 dark:text-blue-300">
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>Use o e-mail informado pelo seu gestor no convite. O sistema vinculará sua conta automaticamente.</span>
                   </div>

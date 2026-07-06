@@ -79,7 +79,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r bg-card transition-transform duration-300 ease-in-out',
+          'pt-safe pb-safe fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full flex-col border-r bg-card transition-transform duration-300 ease-in-out',
           mobileOpen && 'translate-x-0',
           'md:relative md:z-auto md:translate-x-0 md:transition-[width]',
           collapsed ? 'md:w-16' : 'md:w-64'

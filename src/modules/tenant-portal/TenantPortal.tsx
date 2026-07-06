@@ -618,7 +618,7 @@ export function TenantPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-gray-950">
+    <div className="light pb-safe min-h-screen bg-slate-50">
 
       <TenantPortalHeader />
 

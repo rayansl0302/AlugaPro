@@ -185,9 +185,9 @@ export function LandingPage() {
           <div className="pointer-events-none absolute -left-20 top-1/3 h-64 w-64 rounded-full bg-sky-100/50 blur-3xl" />
           <div className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-emerald-100/40 blur-3xl" />
 
-          <div className="relative mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-20">
+          <div className="relative mx-auto grid grid-cols-1 max-w-6xl gap-10 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-14 lg:py-20">
             <motion.div
-              className="max-w-xl"
+              className="min-w-0 max-w-xl"
               variants={staggerContainer(0.12, 0.2)}
               initial="hidden"
               animate="visible"

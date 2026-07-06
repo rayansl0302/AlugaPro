@@ -19,7 +19,7 @@ export function TenantPortalHeader() {
     exact ? location.pathname === href : location.pathname.startsWith(href)
 
   return (
-    <header className="sticky top-0 z-10 border-b border-[#032B61]/10 bg-white shadow-sm">
+    <header className="pt-safe sticky top-0 z-10 border-b border-[#032B61]/10 bg-white shadow-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4">
         <div className="flex min-w-0 items-center gap-4">
           <Link to="/portal" className="flex shrink-0 items-center">

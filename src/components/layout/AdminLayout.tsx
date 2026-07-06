@@ -41,7 +41,7 @@ export function AdminLayout() {
     'AlugaPro'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="pt-safe pb-safe flex h-screen overflow-hidden bg-background">
       <Sidebar
         collapsed={sidebarCollapsed}
         onToggle={() => setSidebarCollapsed((v) => !v)}

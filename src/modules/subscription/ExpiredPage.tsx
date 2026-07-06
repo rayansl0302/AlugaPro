@@ -18,7 +18,7 @@ export function ExpiredPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-6">
+    <div className="pt-safe pb-safe min-h-screen bg-background flex flex-col items-center justify-center p-6">
       <div className="max-w-2xl w-full space-y-8 text-center">
         <div className="flex flex-col items-center gap-3">
           <div className="rounded-full bg-muted p-4">

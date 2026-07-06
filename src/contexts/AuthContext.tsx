@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from 'react
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithCredential,
   GoogleAuthProvider,
   signOut,
   sendPasswordResetEmail,
@@ -10,6 +11,8 @@ import {
   updateProfile,
   User as FirebaseUser,
 } from 'firebase/auth'
+import { Capacitor } from '@capacitor/core'
+import { SocialLogin } from '@capgo/capacitor-social-login'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
 import { User, UserRole } from '@/types'
@@ -23,6 +26,14 @@ import { queryClient } from '@/lib/queryClient'
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
 const ROLE_HINT_KEY = 'alugapro_role_hint'
 
+// Web Client ID (OAuth) do projeto Firebase — usado pelo login nativo do
+// Google no Android/iOS (Firebase Console > Authentication > Sign-in method
+// > Google > Web SDK configuration). No app nativo, signInWithPopup não
+// funciona dentro do WebView (cai pro navegador do sistema e a pessoa não
+// consegue voltar) — por isso ali usamos o plugin nativo em vez do popup.
+const GOOGLE_WEB_CLIENT_ID = '792130538801-bm37u2uab4j0grkl7ceirv7fqdegpact.apps.googleusercontent.com'
+let googleSocialLoginInitialized = false
+
 // Afiliados do programa de indicação — pessoa física/jurídica externa que
 // indica o AlugaPro, não é uma empresa-cliente. companyId fixo independente
 // do que estiver salvo no doc do Firestore, para nunca misturar com dados
@@ -33,6 +44,12 @@ type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
 
 function isAdminEmail(email?: string | null) {
   return !!email && ADMIN_EMAILS.includes(email.toLowerCase())
+}
+
+async function ensureGoogleSocialLoginInitialized() {
+  if (googleSocialLoginInitialized) return
+  await SocialLogin.initialize({ google: { webClientId: GOOGLE_WEB_CLIENT_ID } })
+  googleSocialLoginInitialized = true
 }
 
 function baseProfile(
@@ -295,6 +312,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async (intendedRole: LoginRole = 'gestor', refCode?: string) => {
     localStorage.setItem(ROLE_HINT_KEY, intendedRole)
+
+    if (Capacitor.isNativePlatform()) {
+      // signInWithPopup não funciona dentro do WebView do Capacitor — ele cai
+      // pro navegador do sistema e a pessoa fica sem volta pro app. No app
+      // nativo usamos o seletor de conta do Google nativo (sem navegador).
+      await ensureGoogleSocialLoginInitialized()
+      // Não passar `scopes` aqui: o plugin já inclui email/profile/openid por
+      // padrão, e escopos customizados exigem modificar a MainActivity nativa
+      // (ModifiedMainActivityForSocialLoginPlugin), o que não precisamos.
+      const { result } = await SocialLogin.login({ provider: 'google', options: {} })
+      const idToken = 'idToken' in result ? result.idToken : undefined
+      if (!idToken) throw new Error('Login com Google cancelado ou sem token.')
+      const credential = GoogleAuthProvider.credential(idToken)
+      const cred = await signInWithCredential(auth, credential)
+      setUser(await resolveUserProfile(cred.user, intendedRole, refCode))
+      return
+    }
+
     const provider = new GoogleAuthProvider()
     provider.setCustomParameters({ prompt: 'select_account' })
     const cred = await signInWithPopup(auth, provider)

@@ -140,6 +140,16 @@ html {
   --safe-area-right: env(safe-area-inset-right, 0px);
 }
 
+/* Aplicar diretamente no elemento raiz de cada tela (min-h-screen/h-screen),
+   nunca num ancestral — como o valor vira padding do próprio elemento (que já
+   usa border-box), o vh continua correto sem cortar conteúdo embaixo. */
+.pt-safe {
+  padding-top: var(--safe-area-top);
+}
+.pb-safe {
+  padding-bottom: var(--safe-area-bottom);
+}
+
 /* Impede bounce scroll no iOS que aparece fora do app */
 body {
   overscroll-behavior: none;

@@ -88,13 +88,10 @@ git push            # no Mac: git pull && npx cap sync ios
 
 ## Ícones e Splash Screen
 
-Coloque os arquivos em `resources/`:
-- `icon.png` — **1024×1024px**, sem transparência
-- `splash.png` — **2732×2732px**, logo centralizado
-
-Depois rode:
+Já gerados a partir da logo real do AlugaPro (`resources/logo.png`, fundo branco).
+Pra regenerar depois de trocar a logo, veja [resources/README.md](resources/README.md):
 ```bash
-npx @capacitor/assets generate
+npx capacitor-assets generate --assetPath resources --iconBackgroundColor '#FFFFFF' --splashBackgroundColor '#FFFFFF' --android
 npm run build:mobile
 ```
 
