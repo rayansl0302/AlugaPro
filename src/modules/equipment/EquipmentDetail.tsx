@@ -1,20 +1,22 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DollarSign, User, Tag, HardHat, Hash } from 'lucide-react'
 import { Equipment, EquipmentStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
 
-const statusConfig: Record<EquipmentStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'secondary' | 'destructive' }> = {
-  disponivel: { label: 'Disponível', variant: 'success' },
-  alugado: { label: 'Alugado', variant: 'info' },
-  reservado: { label: 'Reservado', variant: 'warning' },
-  manutencao: { label: 'Manutenção', variant: 'secondary' },
-  encerrado: { label: 'Encerrado', variant: 'destructive' },
+const statusVariant: Record<EquipmentStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
+  disponivel: 'success',
+  alugado: 'info',
+  reservado: 'warning',
+  manutencao: 'secondary',
+  encerrado: 'destructive',
 }
 
 export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
-  const sc = statusConfig[equipment.status]
+  const { t } = useTranslation('equipment')
+  const variant = statusVariant[equipment.status]
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({ open: false, index: 0 })
   const photos = equipment.photos ?? []
   return (
@@ -26,14 +28,14 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
             {equipment.code}{equipment.brand ? ` — ${equipment.brand} ${equipment.model}` : ` — ${equipment.model}`}
           </p>
         </div>
-        <Badge variant={sc.variant}>{sc.label}</Badge>
+        <Badge variant={variant}>{t(`common:status.${equipment.status}`)}</Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <DollarSign className="h-5 w-5 text-primary" />
           <div>
-            <p className="text-xs text-muted-foreground">Valor do Aluguel</p>
+            <p className="text-xs text-muted-foreground">{t('fields.rentValue')}</p>
             <p className="font-bold">{formatCurrency(equipment.rentValue)}</p>
           </div>
         </div>
@@ -41,7 +43,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <DollarSign className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Caução</p>
+              <p className="text-xs text-muted-foreground">{t('caution')}</p>
               <p className="font-bold">{formatCurrency(equipment.cautionValue)}</p>
             </div>
           </div>
@@ -49,7 +51,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <Tag className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Tipo</p>
+            <p className="text-xs text-muted-foreground">{t('form.type')}</p>
             <p className="font-medium">{equipment.type}</p>
           </div>
         </div>
@@ -57,7 +59,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Hash className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Nº de Série / Patrimônio</p>
+              <p className="text-xs text-muted-foreground">{t('form.serialNumber')}</p>
               <p className="font-mono font-medium">{equipment.serialNumber}</p>
             </div>
           </div>
@@ -66,7 +68,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <HardHat className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Valor de Aquisição</p>
+              <p className="text-xs text-muted-foreground">{t('form.purchaseValue')}</p>
               <p className="font-medium">{formatCurrency(equipment.purchaseValue)}</p>
             </div>
           </div>
@@ -75,7 +77,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <User className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Locatário Atual</p>
+              <p className="text-xs text-muted-foreground">{t('currentTenant')}</p>
               <p className="font-medium">{equipment.activeTenantName}</p>
             </div>
           </div>
@@ -91,7 +93,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
               onClick={() => setLightbox({ open: true, index: idx })}
               className="aspect-square overflow-hidden rounded-lg border bg-muted/30"
             >
-              <img src={url} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover transition-transform hover:scale-105" />
+              <img src={url} alt={t('fields.photoAlt', { index: idx + 1 })} className="h-full w-full object-cover transition-transform hover:scale-105" />
             </button>
           ))}
         </div>
@@ -106,7 +108,7 @@ export function EquipmentDetail({ equipment }: { equipment: Equipment }) {
 
       {equipment.notes && (
         <div className="rounded-lg border p-4">
-          <p className="text-xs font-medium text-muted-foreground">Observações</p>
+          <p className="text-xs font-medium text-muted-foreground">{t('form.observations')}</p>
           <p className="mt-1 text-sm">{equipment.notes}</p>
         </div>
       )}

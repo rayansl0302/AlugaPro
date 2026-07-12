@@ -1,14 +1,15 @@
 import { type ClassValue, clsx } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import { format, differenceInDays, isAfter, isBefore, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { getDateFnsLocale, getNumberLocale } from '@/i18n/dateLocales'
+import i18n from '@/i18n'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
 export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('pt-BR', {
+  return new Intl.NumberFormat(getNumberLocale(i18n.language), {
     style: 'currency',
     currency: 'BRL',
   }).format(value)
@@ -16,11 +17,12 @@ export function formatCurrency(value: number): string {
 
 export function formatDate(date: string | Date, pattern = 'dd/MM/yyyy'): string {
   const d = typeof date === 'string' ? parseISO(date) : date
-  return format(d, pattern, { locale: ptBR })
+  return format(d, pattern, { locale: getDateFnsLocale(i18n.language) })
 }
 
 export function formatDatetime(date: string | Date): string {
-  return formatDate(date, "dd/MM/yyyy 'às' HH:mm")
+  const at = i18n.language?.startsWith('en') ? "'at'" : i18n.language?.startsWith('es') ? "'a las'" : "'às'"
+  return formatDate(date, `dd/MM/yyyy ${at} HH:mm`)
 }
 
 export function formatDateOptional(
@@ -31,7 +33,7 @@ export function formatDateOptional(
   if (!date) return fallback
   const d = typeof date === 'string' ? parseISO(date) : date
   if (Number.isNaN(d.getTime())) return fallback
-  return format(d, pattern, { locale: ptBR })
+  return format(d, pattern, { locale: getDateFnsLocale(i18n.language) })
 }
 
 export function formatCPF(cpf: string): string {

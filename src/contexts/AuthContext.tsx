@@ -15,12 +15,14 @@ import { Capacitor } from '@capacitor/core'
 import { SocialLogin } from '@capgo/capacitor-social-login'
 import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore'
 import { auth, db } from '@/lib/firebase'
-import { User, UserRole } from '@/types'
+import { User, UserRole, AppLocale } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 import { getInviteByEmail } from '@/services/invites'
 import { createTrialSubscription, getSubscription } from '@/services/subscription'
 import { createReferral } from '@/services/affiliateReferrals'
 import { queryClient } from '@/lib/queryClient'
+import i18n from '@/i18n'
+import { LOCALE_STORAGE_KEY, isAppLocale, normalizeLocale } from '@/i18n/locales'
 
 // ── Admins reais (somente estes e-mails recebem o papel de administrador) ──────
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
@@ -32,6 +34,10 @@ const ROLE_HINT_KEY = 'alugapro_role_hint'
 // funciona dentro do WebView (cai pro navegador do sistema e a pessoa não
 // consegue voltar) — por isso ali usamos o plugin nativo em vez do popup.
 const GOOGLE_WEB_CLIENT_ID = '792130538801-bm37u2uab4j0grkl7ceirv7fqdegpact.apps.googleusercontent.com'
+// iOS Client ID — obrigatório pro login Google no app iOS. Gerado ao registrar
+// o app iOS (bundle com.alugapro.app) no Firebase: baixe o GoogleService-Info.plist
+// e copie o valor de CLIENT_ID aqui antes do build iOS. Vazio = iOS ainda não configurado.
+const GOOGLE_IOS_CLIENT_ID = ''
 let googleSocialLoginInitialized = false
 
 // Afiliados do programa de indicação — pessoa física/jurídica externa que
@@ -48,7 +54,17 @@ function isAdminEmail(email?: string | null) {
 
 async function ensureGoogleSocialLoginInitialized() {
   if (googleSocialLoginInitialized) return
-  await SocialLogin.initialize({ google: { webClientId: GOOGLE_WEB_CLIENT_ID } })
+  if (Capacitor.getPlatform() === 'ios' && !GOOGLE_IOS_CLIENT_ID) {
+    throw new Error('Login Google no iOS ainda não configurado (falta GOOGLE_IOS_CLIENT_ID).')
+  }
+  await SocialLogin.initialize({
+    google: {
+      webClientId: GOOGLE_WEB_CLIENT_ID,
+      ...(GOOGLE_IOS_CLIENT_ID
+        ? { iOSClientId: GOOGLE_IOS_CLIENT_ID, iOSServerClientId: GOOGLE_WEB_CLIENT_ID }
+        : {}),
+    },
+  })
   googleSocialLoginInitialized = true
 }
 
@@ -72,6 +88,7 @@ function baseProfile(
     phoneVerified: docData?.phoneVerified ?? false,
     phoneVerifiedAt: docData?.phoneVerifiedAt,
     avatar: docData?.avatar ?? fbUser.photoURL ?? undefined,
+    locale: isAppLocale(docData?.locale) ? docData.locale : undefined,
     active: docData?.active ?? true,
     createdAt: docData?.createdAt ?? Timestamp.now(),
     updatedAt: docData?.updatedAt ?? Timestamp.now(),
@@ -259,6 +276,7 @@ interface AuthContextValue {
   resetPassword: (email: string) => Promise<void>
   updateLocalUser: (patch: Partial<User>) => void
   refreshProfile: () => Promise<void>
+  setLocale: (locale: AppLocale) => Promise<void>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -282,7 +300,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setFirebaseUser(fbUser)
       if (fbUser) {
         const hint = (localStorage.getItem(ROLE_HINT_KEY) as UserRole) || 'gestor'
-        setUser(await resolveUserProfile(fbUser, hint))
+        const profile = await resolveUserProfile(fbUser, hint)
+        setUser(profile)
+        if (profile.locale) {
+          const normalized = normalizeLocale(profile.locale)
+          void i18n.changeLanguage(normalized)
+          try {
+            localStorage.setItem(LOCALE_STORAGE_KEY, normalized)
+          } catch {
+            // ignore
+          }
+        }
       } else {
         if (!sessionStorage.getItem(DEMO_SESSION_KEY)) setUser(null)
       }
@@ -291,6 +319,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return unsubscribe
   }, [])
 
+  const setLocale = async (locale: AppLocale) => {
+    const normalized = normalizeLocale(locale)
+    await i18n.changeLanguage(normalized)
+    try {
+      localStorage.setItem(LOCALE_STORAGE_KEY, normalized)
+    } catch {
+      // ignore
+    }
+
+    const uid = firebaseUser?.uid
+    if (uid) {
+      try {
+        await setDoc(
+          doc(db, 'users', uid),
+          { locale: normalized, updatedAt: serverTimestamp() },
+          { merge: true }
+        )
+      } catch {
+        // Firestore unavailable — keep local preference
+      }
+    }
+
+    setUser((prev) => {
+      if (!prev) return prev
+      const next = { ...prev, locale: normalized }
+      if (sessionStorage.getItem(DEMO_SESSION_KEY)) {
+        sessionStorage.setItem(DEMO_SESSION_KEY, JSON.stringify(next))
+      }
+      return next
+    })
+  }
   const signIn = async (email: string, password: string, intendedRole: LoginRole = 'gestor') => {
     const demoUser = DEMO_USERS[email.toLowerCase()]
     if (demoUser && password === DEMO_PASSWORD) {
@@ -368,7 +427,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signUp, signInWithGoogle, logout, resetPassword, updateLocalUser, refreshProfile }}>
+    <AuthContext.Provider value={{ firebaseUser, user, loading, signIn, signUp, signInWithGoogle, logout, resetPassword, updateLocalUser, refreshProfile, setLocale }}>
       {children}
     </AuthContext.Provider>
   )

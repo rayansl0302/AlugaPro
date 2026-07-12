@@ -8,8 +8,12 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Registro manual em main.tsx: dentro do app nativo (Capacitor) o SW
+      // não deve rodar — os assets já vêm empacotados no APK/IPA e o cache
+      // do Workbox serviria bundle antigo depois de atualizar o app.
+      injectRegister: false,
       workbox: {
-        maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       includeAssets: ['favicon.svg', 'favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'],
       manifest: {

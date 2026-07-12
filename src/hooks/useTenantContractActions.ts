@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Contract } from '@/types'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { contractPDFToBlob, downloadContractPDF } from '@/lib/contractPDF'
+import { openOrShareBlob } from '@/lib/nativeFile'
 import { toast } from '@/hooks/useToast'
 
 export function useTenantContractActions() {
@@ -14,7 +15,7 @@ export function useTenantContractActions() {
       setLoadingAction('view')
       try {
         const doc = await generateSignedContractPDF(contract)
-        window.open(URL.createObjectURL(contractPDFToBlob(doc)), '_blank')
+        await openOrShareBlob(contractPDFToBlob(doc), `Contrato_${contract.contractNumber}.pdf`)
       } catch {
         toast({ title: 'Erro ao gerar o contrato.', variant: 'destructive' })
       } finally {
@@ -36,7 +37,7 @@ export function useTenantContractActions() {
       setLoadingAction('download')
       try {
         const doc = await generateSignedContractPDF(contract)
-        downloadContractPDF(doc, `Contrato_${contract.contractNumber}.pdf`)
+        await downloadContractPDF(doc, `Contrato_${contract.contractNumber}.pdf`)
       } catch {
         toast({ title: 'Erro ao baixar o contrato.', variant: 'destructive' })
       } finally {

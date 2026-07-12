@@ -1,0 +1,93 @@
+{
+  "title": "Advertências",
+  "subtitle": "Registre e acompanhe advertências aos inquilinos.",
+  "add": "Nova advertência",
+  "new": "Nova advertência",
+  "edit": "Editar advertência",
+  "delete": "Excluir advertência",
+  "view": "Ver advertência",
+  "searchPlaceholder": "Buscar por inquilino ou motivo...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todas",
+    "status": "Status",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhuma advertência registrada",
+    "description": "Registre advertências quando necessário.",
+    "noResults": "Nenhuma advertência encontrada com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados da advertência",
+    "tenant": "Inquilino",
+    "property": "Imóvel",
+    "contract": "Contrato",
+    "reason": "Motivo",
+    "description": "Descrição",
+    "date": "Data",
+    "severity": "Gravidade",
+    "status": "Status"
+  },
+  "detail": {
+    "title": "Detalhes da advertência",
+    "overview": "Visão geral",
+    "history": "Histórico"
+  },
+  "severities": {
+    "leve": "Leve",
+    "media": "Média",
+    "grave": "Grave"
+  },
+  "statuses": {
+    "aberta": "Aberta",
+    "enviada": "Enviada",
+    "resolvida": "Resolvida",
+    "cancelada": "Cancelada"
+  },
+  "toast": {
+    "created": "Advertência registrada com sucesso.",
+    "updated": "Advertência atualizada com sucesso.",
+    "deleted": "Advertência removida.",
+    "loadError": "Erro ao carregar advertências.",
+    "createError": "Erro ao registrar advertência.",
+    "updateError": "Erro ao atualizar advertência.",
+    "deleteError": "Erro ao remover advertência.",
+    "deleteConfirm": "Remover esta advertência? Esta ação não pode ser desfeita."
+  },
+  "searchPlaceholderPage": "Buscar inquilino ou imóvel...",
+  "newWarning": "Nova Advertência",
+  "warn": "Advertir",
+  "totalWarnings": "Total de advertências",
+  "warnedTenants": "Inquilinos advertidos",
+  "atRisk": "Em risco de rescisão (≥4)",
+  "emptyDescription": "Ótimo sinal — nenhum inquilino foi advertido até agora.",
+  "warningCount": "{{count}} advertência",
+  "warningCount_plural": "{{count}} advertências",
+  "rescissionNotice": "Limite de 4 advertências atingido — o proprietário pode rescindir o contrato imediatamente, sem devolução dos valores pagos, conforme cláusula contratual.",
+  "issuedBy": "{{date}} — por {{name}}",
+  "remove": "Remover",
+  "audioCount": "{{count}} áudio(s)",
+  "itemLabel": "inquilinos",
+  "tenantFallback": "Inquilino",
+  "warningForm": {
+    "tenantContract": "Inquilino / Contrato *",
+    "selectActiveContract": "Selecione o contrato ativo",
+    "searchTenant": "Buscar inquilino...",
+    "noActiveContracts": "Nenhum contrato ativo encontrado.",
+    "clauseReference": "Cláusula contratual referenciada",
+    "clausePlaceholder": "Ex: Cláusula 11.2 — Do sossego",
+    "reason": "Motivo da advertência *",
+    "reasonPlaceholder": "Descreva detalhadamente o ocorrido...",
+    "photos": "Fotos (prova)",
+    "audios": "Áudios (prova, se houver)",
+    "rescissionInfo": "A advertência fica registrada permanentemente e visível para o inquilino. Ao atingir 4 advertências, o contrato passa a permitir rescisão imediata por parte do proprietário, conforme cláusula contratual.",
+    "submit": "Registrar Advertência",
+    "toast": {
+      "selectContract": "Selecione o contrato/inquilino.",
+      "describeReason": "Descreva o motivo da advertência.",
+      "attachEvidence": "Anexe ao menos uma prova (foto ou áudio).",
+      "created": "Advertência registrada."
+    }
+  }
+}

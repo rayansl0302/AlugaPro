@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
+import i18n from '@/i18n'
+import { getDateFnsLocale } from '@/i18n/dateLocales'
 import { useState, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addMonths, format, setDate, endOfMonth, startOfMonth,
 } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import {
   DollarSign, CheckCircle, Clock, AlertTriangle, Users,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus, Search, FileCheck, Eye,
@@ -37,16 +39,7 @@ const MONTHS_BACK  = 3
 const MONTHS_FWD   = 2
 const TOTAL_MONTHS = MONTHS_BACK + 1 + MONTHS_FWD
 
-const EXPENSE_TYPE_LABELS: Record<ExpenseType, string> = {
-  internet:   'Internet',
-  energia:    'Energia',
-  agua:       'Água',
-  gas:        'Gás',
-  iptu:       'IPTU',
-  condominio: 'Condomínio',
-  seguranca:  'Segurança',
-  outro:      'Outro',
-}
+const EXPENSE_TYPE_KEYS: ExpenseType[] = ['internet', 'energia', 'agua', 'gas', 'iptu', 'condominio', 'seguranca', 'outro']
 
 const STATUS_BADGE = { pendente: 'warning', pago: 'success', parcial: 'info' } as const
 
@@ -65,6 +58,7 @@ interface ExpenseCellProps {
 function ExpenseMonthCell({
   expense, monthDate, monthStr, currentMonthStr, todayStr, canManage, onManage,
 }: ExpenseCellProps) {
+  const { t } = useTranslation('sharedExpenses')
   const isCurrentMonth = monthStr === currentMonthStr
   const ring = isCurrentMonth ? 'ring-2 ring-primary ring-offset-1' : ''
   const base = `h-14 w-[64px] shrink-0 flex flex-col items-center justify-center rounded-lg text-xs font-medium transition-all ${ring}`
@@ -95,7 +89,7 @@ function ExpenseMonthCell({
   if (monthStr > currentMonthStr) {
     return (
       <button
-        title="Mês futuro"
+        title={t('futureMonth')}
         onClick={() => canManage && onManage(expense.id)}
         className={cn(
           base,
@@ -105,7 +99,7 @@ function ExpenseMonthCell({
         )}
       >
         <Clock className="h-3.5 w-3.5" />
-        <span className="mt-0.5">agendado</span>
+        <span className="mt-0.5">{t('timeline.scheduled')}</span>
       </button>
     )
   }
@@ -114,7 +108,7 @@ function ExpenseMonthCell({
   if (expense.status === 'pago') {
     return (
       <button
-        title="Todos pagaram"
+        title={t('allPaid')}
         onClick={() => onManage(expense.id)}
         className={cn(
           base,
@@ -123,7 +117,7 @@ function ExpenseMonthCell({
         )}
       >
         <CheckCircle className="h-3.5 w-3.5" />
-        <span className="mt-0.5">pago</span>
+        <span className="mt-0.5">{t('timeline.paid')}</span>
       </button>
     )
   }
@@ -132,7 +126,7 @@ function ExpenseMonthCell({
   if (expense.status === 'parcial') {
     return (
       <button
-        title="Pagamento parcial"
+        title={t('timeline.partialTitle')}
         onClick={() => canManage && onManage(expense.id)}
         className={cn(
           base,
@@ -142,7 +136,7 @@ function ExpenseMonthCell({
         )}
       >
         <Users className="h-3.5 w-3.5" />
-        <span className="mt-0.5">parcial</span>
+        <span className="mt-0.5">{t('timeline.partial')}</span>
       </button>
     )
   }
@@ -160,7 +154,7 @@ function ExpenseMonthCell({
   if (isOverdue) {
     return (
       <button
-        title="Em atraso"
+        title={t('timeline.overdueTitle')}
         onClick={() => canManage && onManage(expense.id)}
         className={cn(
           base,
@@ -170,14 +164,14 @@ function ExpenseMonthCell({
         )}
       >
         <AlertTriangle className="h-3.5 w-3.5" />
-        <span className="mt-0.5">atraso</span>
+        <span className="mt-0.5">{t('timeline.overdue')}</span>
       </button>
     )
   }
 
   return (
     <button
-      title="Pendente"
+      title={t('timeline.pendingTitle')}
       onClick={() => canManage && onManage(expense.id)}
       className={cn(
         base,
@@ -187,7 +181,7 @@ function ExpenseMonthCell({
       )}
     >
       <Clock className="h-3.5 w-3.5" />
-      <span className="mt-0.5">pendente</span>
+      <span className="mt-0.5">{t('timeline.pending')}</span>
     </button>
   )
 }
@@ -195,6 +189,13 @@ function ExpenseMonthCell({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function SharedExpensesPage() {
+  const { t } = useTranslation('sharedExpenses')
+  const { t: tCommon } = useTranslation('common')
+  const expenseTypeLabel = (type: ExpenseType) => t(`types.${type}`, { defaultValue: type })
+  const EXPENSE_TYPE_LABELS = EXPENSE_TYPE_KEYS.reduce((acc, key) => {
+    acc[key] = expenseTypeLabel(key)
+    return acc
+  }, {} as Record<ExpenseType, string>)
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId       = user?.companyId ?? ''
@@ -322,7 +323,7 @@ export function SharedExpensesPage() {
           return { tenantId: tid, tenantName: tname }
         })
       if (participants.length === 0) {
-        toast({ title: 'Informe ao menos um participante.', variant: 'destructive' })
+        toast({ title: t('toast.needParticipant'), variant: 'destructive' })
         return
       }
       const split = splitExpenseEqually(Number(formData.totalAmount), participants)
@@ -344,7 +345,7 @@ export function SharedExpensesPage() {
       }
       await createSharedExpense(payload)
       qc.invalidateQueries({ queryKey: ['sharedExpenses'] })
-      toast({ title: 'Despesa compartilhada criada.' })
+      toast({ title: t('toast.created') })
       setShowForm(false)
       setFormData({
         propertyId: '', propertyName: '', type: 'internet',
@@ -352,7 +353,7 @@ export function SharedExpensesPage() {
         recurring: false, dueDay: '', participantsRaw: '',
       })
     } catch {
-      toast({ title: 'Erro ao criar despesa.', variant: 'destructive' })
+      toast({ title: t('toast.createError'), variant: 'destructive' })
     } finally {
       setFormLoading(false)
     }
@@ -370,7 +371,7 @@ export function SharedExpensesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar despesa ou imóvel..."
+                placeholder={t('searchPlaceholderPage')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 sm:w-64"
@@ -379,10 +380,10 @@ export function SharedExpensesPage() {
             {propertyOptions.length > 1 && (
               <Select value={propertyFilter} onValueChange={setPropertyFilter}>
                 <SelectTrigger className="w-48">
-                  <SelectValue placeholder="Todos os imóveis" />
+                  <SelectValue placeholder={t('allProperties')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos os imóveis</SelectItem>
+                  <SelectItem value="todos">{t('allProperties')}</SelectItem>
                   {propertyOptions.map(([id, name]) => (
                     <SelectItem key={id} value={id}>{name}</SelectItem>
                   ))}
@@ -398,18 +399,18 @@ export function SharedExpensesPage() {
                 size="sm" className="h-7 gap-1.5 px-3"
                 onClick={() => setViewMode('timeline')}
               >
-                <CalendarDays className="h-3.5 w-3.5" /> Calendário
+                <CalendarDays className="h-3.5 w-3.5" /> {t('view.calendar')}
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
                 size="sm" className="h-7 gap-1.5 px-3"
                 onClick={() => setViewMode('list')}
               >
-                <LayoutList className="h-3.5 w-3.5" /> Lista
+                <LayoutList className="h-3.5 w-3.5" /> {t('view.list')}
               </Button>
             </div>
             <Button onClick={() => setShowForm(true)}>
-              <Plus className="mr-1.5 h-4 w-4" /> Nova Despesa
+              <Plus className="mr-1.5 h-4 w-4" /> {t('new')}
             </Button>
           </div>
         </div>
@@ -423,7 +424,7 @@ export function SharedExpensesPage() {
                 size="sm"
                 onClick={() => setStatusFilter(s)}
               >
-                {s === 'todos' ? 'Todos' : s === 'pendente' ? 'Pendente' : s === 'parcial' ? 'Parcial' : 'Pago'}
+                {s === 'todos' ? t('filters.all') : t(`statuses.${s}`)}
               </Button>
             ))}
           </div>
@@ -436,7 +437,7 @@ export function SharedExpensesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Clock className="h-7 w-7 text-yellow-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Pendente</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.pending')}</p>
               <p className="font-bold">{formatCurrency(kpiPending)}</p>
             </div>
           </CardContent>
@@ -445,7 +446,7 @@ export function SharedExpensesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <AlertTriangle className="h-7 w-7 text-red-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Em Atraso</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.overdue')}</p>
               <p className="font-bold text-destructive">{formatCurrency(kpiOverdue)}</p>
             </div>
           </CardContent>
@@ -454,7 +455,7 @@ export function SharedExpensesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <CheckCircle className="h-7 w-7 text-green-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Recebido</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.received')}</p>
               <p className="font-bold text-green-600">{formatCurrency(kpiPaid)}</p>
             </div>
           </CardContent>
@@ -463,7 +464,7 @@ export function SharedExpensesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <DollarSign className="h-7 w-7 text-muted-foreground shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Despesas</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.expenses')}</p>
               <p className="font-bold">{expenses.length}</p>
             </div>
           </CardContent>
@@ -476,8 +477,8 @@ export function SharedExpensesPage() {
             <FileCheck className="h-4 w-4 shrink-0" />
             <span>
               {pendingReceipts === 1
-                ? 'Há 1 comprovante aguardando confirmação de pagamento.'
-                : `Há ${pendingReceipts} comprovantes aguardando confirmação de pagamento.`}
+                ? t('pendingReceiptOne')
+                : t('pendingReceiptMany', { count: pendingReceipts })}
             </span>
           </div>
           {firstPendingReceipt && (
@@ -490,7 +491,7 @@ export function SharedExpensesPage() {
               )}
             >
               <Eye className="mr-1.5 h-4 w-4" />
-              Visualizar comprovante
+              {t('viewReceipt')}
             </Button>
           )}
         </div>
@@ -505,12 +506,12 @@ export function SharedExpensesPage() {
       ) : expenses.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <DollarSign className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhuma despesa compartilhada</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('emptyTitle')}</p>
           <p className="mt-1 text-sm text-muted-foreground/70">
-            Crie despesas de condomínio, internet, energia e divida entre inquilinos
+            {t('emptyHint')}
           </p>
           <Button className="mt-4" onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Nova Despesa
+            <Plus className="mr-2 h-4 w-4" /> {t('new')}
           </Button>
         </div>
       ) : viewMode === 'timeline' ? (
@@ -523,13 +524,13 @@ export function SharedExpensesPage() {
               {/* Month header */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
                 <div className="w-[180px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Despesa / Imóvel
+                  {t('expenseProperty')}
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
-                  Total
+                  {tCommon('ui.total')}
                 </div>
                 <div className="w-[112px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-                  Comprovante
+                  {t('receiptHead')}
                 </div>
                 <Button
                   variant="ghost" size="icon" className="h-6 w-6 shrink-0"
@@ -549,7 +550,7 @@ export function SharedExpensesPage() {
                           isCurrent ? 'text-primary font-bold' : 'text-muted-foreground',
                         )}
                       >
-                        <div className="text-xs uppercase">{format(m, 'MMM', { locale: ptBR })}</div>
+                        <div className="text-xs uppercase">{format(m, 'MMM', { locale: getDateFnsLocale(i18n.language) })}</div>
                         <div className="text-[10px]">{format(m, 'yyyy')}</div>
                         {isCurrent && <div className="mx-auto mt-0.5 h-0.5 w-4 rounded-full bg-primary" />}
                       </div>
@@ -568,7 +569,7 @@ export function SharedExpensesPage() {
               {filteredExpenses.length === 0 ? (
                 <div className="py-16 text-center">
                   <DollarSign className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
-                  <p className="font-medium text-muted-foreground">Nenhuma despesa encontrada</p>
+                  <p className="font-medium text-muted-foreground">{t('emptyFound')}</p>
                 </div>
               ) : filteredExpenses.map((expense, idx) => {
                 const paidCount  = expense.participants.filter((p) => p.status === 'pago').length
@@ -590,19 +591,19 @@ export function SharedExpensesPage() {
                     <div className="w-[180px] shrink-0 min-w-0">
                       <p className="text-sm font-semibold truncate">{expense.description}</p>
                       <p className="text-[11px] text-muted-foreground truncate">{expense.propertyName ?? '—'}</p>
-                      <p className="text-[10px] text-muted-foreground">{paidCount}/{totalCount} pagaram</p>
+                      <p className="text-[10px] text-muted-foreground">{t('paidRatio', { paid: paidCount, total: totalCount })}</p>
                     </div>
                     <div className="w-[72px] shrink-0 text-right pr-2">
                       <p className="text-sm font-bold text-primary">{formatCurrency(expense.totalAmount)}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {expense.recurring ? `dia ${expense.dueDay}` : 'único'}
+                        {expense.recurring ? t('dueDayShort', { day: expense.dueDay }) : t('oneTime')}
                       </p>
                     </div>
                     <div className="w-[112px] shrink-0 flex flex-col items-center justify-center gap-1">
                       {pendingReceiptCount > 0 ? (
                         <>
                           <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
-                            {pendingReceiptCount} aguardando
+                            {t('awaitingCount', { count: pendingReceiptCount })}
                           </Badge>
                           {canManage && firstPendingReceipt && (
                             <Button
@@ -615,7 +616,7 @@ export function SharedExpensesPage() {
                               )}
                             >
                               <Eye className="mr-1 h-3 w-3" />
-                              Validar
+                              {t('validate')}
                             </Button>
                           )}
                         </>
@@ -651,13 +652,13 @@ export function SharedExpensesPage() {
 
           {/* Legend */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Pago</span>
-            <span className="flex items-center gap-1 text-orange-500"><Users className="h-3 w-3" /> Parcial</span>
-            <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> Atrasado</span>
-            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> Comprovante</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> Pendente</span>
-            <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> Agendado</span>
-            <span>— Fora do mês de vencimento</span>
+            <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> {tCommon('status.pago')}</span>
+            <span className="flex items-center gap-1 text-orange-500"><Users className="h-3 w-3" /> {tCommon('status.parcial')}</span>
+            <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> {tCommon('status.atrasado')}</span>
+            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> {t('legend.receipt')}</span>
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> {tCommon('status.pendente')}</span>
+            <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> {t('legend.scheduled')}</span>
+            <span>— {t('legend.outOfRange')}</span>
           </div>
         </div>
 
@@ -677,17 +678,17 @@ export function SharedExpensesPage() {
                       <p className="text-xs text-muted-foreground mt-0.5">
                         {expense.propertyName} •{' '}
                         {expense.recurring
-                          ? `Recorrente • todo dia ${expense.dueDay ?? 1}`
+                          ? t('recurringEveryDay', { day: expense.dueDay ?? 1 })
                           : expense.dueDate
-                            ? `Vence ${formatDateOptional(expense.dueDate)}`
-                            : 'Sem vencimento'}
+                            ? t('dueOn', { date: formatDateOptional(expense.dueDate) })
+                            : t('noDueDate')}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
                       <p className="font-bold text-lg">{formatCurrency(expense.totalAmount)}</p>
                       <Badge variant={STATUS_BADGE[expense.status]} className="text-xs">
-                        {expense.status === 'pendente' ? 'Pendente'
-                          : expense.status === 'pago' ? 'Pago' : 'Parcial'}
+                        {expense.status === 'pendente' ? tCommon('status.pendente')
+                          : expense.status === 'pago' ? tCommon('status.pago') : tCommon('status.parcial')}
                       </Badge>
                     </div>
                   </div>
@@ -695,13 +696,13 @@ export function SharedExpensesPage() {
                 <div className="px-4 pb-4">
                   <div className="mb-2 flex items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1">
-                      <CheckCircle className="h-3 w-3 text-green-500" /> {paidCount} pagos
+                      <CheckCircle className="h-3 w-3 text-green-500" /> {t('paidCount', { count: paidCount })}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Clock className="h-3 w-3 text-yellow-500" /> {pendingCount} pendentes
+                      <Clock className="h-3 w-3 text-yellow-500" /> {t('pendingCount', { count: pendingCount })}
                     </span>
                     <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3" /> {expense.participants.length} participantes
+                      <Users className="h-3 w-3" /> {t('participantsCount', { count: expense.participants.length })}
                     </span>
                   </div>
                   <div className="space-y-1.5">
@@ -714,7 +715,7 @@ export function SharedExpensesPage() {
                           <span className="font-medium">{p.tenantName}</span>
                           {p.paidDate && (
                             <span className="ml-2 text-xs text-muted-foreground">
-                              ({format(new Date(p.paidDate + 'T12:00:00'), 'dd/MM', { locale: ptBR })})
+                              ({format(new Date(p.paidDate + 'T12:00:00'), 'dd/MM', { locale: getDateFnsLocale(i18n.language) })})
                             </span>
                           )}
                         </div>
@@ -727,13 +728,13 @@ export function SharedExpensesPage() {
                               className="h-6 text-[10px] border-orange-300 text-orange-700 px-2"
                               onClick={() => openExpenseManager(expense.id, idx)}
                             >
-                              <Eye className="mr-1 h-3 w-3" /> Validar
+                              <Eye className="mr-1 h-3 w-3" /> {t('validate')}
                             </Button>
                           )}
                           <Badge variant={p.status === 'pago' ? 'success' : 'warning'} className="text-xs">
                             {p.receiptStatus === 'aguardando'
-                              ? 'Comprovante'
-                              : p.status === 'pago' ? 'Pago' : 'Pendente'}
+                              ? t('legend.receipt')
+                              : p.status === 'pago' ? tCommon('status.pago') : tCommon('status.pendente')}
                           </Badge>
                         </div>
                       </div>
@@ -744,7 +745,7 @@ export function SharedExpensesPage() {
                       size="sm" variant="outline" className="mt-3 w-full"
                       onClick={() => openExpenseManager(expense.id)}
                     >
-                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> Gerenciar Pagamentos
+                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" /> {t('managePayments')}
                     </Button>
                   )}
                 </div>
@@ -760,7 +761,7 @@ export function SharedExpensesPage() {
                 rangeStart={cardsPag.rangeStart}
                 rangeEnd={cardsPag.rangeEnd}
                 onPageChange={cardsPag.setPage}
-                itemLabel="despesas"
+                itemLabel={t('itemLabel')}
               />
             </div>
           )}
@@ -779,12 +780,12 @@ export function SharedExpensesPage() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Nova Despesa Compartilhada</DialogTitle>
+            <DialogTitle>{t('new')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label>Tipo</Label>
+                <Label>{tCommon('ui.type')}</Label>
                 <Select
                   value={formData.type}
                   onValueChange={(v) => setFormData((p) => ({ ...p, type: v as ExpenseType }))}
@@ -798,7 +799,7 @@ export function SharedExpensesPage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Valor Total (R$)</Label>
+                <Label>{t('form.totalAmount')}</Label>
                 <Input
                   type="number" step="0.01" placeholder="200,00"
                   value={formData.totalAmount}
@@ -806,23 +807,23 @@ export function SharedExpensesPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Imóvel</Label>
+                <Label>{t('form.property')}</Label>
                 <Combobox
                   options={properties.map((p) => ({ value: p.id, label: p.name, description: p.code }))}
                   value={formData.propertyId}
                   onChange={(value, option) =>
                     setFormData((p) => ({ ...p, propertyId: value, propertyName: option.label }))
                   }
-                  placeholder="Selecione o imóvel"
-                  searchPlaceholder="Buscar imóvel..."
-                  emptyText="Nenhum imóvel cadastrado."
+                  placeholder={t('selectProperty')}
+                  searchPlaceholder={t('searchProperty')}
+                  emptyText={t('emptyProperty')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>{formData.recurring ? 'Dia do Vencimento' : 'Data de Vencimento'}</Label>
+                <Label>{formData.recurring ? t('form.dueDayLabel') : t('form.dueDateLabel')}</Label>
                 {formData.recurring ? (
                   <Input
-                    type="number" min={1} max={28} placeholder="Ex.: 10"
+                    type="number" min={1} max={28} placeholder={t('form.dueDayPlaceholder')}
                     value={formData.dueDay}
                     onChange={(e) => setFormData((p) => ({ ...p, dueDay: e.target.value }))}
                   />
@@ -838,11 +839,11 @@ export function SharedExpensesPage() {
                     checked={formData.recurring}
                     onChange={(e) => setFormData((p) => ({ ...p, recurring: e.target.checked }))}
                   />
-                  Recorrente mensal
+                  {t('form.recurringMonthly')}
                 </label>
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Descrição (opcional)</Label>
+                <Label>{t('form.descriptionOptional')}</Label>
                 <Input
                   placeholder={EXPENSE_TYPE_LABELS[formData.type]}
                   value={formData.description}
@@ -852,28 +853,28 @@ export function SharedExpensesPage() {
             </div>
 
             <div className="space-y-1.5">
-              <Label>Participantes</Label>
+              <Label>{t('form.participants')}</Label>
               <Combobox
                 options={tenants.map((t) => ({ value: t.id, label: t.name, description: t.cpf }))}
                 value=""
                 onChange={(value, option) => addParticipant(value, option.label)}
-                placeholder="Adicionar inquilino..."
-                searchPlaceholder="Buscar inquilino..."
-                emptyText="Nenhum inquilino cadastrado."
+                placeholder={t('addTenant')}
+                searchPlaceholder={t('searchTenant')}
+                emptyText={t('emptyTenant')}
               />
               <textarea
                 className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                placeholder="Selecione os inquilinos acima"
+                placeholder={t('selectTenantsPlaceholder')}
                 value={formData.participantsRaw}
                 onChange={(e) => setFormData((p) => ({ ...p, participantsRaw: e.target.value }))}
               />
               <p className="text-xs text-muted-foreground">
-                O valor será dividido igualmente entre os participantes.
+                {t('form.splitHint')}
               </p>
             </div>
 
             <Button className="w-full" onClick={handleCreate} disabled={formLoading}>
-              {formLoading ? 'Criando...' : 'Criar Despesa'}
+              {formLoading ? t('creating') : t('createExpense')}
             </Button>
           </div>
         </DialogContent>

@@ -1,0 +1,134 @@
+{
+  "title": "Maintenance",
+  "subtitle": "Manage maintenance tickets and requests.",
+  "add": "Open ticket",
+  "new": "New ticket",
+  "edit": "Edit ticket",
+  "delete": "Delete ticket",
+  "view": "View ticket",
+  "searchPlaceholder": "Search tickets...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "category": "Category",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No open tickets",
+    "description": "Open a ticket when maintenance is needed.",
+    "noResults": "No tickets match the current filters."
+  },
+  "form": {
+    "title": "Ticket details",
+    "ticketTitle": "Title",
+    "category": "Category",
+    "status": "Status",
+    "property": "Property",
+    "tenant": "Tenant",
+    "description": "Description",
+    "priority": "Priority",
+    "photos": "Photos",
+    "comment": "Comment"
+  },
+  "detail": {
+    "title": "Ticket details",
+    "overview": "Overview",
+    "comments": "Comments",
+    "photos": "Photos",
+    "history": "History"
+  },
+  "categories": {
+    "eletrica": "Electrical",
+    "hidraulica": "Plumbing",
+    "pintura": "Painting",
+    "estrutura": "Structure",
+    "limpeza": "Cleaning",
+    "seguranca": "Security",
+    "outro": "Other"
+  },
+  "statuses": {
+    "aberto": "Open",
+    "em_analise": "Under review",
+    "em_andamento": "In progress",
+    "finalizado": "Done"
+  },
+  "roles": {
+    "inquilino": "Tenant",
+    "gestor": "Manager",
+    "proprietario": "Owner",
+    "admin": "Administrator",
+    "afiliado": "Affiliate"
+  },
+  "statusHistory": {
+    "title": "Status history",
+    "currentNoHistory": "Current status (no history logged)",
+    "from": "from {{status}}"
+  },
+  "commentsPanel": {
+    "title": "Comments",
+    "messagesCount": "{{count}} message(s)",
+    "empty": "No comments yet.",
+    "newComment": "New comment",
+    "send": "Send comment",
+    "sending": "Sending...",
+    "writeComment": "Write a comment..."
+  },
+  "priorities": {
+    "baixa": "Low",
+    "media": "Medium",
+    "alta": "High",
+    "urgente": "Urgent"
+  },
+  "toast": {
+    "created": "Ticket opened successfully.",
+    "updated": "Ticket updated successfully.",
+    "deleted": "Ticket deleted successfully.",
+    "loadError": "Failed to load tickets.",
+    "createError": "Failed to open ticket.",
+    "updateError": "Failed to update ticket.",
+    "deleteError": "Failed to delete ticket.",
+    "deleteConfirm": "Are you sure you want to delete this ticket?",
+    "statusUpdated": "Status updated.",
+    "statusError": "Failed to update status.",
+    "commentSent": "Comment sent.",
+    "commentError": "Failed to send comment.",
+    "requiredFields": "Fill in the required fields."
+  },
+  "openTicket": "Open ticket",
+  "openTicketTitle": "Open maintenance ticket",
+  "opening": "Opening...",
+  "emptyFound": "No tickets found",
+  "selectProperty": "Select property",
+  "searchProperty": "Search property...",
+  "emptyProperty": "No properties registered.",
+  "selectTenant": "Select tenant",
+  "searchTenant": "Search tenant...",
+  "emptyTenant": "No tenants registered.",
+  "titlePlaceholder": "Leaking faucet",
+  "descriptionPlaceholder": "Describe the issue...",
+  "commentPlaceholder": "Reply to the tenant or add a note...",
+  "assetTypes": {
+    "imovel": "Property",
+    "veiculo": "Vehicle",
+    "equipamento": "Equipment"
+  },
+  "table": {
+    "title": "Title",
+    "assetVehicle": "Property / Vehicle",
+    "tenant": "Tenant",
+    "category": "Category",
+    "priority": "Priority",
+    "status": "Status",
+    "openedAt": "Opened at",
+    "actions": "Actions"
+  },
+  "view": {
+    "table": "Table",
+    "cards": "Cards"
+  },
+  "itemLabel": "tickets",
+  "openedAt": "Opened at {{date}}",
+  "ticketStatus": "Ticket status",
+  "priorityWithValue": "Priority {{value}}"
+}

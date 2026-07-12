@@ -1,5 +1,12 @@
 # AlugaPro — Guia de Build Mobile
 
+## ⚠️ Antes de QUALQUER build: o arquivo `.env`
+
+O Vite grava as credenciais do Firebase **dentro do bundle** na hora do build.
+Sem um `.env` na raiz com as chaves `VITE_FIREBASE_*` preenchidas, o app compila
+mas abre em **tela branca** no celular (`auth/invalid-api-key`). Confira que o
+`.env` existe (base: `.env.example`) antes de rodar qualquer `npm run build:*`.
+
 ## Fluxo padrão (a cada atualização do app)
 
 ```bash
@@ -12,6 +19,16 @@ npm run build:mobile   # build web + sync Android e iOS
 
 ### Pré-requisitos
 - [Android Studio](https://developer.android.com/studio) instalado
+- `android/app/google-services.json` presente (baixado do Firebase Console —
+  app Android `com.alugapro.app`). Sem ele o login Google nativo não funciona.
+- SHA-1 do keystore registrado no Firebase (Configurações do projeto → app
+  Android → Adicionar impressão digital). O SHA-1 de **debug** e o de **release**
+  são diferentes — registre os dois, senão o login Google falha no build release.
+  ```bash
+  # SHA-1 do keystore de release:
+  "/Applications/Android Studio.app/Contents/jbr/Contents/Home/bin/keytool" \
+    -list -v -keystore alugapro-keystore/alugapro-release.jks -alias alugapro
+  ```
 
 ### Abrir no Android Studio
 ```bash
@@ -28,7 +45,10 @@ No Android Studio:
 No Android Studio:
 1. **Build → Generate Signed Bundle / APK**
 2. Escolha **Android App Bundle (.aab)**
-3. Crie ou use uma keystore existente — **GUARDE A KEYSTORE COM SEGURANÇA, nunca perca**
+3. Use a keystore existente: `alugapro-keystore/alugapro-release.jks`, alias `alugapro`
+   — **GUARDE A KEYSTORE E AS SENHAS COM SEGURANÇA, nunca perca** (sem ela não
+   dá pra atualizar o app publicado). Ela está no `.gitignore` e NÃO vai pro git;
+   mantenha backup fora do projeto (gerenciador de senhas / drive pessoal).
 4. Preencha: Key alias, Key password, Store password
 5. Build type: **release**
 6. O AAB fica em: `android/app/build/outputs/bundle/release/app-release.aab`
@@ -46,9 +66,18 @@ versionName "1.1"   # versão exibida na loja
 ## iOS (App Store) — Executar no MacBook
 
 ### Pré-requisitos no Mac
-- Xcode 15+ instalado (App Store)
+- Xcode 15+ instalado (App Store) — só as Command Line Tools NÃO bastam
 - CocoaPods: `sudo gem install cocoapods`
 - Conta Apple Developer ($99/ano)
+
+### Pendências específicas do AlugaPro no iOS (fazer antes do primeiro build)
+1. Registrar o app iOS (`com.alugapro.app`) no Firebase Console e baixar o
+   `GoogleService-Info.plist` → colocar em `ios/App/App/`.
+2. Copiar o `CLIENT_ID` desse plist para `GOOGLE_IOS_CLIENT_ID` em
+   `src/contexts/AuthContext.tsx` (sem isso o botão "Entrar com Google" no iOS
+   falha com mensagem explicativa).
+3. Adicionar o URL scheme reverso (`REVERSED_CLIENT_ID` do plist) no
+   `ios/App/App/Info.plist`, conforme docs do `@capgo/capacitor-social-login`.
 
 ### Setup inicial no Mac (apenas uma vez)
 ```bash

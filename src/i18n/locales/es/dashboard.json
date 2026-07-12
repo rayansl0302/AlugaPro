@@ -1,0 +1,62 @@
+{
+  "welcome": {
+    "greeting": "Hola, {{name}}",
+    "title": "Panel",
+    "subtitle": "Visión general de tu operación de alquileres."
+  },
+  "indicators": {
+    "title": "Indicadores",
+    "totalProperties": "Total de inmuebles",
+    "rented": "Alquilados",
+    "vacant": "vacíos",
+    "vacantProperties": "Inmuebles vacíos",
+    "expectedRevenue": "Ingresos previstos",
+    "receivedRevenue": "Ingresos recibidos",
+    "overdue": "Morosos",
+    "overdueCharges": "Cobros vencidos",
+    "pending": "Pendiente",
+    "activeTenants": "Inquilinos activos",
+    "activeContracts": "Contratos activos",
+    "openTickets": "Tickets abiertos"
+  },
+  "charts": {
+    "revenueByMonth": "Ingresos por mes",
+    "revenueByMonthDescription": "Comparativo de ingresos previstos vs recibidos",
+    "occupancy": "Ocupación",
+    "occupancyDescription": "Estado de los inmuebles",
+    "received": "Recibido",
+    "pending": "Pendiente",
+    "rented": "Alquilados",
+    "vacant": "Vacíos",
+    "maintenance": "Mantenimiento",
+    "months": {
+      "jan": "Ene",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Abr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Ago",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dic"
+    }
+  },
+  "recentActivity": {
+    "title": "Actividad reciente",
+    "overdueCharges": "Cobros vencidos",
+    "daysLate": "{{days}}d de atraso",
+    "notify": "Notificar",
+    "whatsAppMissing": "WhatsApp no registrado para este inquilino.",
+    "empty": "Ninguna actividad reciente.",
+    "noOverdue": "Ningún cobro vencido en este momento."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error al cargar los datos.",
+    "retry": "Reintentar",
+    "viewAll": "Ver todos"
+  }
+}

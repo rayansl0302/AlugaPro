@@ -1,0 +1,100 @@
+{
+  "title": "Reports",
+  "subtitle": "Export and view operational reports.",
+  "exportExcel": "Excel",
+  "exportPdf": "Export PDF",
+  "searchPlaceholder": "Search report...",
+  "filters": {
+    "title": "Filters",
+    "period": "Period",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "type": "Report type",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No data for this period",
+    "description": "Adjust the period or wait for new entries.",
+    "noResults": "No results to export.",
+    "noData": "No data to export."
+  },
+  "types": {
+    "financial": "Financial report",
+    "properties": "Properties report",
+    "tenants": "Tenants report",
+    "overdue": "Overdue report",
+    "contracts": "Contracts report",
+    "maintenance": "Maintenance report"
+  },
+  "charts": {
+    "title": "Charts",
+    "revenueByMonth": "Revenue by month",
+    "occupancy": "Occupancy",
+    "overdueTrend": "Overdue trend",
+    "expensesByCategory": "Expenses by category"
+  },
+  "columns": {
+    "period": "Period",
+    "property": "Property",
+    "tenant": "Tenant",
+    "amount": "Amount",
+    "status": "Status",
+    "dueDate": "Due date",
+    "paidAt": "Paid at"
+  },
+  "toast": {
+    "exported": "{{title}} exported as {{format}}.",
+    "exportError": "Failed to export report.",
+    "exportCancelled": "Export cancelled.",
+    "loadError": "Failed to load report.",
+    "noData": "No data to export."
+  },
+  "summary": {
+    "properties": "Properties",
+    "tenants": "Tenants",
+    "totalReceived": "Total received",
+    "overdue": "Overdue"
+  },
+  "exportTitle": "Export reports",
+  "exportCsv": "CSV",
+  "descriptions": {
+    "financial": "All charges and payments in the system",
+    "properties": "Full property registry with status and values",
+    "tenants": "Full tenant list and contract status",
+    "overdue": "Overdue charges with days late"
+  },
+  "sheetNames": {
+    "financial": "Financial",
+    "properties": "Properties",
+    "tenants": "Tenants",
+    "overdue": "Overdue",
+    "data": "Data"
+  },
+  "contractStatus": {
+    "active": "Active",
+    "none": "No contract"
+  },
+  "csvColumns": {
+    "description": "Description",
+    "tenant": "Tenant",
+    "property": "Property",
+    "dueDate": "Due Date",
+    "paymentDate": "Payment Date",
+    "paymentMethod": "Payment Method",
+    "amount": "Amount (R$)",
+    "totalWithCharges": "Total with Charges (R$)",
+    "status": "Status",
+    "code": "Code",
+    "name": "Name",
+    "type": "Type",
+    "address": "Address",
+    "rentValue": "Rent Value (R$)",
+    "currentTenant": "Current Tenant",
+    "cpf": "CPF",
+    "email": "Email",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "contractStatus": "Contract Status",
+    "daysOverdue": "Days Overdue"
+  }
+}

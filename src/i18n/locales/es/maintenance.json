@@ -1,0 +1,134 @@
+{
+  "title": "Mantenimiento",
+  "subtitle": "Gestione tickets y solicitudes de mantenimiento.",
+  "add": "Abrir ticket",
+  "new": "Nuevo ticket",
+  "edit": "Editar ticket",
+  "delete": "Eliminar ticket",
+  "view": "Ver ticket",
+  "searchPlaceholder": "Buscar llamados...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "category": "Categoría",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún ticket abierto",
+    "description": "Abra un ticket cuando se necesite mantenimiento.",
+    "noResults": "Ningún ticket coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del ticket",
+    "ticketTitle": "Título",
+    "category": "Categoría",
+    "status": "Estado",
+    "property": "Inmueble",
+    "tenant": "Inquilino",
+    "description": "Descripción",
+    "priority": "Prioridad",
+    "photos": "Fotos",
+    "comment": "Comentario"
+  },
+  "detail": {
+    "title": "Detalles del ticket",
+    "overview": "Resumen",
+    "comments": "Comentarios",
+    "photos": "Fotos",
+    "history": "Historial"
+  },
+  "categories": {
+    "eletrica": "Eléctrica",
+    "hidraulica": "Hidráulica",
+    "pintura": "Pintura",
+    "estrutura": "Estructura",
+    "limpeza": "Limpieza",
+    "seguranca": "Seguridad",
+    "outro": "Otro"
+  },
+  "statuses": {
+    "aberto": "Abierto",
+    "em_analise": "En análisis",
+    "em_andamento": "En curso",
+    "finalizado": "Finalizado"
+  },
+  "roles": {
+    "inquilino": "Inquilino",
+    "gestor": "Gestor",
+    "proprietario": "Propietario",
+    "admin": "Administrador",
+    "afiliado": "Afiliado"
+  },
+  "statusHistory": {
+    "title": "Historial de estado",
+    "currentNoHistory": "Estado actual (sin historial registrado)",
+    "from": "de {{status}}"
+  },
+  "commentsPanel": {
+    "title": "Comentarios",
+    "messagesCount": "{{count}} mensaje(s)",
+    "empty": "Aún no hay comentarios.",
+    "newComment": "Nuevo comentario",
+    "send": "Enviar comentario",
+    "sending": "Enviando...",
+    "writeComment": "Escribe un comentario..."
+  },
+  "priorities": {
+    "baixa": "Baja",
+    "media": "Media",
+    "alta": "Alta",
+    "urgente": "Urgente"
+  },
+  "toast": {
+    "created": "Llamado abierto con éxito.",
+    "updated": "Ticket actualizado con éxito.",
+    "deleted": "Ticket eliminado con éxito.",
+    "loadError": "Error al cargar tickets.",
+    "createError": "Error al abrir el llamado.",
+    "updateError": "Error al actualizar ticket.",
+    "deleteError": "Error al eliminar ticket.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este ticket?",
+    "statusUpdated": "Estado actualizado.",
+    "statusError": "Error al actualizar el estado.",
+    "commentSent": "Comentario enviado.",
+    "commentError": "Error al enviar el comentario.",
+    "requiredFields": "Complete los campos obligatorios."
+  },
+  "openTicket": "Abrir llamado",
+  "openTicketTitle": "Abrir llamado de mantenimiento",
+  "opening": "Abriendo...",
+  "emptyFound": "Ningún llamado encontrado",
+  "selectProperty": "Seleccione el inmueble",
+  "searchProperty": "Buscar inmueble...",
+  "emptyProperty": "Ningún inmueble registrado.",
+  "selectTenant": "Seleccione el inquilino",
+  "searchTenant": "Buscar inquilino...",
+  "emptyTenant": "Ningún inquilino registrado.",
+  "titlePlaceholder": "Grifo con fuga",
+  "descriptionPlaceholder": "Describa el problema...",
+  "commentPlaceholder": "Responda al inquilino o registre una observación...",
+  "assetTypes": {
+    "imovel": "Inmueble",
+    "veiculo": "Vehículo",
+    "equipamento": "Equipo"
+  },
+  "table": {
+    "title": "Título",
+    "assetVehicle": "Inmueble / Vehículo",
+    "tenant": "Inquilino",
+    "category": "Categoría",
+    "priority": "Prioridad",
+    "status": "Estado",
+    "openedAt": "Abierto el",
+    "actions": "Acciones"
+  },
+  "view": {
+    "table": "Tabla",
+    "cards": "Cards"
+  },
+  "itemLabel": "llamados",
+  "openedAt": "Abierto el {{date}}",
+  "ticketStatus": "Estado del llamado",
+  "priorityWithValue": "Prioridad {{value}}"
+}

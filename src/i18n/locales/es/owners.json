@@ -1,0 +1,82 @@
+{
+  "title": "Propietarios",
+  "subtitle": "Gestione los propietarios de sus activos.",
+  "add": "Agregar propietario",
+  "new": "Nuevo propietario",
+  "edit": "Editar propietario",
+  "delete": "Eliminar propietario",
+  "view": "Ver propietario",
+  "searchPlaceholder": "Buscar por nombre, documento o correo...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún propietario registrado",
+    "description": "Registre el primer propietario para vincular activos.",
+    "noResults": "Ningún propietario coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos personales",
+    "name": "Nombre completo",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "cnpj": "CNPJ",
+    "rg": "Documento de identidad",
+    "birthDate": "Fecha de nacimiento",
+    "nationality": "Nacionalidad",
+    "maritalStatus": "Estado civil",
+    "profession": "Profesión",
+    "address": "Dirección",
+    "street": "Calle",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Barrio",
+    "city": "Ciudad",
+    "state": "Estado",
+    "zipCode": "Código postal",
+    "bankAccount": "Datos bancarios",
+    "pixKey": "Clave PIX",
+    "observations": "Observaciones",
+    "documents": "Documentos"
+  },
+  "detail": {
+    "title": "Detalles del propietario",
+    "personalData": "Datos personales",
+    "contact": "Contacto",
+    "documents": "Documentos",
+    "assets": "Activos",
+    "contracts": "Contratos",
+    "financial": "Financiero",
+    "history": "Historial"
+  },
+  "photoLabel": "Foto del propietario",
+  "cpfMissing": "CPF no informado",
+  "itemLabel": "propietarios",
+  "register": "Registrar",
+  "placeholders": {
+    "name": "María Silva",
+    "email": "maria@email.com"
+  },
+  "validation": {
+    "nameRequired": "Nombre obligatorio",
+    "cpfInvalid": "CPF inválido",
+    "emailInvalid": "Correo inválido",
+    "phoneInvalid": "Teléfono inválido"
+  },
+  "toast": {
+    "created": "Propietario creado con éxito.",
+    "updated": "Propietario actualizado con éxito.",
+    "deleted": "Propietario eliminado con éxito.",
+    "loadError": "Error al cargar propietarios.",
+    "createError": "Error al crear propietario.",
+    "updateError": "Error al actualizar propietario.",
+    "deleteError": "Error al eliminar propietario.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este propietario?",
+    "photoError": "Error al subir la foto."
+  }
+}

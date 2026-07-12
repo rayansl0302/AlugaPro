@@ -1,0 +1,100 @@
+{
+  "title": "Equipment",
+  "subtitle": "Manage equipment available for rent.",
+  "add": "Add equipment",
+  "new": "New equipment",
+  "edit": "Edit equipment",
+  "delete": "Delete equipment",
+  "view": "View equipment",
+  "searchPlaceholder": "Search by name, serial, or category...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "category": "Category",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No equipment yet",
+    "description": "Add your first equipment item to get started.",
+    "noResults": "No equipment matches the current filters."
+  },
+  "form": {
+    "title": "Equipment details",
+    "name": "Name",
+    "serial": "Serial number",
+    "category": "Category",
+    "status": "Status",
+    "value": "Rental value",
+    "brand": "Brand",
+    "model": "Model",
+    "owner": "Owner",
+    "description": "Description",
+    "observations": "Notes",
+    "photos": "Photos",
+    "type": "Type",
+    "serialNumber": "Serial no. / Asset tag",
+    "purchaseValue": "Purchase value",
+    "photosLabel": "Equipment photos"
+  },
+  "placeholders": {
+    "name": "e.g. Concrete mixer 400L",
+    "type": "e.g. Mixer, Laptop, Air conditioner...",
+    "brand": "e.g. CSM",
+    "model": "e.g. CM-400L",
+    "value": "0.00",
+    "notes": "Internal notes...",
+    "selectOwner": "Select the owner",
+    "searchOwner": "Search owner...",
+    "noOwners": "No owners registered."
+  },
+  "hints": {
+    "freeType": "Type freely — not limited to the suggestions list."
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "modelRequired": "Model is required",
+    "typeRequired": "Type is required",
+    "valueRequired": "Value is required",
+    "ownerRequired": "Owner is required"
+  },
+  "buttons": {
+    "save": "Save changes",
+    "create": "Add equipment"
+  },
+  "fields": {
+    "rentValue": "Rental value",
+    "photoAlt": "Photo {{index}}"
+  },
+  "caution": "Security deposit",
+  "currentTenant": "Current tenant",
+  "detail": {
+    "title": "Equipment details",
+    "overview": "Overview",
+    "financial": "Financial",
+    "contracts": "Contracts",
+    "documents": "Documents",
+    "maintenance": "Maintenance",
+    "history": "History"
+  },
+  "statuses": {
+    "disponivel": "Available",
+    "alugado": "Rented",
+    "reservado": "Reserved",
+    "manutencao": "Maintenance",
+    "encerrado": "Closed"
+  },
+  "tenantLabel": "Tenant",
+  "itemLabel": "equipment",
+  "toast": {
+    "created": "Equipment created successfully.",
+    "updated": "Equipment updated successfully.",
+    "deleted": "Equipment deleted successfully.",
+    "loadError": "Failed to load equipment.",
+    "createError": "Failed to create equipment.",
+    "updateError": "Failed to update equipment.",
+    "deleteError": "Failed to delete equipment.",
+    "deleteConfirm": "Are you sure you want to delete this equipment?",
+    "saveError": "Failed to save equipment."
+  }
+}

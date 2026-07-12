@@ -1,35 +1,38 @@
 import { useQuery } from '@tanstack/react-query'
 import { Download, FileText, BarChart3, FileSpreadsheet } from 'lucide-react'
 import * as XLSX from 'xlsx'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { getCharges } from '@/services/charges'
 import { formatCurrency } from '@/lib/utils'
+import { saveOrShareFile } from '@/lib/nativeFile'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from '@/hooks/useToast'
 
-function exportToCSV(data: Record<string, unknown>[], filename: string) {
+async function exportToCSV(data: Record<string, unknown>[], filename: string) {
   if (data.length === 0) return
   const headers = Object.keys(data[0])
   const rows = data.map((row) => headers.map((h) => JSON.stringify(row[h] ?? '')).join(','))
   const csv = [headers.join(','), ...rows].join('\n')
   const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = `${filename}.csv`
-  a.click()
-  URL.revokeObjectURL(url)
+  await saveOrShareFile(blob, `${filename}.csv`)
 }
 
-function exportToXLSX(data: Record<string, unknown>[], filename: string, sheetName = 'Dados') {
+async function exportToXLSX(data: Record<string, unknown>[], filename: string, sheetName = 'Dados') {
   if (data.length === 0) return
   const ws = XLSX.utils.json_to_sheet(data)
   const wb = XLSX.utils.book_new()
   XLSX.utils.book_append_sheet(wb, ws, sheetName)
-  XLSX.writeFile(wb, `${filename}.xlsx`)
+  // XLSX.writeFile depende do download do browser (inexistente no WebView
+  // nativo) — gera o buffer em memória e delega ao helper multiplataforma.
+  const buffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' }) as ArrayBuffer
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  })
+  await saveOrShareFile(blob, `${filename}.xlsx`)
 }
 
 interface ReportDef {
@@ -42,6 +45,7 @@ interface ReportDef {
 }
 
 export function ReportsPage() {
+  const { t } = useTranslation('reports')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
 
@@ -65,92 +69,97 @@ export function ReportsPage() {
 
   const reports: ReportDef[] = [
     {
-      title: 'Relatório Financeiro',
-      description: 'Todas as cobranças e recebimentos do sistema',
+      title: t('types.financial'),
+      description: t('descriptions.financial'),
       icon: BarChart3,
       csvName: 'relatorio-financeiro',
-      sheetName: 'Financeiro',
+      sheetName: t('sheetNames.financial'),
       getData: () =>
         charges.map((c) => ({
-          Descrição: c.description,
-          Inquilino: c.tenantName ?? '',
-          Imóvel: c.propertyName ?? '',
-          Vencimento: c.dueDate ?? '',
-          'Data Pagamento': c.paidDate ?? '',
-          'Forma Pagamento': c.paymentMethod ?? '',
-          'Valor (R$)': c.amount.toFixed(2),
-          'Total com Encargos (R$)': (c.totalAmount ?? c.amount).toFixed(2),
-          Status: c.status,
+          [t('csvColumns.description')]: c.description,
+          [t('csvColumns.tenant')]: c.tenantName ?? '',
+          [t('csvColumns.property')]: c.propertyName ?? '',
+          [t('csvColumns.dueDate')]: c.dueDate ?? '',
+          [t('csvColumns.paymentDate')]: c.paidDate ?? '',
+          [t('csvColumns.paymentMethod')]: c.paymentMethod ?? '',
+          [t('csvColumns.amount')]: c.amount.toFixed(2),
+          [t('csvColumns.totalWithCharges')]: (c.totalAmount ?? c.amount).toFixed(2),
+          [t('csvColumns.status')]: c.status,
         })),
     },
     {
-      title: 'Relatório de Imóveis',
-      description: 'Cadastro completo de imóveis com status e valores',
+      title: t('types.properties'),
+      description: t('descriptions.properties'),
       icon: FileText,
       csvName: 'relatorio-imoveis',
-      sheetName: 'Imóveis',
+      sheetName: t('sheetNames.properties'),
       getData: () =>
         properties.map((p) => ({
-          Código: p.code,
-          Nome: p.name,
-          Tipo: p.type,
-          Status: p.status,
-          Endereço: `${p.address.street}, ${p.address.number} — ${p.address.city}/${p.address.state}`,
-          'Valor Aluguel (R$)': p.rentValue.toFixed(2),
-          'Inquilino Atual': p.activeTenantName ?? '',
+          [t('csvColumns.code')]: p.code,
+          [t('csvColumns.name')]: p.name,
+          [t('csvColumns.type')]: p.type,
+          [t('csvColumns.status')]: p.status,
+          [t('csvColumns.address')]: `${p.address.street}, ${p.address.number} — ${p.address.city}/${p.address.state}`,
+          [t('csvColumns.rentValue')]: p.rentValue.toFixed(2),
+          [t('csvColumns.currentTenant')]: p.activeTenantName ?? '',
         })),
     },
     {
-      title: 'Relatório de Inquilinos',
-      description: 'Lista completa de inquilinos e status de contratos',
+      title: t('types.tenants'),
+      description: t('descriptions.tenants'),
       icon: FileText,
       csvName: 'relatorio-inquilinos',
-      sheetName: 'Inquilinos',
+      sheetName: t('sheetNames.tenants'),
       getData: () =>
-        tenants.map((t) => ({
-          Nome: t.name,
-          CPF: t.cpf,
-          Email: t.email ?? '',
-          Telefone: t.phone ?? '',
-          WhatsApp: t.whatsapp ?? '',
-          'Status Contrato': t.activeContractId ? 'Ativo' : 'Sem contrato',
+        tenants.map((tenant) => ({
+          [t('csvColumns.name')]: tenant.name,
+          [t('csvColumns.cpf')]: tenant.cpf,
+          [t('csvColumns.email')]: tenant.email ?? '',
+          [t('csvColumns.phone')]: tenant.phone ?? '',
+          [t('csvColumns.whatsapp')]: tenant.whatsapp ?? '',
+          [t('csvColumns.contractStatus')]: tenant.activeContractId ? t('contractStatus.active') : t('contractStatus.none'),
         })),
     },
     {
-      title: 'Relatório de Inadimplência',
-      description: 'Cobranças em atraso com dias de inadimplência',
+      title: t('types.overdue'),
+      description: t('descriptions.overdue'),
       icon: FileText,
       csvName: 'relatorio-inadimplencia',
-      sheetName: 'Inadimplência',
+      sheetName: t('sheetNames.overdue'),
       getData: () =>
         charges
           .filter((c) => c.status !== 'pago' && c.status !== 'cancelado' && !!c.dueDate && c.dueDate < today)
           .map((c) => ({
-            Inquilino: c.tenantName ?? '',
-            Imóvel: c.propertyName ?? '',
-            Descrição: c.description,
-            Vencimento: c.dueDate ?? '',
-            'Valor (R$)': c.amount.toFixed(2),
-            'Total com Encargos (R$)': (c.totalAmount ?? c.amount).toFixed(2),
-            'Dias em Atraso': c.dueDate
+            [t('csvColumns.tenant')]: c.tenantName ?? '',
+            [t('csvColumns.property')]: c.propertyName ?? '',
+            [t('csvColumns.description')]: c.description,
+            [t('csvColumns.dueDate')]: c.dueDate ?? '',
+            [t('csvColumns.amount')]: c.amount.toFixed(2),
+            [t('csvColumns.totalWithCharges')]: (c.totalAmount ?? c.amount).toFixed(2),
+            [t('csvColumns.daysOverdue')]: c.dueDate
               ? Math.floor((Date.now() - new Date(c.dueDate).getTime()) / 86400000)
               : 0,
           })),
     },
   ]
 
-  const handleExport = (report: ReportDef, format: 'csv' | 'xlsx') => {
+  const handleExport = async (report: ReportDef, format: 'csv' | 'xlsx') => {
     const data = report.getData()
     if (data.length === 0) {
-      toast({ title: 'Nenhum dado para exportar.', variant: 'destructive' })
+      toast({ title: t('toast.noData'), variant: 'destructive' })
       return
     }
-    if (format === 'csv') {
-      exportToCSV(data, report.csvName)
-    } else {
-      exportToXLSX(data, report.csvName, report.sheetName)
+    try {
+      if (format === 'csv') {
+        await exportToCSV(data, report.csvName)
+      } else {
+        await exportToXLSX(data, report.csvName, report.sheetName)
+      }
+      toast({ title: t('toast.exported', { title: report.title, format: format.toUpperCase() }) })
+    } catch {
+      // Cancelar a share sheet no app nativo rejeita a promise — não é erro
+      toast({ title: t('toast.exportCancelled') })
     }
-    toast({ title: `${report.title} exportado em ${format.toUpperCase()}.` })
   }
 
   return (
@@ -160,13 +169,13 @@ export function ReportsPage() {
         <Card>
           <CardContent className="p-5 text-center">
             <p className="text-3xl font-bold">{properties.length}</p>
-            <p className="text-sm text-muted-foreground mt-1">Imóveis</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('summary.properties')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-5 text-center">
             <p className="text-3xl font-bold">{tenants.length}</p>
-            <p className="text-sm text-muted-foreground mt-1">Inquilinos</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('summary.tenants')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -176,7 +185,7 @@ export function ReportsPage() {
                 charges.filter((c) => c.status === 'pago').reduce((s, c) => s + c.amount, 0)
               )}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Total Recebido</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('summary.totalReceived')}</p>
           </CardContent>
         </Card>
         <Card>
@@ -184,12 +193,12 @@ export function ReportsPage() {
             <p className="text-3xl font-bold text-destructive">
               {charges.filter((c) => c.status === 'atrasado').length}
             </p>
-            <p className="text-sm text-muted-foreground mt-1">Em Atraso</p>
+            <p className="text-sm text-muted-foreground mt-1">{t('summary.overdue')}</p>
           </CardContent>
         </Card>
       </div>
 
-      <h2 className="text-lg font-semibold">Exportar Relatórios</h2>
+      <h2 className="text-lg font-semibold">{t('exportTitle')}</h2>
 
       <div className="grid gap-4 sm:grid-cols-2">
         {reports.map((report) => {
@@ -215,7 +224,7 @@ export function ReportsPage() {
                     onClick={() => handleExport(report, 'csv')}
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    CSV
+                    {t('exportCsv')}
                   </Button>
                   <Button
                     variant="outline"
@@ -223,7 +232,7 @@ export function ReportsPage() {
                     onClick={() => handleExport(report, 'xlsx')}
                   >
                     <FileSpreadsheet className="mr-2 h-4 w-4" />
-                    Excel
+                    {t('exportExcel')}
                   </Button>
                 </div>
               </CardContent>

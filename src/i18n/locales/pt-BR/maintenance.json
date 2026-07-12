@@ -1,0 +1,134 @@
+{
+  "title": "Manutenção",
+  "subtitle": "Gerencie chamados e solicitações de manutenção.",
+  "add": "Abrir chamado",
+  "new": "Novo chamado",
+  "edit": "Editar chamado",
+  "delete": "Excluir chamado",
+  "view": "Ver chamado",
+  "searchPlaceholder": "Buscar chamados...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "category": "Categoria",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum chamado aberto",
+    "description": "Abra um chamado quando houver necessidade de manutenção.",
+    "noResults": "Nenhum chamado encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados do chamado",
+    "ticketTitle": "Título",
+    "category": "Categoria",
+    "status": "Status",
+    "property": "Imóvel",
+    "tenant": "Inquilino",
+    "description": "Descrição",
+    "priority": "Prioridade",
+    "photos": "Fotos",
+    "comment": "Comentário"
+  },
+  "detail": {
+    "title": "Detalhes do chamado",
+    "overview": "Visão geral",
+    "comments": "Comentários",
+    "photos": "Fotos",
+    "history": "Histórico"
+  },
+  "categories": {
+    "eletrica": "Elétrica",
+    "hidraulica": "Hidráulica",
+    "pintura": "Pintura",
+    "estrutura": "Estrutura",
+    "limpeza": "Limpeza",
+    "seguranca": "Segurança",
+    "outro": "Outro"
+  },
+  "statuses": {
+    "aberto": "Aberto",
+    "em_analise": "Em Análise",
+    "em_andamento": "Em andamento",
+    "finalizado": "Finalizado"
+  },
+  "roles": {
+    "inquilino": "Inquilino",
+    "gestor": "Gestor",
+    "proprietario": "Proprietário",
+    "admin": "Administrador",
+    "afiliado": "Afiliado"
+  },
+  "statusHistory": {
+    "title": "Histórico de status",
+    "currentNoHistory": "Status atual (sem histórico registrado)",
+    "from": "de {{status}}"
+  },
+  "commentsPanel": {
+    "title": "Comentários",
+    "messagesCount": "{{count}} mensagem(ns)",
+    "empty": "Nenhum comentário ainda.",
+    "newComment": "Novo comentário",
+    "send": "Enviar comentário",
+    "sending": "Enviando...",
+    "writeComment": "Escreva um comentário..."
+  },
+  "priorities": {
+    "baixa": "Baixa",
+    "media": "Média",
+    "alta": "Alta",
+    "urgente": "Urgente"
+  },
+  "toast": {
+    "created": "Chamado aberto com sucesso.",
+    "updated": "Chamado atualizado com sucesso.",
+    "deleted": "Chamado excluído com sucesso.",
+    "loadError": "Erro ao carregar chamados.",
+    "createError": "Erro ao abrir chamado.",
+    "updateError": "Erro ao atualizar chamado.",
+    "deleteError": "Erro ao excluir chamado.",
+    "deleteConfirm": "Tem certeza que deseja excluir este chamado?",
+    "statusUpdated": "Status atualizado.",
+    "statusError": "Erro ao atualizar status.",
+    "commentSent": "Comentário enviado.",
+    "commentError": "Erro ao enviar comentário.",
+    "requiredFields": "Preencha os campos obrigatórios."
+  },
+  "openTicket": "Abrir Chamado",
+  "openTicketTitle": "Abrir Chamado de Manutenção",
+  "opening": "Abrindo...",
+  "emptyFound": "Nenhum chamado encontrado",
+  "selectProperty": "Selecione o imóvel",
+  "searchProperty": "Buscar imóvel...",
+  "emptyProperty": "Nenhum imóvel cadastrado.",
+  "selectTenant": "Selecione o inquilino",
+  "searchTenant": "Buscar inquilino...",
+  "emptyTenant": "Nenhum inquilino cadastrado.",
+  "titlePlaceholder": "Torneira com vazamento",
+  "descriptionPlaceholder": "Descreva o problema...",
+  "commentPlaceholder": "Responda ao inquilino ou registre uma observação...",
+  "assetTypes": {
+    "imovel": "Imóvel",
+    "veiculo": "Veículo",
+    "equipamento": "Equipamento"
+  },
+  "table": {
+    "title": "Título",
+    "assetVehicle": "Imóvel / Veículo",
+    "tenant": "Inquilino",
+    "category": "Categoria",
+    "priority": "Prioridade",
+    "status": "Status",
+    "openedAt": "Aberto em",
+    "actions": "Ações"
+  },
+  "view": {
+    "table": "Tabela",
+    "cards": "Cards"
+  },
+  "itemLabel": "chamados",
+  "openedAt": "Aberto em {{date}}",
+  "ticketStatus": "Status do chamado",
+  "priorityWithValue": "Prioridade {{value}}"
+}

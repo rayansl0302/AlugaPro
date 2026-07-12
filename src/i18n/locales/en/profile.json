@@ -1,0 +1,69 @@
+{
+  "title": "My Profile",
+  "personalInfo": "Account details",
+  "language": "Language",
+  "languageHint": "Choose the interface language. Monetary values remain in Brazilian Real (BRL).",
+  "phone": "Mobile phone",
+  "verifyPhone": "Verify phone",
+  "savePhone": "Save phone",
+  "logout": "Log out",
+  "nameReadonly": "Name (read-only)",
+  "emailReadonly": "Email (read-only)",
+  "localeSaved": "Language preference saved",
+  "back": "Back",
+  "subscription": "Subscription",
+  "fields": {
+    "name": "Name",
+    "email": "Email",
+    "role": "Role"
+  },
+  "subStatus": {
+    "trialing": "Trial active",
+    "active": "Active",
+    "past_due": "Payment pending",
+    "canceled": "Canceled",
+    "expired": "Expired",
+    "demo": "Admin"
+  },
+  "affiliate": {
+    "cardTitle": "Referral code",
+    "linked": "Linked: {{code}}",
+    "linkedNote": "This link is permanent and cannot be changed.",
+    "explain": "Were you referred by someone? Enter their referral code. The link is unique and permanent — it cannot be changed later.",
+    "placeholder": "E.g.: MARINA",
+    "link": "Link",
+    "disabledHint": "You cannot link a referral code once the subscription becomes active. This only becomes available again on a future renewal.",
+    "toastEmptyCode": "Enter a referral code.",
+    "confirmLink": "Link the code \"{{code}}\" to your account? This link is permanent and cannot be undone or changed later.",
+    "toastLinked": "Referral code linked!",
+    "toastError": "This code could not be linked.",
+    "toastErrorDesc": "Check that it is correct and try again."
+  },
+  "sub": {
+    "trialDaysLeft_one": "{{count}} day left of trial",
+    "trialDaysLeft_other": "{{count}} days left of trial",
+    "pendingActivation": "Account pending activation",
+    "paymentFailed": "Payment failed — write access suspended",
+    "subscribeToPlan": "Subscribe to a plan to keep using",
+    "active": "Subscription active",
+    "activatePlan": "Activate plan",
+    "subscribeNow": "Subscribe now",
+    "regularize": "Settle payment",
+    "manage": "Manage"
+  },
+  "phoneCard": {
+    "verified": "Verified",
+    "notVerified": "Not verified",
+    "realAccountRequired": "SMS verification requires signing in to a real account (Firebase). Demo accounts cannot verify their phone.",
+    "confirmedBySms": "Number confirmed by SMS",
+    "changeNumber": "Change number",
+    "numberLabel": "Mobile number (with area code)",
+    "sendCode": "Send code",
+    "smsHint": "We will send a 6-digit code by SMS to confirm the number.",
+    "codeLabel": "Code received by SMS",
+    "confirm": "Confirm",
+    "resendCode": "Resend code / correct number",
+    "cancel": "Cancel"
+  },
+  "toastPhoneVerified": "Phone verified successfully."
+}

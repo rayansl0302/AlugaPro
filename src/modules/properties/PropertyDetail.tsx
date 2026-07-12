@@ -1,20 +1,22 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { MapPin, DollarSign, User, Tag } from 'lucide-react'
-import { Property } from '@/types'
+import { Property, PropertyStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
 
-const statusConfig = {
-  disponivel: { label: 'Disponível', variant: 'success' as const },
-  alugado: { label: 'Alugado', variant: 'info' as const },
-  reservado: { label: 'Reservado', variant: 'warning' as const },
-  manutencao: { label: 'Manutenção', variant: 'secondary' as const },
-  encerrado: { label: 'Encerrado', variant: 'destructive' as const },
+const statusVariants: Record<PropertyStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
+  disponivel: 'success',
+  alugado: 'info',
+  reservado: 'warning',
+  manutencao: 'secondary',
+  encerrado: 'destructive',
 }
 
 export function PropertyDetail({ property }: { property: Property }) {
-  const sc = statusConfig[property.status]
+  const { t } = useTranslation('properties')
+  const variant = statusVariants[property.status]
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({ open: false, index: 0 })
   const photos = property.photos ?? []
   return (
@@ -24,14 +26,14 @@ export function PropertyDetail({ property }: { property: Property }) {
           <h2 className="text-xl font-bold">{property.name}</h2>
           <p className="text-sm text-muted-foreground">{property.code}</p>
         </div>
-        <Badge variant={sc.variant}>{sc.label}</Badge>
+        <Badge variant={variant}>{t(`common:status.${property.status}`)}</Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <DollarSign className="h-5 w-5 text-primary" />
           <div>
-            <p className="text-xs text-muted-foreground">Valor do Aluguel</p>
+            <p className="text-xs text-muted-foreground">{t('form.value')}</p>
             <p className="font-bold">{formatCurrency(property.rentValue)}</p>
           </div>
         </div>
@@ -39,7 +41,7 @@ export function PropertyDetail({ property }: { property: Property }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <DollarSign className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Caução</p>
+              <p className="text-xs text-muted-foreground">{t('caution')}</p>
               <p className="font-bold">{formatCurrency(property.cautionValue)}</p>
             </div>
           </div>
@@ -47,15 +49,15 @@ export function PropertyDetail({ property }: { property: Property }) {
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <Tag className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Tipo</p>
-            <p className="font-medium capitalize">{property.type.replace('_', ' ')}</p>
+            <p className="text-xs text-muted-foreground">{t('form.type')}</p>
+            <p className="font-medium capitalize">{t(`types.${property.type}`)}</p>
           </div>
         </div>
         {property.activeTenantName && (
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <User className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Inquilino Atual</p>
+              <p className="text-xs text-muted-foreground">{t('currentTenant')}</p>
               <p className="font-medium">{property.activeTenantName}</p>
             </div>
           </div>
@@ -87,7 +89,7 @@ export function PropertyDetail({ property }: { property: Property }) {
       <div className="flex items-start gap-3 rounded-lg border p-4">
         <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
         <div>
-          <p className="text-xs text-muted-foreground">Endereço</p>
+          <p className="text-xs text-muted-foreground">{t('form.address')}</p>
           <p className="font-medium">
             {property.address.street}, {property.address.number}
             {property.address.complement && `, ${property.address.complement}`}
@@ -101,7 +103,7 @@ export function PropertyDetail({ property }: { property: Property }) {
 
       {property.notes && (
         <div className="rounded-lg border p-4">
-          <p className="text-xs font-medium text-muted-foreground">Observações</p>
+          <p className="text-xs font-medium text-muted-foreground">{t('form.observations')}</p>
           <p className="mt-1 text-sm">{property.notes}</p>
         </div>
       )}

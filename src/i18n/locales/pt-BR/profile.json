@@ -1,0 +1,69 @@
+{
+  "title": "Meu Perfil",
+  "personalInfo": "Dados da conta",
+  "language": "Idioma",
+  "languageHint": "Escolha o idioma da interface. Valores monetários continuam em Real (BRL).",
+  "phone": "Celular",
+  "verifyPhone": "Verificar telefone",
+  "savePhone": "Salvar telefone",
+  "logout": "Sair da conta",
+  "nameReadonly": "Nome (somente leitura)",
+  "emailReadonly": "E-mail (somente leitura)",
+  "localeSaved": "Preferência de idioma salva",
+  "back": "Voltar",
+  "subscription": "Assinatura",
+  "fields": {
+    "name": "Nome",
+    "email": "E-mail",
+    "role": "Perfil"
+  },
+  "subStatus": {
+    "trialing": "Trial ativo",
+    "active": "Ativo",
+    "past_due": "Pagamento pendente",
+    "canceled": "Cancelado",
+    "expired": "Expirado",
+    "demo": "Admin"
+  },
+  "affiliate": {
+    "cardTitle": "Código de indicação",
+    "linked": "Vinculado: {{code}}",
+    "linkedNote": "Essa vinculação é permanente e não pode ser alterada.",
+    "explain": "Foi indicado por alguém? Informe o código de indicação dele. A vinculação é única e definitiva — não poderá ser alterada depois.",
+    "placeholder": "Ex: MARINA",
+    "link": "Vincular",
+    "disabledHint": "Não é possível vincular um código de indicação depois que a assinatura se torna ativa. Isso só fica disponível novamente numa próxima renovação.",
+    "toastEmptyCode": "Informe um código de indicação.",
+    "confirmLink": "Vincular o código \"{{code}}\" à sua conta? Essa vinculação é permanente e não pode ser desfeita ou alterada depois.",
+    "toastLinked": "Código de indicação vinculado!",
+    "toastError": "Não foi possível vincular esse código.",
+    "toastErrorDesc": "Verifique se ele está correto e tente novamente."
+  },
+  "sub": {
+    "trialDaysLeft_one": "{{count}} dia restante de trial",
+    "trialDaysLeft_other": "{{count}} dias restantes de trial",
+    "pendingActivation": "Conta pendente de ativação",
+    "paymentFailed": "Pagamento falhou — acesso de escrita suspenso",
+    "subscribeToPlan": "Assine um plano para continuar usando",
+    "active": "Assinatura ativa",
+    "activatePlan": "Ativar plano",
+    "subscribeNow": "Assinar agora",
+    "regularize": "Regularizar",
+    "manage": "Gerenciar"
+  },
+  "phoneCard": {
+    "verified": "Verificado",
+    "notVerified": "Não verificado",
+    "realAccountRequired": "A verificação por SMS requer login em uma conta real (Firebase). Contas de demonstração não podem verificar o telefone.",
+    "confirmedBySms": "Número confirmado por SMS",
+    "changeNumber": "Alterar número",
+    "numberLabel": "Número do celular (com DDD)",
+    "sendCode": "Enviar código",
+    "smsHint": "Enviaremos um código de 6 dígitos por SMS para confirmar o número.",
+    "codeLabel": "Código recebido por SMS",
+    "confirm": "Confirmar",
+    "resendCode": "Reenviar código / corrigir número",
+    "cancel": "Cancelar"
+  },
+  "toastPhoneVerified": "Telefone verificado com sucesso."
+}

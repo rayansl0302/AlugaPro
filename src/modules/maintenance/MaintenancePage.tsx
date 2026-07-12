@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { useMemo, useState } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Plus, Wrench, Search, Eye, ListFilter, Table2, LayoutGrid, ChevronDown, Check } from 'lucide-react'
@@ -42,12 +43,6 @@ import {
 } from '@/lib/maintenanceEntityPhotos'
 import { Tenant, ContractAssetType } from '@/types'
 
-const ASSET_TYPE_LABEL: Record<ContractAssetType, string> = {
-  imovel: 'Imóvel',
-  veiculo: 'Veículo',
-  equipamento: 'Equipamento',
-}
-
 // ─── WhatsApp helper ──────────────────────────────────────────────────────────
 const STATUS_LABELS: Record<string, string> = {
   aberto:       'Aberto',
@@ -80,21 +75,12 @@ async function notifyMaintenanceWhatsApp(phone: string | undefined, message: str
   } catch { /* silencioso — não bloqueia o fluxo principal */ }
 }
 
-const categoryLabels: Record<MaintenanceCategory, string> = {
-  eletrica: 'Elétrica',
-  hidraulica: 'Hidráulica',
-  pintura: 'Pintura',
-  estrutura: 'Estrutura',
-  limpeza: 'Limpeza',
-  seguranca: 'Segurança',
-  outro: 'Outro',
-}
 
-const statusConfig: Record<MaintenanceStatus, { label: string; variant: 'info' | 'warning' | 'secondary' | 'success' }> = {
-  aberto: { label: 'Aberto', variant: 'info' },
-  em_analise: { label: 'Em Análise', variant: 'warning' },
-  em_andamento: { label: 'Em Andamento', variant: 'secondary' },
-  finalizado: { label: 'Finalizado', variant: 'success' },
+const statusVariants: Record<MaintenanceStatus, 'info' | 'warning' | 'secondary' | 'success'> = {
+  aberto: 'info',
+  em_analise: 'warning',
+  em_andamento: 'secondary',
+  finalizado: 'success',
 }
 
 const priorityVariant = {
@@ -111,6 +97,26 @@ function formatRequestDate(request: MaintenanceRequest) {
 }
 
 export function MaintenancePage() {
+  const { t } = useTranslation('maintenance')
+  const { t: tCommon } = useTranslation('common')
+  const statusConfig = (Object.keys(statusVariants) as MaintenanceStatus[]).reduce((acc, s) => {
+    acc[s] = { label: t(`statuses.${s}`), variant: statusVariants[s] }
+    return acc
+  }, {} as Record<MaintenanceStatus, { label: string; variant: 'info' | 'warning' | 'secondary' | 'success' }>)
+  const ASSET_TYPE_LABEL: Record<ContractAssetType, string> = {
+    imovel: t('assetTypes.imovel'),
+    veiculo: t('assetTypes.veiculo'),
+    equipamento: t('assetTypes.equipamento'),
+  }
+  const categoryLabels: Record<MaintenanceCategory, string> = {
+    eletrica: t('categories.eletrica'),
+    hidraulica: t('categories.hidraulica'),
+    pintura: t('categories.pintura'),
+    estrutura: t('categories.estrutura'),
+    limpeza: t('categories.limpeza'),
+    seguranca: t('categories.seguranca'),
+    outro: t('categories.outro'),
+  }
   const { user, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -203,7 +209,7 @@ export function MaintenancePage() {
               <div className="flex shrink-0 flex-col items-end gap-1">
                 <Badge variant={sc.variant}>{sc.label}</Badge>
                 <Badge variant={priorityVariant[request.priority]} className="text-xs">
-                  {request.priority.charAt(0).toUpperCase() + request.priority.slice(1)}
+                  {t(`priorities.${request.priority}`)}
                 </Badge>
               </div>
             </div>
@@ -214,7 +220,7 @@ export function MaintenancePage() {
             <span className="rounded bg-muted px-2 py-0.5">
               {categoryLabels[request.category]}
             </span>
-            <span>Aberto em {formatRequestDate(request)}</span>
+            <span>{t('openedAt', { date: formatRequestDate(request) })}</span>
           </div>
           <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
 
@@ -225,7 +231,7 @@ export function MaintenancePage() {
             onClick={() => setViewingRequest(request)}
           >
             <Eye className="mr-1.5 h-4 w-4" />
-            Visualizar
+            {tCommon('actions.view')}
           </Button>
         </CardContent>
       </Card>
@@ -234,7 +240,7 @@ export function MaintenancePage() {
 
   const handleCreate = async () => {
     if (!form.title || !form.propertyId) {
-      toast({ title: 'Preencha os campos obrigatórios.', variant: 'destructive' })
+      toast({ title: t('toast.requiredFields'), variant: 'destructive' })
       return
     }
     setFormLoading(true)
@@ -252,7 +258,7 @@ export function MaintenancePage() {
         statusHistory: [buildInitialStatusHistory(actor)],
       })
       qc.invalidateQueries({ queryKey: ['maintenance'] })
-      toast({ title: 'Chamado aberto com sucesso.' })
+      toast({ title: t('toast.created') })
 
       // Notifica inquilino via WhatsApp
       const tenant = (tenants as Tenant[]).find((t) => t.id === form.tenantId)
@@ -265,7 +271,7 @@ export function MaintenancePage() {
 
       setShowForm(false)
     } catch {
-      toast({ title: 'Erro ao abrir chamado.', variant: 'destructive' })
+      toast({ title: t('toast.createError'), variant: 'destructive' })
     } finally {
       setFormLoading(false)
     }
@@ -288,7 +294,7 @@ export function MaintenancePage() {
         )
       }
       qc.invalidateQueries({ queryKey: ['maintenance'] })
-      toast({ title: 'Status atualizado.' })
+      toast({ title: t('toast.statusUpdated') })
 
       // Notifica inquilino via WhatsApp
       const tenant = (tenants as Tenant[]).find((t) => t.id === viewingRequest.tenantId)
@@ -299,7 +305,7 @@ export function MaintenancePage() {
         )
       }
     } catch {
-      toast({ title: 'Erro ao atualizar status.', variant: 'destructive' })
+      toast({ title: t('toast.statusError'), variant: 'destructive' })
     } finally {
       setStatusLoading(false)
     }
@@ -321,9 +327,9 @@ export function MaintenancePage() {
       )
       setCommentText('')
       qc.invalidateQueries({ queryKey: ['maintenance'] })
-      toast({ title: 'Comentário enviado.' })
+      toast({ title: t('toast.commentSent') })
     } catch {
-      toast({ title: 'Erro ao enviar comentário.', variant: 'destructive' })
+      toast({ title: t('toast.commentError'), variant: 'destructive' })
     } finally {
       setCommentLoading(false)
     }
@@ -336,7 +342,7 @@ export function MaintenancePage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar chamados..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 sm:w-64"
@@ -347,7 +353,7 @@ export function MaintenancePage() {
               <Button variant="outline" size="sm" className="justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <ListFilter className="h-4 w-4" />
-                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as MaintenanceStatus].label}
+                  {statusFilter === 'todos' ? t('filters.all') : statusConfig[statusFilter as MaintenanceStatus].label}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
@@ -355,7 +361,7 @@ export function MaintenancePage() {
             <DropdownMenuContent align="start">
               {(['todos', 'aberto', 'em_analise', 'em_andamento', 'finalizado'] as const).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
-                  {s === 'todos' ? 'Todos' : statusConfig[s as MaintenanceStatus].label}
+                  {s === 'todos' ? t('filters.all') : statusConfig[s as MaintenanceStatus].label}
                   {statusFilter === s && <Check className="h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               ))}
@@ -367,23 +373,23 @@ export function MaintenancePage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 {viewMode === 'table' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-                {viewMode === 'table' ? 'Tabela' : 'Cards'}
+                {viewMode === 'table' ? t('view.table') : t('view.cards')}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => setViewMode('table')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Tabela</span>
+                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> {t('view.table')}</span>
                 {viewMode === 'table' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setViewMode('grid')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Cards</span>
+                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> {t('view.cards')}</span>
                 {viewMode === 'grid' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => setShowForm(true)}>
-            <Plus className="mr-2 h-4 w-4" /> Abrir Chamado
+            <Plus className="mr-2 h-4 w-4" /> {t('openTicket')}
           </Button>
         </div>
       </div>
@@ -405,7 +411,7 @@ export function MaintenancePage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Wrench className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum chamado encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('emptyFound')}</p>
         </div>
       ) : viewMode === 'table' ? (
         <>
@@ -413,14 +419,14 @@ export function MaintenancePage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Imóvel / Veículo</TableHead>
-                  <TableHead>Inquilino</TableHead>
-                  <TableHead>Categoria</TableHead>
-                  <TableHead>Prioridade</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Aberto em</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('table.title')}</TableHead>
+                  <TableHead>{t('table.assetVehicle')}</TableHead>
+                  <TableHead>{t('table.tenant')}</TableHead>
+                  <TableHead>{t('table.category')}</TableHead>
+                  <TableHead>{t('table.priority')}</TableHead>
+                  <TableHead>{t('table.status')}</TableHead>
+                  <TableHead>{t('table.openedAt')}</TableHead>
+                  <TableHead className="text-right">{t('table.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -445,7 +451,7 @@ export function MaintenancePage() {
                       </TableCell>
                       <TableCell>
                         <Badge variant={priorityVariant[request.priority]} className="text-xs capitalize">
-                          {request.priority}
+                          {t(`priorities.${request.priority}`)}
                         </Badge>
                       </TableCell>
                       <TableCell>
@@ -461,7 +467,7 @@ export function MaintenancePage() {
                           onClick={() => setViewingRequest(request)}
                         >
                           <Eye className="mr-1.5 h-4 w-4" />
-                          Visualizar
+                          {tCommon('actions.view')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -477,7 +483,7 @@ export function MaintenancePage() {
             rangeStart={pag.rangeStart}
             rangeEnd={pag.rangeEnd}
             onPageChange={pag.setPage}
-            itemLabel="chamados"
+            itemLabel={t('itemLabel')}
           />
         </>
       ) : (
@@ -492,7 +498,7 @@ export function MaintenancePage() {
                 rangeStart={pag.rangeStart}
                 rangeEnd={pag.rangeEnd}
                 onPageChange={pag.setPage}
-                itemLabel="chamados"
+                itemLabel={t('itemLabel')}
               />
             </div>
           )}
@@ -502,20 +508,20 @@ export function MaintenancePage() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Abrir Chamado de Manutenção</DialogTitle>
+            <DialogTitle>{t('openTicketTitle')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Título *</Label>
+                <Label>{t('form.ticketTitle')} *</Label>
                 <Input
-                  placeholder="Torneira com vazamento"
+                  placeholder={t('titlePlaceholder')}
                   value={form.title}
                   onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Categoria</Label>
+                <Label>{t('form.category')}</Label>
                 <Select value={form.category} onValueChange={(v) => setForm((p) => ({ ...p, category: v as MaintenanceCategory }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -526,55 +532,55 @@ export function MaintenancePage() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Prioridade</Label>
+                <Label>{t('form.priority')}</Label>
                 <Select value={form.priority} onValueChange={(v) => setForm((p) => ({ ...p, priority: v as MaintenanceRequest['priority'] }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                    <SelectItem value="urgente">Urgente</SelectItem>
+                    <SelectItem value="baixa">{t('priorities.baixa')}</SelectItem>
+                    <SelectItem value="media">{t('priorities.media')}</SelectItem>
+                    <SelectItem value="alta">{t('priorities.alta')}</SelectItem>
+                    <SelectItem value="urgente">{t('priorities.urgente')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label>Imóvel *</Label>
+                <Label>{t('form.property')} *</Label>
                 <Combobox
                   options={properties.map((p) => ({ value: p.id, label: p.name, description: p.code }))}
                   value={form.propertyId}
                   onChange={(value, option) =>
                     setForm((p) => ({ ...p, propertyId: value, propertyName: option.label }))
                   }
-                  placeholder="Selecione o imóvel"
-                  searchPlaceholder="Buscar imóvel..."
-                  emptyText="Nenhum imóvel cadastrado."
+                  placeholder={t('selectProperty')}
+                  searchPlaceholder={t('searchProperty')}
+                  emptyText={t('emptyProperty')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Inquilino</Label>
+                <Label>{t('form.tenant')}</Label>
                 <Combobox
                   options={tenants.map((t) => ({ value: t.id, label: t.name, description: t.cpf }))}
                   value={form.tenantId}
                   onChange={(value, option) =>
                     setForm((p) => ({ ...p, tenantId: value, tenantName: option.label }))
                   }
-                  placeholder="Selecione o inquilino"
-                  searchPlaceholder="Buscar inquilino..."
-                  emptyText="Nenhum inquilino cadastrado."
+                  placeholder={t('selectTenant')}
+                  searchPlaceholder={t('searchTenant')}
+                  emptyText={t('emptyTenant')}
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>Descrição</Label>
+                <Label>{t('form.description')}</Label>
                 <textarea
                   className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Descreva o problema..."
+                  placeholder={t('descriptionPlaceholder')}
                   value={form.description}
                   onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
                 />
               </div>
             </div>
             <Button className="w-full" onClick={handleCreate} disabled={formLoading}>
-              {formLoading ? 'Abrindo...' : 'Abrir Chamado'}
+              {formLoading ? t('opening') : t('openTicket')}
             </Button>
           </div>
         </DialogContent>
@@ -611,7 +617,7 @@ export function MaintenancePage() {
                     {categoryLabels[viewingRequest.category]}
                   </span>
                   <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
-                    Prioridade {viewingRequest.priority}
+                    {t('priorityWithValue', { value: t(`priorities.${viewingRequest.priority}`) })}
                   </span>
                 </div>
 
@@ -623,24 +629,24 @@ export function MaintenancePage() {
                     <span className="font-medium text-right">{entityPhotos.assetName ?? viewingRequest.propertyName ?? '—'}</span>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Inquilino</span>
+                    <span className="text-muted-foreground">{t('form.tenant')}</span>
                     <span className="font-medium text-right">{entityPhotos.tenantName}</span>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Aberto em</span>
+                    <span className="text-muted-foreground">{t('table.openedAt')}</span>
                     <span className="text-right">{formatRequestDate(viewingRequest)}</span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{t('form.description')}</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
                 </div>
 
                 <MaintenanceRequestPhotos photos={viewingRequest.photos} />
 
                 <div className="space-y-1.5">
-                  <Label>Status do chamado</Label>
+                  <Label>{t('ticketStatus')}</Label>
                   <Select
                     value={viewingRequest.status}
                     onValueChange={(v) => handleStatusChange(v as MaintenanceStatus)}
@@ -669,7 +675,7 @@ export function MaintenancePage() {
                 onSubmit={handleAddComment}
                 loading={commentLoading}
                 inputId="gestor-comment"
-                placeholder="Responda ao inquilino ou registre uma observação..."
+                placeholder={t('commentPlaceholder')}
               />
             </div>
             </div>

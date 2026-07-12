@@ -1,0 +1,100 @@
+{
+  "title": "Equipamentos",
+  "subtitle": "Gerencie equipamentos disponíveis para locação.",
+  "add": "Adicionar equipamento",
+  "new": "Novo equipamento",
+  "edit": "Editar equipamento",
+  "delete": "Excluir equipamento",
+  "view": "Ver equipamento",
+  "searchPlaceholder": "Buscar por nome, série ou categoria...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "category": "Categoria",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum equipamento cadastrado",
+    "description": "Cadastre o primeiro equipamento para começar.",
+    "noResults": "Nenhum equipamento encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados do equipamento",
+    "name": "Nome",
+    "serial": "Número de série",
+    "category": "Categoria",
+    "status": "Status",
+    "value": "Valor da locação",
+    "brand": "Marca",
+    "model": "Modelo",
+    "owner": "Proprietário",
+    "description": "Descrição",
+    "observations": "Observações",
+    "photos": "Fotos",
+    "type": "Tipo",
+    "serialNumber": "Nº de série / Patrimônio",
+    "purchaseValue": "Valor de aquisição",
+    "photosLabel": "Fotos do equipamento"
+  },
+  "placeholders": {
+    "name": "Ex: Betoneira 400L",
+    "type": "Ex: Betoneira, Notebook, Ar-condicionado...",
+    "brand": "Ex: CSM",
+    "model": "Ex: CM-400L",
+    "value": "0,00",
+    "notes": "Notas internas...",
+    "selectOwner": "Selecione o proprietário",
+    "searchOwner": "Buscar proprietário...",
+    "noOwners": "Nenhum proprietário cadastrado."
+  },
+  "hints": {
+    "freeType": "Digite livremente — não se limita à lista de sugestões."
+  },
+  "validation": {
+    "nameRequired": "Nome obrigatório",
+    "modelRequired": "Modelo obrigatório",
+    "typeRequired": "Tipo obrigatório",
+    "valueRequired": "Valor obrigatório",
+    "ownerRequired": "Proprietário obrigatório"
+  },
+  "buttons": {
+    "save": "Salvar alterações",
+    "create": "Cadastrar equipamento"
+  },
+  "fields": {
+    "rentValue": "Valor do aluguel",
+    "photoAlt": "Foto {{index}}"
+  },
+  "caution": "Caução",
+  "currentTenant": "Locatário atual",
+  "detail": {
+    "title": "Detalhes do equipamento",
+    "overview": "Visão geral",
+    "financial": "Financeiro",
+    "contracts": "Contratos",
+    "documents": "Documentos",
+    "maintenance": "Manutenções",
+    "history": "Histórico"
+  },
+  "statuses": {
+    "disponivel": "Disponível",
+    "alugado": "Alugado",
+    "reservado": "Reservado",
+    "manutencao": "Manutenção",
+    "encerrado": "Encerrado"
+  },
+  "tenantLabel": "Locatário",
+  "itemLabel": "equipamentos",
+  "toast": {
+    "created": "Equipamento criado com sucesso.",
+    "updated": "Equipamento atualizado com sucesso.",
+    "deleted": "Equipamento excluído com sucesso.",
+    "loadError": "Erro ao carregar equipamentos.",
+    "createError": "Erro ao criar equipamento.",
+    "updateError": "Erro ao atualizar equipamento.",
+    "deleteError": "Erro ao excluir equipamento.",
+    "deleteConfirm": "Tem certeza que deseja excluir este equipamento?",
+    "saveError": "Erro ao salvar equipamento."
+  }
+}

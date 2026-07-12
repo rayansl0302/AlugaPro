@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Bell, MessageSquare, Mail, Smartphone, FileCheck, AlertTriangle, Wrench, Loader2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,57 +23,50 @@ const TYPE_COLOR: Record<NotificationAlertType, string> = {
 
 interface NotificationRule {
   trigger: string
-  label: string
   daysOffset: number
   channels: { whatsapp: boolean; email: boolean; push: boolean }
 }
 
-const defaultRules: NotificationRule[] = [
+const defaultRules: Omit<NotificationRule, 'label'>[] = [
   {
     trigger: 'vencimento_7dias',
-    label: '7 dias antes do vencimento',
     daysOffset: -7,
     channels: { whatsapp: true, email: true, push: false },
   },
   {
     trigger: 'vencimento_3dias',
-    label: '3 dias antes do vencimento',
     daysOffset: -3,
     channels: { whatsapp: true, email: false, push: true },
   },
   {
     trigger: 'vencimento_1dia',
-    label: '1 dia antes do vencimento',
     daysOffset: -1,
     channels: { whatsapp: true, email: false, push: true },
   },
   {
     trigger: 'vencido_dia',
-    label: 'No dia do vencimento',
     daysOffset: 0,
     channels: { whatsapp: true, email: true, push: true },
   },
   {
     trigger: 'vencido_3dias',
-    label: '3 dias após o vencimento',
     daysOffset: 3,
     channels: { whatsapp: true, email: true, push: false },
   },
   {
     trigger: 'vencido_7dias',
-    label: '7 dias após o vencimento',
     daysOffset: 7,
     channels: { whatsapp: true, email: true, push: false },
   },
   {
     trigger: 'vencido_15dias',
-    label: '15 dias após o vencimento',
     daysOffset: 15,
     channels: { whatsapp: true, email: true, push: false },
   },
 ]
 
 export function NotificationsPage() {
+  const { t } = useTranslation('notifications')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
   const { alerts, count, isLoading } = useNotificationAlerts(companyId)
@@ -84,9 +78,9 @@ export function NotificationsPage() {
           <Bell className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h2 className="text-lg font-semibold">Notificações</h2>
+          <h2 className="text-lg font-semibold">{t('title')}</h2>
           <p className="text-sm text-muted-foreground">
-            Alertas em tempo real e configuração de mensagens automáticas
+            {t('pageSubtitle')}
           </p>
         </div>
       </div>
@@ -94,27 +88,27 @@ export function NotificationsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base flex items-center gap-2">
-            Alertas pendentes
+            {t('pendingAlerts')}
             {count > 0 && (
               <Badge variant="destructive">{count}</Badge>
             )}
           </CardTitle>
           <CardDescription>
-            Comprovantes enviados, cobranças em atraso e chamados aguardando ação
+            {t('pendingAlertsDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center gap-2 py-8 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Carregando alertas...
+              {t('loadingAlerts')}
             </div>
           ) : count === 0 ? (
             <div className="py-8 text-center">
               <Bell className="mx-auto mb-2 h-8 w-8 text-muted-foreground/30" />
-              <p className="text-sm font-medium">Nenhum alerta pendente</p>
+              <p className="text-sm font-medium">{t('noPendingTitle')}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Novos comprovantes e chamados aparecerão aqui automaticamente.
+                {t('noPendingDescription')}
               </p>
             </div>
           ) : (
@@ -149,9 +143,9 @@ export function NotificationsPage() {
 
       <div className="flex items-center gap-3">
         <div>
-          <h3 className="text-base font-semibold">Alertas automáticos de cobrança</h3>
+          <h3 className="text-base font-semibold">{t('autoTitle')}</h3>
           <p className="text-sm text-muted-foreground">
-            Configure quando e como os inquilinos recebem lembretes de vencimento
+            {t('autoSubtitle')}
           </p>
         </div>
       </div>
@@ -168,7 +162,7 @@ export function NotificationsPage() {
         </div>
         <div className="flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm">
           <Smartphone className="h-4 w-4 text-purple-500" />
-          Push Notification
+          {t('push')}
         </div>
       </div>
 
@@ -182,12 +176,12 @@ export function NotificationsPage() {
                   className="shrink-0 w-24 justify-center"
                 >
                   {rule.daysOffset < 0
-                    ? `${Math.abs(rule.daysOffset)}d antes`
+                    ? t('daysBefore', { count: Math.abs(rule.daysOffset) })
                     : rule.daysOffset === 0
-                    ? 'No dia'
-                    : `${rule.daysOffset}d depois`}
+                    ? t('onDay')
+                    : t('daysAfter', { count: rule.daysOffset })}
                 </Badge>
-                <span className="text-sm font-medium">{rule.label}</span>
+                <span className="text-sm font-medium">{t(`rules.${rule.trigger}`)}</span>
               </div>
               <div className="flex items-center gap-6">
                 <div className="flex items-center gap-2">
@@ -210,31 +204,31 @@ export function NotificationsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">Template de Mensagem</CardTitle>
+          <CardTitle className="text-base">{t('templateTitle')}</CardTitle>
           <CardDescription>
-            Variáveis disponíveis: {'{{nome}}'}, {'{{imovel}}'}, {'{{valor}}'}, {'{{vencimento}}'}, {'{{dias_atraso}}'}
+            {t('templateVars')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[
               {
-                label: 'WhatsApp — Antes do Vencimento',
-                template: 'Olá {{nome}}! Lembrando que seu aluguel do imóvel {{imovel}} no valor de {{valor}} vence em {{vencimento}}. AlugaPro 🏠',
+                label: t('templates.waBeforeLabel'),
+                template: t('templates.waBefore'),
               },
               {
-                label: 'WhatsApp — Após o Vencimento',
-                template: 'Olá {{nome}}, seu aluguel do imóvel {{imovel}} no valor de {{valor}} está {{dias_atraso}} dias em atraso. Por favor, regularize para evitar multas. AlugaPro 🏠',
+                label: t('templates.waAfterLabel'),
+                template: t('templates.waAfter'),
               },
               {
-                label: 'E-mail — Assunto',
-                template: '[AlugaPro] Lembrete de pagamento — {{imovel}}',
+                label: t('templates.emailSubjectLabel'),
+                template: t('templates.emailSubject'),
               },
-            ].map((t) => (
-              <div key={t.label} className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">{t.label}</Label>
+            ].map((item) => (
+              <div key={item.label} className="space-y-1.5">
+                <Label className="text-xs text-muted-foreground">{item.label}</Label>
                 <textarea
-                  defaultValue={t.template}
+                  defaultValue={item.template}
                   className="flex min-h-[70px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 />
               </div>

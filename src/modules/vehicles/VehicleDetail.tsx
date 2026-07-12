@@ -1,29 +1,22 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { DollarSign, User, Tag, Car, Gauge, Fuel } from 'lucide-react'
-import { Vehicle, VehicleStatus, VehicleType } from '@/types'
+import { Vehicle, VehicleStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { PhotoLightbox } from '@/components/shared/PhotoLightbox'
 
-const statusConfig: Record<VehicleStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'secondary' | 'destructive' }> = {
-  disponivel: { label: 'Disponível', variant: 'success' },
-  alugado: { label: 'Alugado', variant: 'info' },
-  reservado: { label: 'Reservado', variant: 'warning' },
-  manutencao: { label: 'Manutenção', variant: 'secondary' },
-  encerrado: { label: 'Encerrado', variant: 'destructive' },
-}
-
-const typeLabels: Record<VehicleType, string> = {
-  carro: 'Carro',
-  moto: 'Moto',
-  caminhao: 'Caminhão',
-  van: 'Van',
-  onibus: 'Ônibus',
-  outro: 'Outro',
+const statusVariant: Record<VehicleStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
+  disponivel: 'success',
+  alugado: 'info',
+  reservado: 'warning',
+  manutencao: 'secondary',
+  encerrado: 'destructive',
 }
 
 export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
-  const sc = statusConfig[vehicle.status]
+  const { t } = useTranslation('vehicles')
+  const variant = statusVariant[vehicle.status]
   const [lightbox, setLightbox] = useState<{ open: boolean; index: number }>({ open: false, index: 0 })
   const photos = vehicle.photos ?? []
   return (
@@ -33,14 +26,14 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <h2 className="text-xl font-bold">{vehicle.brand} {vehicle.model}</h2>
           <p className="text-sm text-muted-foreground">{vehicle.code} — {vehicle.plate}</p>
         </div>
-        <Badge variant={sc.variant}>{sc.label}</Badge>
+        <Badge variant={variant}>{t(`common:status.${vehicle.status}`)}</Badge>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <DollarSign className="h-5 w-5 text-primary" />
           <div>
-            <p className="text-xs text-muted-foreground">Valor do Aluguel</p>
+            <p className="text-xs text-muted-foreground">{t('fields.rentValue')}</p>
             <p className="font-bold">{formatCurrency(vehicle.rentValue)}</p>
           </div>
         </div>
@@ -48,7 +41,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <DollarSign className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Caução</p>
+              <p className="text-xs text-muted-foreground">{t('caution')}</p>
               <p className="font-bold">{formatCurrency(vehicle.cautionValue)}</p>
             </div>
           </div>
@@ -56,14 +49,14 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <Tag className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Tipo</p>
-            <p className="font-medium">{typeLabels[vehicle.type]}</p>
+            <p className="text-xs text-muted-foreground">{t('form.type')}</p>
+            <p className="font-medium">{t(`types.${vehicle.type}`)}</p>
           </div>
         </div>
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <Car className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Ano</p>
+            <p className="text-xs text-muted-foreground">{t('form.year')}</p>
             <p className="font-medium">{vehicle.year}</p>
           </div>
         </div>
@@ -71,8 +64,8 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Fuel className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Combustível</p>
-              <p className="font-medium capitalize">{vehicle.fuel}</p>
+              <p className="text-xs text-muted-foreground">{t('form.fuelType')}</p>
+              <p className="font-medium">{t(`fuels.${vehicle.fuel}`)}</p>
             </div>
           </div>
         )}
@@ -80,7 +73,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Gauge className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Quilometragem</p>
+              <p className="text-xs text-muted-foreground">{t('form.mileage')}</p>
               <p className="font-medium">{vehicle.mileage.toLocaleString('pt-BR')} km</p>
             </div>
           </div>
@@ -89,7 +82,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Tag className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Cor</p>
+              <p className="text-xs text-muted-foreground">{t('form.color')}</p>
               <p className="font-medium">{vehicle.color}</p>
             </div>
           </div>
@@ -98,7 +91,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <User className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Locatário Atual</p>
+              <p className="text-xs text-muted-foreground">{t('currentTenant')}</p>
               <p className="font-medium">{vehicle.activeTenantName}</p>
             </div>
           </div>
@@ -114,7 +107,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
               onClick={() => setLightbox({ open: true, index: idx })}
               className="aspect-square overflow-hidden rounded-lg border bg-muted/30"
             >
-              <img src={url} alt={`Foto ${idx + 1}`} className="h-full w-full object-cover transition-transform hover:scale-105" />
+              <img src={url} alt={t('fields.photoAlt', { index: idx + 1 })} className="h-full w-full object-cover transition-transform hover:scale-105" />
             </button>
           ))}
         </div>
@@ -131,13 +124,13 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
         <div className="grid gap-4 sm:grid-cols-2">
           {vehicle.renavam && (
             <div className="rounded-lg border p-4">
-              <p className="text-xs font-medium text-muted-foreground">RENAVAM</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('form.renavam')}</p>
               <p className="mt-1 font-mono text-sm">{vehicle.renavam}</p>
             </div>
           )}
           {vehicle.chassi && (
             <div className="rounded-lg border p-4">
-              <p className="text-xs font-medium text-muted-foreground">Chassi</p>
+              <p className="text-xs font-medium text-muted-foreground">{t('form.chassi')}</p>
               <p className="mt-1 font-mono text-sm">{vehicle.chassi}</p>
             </div>
           )}
@@ -146,7 +139,7 @@ export function VehicleDetail({ vehicle }: { vehicle: Vehicle }) {
 
       {vehicle.notes && (
         <div className="rounded-lg border p-4">
-          <p className="text-xs font-medium text-muted-foreground">Observações</p>
+          <p className="text-xs font-medium text-muted-foreground">{t('form.observations')}</p>
           <p className="mt-1 text-sm">{vehicle.notes}</p>
         </div>
       )}

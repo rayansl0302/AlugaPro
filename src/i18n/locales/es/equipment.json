@@ -1,0 +1,100 @@
+{
+  "title": "Equipos",
+  "subtitle": "Gestione equipos disponibles para alquiler.",
+  "add": "Agregar equipo",
+  "new": "Nuevo equipo",
+  "edit": "Editar equipo",
+  "delete": "Eliminar equipo",
+  "view": "Ver equipo",
+  "searchPlaceholder": "Buscar por nombre, serie o categoría...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "category": "Categoría",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún equipo registrado",
+    "description": "Registre el primer equipo para comenzar.",
+    "noResults": "Ningún equipo coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del equipo",
+    "name": "Nombre",
+    "serial": "Número de serie",
+    "category": "Categoría",
+    "status": "Estado",
+    "value": "Valor del alquiler",
+    "brand": "Marca",
+    "model": "Modelo",
+    "owner": "Propietario",
+    "description": "Descripción",
+    "observations": "Observaciones",
+    "photos": "Fotos",
+    "type": "Tipo",
+    "serialNumber": "N.º de serie / Patrimonio",
+    "purchaseValue": "Valor de adquisición",
+    "photosLabel": "Fotos del equipo"
+  },
+  "placeholders": {
+    "name": "Ej: Hormigonera 400L",
+    "type": "Ej: Hormigonera, Notebook, Aire acondicionado...",
+    "brand": "Ej: CSM",
+    "model": "Ej: CM-400L",
+    "value": "0,00",
+    "notes": "Notas internas...",
+    "selectOwner": "Seleccione el propietario",
+    "searchOwner": "Buscar propietario...",
+    "noOwners": "Ningún propietario registrado."
+  },
+  "hints": {
+    "freeType": "Escriba libremente — no se limita a la lista de sugerencias."
+  },
+  "validation": {
+    "nameRequired": "Nombre obligatorio",
+    "modelRequired": "Modelo obligatorio",
+    "typeRequired": "Tipo obligatorio",
+    "valueRequired": "Valor obligatorio",
+    "ownerRequired": "Propietario obligatorio"
+  },
+  "buttons": {
+    "save": "Guardar cambios",
+    "create": "Agregar equipo"
+  },
+  "fields": {
+    "rentValue": "Valor del alquiler",
+    "photoAlt": "Foto {{index}}"
+  },
+  "caution": "Depósito",
+  "currentTenant": "Arrendatario actual",
+  "detail": {
+    "title": "Detalles del equipo",
+    "overview": "Resumen",
+    "financial": "Financiero",
+    "contracts": "Contratos",
+    "documents": "Documentos",
+    "maintenance": "Mantenimientos",
+    "history": "Historial"
+  },
+  "statuses": {
+    "disponivel": "Disponible",
+    "alugado": "Alquilado",
+    "reservado": "Reservado",
+    "manutencao": "Mantenimiento",
+    "encerrado": "Cerrado"
+  },
+  "tenantLabel": "Arrendatario",
+  "itemLabel": "equipos",
+  "toast": {
+    "created": "Equipo creado con éxito.",
+    "updated": "Equipo actualizado con éxito.",
+    "deleted": "Equipo eliminado con éxito.",
+    "loadError": "Error al cargar equipos.",
+    "createError": "Error al crear equipo.",
+    "updateError": "Error al actualizar equipo.",
+    "deleteError": "Error al eliminar equipo.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este equipo?",
+    "saveError": "Error al guardar el equipo."
+  }
+}

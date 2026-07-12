@@ -1,0 +1,71 @@
+{
+  "title": "Notificaciones",
+  "subtitle": "Siga alertas y avisos del sistema.",
+  "markAllRead": "Marcar todas como leídas",
+  "markRead": "Marcar como leída",
+  "delete": "Eliminar notificación",
+  "searchPlaceholder": "Buscar notificaciones...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todas",
+    "unread": "No leídas",
+    "read": "Leídas",
+    "type": "Tipo",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ninguna notificación",
+    "description": "Está al día. Las nuevas alertas aparecerán aquí.",
+    "noResults": "Ninguna notificación encontrada."
+  },
+  "types": {
+    "charge": "Cargo",
+    "contract": "Contrato",
+    "maintenance": "Mantenimiento",
+    "system": "Sistema",
+    "warning": "Advertencia"
+  },
+  "detail": {
+    "title": "Detalle de la notificación",
+    "related": "Relacionado"
+  },
+  "toast": {
+    "markedRead": "Notificación marcada como leída.",
+    "markedAllRead": "Todas las notificaciones fueron marcadas como leídas.",
+    "deleted": "Notificación eliminada.",
+    "loadError": "Error al cargar notificaciones.",
+    "markError": "Error al actualizar la notificación.",
+    "deleteError": "Error al eliminar la notificación."
+  },
+  "pageSubtitle": "Alertas en tiempo real y configuración de mensajes automáticos",
+  "pendingAlerts": "Alertas pendientes",
+  "pendingAlertsDescription": "Comprobantes enviados, cobros vencidos y llamados pendientes de acción",
+  "loadingAlerts": "Cargando alertas...",
+  "noPendingTitle": "Ninguna alerta pendiente",
+  "noPendingDescription": "Nuevos comprobantes y llamados aparecerán aquí automáticamente.",
+  "autoTitle": "Alertas automáticos de cobro",
+  "autoSubtitle": "Configure cuándo y cómo los inquilinos reciben recordatorios de vencimiento",
+  "push": "Notificación push",
+  "daysBefore": "{{count}}d antes",
+  "onDay": "El día",
+  "daysAfter": "{{count}}d después",
+  "rules": {
+    "vencimento_7dias": "7 días antes del vencimiento",
+    "vencimento_3dias": "3 días antes del vencimiento",
+    "vencimento_1dia": "1 día antes del vencimiento",
+    "vencido_dia": "El día del vencimiento",
+    "vencido_3dias": "3 días después del vencimiento",
+    "vencido_7dias": "7 días después del vencimiento",
+    "vencido_15dias": "15 días después del vencimiento"
+  },
+  "templateTitle": "Plantilla de mensaje",
+  "templateVars": "Variables disponibles: {{vars}}",
+  "templates": {
+    "waBeforeLabel": "WhatsApp — Antes del vencimiento",
+    "waBefore": "¡Hola {{{{nome}}}}! Recordando que su alquiler del inmueble {{{{imovel}}}} por {{{{valor}}}} vence el {{{{vencimento}}}}. AlugaPro 🏠",
+    "waAfterLabel": "WhatsApp — Después del vencimiento",
+    "waAfter": "Hola {{{{nome}}}}, su alquiler del inmueble {{{{imovel}}}} por {{{{valor}}}} tiene {{{{dias_atraso}}}} días de atraso. Por favor, regularice para evitar multas. AlugaPro 🏠",
+    "emailSubjectLabel": "Correo — Asunto",
+    "emailSubject": "[AlugaPro] Recordatorio de pago — {{{{imovel}}}}"
+  }
+}

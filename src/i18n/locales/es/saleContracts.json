@@ -1,0 +1,172 @@
+{
+  "title": "Contratos de venta",
+  "subtitle": "Genere y siga contratos de compraventa.",
+  "add": "Nuevo contrato de venta",
+  "new": "Nuevo contrato de venta",
+  "edit": "Editar contrato",
+  "delete": "Eliminar contrato",
+  "view": "Ver contrato",
+  "generatePdf": "Generar PDF",
+  "preview": "Vista previa",
+  "searchPlaceholder": "Buscar por vendedor, comprador o terreno...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún contrato de venta",
+    "description": "Cree el primer contrato de compraventa.",
+    "noResults": "Ningún contrato coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del contrato",
+    "seller": "Vendedor",
+    "buyer": "Comprador",
+    "witness1": "Testigo 1",
+    "witness2": "Testigo 2",
+    "landDescription": "Descripción del terreno",
+    "coordinates": "Coordenadas",
+    "price": "Precio",
+    "priceInWords": "Precio en letras",
+    "paymentMethod": "Forma de pago",
+    "forum": "Fuero",
+    "city": "Ciudad",
+    "nationality": "Nacionalidad",
+    "maritalStatus": "Estado civil",
+    "cpf": "CPF",
+    "rg": "Documento de identidad",
+    "name": "Nombre"
+  },
+  "detail": {
+    "title": "Detalles del contrato",
+    "parties": "Partes",
+    "land": "Terreno",
+    "values": "Valores",
+    "signatures": "Firmas",
+    "documents": "Documentos"
+  },
+  "signatures": {
+    "title": "Firmas",
+    "pending": "Pendiente",
+    "signed": "Firmado",
+    "copyLink": "Copiar enlace",
+    "sendLink": "Enviar enlace"
+  },
+  "statuses": {
+    "rascunho": "Borrador",
+    "pendente": "Pendiente",
+    "assinado": "Firmado",
+    "finalizado": "Finalizado",
+    "cancelado": "Cancelado"
+  },
+  "toast": {
+    "created": "¡Contrato generado!",
+    "updated": "Contrato actualizado.",
+    "deleted": "Contrato eliminado.",
+    "loadError": "Error al cargar contratos de venta.",
+    "createError": "Error al generar el contrato.",
+    "updateError": "Error al guardar los cambios.",
+    "deleteError": "Error al eliminar el contrato.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este contrato?",
+    "pdfGenerated": "¡PDF final generado!",
+    "pdfError": "Error al generar el PDF final.",
+    "previewError": "Error al generar la vista previa.",
+    "linkCopied": "Enlace copiado.",
+    "linkCopyError": "No se pudo copiar el enlace.",
+    "statusUpdated": "Estado actualizado.",
+    "statusError": "Error al actualizar el estado.",
+    "validationError": "Complete los datos obligatorios de vendedor, comprador, terreno, precio, fuero y ciudad."
+  },
+  "signPage": {
+    "brandSubtitle": "AlugaPro — firma electrónica de contrato",
+    "titleFallback": "Firma",
+    "roles": {
+      "vendedor": "Firma del Vendedor",
+      "comprador": "Firma del Comprador",
+      "testemunha1": "Firma de Testigo",
+      "testemunha2": "Firma de Testigo"
+    },
+    "roleNames": {
+      "vendedor": "vendedor",
+      "comprador": "comprador(a)",
+      "testemunha": "testigo"
+    },
+    "loading": "Cargando contrato...",
+    "invalidTitle": "Enlace inválido o expirado",
+    "invalidDescription": "No encontramos esta solicitud de firma. Solicite un nuevo enlace al responsable del contrato.",
+    "alreadyTitle": "Firma ya registrada",
+    "alreadyDescription": "Ya firmó el contrato {{contractNumber}}. ¡Gracias!",
+    "doneTitle": "¡Firma registrada!",
+    "doneDescription": "Su firma fue vinculada al contrato {{contractNumber}}. Ya puede cerrar esta página.",
+    "contractLabel": "Contrato {{contractNumber}}",
+    "fields": {
+      "seller": "Vendedor",
+      "buyer": "Comprador",
+      "object": "Objeto",
+      "value": "Valor",
+      "cpf": "Su CPF",
+      "rg": "Su documento",
+      "docFront": "Documento (frente)",
+      "docBack": "Documento (reverso)",
+      "docSelfie": "Usted sosteniendo el documento",
+      "signature": "Su firma"
+    },
+    "greeting": "Hola, {{name}}. Fue indicado(a) como {{role}} de este contrato. Revise los datos y firme abajo.",
+    "submitting": "Registrando...",
+    "confirm": "Confirmar firma",
+    "legalNote": "Firma electrónica válida según la MP nº 2.200-2/2001.",
+    "toast": {
+      "validation": "Complete el CPF, envíe las fotos del documento (frente, reverso y sosteniéndolo) y confirme su firma.",
+      "success": "¡Firma registrada con éxito!",
+      "error": "Error al registrar la firma. Inténtelo de nuevo."
+    }
+  },
+  "landTitle": "Contratos de Terreno",
+  "landSubtitle": "Genere contratos de compraventa con firma remota.",
+  "newContract": "Nuevo contrato",
+  "generatedContracts": "Contratos generados",
+  "emptyGenerated": "Aún no hay contratos generados.",
+  "generateContract": "Generar contrato",
+  "roles": {
+    "vendedor": "Vendedor",
+    "comprador": "Comprador(a)",
+    "testemunha1": "1.er Testigo",
+    "testemunha2": "2.º Testigo"
+  },
+  "formExtra": {
+    "lockedAfterSign": "(ya firmó — datos bloqueados)",
+    "lockedWitness": "(ya firmó — bloqueada)",
+    "fullName": "Nombre completo",
+    "fullAddress": "Dirección completa",
+    "nationalityPlaceholder": "brasileño(a)",
+    "maritalPlaceholder": "soltero(a)",
+    "land": "Terreno",
+    "landAddress": "Dirección del terreno",
+    "landSituation": "Situación (no repita dirección/coordenadas)",
+    "coordinatesOptional": "Coordenadas (opcional)",
+    "priceAndPayment": "Precio y pago",
+    "valueBRL": "Valor (R$)",
+    "valueInWords": "Valor en letras",
+    "paymentMethod": "Forma de pago",
+    "forumAndPlace": "Fuero y lugar",
+    "forum": "Partido judicial (fuero)",
+    "signatureCity": "Ciudad de la firma",
+    "witnessesOptional": "Testigos (opcional)",
+    "witnessDocsHint": "CPF y documento de los testigos son opcionales en el enlace de firma.",
+    "editing": "Editando {{number}}",
+    "saveChanges": "Guardar cambios",
+    "cancel": "Cancelar",
+    "updateStatus": "Actualizar estado",
+    "generateFinalPdf": "Generar PDF final",
+    "viewPdf": "Ver PDF",
+    "link": "Enlace",
+    "signed": "Firmó",
+    "previewNumber": "PREVIA"
+  },
+  "toastExtra": {
+    "previewValidation": "Complete al menos el nombre del vendedor y del comprador para la vista previa.",
+    "createdDescription": "Copie los enlaces de firma abajo y envíelos a las partes."
+  }
+}

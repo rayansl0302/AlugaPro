@@ -1,0 +1,101 @@
+{
+  "title": "Tenants",
+  "subtitle": "Manage tenants and lessees.",
+  "add": "Add tenant",
+  "new": "New tenant",
+  "edit": "Edit tenant",
+  "delete": "Delete tenant",
+  "view": "View tenant",
+  "searchPlaceholder": "Search by name, CPF, or email...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No tenants yet",
+    "description": "Add your first tenant to link contracts.",
+    "noResults": "No tenants match the current filters."
+  },
+  "form": {
+    "title": "Personal data",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "rg": "ID document",
+    "birthDate": "Date of birth",
+    "nationality": "Nationality",
+    "maritalStatus": "Marital status",
+    "profession": "Profession",
+    "income": "Monthly income",
+    "address": "Address",
+    "street": "Street",
+    "number": "Number",
+    "complement": "Complement",
+    "neighborhood": "Neighborhood",
+    "city": "City",
+    "state": "State",
+    "zipCode": "ZIP code",
+    "emergencyContact": "Emergency contact",
+    "guarantor": "Guarantor",
+    "observations": "Notes",
+    "documents": "Documents",
+    "photoLabel": "Tenant photo"
+  },
+  "placeholders": {
+    "name": "John Doe",
+    "email": "john@email.com"
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "cpfInvalid": "Invalid CPF",
+    "rgInvalid": "Invalid RG",
+    "emailInvalid": "Invalid email",
+    "phoneInvalid": "Invalid phone number"
+  },
+  "buttons": {
+    "save": "Save changes",
+    "create": "Add tenant"
+  },
+  "fields": {
+    "situation": "Status"
+  },
+  "detail": {
+    "title": "Tenant details",
+    "personalData": "Personal data",
+    "contact": "Contact",
+    "documents": "Documents",
+    "contracts": "Contracts",
+    "charges": "Charges",
+    "warnings": "Warnings",
+    "history": "History"
+  },
+  "statuses": {
+    "ativo": "Active",
+    "inativo": "Inactive",
+    "inadimplente": "Overdue"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Active",
+    "noContract": "No contract"
+  },
+  "withContract": "With contract",
+  "noContract": "No contract",
+  "itemLabel": "tenants",
+  "toast": {
+    "created": "Tenant created successfully.",
+    "updated": "Tenant updated successfully.",
+    "deleted": "Tenant deleted successfully.",
+    "loadError": "Failed to load tenants.",
+    "createError": "Failed to create tenant.",
+    "updateError": "Failed to update tenant.",
+    "deleteError": "Failed to delete tenant.",
+    "deleteConfirm": "Are you sure you want to delete this tenant?",
+    "saveError": "Failed to save tenant.",
+    "photoError": "Failed to upload photo."
+  }
+}

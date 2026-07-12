@@ -1,0 +1,130 @@
+{
+  "title": "Subscription",
+  "subtitle": "Manage your plan and payment methods",
+  "subscribe": "Subscribe",
+  "subscribeNow": "Subscribe now",
+  "currentPlan": "Current plan",
+  "choosePlan": "Choose a plan",
+  "changePlan": "Change plan",
+  "activatePlan": "Activate plan",
+  "manage": "Manage",
+  "regularize": "Settle payment",
+  "reactivate": "Reactivate",
+  "viewPlans": "View plans",
+  "downgrade": "Downgrade",
+  "wait": "Please wait...",
+  "mostPopular": "Most popular",
+  "freeTrial": "Free trial",
+  "trialPeriod": "Trial period",
+  "trialDays": "14 days",
+  "noCreditCard": "No credit card required",
+  "cancelAnytime": "Cancel anytime",
+  "perMonth": "/month",
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "price": "R$ 39",
+      "priceValue": 39,
+      "description": "For new managers"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "R$ 79",
+      "priceValue": 79,
+      "description": "For growing property managers"
+    },
+    "business": {
+      "name": "Business",
+      "price": "R$ 129",
+      "priceValue": 129,
+      "description": "For larger operations"
+    }
+  },
+  "features": {
+    "starter": {
+      "properties": "Up to 10 properties/vehicles",
+      "users": "2 manager users",
+      "contracts": "Digital contracts",
+      "charges": "Automatic billing",
+      "portal": "Tenant portal",
+      "support": "Email support"
+    },
+    "pro": {
+      "properties": "Up to 50 properties/vehicles",
+      "users": "5 manager users",
+      "contracts": "Digital contracts",
+      "charges": "Automatic billing",
+      "portal": "Tenant portal",
+      "reports": "Advanced reports",
+      "export": "Data export",
+      "support": "Priority support"
+    },
+    "business": {
+      "properties": "Unlimited properties/vehicles",
+      "users": "Unlimited users",
+      "contracts": "Digital contracts",
+      "charges": "Automatic billing",
+      "portal": "Tenant portal",
+      "reports": "Advanced reports",
+      "export": "Data export",
+      "api": "Integrations API (coming soon)",
+      "onboarding": "Assisted onboarding"
+    }
+  },
+  "status": {
+    "trialing": "Active trial",
+    "active": "Active",
+    "past_due": "Payment pending",
+    "canceled": "Canceled",
+    "expired": "Expired",
+    "demo": "Admin"
+  },
+  "banner": {
+    "trialing": "Your trial ends in {{count}} day(s). Subscribe to keep using all features.",
+    "past_due": "Payment pending. Write access is suspended. Settle payment to resume.",
+    "canceled": "Subscription canceled. You will have access until the end of the current period ({{count}} days left)."
+  },
+  "trial": {
+    "endsIn": "Trial ends in {{count}} day(s). Subscribe to a plan to keep access.",
+    "daysLeft": "{{count}} day(s) of trial left",
+    "offer": "14 days free · no credit card · cancel anytime"
+  },
+  "expired": {
+    "title": "Access suspended",
+    "description": "Your trial period has expired. Choose a plan to keep using AlugaPro.",
+    "logout": "Log out"
+  },
+  "pastDue": {
+    "message": "Payment failed. Write access suspended. Settle payment to continue."
+  },
+  "usage": {
+    "properties": "of {{max}} properties",
+    "vehicles": "of {{max}} vehicles",
+    "users": "of {{max}} users"
+  },
+  "mobileNote": "Payment is processed exclusively on the website to avoid app store fees. If you are on the mobile app, the \"Subscribe now\" button will open your phone's browser.",
+  "toast": {
+    "activated": "Subscription activated!",
+    "activatedDesc": "Your plan is active.",
+    "verifyError": "Failed to verify subscription",
+    "affiliateOk": "Referral code validated!",
+    "affiliateOkDesc": "The affiliate commission will activate after the 15-day waiting period.",
+    "redirectPay": "Redirecting to payment...",
+    "redirectPayDesc": "A new tab was opened for you to complete payment.",
+    "startError": "Failed to start subscription",
+    "invalidDocument": "Enter a valid CPF or CNPJ."
+  },
+  "verifying": "Verifying payment with Mercado Pago...",
+  "demoTitle": "Demo account",
+  "demoDescription": "This account has full Business plan access for sales demos. Real charges do not apply.",
+  "confirmDocumentTitle": "Confirm your CPF or CNPJ",
+  "confirmDocumentDesc": "We need the CPF (individual) or CNPJ (company) to generate the charge. This is only asked once.",
+  "documentLabel": "CPF or CNPJ",
+  "continuePayment": "Continue to payment",
+  "unlimited": "Unlimited",
+  "upToProperties": "Up to {{count}} properties",
+  "upToUsers": "Up to {{count}} users",
+  "unlimitedProperties": "Unlimited properties",
+  "unlimitedUsers": "Unlimited users",
+  "chooseWhatsApp": "Hi! I want to subscribe to the {{plan}} plan on AlugaPro.\n\nCompany: {{company}}\nEmail: {{email}}"
+}

@@ -1,0 +1,82 @@
+{
+  "title": "Owners",
+  "subtitle": "Manage the owners of your assets.",
+  "add": "Add owner",
+  "new": "New owner",
+  "edit": "Edit owner",
+  "delete": "Delete owner",
+  "view": "View owner",
+  "searchPlaceholder": "Search by name, tax ID, or email...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No owners yet",
+    "description": "Add your first owner to link assets.",
+    "noResults": "No owners match the current filters."
+  },
+  "form": {
+    "title": "Personal data",
+    "name": "Full name",
+    "email": "Email",
+    "phone": "Phone",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "cnpj": "CNPJ",
+    "rg": "ID document",
+    "birthDate": "Date of birth",
+    "nationality": "Nationality",
+    "maritalStatus": "Marital status",
+    "profession": "Profession",
+    "address": "Address",
+    "street": "Street",
+    "number": "Number",
+    "complement": "Complement",
+    "neighborhood": "Neighborhood",
+    "city": "City",
+    "state": "State",
+    "zipCode": "ZIP code",
+    "bankAccount": "Bank details",
+    "pixKey": "PIX key",
+    "observations": "Notes",
+    "documents": "Documents"
+  },
+  "detail": {
+    "title": "Owner details",
+    "personalData": "Personal data",
+    "contact": "Contact",
+    "documents": "Documents",
+    "assets": "Assets",
+    "contracts": "Contracts",
+    "financial": "Financial",
+    "history": "History"
+  },
+  "photoLabel": "Owner photo",
+  "cpfMissing": "CPF not provided",
+  "itemLabel": "owners",
+  "register": "Register",
+  "placeholders": {
+    "name": "Mary Smith",
+    "email": "mary@email.com"
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "cpfInvalid": "Invalid CPF",
+    "emailInvalid": "Invalid email",
+    "phoneInvalid": "Invalid phone number"
+  },
+  "toast": {
+    "created": "Owner created successfully.",
+    "updated": "Owner updated successfully.",
+    "deleted": "Owner deleted successfully.",
+    "loadError": "Failed to load owners.",
+    "createError": "Failed to create owner.",
+    "updateError": "Failed to update owner.",
+    "deleteError": "Failed to delete owner.",
+    "deleteConfirm": "Are you sure you want to delete this owner?",
+    "photoError": "Failed to upload photo."
+  }
+}

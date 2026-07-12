@@ -1,10 +1,12 @@
 import { AlertTriangle, Clock, CreditCard, X } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useNavigate } from 'react-router-dom'
 import { useSubscription } from '@/hooks/useSubscription'
 import { Button } from '@/components/ui/button'
 
 export function SubscriptionBanner() {
+  const { t } = useTranslation('subscription')
   const { status, daysRemaining, isAdmin } = useSubscription()
   const navigate = useNavigate()
   const [dismissed, setDismissed] = useState(false)
@@ -18,14 +20,13 @@ export function SubscriptionBanner() {
         <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
           <Clock className="h-4 w-4 shrink-0" />
           <span>
-            Seu período de teste termina em <strong>{daysRemaining} dia{daysRemaining !== 1 ? 's' : ''}</strong>.{' '}
-            Assine para continuar usando todos os recursos.
+            {t('banner.trialing', { count: daysRemaining })}
           </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <Button size="sm" onClick={() => navigate('/configuracoes/assinatura')}>
             <CreditCard className="mr-1 h-3.5 w-3.5" />
-            Ver planos
+            {t('viewPlans')}
           </Button>
           <button onClick={() => setDismissed(true)} className="text-amber-600 hover:text-amber-800 dark:text-amber-400">
             <X className="h-4 w-4" />
@@ -41,12 +42,12 @@ export function SubscriptionBanner() {
         <div className="flex items-center gap-2 text-red-800 dark:text-red-300">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>
-            <strong>Pagamento pendente.</strong> O acesso de escrita está suspenso. Regularize para retomar.
+            {t('banner.past_due')}
           </span>
         </div>
         <Button size="sm" variant="destructive" onClick={() => navigate('/configuracoes/assinatura')}>
           <CreditCard className="mr-1 h-3.5 w-3.5" />
-          Regularizar
+          {t('regularize')}
         </Button>
       </div>
     )
@@ -58,11 +59,11 @@ export function SubscriptionBanner() {
         <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
           <AlertTriangle className="h-4 w-4 shrink-0" />
           <span>
-            Assinatura cancelada. Você terá acesso até o fim do período atual ({daysRemaining} dias restantes).
+            {t('banner.canceled', { count: daysRemaining })}
           </span>
         </div>
         <Button size="sm" onClick={() => navigate('/configuracoes/assinatura')}>
-          Reativar
+          {t('reactivate')}
         </Button>
       </div>
     )

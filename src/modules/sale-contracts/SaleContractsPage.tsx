@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Capacitor } from '@capacitor/core'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Copy, Check, Loader2, FileText, CheckCircle, Clock, RefreshCw, Download, Landmark, Pencil, X,
@@ -11,6 +13,7 @@ import {
 import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
 import { generateSaleContractPDF, contractPDFToBlob, PDFWitness } from '@/lib/contractPDF'
+import { openOrShareBlob } from '@/lib/nativeFile'
 import { SaleContract, SaleContractParty, SaleContractSigner, SaleContractSignerRole } from '@/types'
 import { generateSaleContractNumber, formatCurrency, formatDate, maskCPF, maskRG } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -40,6 +43,9 @@ async function urlToDataURL(url: string | undefined): Promise<string | undefined
 function openBlankTab(): Window | null {
   // Abre a aba já no clique (síncrono) pra não cair no bloqueio de pop-up —
   // o PDF é montado depois, de forma assíncrona, e só então redireciona.
+  // No app nativo não existe "aba": retorna null e quem chamou cai no
+  // fallback openOrShareBlob (share sheet).
+  if (Capacitor.isNativePlatform()) return null
   return window.open('', '_blank')
 }
 
@@ -102,11 +108,11 @@ async function buildSaleContractPdf(input: SaleContractPdfData) {
   })
 }
 
-const ROLE_LABELS: Record<SaleContractSignerRole, string> = {
-  vendedor: 'Vendedor',
-  comprador: 'Comprador(a)',
-  testemunha1: '1ª Testemunha',
-  testemunha2: '2ª Testemunha',
+const ROLE_KEYS: Record<SaleContractSignerRole, string> = {
+  vendedor: 'vendedor',
+  comprador: 'comprador',
+  testemunha1: 'testemunha1',
+  testemunha2: 'testemunha2',
 }
 
 function PartyFields({ idPrefix, title, value, onChange, disabled }: {
@@ -116,35 +122,36 @@ function PartyFields({ idPrefix, title, value, onChange, disabled }: {
   onChange: (v: SaleContractParty) => void
   disabled?: boolean
 }) {
+  const { t } = useTranslation('saleContracts')
   return (
     <div className="space-y-3">
       <p className="text-sm font-semibold">
         {title}
-        {disabled && <span className="ml-2 text-xs font-normal text-muted-foreground">(já assinou — dados travados)</span>}
+        {disabled && <span className="ml-2 text-xs font-normal text-muted-foreground">{t('formExtra.lockedAfterSign')}</span>}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="space-y-1 sm:col-span-2">
-          <Label htmlFor={`${idPrefix}-name`} className="text-xs">Nome completo</Label>
+          <Label htmlFor={`${idPrefix}-name`} className="text-xs">{t('formExtra.fullName')}</Label>
           <Input id={`${idPrefix}-name`} value={value.name} onChange={(e) => onChange({ ...value, name: e.target.value })} disabled={disabled} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`${idPrefix}-nationality`} className="text-xs">Nacionalidade</Label>
-          <Input id={`${idPrefix}-nationality`} value={value.nationality} onChange={(e) => onChange({ ...value, nationality: e.target.value })} placeholder="brasileiro(a)" disabled={disabled} />
+          <Label htmlFor={`${idPrefix}-nationality`} className="text-xs">{t('form.nationality')}</Label>
+          <Input id={`${idPrefix}-nationality`} value={value.nationality} onChange={(e) => onChange({ ...value, nationality: e.target.value })} placeholder={t('formExtra.nationalityPlaceholder')} disabled={disabled} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`${idPrefix}-marital`} className="text-xs">Estado civil</Label>
-          <Input id={`${idPrefix}-marital`} value={value.maritalStatus} onChange={(e) => onChange({ ...value, maritalStatus: e.target.value })} placeholder="solteiro(a)" disabled={disabled} />
+          <Label htmlFor={`${idPrefix}-marital`} className="text-xs">{t('form.maritalStatus')}</Label>
+          <Input id={`${idPrefix}-marital`} value={value.maritalStatus} onChange={(e) => onChange({ ...value, maritalStatus: e.target.value })} placeholder={t('formExtra.maritalPlaceholder')} disabled={disabled} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`${idPrefix}-cpf`} className="text-xs">CPF</Label>
+          <Label htmlFor={`${idPrefix}-cpf`} className="text-xs">{t('form.cpf')}</Label>
           <Input id={`${idPrefix}-cpf`} value={value.cpf} onChange={(e) => onChange({ ...value, cpf: maskCPF(e.target.value) })} placeholder="000.000.000-00" disabled={disabled} />
         </div>
         <div className="space-y-1">
-          <Label htmlFor={`${idPrefix}-rg`} className="text-xs">RG</Label>
+          <Label htmlFor={`${idPrefix}-rg`} className="text-xs">{t('form.rg')}</Label>
           <Input id={`${idPrefix}-rg`} value={value.rg} onChange={(e) => onChange({ ...value, rg: maskRG(e.target.value) })} placeholder="00.000.000-0" disabled={disabled} />
         </div>
         <div className="space-y-1 sm:col-span-2">
-          <Label htmlFor={`${idPrefix}-address`} className="text-xs">Endereço completo</Label>
+          <Label htmlFor={`${idPrefix}-address`} className="text-xs">{t('formExtra.fullAddress')}</Label>
           <Input id={`${idPrefix}-address`} value={value.address} onChange={(e) => onChange({ ...value, address: e.target.value })} disabled={disabled} />
         </div>
       </div>
@@ -152,7 +159,9 @@ function PartyFields({ idPrefix, title, value, onChange, disabled }: {
   )
 }
 
-function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onRefresh: () => void }) {
+function SaleContractCard({
+  contract, onRefresh }: { contract: SaleContract; onRefresh: () => void }) {
+  const { t } = useTranslation('saleContracts')
   const [refreshing, setRefreshing] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [previewing, setPreviewing] = useState(false)
@@ -182,10 +191,10 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
     try {
       await navigator.clipboard.writeText(signLink(token))
       setCopiedToken(token)
-      toast({ title: 'Link copiado.' })
-      setTimeout(() => setCopiedToken((t) => (t === token ? null : t)), 2000)
+      toast({ title: t('toast.linkCopied') })
+      setTimeout(() => setCopiedToken((current) => (current === token ? null : current)), 2000)
     } catch {
-      toast({ title: 'Não foi possível copiar o link.', variant: 'destructive' })
+      toast({ title: t('toast.linkCopyError'), variant: 'destructive' })
     }
   }
 
@@ -207,9 +216,9 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       }))
       await updateSaleContract(contract.id, { signers: updated })
       onRefresh()
-      toast({ title: 'Status atualizado.' })
+      toast({ title: t('toast.statusUpdated') })
     } catch {
-      toast({ title: 'Erro ao atualizar status.', variant: 'destructive' })
+      toast({ title: t('toast.statusError'), variant: 'destructive' })
     } finally {
       setRefreshing(false)
     }
@@ -226,9 +235,9 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       const url = await uploadSaleContractPDF(contract.id, blob, contract.contractNumber)
       await updateSaleContract(contract.id, { signedPdfUrl: url, status: 'assinado' })
       onRefresh()
-      toast({ title: 'PDF final gerado!' })
+      toast({ title: t('toast.pdfGenerated') })
     } catch {
-      toast({ title: 'Erro ao gerar o PDF final.', variant: 'destructive' })
+      toast({ title: t('toast.pdfError'), variant: 'destructive' })
     } finally {
       setGenerating(false)
     }
@@ -241,9 +250,10 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       const pdf = await buildSaleContractPdf(contract)
       const blob = contractPDFToBlob(pdf)
       if (win) win.location.href = URL.createObjectURL(blob)
+      else await openOrShareBlob(blob, `Previa_${contract.contractNumber}.pdf`)
     } catch {
       win?.close()
-      toast({ title: 'Erro ao gerar a prévia.', variant: 'destructive' })
+      toast({ title: t('toast.previewError'), variant: 'destructive' })
     } finally {
       setPreviewing(false)
     }
@@ -302,7 +312,7 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
       !editVendedor.name || !editVendedor.cpf || !editComprador.name || !editComprador.cpf ||
       !editTerrenoEndereco || !editTerrenoDescricao || !precoNumber || !editFormaPagamento || !editForo || !editCidade
     ) {
-      toast({ title: 'Preencha os dados obrigatórios de vendedor, comprador, terreno, preço, foro e cidade.', variant: 'destructive' })
+      toast({ title: t('toast.validationError'), variant: 'destructive' })
       return
     }
 
@@ -364,9 +374,9 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
 
       onRefresh()
       setEditing(false)
-      toast({ title: 'Contrato atualizado.' })
+      toast({ title: t('toast.updated') })
     } catch {
-      toast({ title: 'Erro ao salvar as alterações.', variant: 'destructive' })
+      toast({ title: t('toast.updateError'), variant: 'destructive' })
     } finally {
       setSavingEdit(false)
     }
@@ -376,35 +386,35 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
     return (
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Editando {contract.contractNumber}</CardTitle>
+          <CardTitle className="text-base">{t('formExtra.editing', { number: contract.contractNumber })}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <PartyFields idPrefix={`edit-vendedor-${contract.id}`} title="Vendedor" value={editVendedor} onChange={setEditVendedor} disabled={vendedorSigner?.status === 'signed'} />
-          <PartyFields idPrefix={`edit-comprador-${contract.id}`} title="Comprador(a)" value={editComprador} onChange={setEditComprador} disabled={compradorSigner?.status === 'signed'} />
+          <PartyFields idPrefix={`edit-vendedor-${contract.id}`} title={t('roles.vendedor')} value={editVendedor} onChange={setEditVendedor} disabled={vendedorSigner?.status === 'signed'} />
+          <PartyFields idPrefix={`edit-comprador-${contract.id}`} title={t('roles.comprador')} value={editComprador} onChange={setEditComprador} disabled={compradorSigner?.status === 'signed'} />
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Terreno</p>
+            <p className="text-sm font-semibold">{t('formExtra.land')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Endereço do terreno</Label>
+                <Label className="text-xs">{t('formExtra.landAddress')}</Label>
                 <Input value={editTerrenoEndereco} onChange={(e) => setEditTerrenoEndereco(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Situação (não repita endereço/coordenadas)</Label>
+                <Label className="text-xs">{t('formExtra.landSituation')}</Label>
                 <Input value={editTerrenoDescricao} onChange={(e) => setEditTerrenoDescricao(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Coordenadas (opcional)</Label>
+                <Label className="text-xs">{t('formExtra.coordinatesOptional')}</Label>
                 <Input value={editTerrenoCoordenadas} onChange={(e) => setEditTerrenoCoordenadas(e.target.value)} />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Preço e pagamento</p>
+            <p className="text-sm font-semibold">{t('formExtra.priceAndPayment')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs">Valor (R$)</Label>
+                <Label className="text-xs">{t('formExtra.valueBRL')}</Label>
                 <Input
                   inputMode="numeric"
                   value={editPrecoValor}
@@ -415,61 +425,61 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Valor por extenso</Label>
+                <Label className="text-xs">{t('formExtra.valueInWords')}</Label>
                 <Input value={editPrecoExtenso} onChange={(e) => setEditPrecoExtenso(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label className="text-xs">Forma de pagamento</Label>
+                <Label className="text-xs">{t('formExtra.paymentMethod')}</Label>
                 <Input value={editFormaPagamento} onChange={(e) => setEditFormaPagamento(e.target.value)} />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Foro e local</p>
+            <p className="text-sm font-semibold">{t('formExtra.forumAndPlace')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label className="text-xs">Comarca (foro)</Label>
+                <Label className="text-xs">{t('formExtra.forum')}</Label>
                 <Input value={editForo} onChange={(e) => setEditForo(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Cidade da assinatura</Label>
+                <Label className="text-xs">{t('formExtra.signatureCity')}</Label>
                 <Input value={editCidade} onChange={(e) => setEditCidade(e.target.value)} />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Testemunhas (opcional)</p>
+            <p className="text-sm font-semibold">{t('formExtra.witnessesOptional')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs">
                   1ª Testemunha — nome
-                  {testemunha1Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">(já assinou — travada)</span>}
+                  {testemunha1Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">{t('formExtra.lockedWitness')}</span>}
                 </Label>
                 <Input value={editTestemunha1Nome} onChange={(e) => setEditTestemunha1Nome(e.target.value)} disabled={testemunha1Signer?.status === 'signed'} />
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">
                   2ª Testemunha — nome
-                  {testemunha2Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">(já assinou — travada)</span>}
+                  {testemunha2Signer?.status === 'signed' && <span className="ml-2 text-muted-foreground">{t('formExtra.lockedWitness')}</span>}
                 </Label>
                 <Input value={editTestemunha2Nome} onChange={(e) => setEditTestemunha2Nome(e.target.value)} disabled={testemunha2Signer?.status === 'signed'} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">1ª Testemunha — CPF (opcional)</Label>
+                <Label className="text-xs">{t('roles.testemunha1')} — {t('form.cpf')}</Label>
                 <Input value={editTestemunha1Cpf} onChange={(e) => setEditTestemunha1Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" disabled={testemunha1Signer?.status === 'signed'} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">2ª Testemunha — CPF (opcional)</Label>
+                <Label className="text-xs">{t('roles.testemunha2')} — {t('form.cpf')}</Label>
                 <Input value={editTestemunha2Cpf} onChange={(e) => setEditTestemunha2Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" disabled={testemunha2Signer?.status === 'signed'} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">1ª Testemunha — RG (opcional)</Label>
+                <Label className="text-xs">{t('roles.testemunha1')} — {t('form.rg')}</Label>
                 <Input value={editTestemunha1Rg} onChange={(e) => setEditTestemunha1Rg(maskRG(e.target.value))} placeholder="00.000.000-0" disabled={testemunha1Signer?.status === 'signed'} />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">2ª Testemunha — RG (opcional)</Label>
+                <Label className="text-xs">{t('roles.testemunha2')} — {t('form.rg')}</Label>
                 <Input value={editTestemunha2Rg} onChange={(e) => setEditTestemunha2Rg(maskRG(e.target.value))} placeholder="00.000.000-0" disabled={testemunha2Signer?.status === 'signed'} />
               </div>
             </div>
@@ -478,10 +488,10 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
           <div className="flex gap-2">
             <Button onClick={handleSaveEdit} disabled={savingEdit}>
               {savingEdit && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar alterações
+              {t('formExtra.saveChanges')}
             </Button>
             <Button variant="ghost" onClick={() => setEditing(false)} disabled={savingEdit}>
-              <X className="mr-1.5 h-4 w-4" /> Cancelar
+              <X className="mr-1.5 h-4 w-4" /> {t('formExtra.cancel')}
             </Button>
           </div>
         </CardContent>
@@ -495,7 +505,7 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
         <div className="flex items-center justify-between gap-3">
           <CardTitle className="text-base">{contract.contractNumber}</CardTitle>
           <Badge variant={contract.status === 'assinado' ? 'success' : contract.status === 'pendente' ? 'warning' : 'secondary'}>
-            {contract.status === 'assinado' ? 'Assinado' : contract.status === 'pendente' ? 'Pendente' : 'Rascunho'}
+            {t(`statuses.${contract.status === 'assinado' ? 'assinado' : contract.status === 'pendente' ? 'pendente' : 'rascunho'}`)}
           </Badge>
         </div>
         <p className="text-sm text-muted-foreground">
@@ -507,17 +517,17 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
           {contract.signers.map((s) => (
             <div key={s.token} className="flex items-center justify-between rounded-lg border p-2.5 text-sm">
               <div className="min-w-0">
-                <p className="font-medium truncate">{ROLE_LABELS[s.role]}</p>
+                <p className="font-medium truncate">{t(`roles.${s.role}`)}</p>
                 <p className="text-xs text-muted-foreground truncate">{s.name}</p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {s.status === 'signed' ? (
-                  <span className="flex items-center gap-1 text-green-600 text-xs font-medium"><CheckCircle className="h-3.5 w-3.5" /> Assinou</span>
+                  <span className="flex items-center gap-1 text-green-600 text-xs font-medium"><CheckCircle className="h-3.5 w-3.5" /> {t('formExtra.signed')}</span>
                 ) : (
                   <>
-                    <span className="flex items-center gap-1 text-yellow-600 text-xs font-medium"><Clock className="h-3.5 w-3.5" /> Pendente</span>
+                    <span className="flex items-center gap-1 text-yellow-600 text-xs font-medium"><Clock className="h-3.5 w-3.5" /> {t('signatures.pending')}</span>
                     <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={() => copyLink(s.token)}>
-                      {copiedToken === s.token ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />} Link
+                      {copiedToken === s.token ? <Check className="mr-1 h-3 w-3" /> : <Copy className="mr-1 h-3 w-3" />} {t('formExtra.link')}
                     </Button>
                   </>
                 )}
@@ -528,23 +538,23 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
 
         <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" onClick={handleRefresh} disabled={refreshing}>
-            {refreshing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />} Atualizar status
+            {refreshing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="mr-1.5 h-3.5 w-3.5" />} {t('formExtra.updateStatus')}
           </Button>
           {contract.status !== 'assinado' && (
             <Button variant="outline" size="sm" onClick={startEditing}>
-              <Pencil className="mr-1.5 h-3.5 w-3.5" /> Editar
+              <Pencil className="mr-1.5 h-3.5 w-3.5" /> {t('edit')}
             </Button>
           )}
           <Button variant="outline" size="sm" onClick={handlePreview} disabled={previewing}>
-            {previewing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} Pré-visualizar
+            {previewing ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} {t('preview')}
           </Button>
           <Button size="sm" onClick={handleGeneratePdf} disabled={!allSigned || generating}>
-            {generating ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} Gerar PDF final
+            {generating ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <FileText className="mr-1.5 h-3.5 w-3.5" />} {t('formExtra.generateFinalPdf')}
           </Button>
           {contract.signedPdfUrl && (
             <Button variant="outline" size="sm" asChild>
               <a href={contract.signedPdfUrl} target="_blank" rel="noopener noreferrer">
-                <Download className="mr-1.5 h-3.5 w-3.5" /> Ver PDF
+                <Download className="mr-1.5 h-3.5 w-3.5" /> {t('formExtra.viewPdf')}
               </a>
             </Button>
           )}
@@ -555,6 +565,7 @@ function SaleContractCard({ contract, onRefresh }: { contract: SaleContract; onR
 }
 
 export function SaleContractsPage() {
+  const { t } = useTranslation('saleContracts')
   const qc = useQueryClient()
   const { data: contracts = [], isLoading } = useQuery({ queryKey: ['saleContracts'], queryFn: getSaleContracts })
 
@@ -599,7 +610,7 @@ export function SaleContractsPage() {
 
   const handlePreviewForm = async () => {
     if (!vendedor.name || !comprador.name) {
-      toast({ title: 'Preencha ao menos o nome do vendedor e do comprador para pré-visualizar.', variant: 'destructive' })
+      toast({ title: t('toastExtra.previewValidation'), variant: 'destructive' })
       return
     }
     const win = openBlankTab()
@@ -607,7 +618,7 @@ export function SaleContractsPage() {
     try {
       const precoNumber = Number(precoValor.replace(/\D/g, '')) / 100
       const pdf = await buildSaleContractPdf({
-        contractNumber: 'PRÉVIA',
+        contractNumber: t('formExtra.previewNumber'),
         vendedor, comprador,
         terrenoDescricao, terrenoEndereco,
         terrenoCoordenadas: terrenoCoordenadas || undefined,
@@ -618,9 +629,10 @@ export function SaleContractsPage() {
       })
       const blob = contractPDFToBlob(pdf)
       if (win) win.location.href = URL.createObjectURL(blob)
+      else await openOrShareBlob(blob, 'Previa_contrato_terreno.pdf')
     } catch {
       win?.close()
-      toast({ title: 'Erro ao gerar a prévia.', variant: 'destructive' })
+      toast({ title: t('toast.previewError'), variant: 'destructive' })
     } finally {
       setPreviewingForm(false)
     }
@@ -632,7 +644,7 @@ export function SaleContractsPage() {
       !vendedor.name || !vendedor.cpf || !comprador.name || !comprador.cpf ||
       !terrenoEndereco || !terrenoDescricao || !precoNumber || !formaPagamento || !foro || !cidade
     ) {
-      toast({ title: 'Preencha os dados obrigatórios de vendedor, comprador, terreno, preço, foro e cidade.', variant: 'destructive' })
+      toast({ title: t('toast.validationError'), variant: 'destructive' })
       return
     }
 
@@ -690,9 +702,9 @@ export function SaleContractsPage() {
 
       qc.invalidateQueries({ queryKey: ['saleContracts'] })
       resetForm()
-      toast({ title: 'Contrato gerado!', description: 'Copie os links na lista abaixo e envie pra cada parte assinar.' })
+      toast({ title: t('toast.created'), description: t('toastExtra.createdDescription') })
     } catch {
-      toast({ title: 'Erro ao gerar o contrato.', variant: 'destructive' })
+      toast({ title: t('toast.createError'), variant: 'destructive' })
     } finally {
       setCreating(false)
     }
@@ -701,21 +713,21 @@ export function SaleContractsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="flex items-center gap-2 text-xl font-bold"><Landmark className="h-5 w-5" /> Contratos de Terreno</h1>
-        <p className="text-sm text-muted-foreground">Gere contratos de compra e venda de terreno com assinatura remota por link individual.</p>
+        <h1 className="flex items-center gap-2 text-xl font-bold"><Landmark className="h-5 w-5" /> {t('landTitle')}</h1>
+        <p className="text-sm text-muted-foreground">{t('landSubtitle')}</p>
       </div>
 
       <Card>
-        <CardHeader><CardTitle className="text-base">Novo contrato</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="text-base">{t('newContract')}</CardTitle></CardHeader>
         <CardContent className="space-y-5">
-          <PartyFields idPrefix="vendedor" title="Vendedor" value={vendedor} onChange={setVendedor} />
-          <PartyFields idPrefix="comprador" title="Comprador(a)" value={comprador} onChange={setComprador} />
+          <PartyFields idPrefix="vendedor" title={t('roles.vendedor')} value={vendedor} onChange={setVendedor} />
+          <PartyFields idPrefix="comprador" title={t('roles.comprador')} value={comprador} onChange={setComprador} />
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Terreno</p>
+            <p className="text-sm font-semibold">{t('formExtra.land')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="terreno-endereco" className="text-xs">Endereço do terreno</Label>
+                <Label htmlFor="terreno-endereco" className="text-xs">{t('formExtra.landAddress')}</Label>
                 <Input id="terreno-endereco" value={terrenoEndereco} onChange={(e) => setTerrenoEndereco(e.target.value)} />
               </div>
               <div className="space-y-1 sm:col-span-2">
@@ -723,17 +735,17 @@ export function SaleContractsPage() {
                 <Input id="terreno-descricao" value={terrenoDescricao} onChange={(e) => setTerrenoDescricao(e.target.value)} placeholder="Ex: terreno destinado a futuro processo de usucapião pela compradora, onde já há uma casa construída por ela." />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="terreno-coordenadas" className="text-xs">Coordenadas (opcional)</Label>
+                <Label htmlFor="terreno-coordenadas" className="text-xs">{t('formExtra.coordinatesOptional')}</Label>
                 <Input id="terreno-coordenadas" value={terrenoCoordenadas} onChange={(e) => setTerrenoCoordenadas(e.target.value)} placeholder="latitude -12.89, longitude -38.40" />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Preço e pagamento</p>
+            <p className="text-sm font-semibold">{t('formExtra.priceAndPayment')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="preco-valor" className="text-xs">Valor (R$)</Label>
+                <Label htmlFor="preco-valor" className="text-xs">{t('formExtra.valueBRL')}</Label>
                 <Input
                   id="preco-valor"
                   inputMode="numeric"
@@ -746,82 +758,82 @@ export function SaleContractsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="preco-extenso" className="text-xs">Valor por extenso</Label>
+                <Label htmlFor="preco-extenso" className="text-xs">{t('formExtra.valueInWords')}</Label>
                 <Input id="preco-extenso" value={precoExtenso} onChange={(e) => setPrecoExtenso(e.target.value)} placeholder="dez mil reais" />
               </div>
               <div className="space-y-1 sm:col-span-2">
-                <Label htmlFor="forma-pagamento" className="text-xs">Forma de pagamento</Label>
+                <Label htmlFor="forma-pagamento" className="text-xs">{t('formExtra.paymentMethod')}</Label>
                 <Input id="forma-pagamento" value={formaPagamento} onChange={(e) => setFormaPagamento(e.target.value)} placeholder="Valor já integralmente pago via transferência PIX." />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Foro e local</p>
+            <p className="text-sm font-semibold">{t('formExtra.forumAndPlace')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="foro" className="text-xs">Comarca (foro)</Label>
+                <Label htmlFor="foro" className="text-xs">{t('formExtra.forum')}</Label>
                 <Input id="foro" value={foro} onChange={(e) => setForo(e.target.value)} placeholder="Salvador, Bahia" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="cidade" className="text-xs">Cidade da assinatura</Label>
+                <Label htmlFor="cidade" className="text-xs">{t('formExtra.signatureCity')}</Label>
                 <Input id="cidade" value={cidade} onChange={(e) => setCidade(e.target.value)} placeholder="Salvador" />
               </div>
             </div>
           </div>
 
           <div className="space-y-3">
-            <p className="text-sm font-semibold">Testemunhas (opcional)</p>
+            <p className="text-sm font-semibold">{t('formExtra.witnessesOptional')}</p>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="testemunha1-nome" className="text-xs">1ª Testemunha — nome</Label>
+                <Label htmlFor="testemunha1-nome" className="text-xs">{t('roles.testemunha1')} — {t('form.name')}</Label>
                 <Input id="testemunha1-nome" value={testemunha1Nome} onChange={(e) => setTestemunha1Nome(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="testemunha2-nome" className="text-xs">2ª Testemunha — nome</Label>
+                <Label htmlFor="testemunha2-nome" className="text-xs">{t('roles.testemunha2')} — {t('form.name')}</Label>
                 <Input id="testemunha2-nome" value={testemunha2Nome} onChange={(e) => setTestemunha2Nome(e.target.value)} />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="testemunha1-cpf" className="text-xs">1ª Testemunha — CPF (opcional)</Label>
+                <Label htmlFor="testemunha1-cpf" className="text-xs">{t('roles.testemunha1')} — {t('form.cpf')}</Label>
                 <Input id="testemunha1-cpf" value={testemunha1Cpf} onChange={(e) => setTestemunha1Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="testemunha2-cpf" className="text-xs">2ª Testemunha — CPF (opcional)</Label>
+                <Label htmlFor="testemunha2-cpf" className="text-xs">{t('roles.testemunha2')} — {t('form.cpf')}</Label>
                 <Input id="testemunha2-cpf" value={testemunha2Cpf} onChange={(e) => setTestemunha2Cpf(maskCPF(e.target.value))} placeholder="000.000.000-00" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="testemunha1-rg" className="text-xs">1ª Testemunha — RG (opcional)</Label>
+                <Label htmlFor="testemunha1-rg" className="text-xs">{t('roles.testemunha1')} — {t('form.rg')}</Label>
                 <Input id="testemunha1-rg" value={testemunha1Rg} onChange={(e) => setTestemunha1Rg(maskRG(e.target.value))} placeholder="00.000.000-0" />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="testemunha2-rg" className="text-xs">2ª Testemunha — RG (opcional)</Label>
+                <Label htmlFor="testemunha2-rg" className="text-xs">{t('roles.testemunha2')} — {t('form.rg')}</Label>
                 <Input id="testemunha2-rg" value={testemunha2Rg} onChange={(e) => setTestemunha2Rg(maskRG(e.target.value))} placeholder="00.000.000-0" />
               </div>
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
-            CPF e RG das testemunhas são opcionais aqui — se não preencher, a própria testemunha informa ao assinar pelo link.
+            {t('formExtra.witnessDocsHint')}
           </p>
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={handlePreviewForm} disabled={previewingForm}>
               {previewingForm ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
-              Pré-visualizar
+              {t('preview')}
             </Button>
             <Button onClick={handleGenerate} disabled={creating}>
               {creating && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Gerar contrato
+              {t('generateContract')}
             </Button>
           </div>
         </CardContent>
       </Card>
 
       <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">Contratos gerados</h2>
+        <h2 className="text-sm font-semibold text-muted-foreground">{t('generatedContracts')}</h2>
         {isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
         ) : contracts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nenhum contrato gerado ainda.</p>
+          <p className="text-sm text-muted-foreground">{t('emptyGenerated')}</p>
         ) : (
           contracts.map((c) => (
             <SaleContractCard key={c.id} contract={c} onRefresh={() => qc.invalidateQueries({ queryKey: ['saleContracts'] })} />

@@ -1,0 +1,99 @@
+{
+  "title": "Financial",
+  "subtitle": "Track cash flow, revenue, and expenses.",
+  "add": "Add entry",
+  "new": "New entry",
+  "edit": "Edit entry",
+  "delete": "Delete entry",
+  "view": "View entry",
+  "searchPlaceholder": "Search by description or category...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "type": "Type",
+    "period": "Period",
+    "category": "Category",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No entries found",
+    "description": "Record revenue and expenses to track cash flow.",
+    "noResults": "No entries match the current filters."
+  },
+  "form": {
+    "title": "Entry details",
+    "type": "Type",
+    "category": "Category",
+    "description": "Description",
+    "amount": "Amount",
+    "date": "Date",
+    "property": "Property",
+    "owner": "Owner",
+    "tenant": "Tenant",
+    "paymentMethod": "Payment method",
+    "observations": "Notes"
+  },
+  "detail": {
+    "title": "Entry details",
+    "overview": "Overview",
+    "related": "Related",
+    "history": "History"
+  },
+  "sections": {
+    "cashFlow": "Cash flow",
+    "revenue": "Revenue",
+    "expenses": "Expenses",
+    "sharedExpenses": "Shared expenses",
+    "balance": "Balance",
+    "expected": "Expected",
+    "received": "Received",
+    "pending": "Pending"
+  },
+  "types": {
+    "receita": "Revenue",
+    "despesa": "Expense"
+  },
+  "toast": {
+    "created": "Entry created successfully.",
+    "updated": "Entry updated successfully.",
+    "deleted": "Entry deleted successfully.",
+    "loadError": "Failed to load financial data.",
+    "createError": "Failed to create entry.",
+    "updateError": "Failed to update entry.",
+    "deleteError": "Failed to delete entry.",
+    "deleteConfirm": "Are you sure you want to delete this entry?"
+  },
+  "monthLabel": "Month:",
+  "expectedRevenue": "Expected revenue",
+  "tabs": {
+    "entries": "Entries",
+    "charts": "Charts"
+  },
+  "emptyMonth": "No entries this month",
+  "itemLabel": "entries",
+  "columns": {
+    "description": "Description",
+    "tenant": "Tenant",
+    "due": "Due date",
+    "payment": "Payment",
+    "method": "Method",
+    "value": "Amount",
+    "status": "Status"
+  },
+  "dueShort": "Due: {{date}}",
+  "paidShort": "Paid: {{date}}",
+  "chartTitle": "Cash flow (6 months)",
+  "chartDescription": "Received vs Pending",
+  "paymentMethods": "Payment methods",
+  "methods": {
+    "pix": "PIX",
+    "dinheiro": "Cash",
+    "transferencia": "Transfer",
+    "cartao": "Card",
+    "boleto": "Bank slip"
+  },
+  "chartSeries": {
+    "received": "Received",
+    "pending": "Pending"
+  }
+}

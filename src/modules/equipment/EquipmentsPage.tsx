@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Plus, Search, HardHat, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getEquipments, deleteEquipment } from '@/services/equipments'
@@ -20,16 +21,17 @@ import { EquipmentForm } from './EquipmentForm'
 import { EquipmentDetail } from './EquipmentDetail'
 import { TenantDetail } from '../tenants/TenantDetail'
 
-const statusConfig: Record<EquipmentStatus, { label: string; variant: 'success' | 'destructive' | 'warning' | 'secondary' | 'info' }> = {
-  disponivel: { label: 'Disponível', variant: 'success' },
-  alugado: { label: 'Alugado', variant: 'info' },
-  reservado: { label: 'Reservado', variant: 'warning' },
-  manutencao: { label: 'Manutenção', variant: 'secondary' },
-  encerrado: { label: 'Encerrado', variant: 'destructive' },
+const statusVariants: Record<EquipmentStatus, 'success' | 'destructive' | 'warning' | 'secondary' | 'info'> = {
+  disponivel: 'success',
+  alugado: 'info',
+  reservado: 'warning',
+  manutencao: 'secondary',
+  encerrado: 'destructive',
 }
 
 
 export function EquipmentsPage() {
+  const { t } = useTranslation('equipment')
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -56,7 +58,7 @@ export function EquipmentsPage() {
 
   const tenantById = useMemo(() => {
     const map: Record<string, Tenant> = {}
-    tenants.forEach((t) => { map[t.id] = t })
+    tenants.forEach((tn) => { map[tn.id] = tn })
     return map
   }, [tenants])
 
@@ -64,9 +66,9 @@ export function EquipmentsPage() {
     mutationFn: deleteEquipment,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['equipments'] })
-      toast({ title: 'Equipamento excluído com sucesso.' })
+      toast({ title: t('toast.deleted') })
     },
-    onError: () => toast({ title: 'Erro ao excluir equipamento.', variant: 'destructive' }),
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
   })
 
   const filtered = equipments.filter((eq) => {
@@ -84,10 +86,12 @@ export function EquipmentsPage() {
   const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
-    if (confirm('Excluir equipamento? Esta ação não pode ser desfeita.')) {
+    if (confirm(t('toast.deleteConfirm'))) {
       deleteMutation.mutate(id)
     }
   }
+
+  const statusLabel = (s: EquipmentStatus) => t(`common:status.${s}`)
 
   return (
     <div className="space-y-6">
@@ -97,7 +101,7 @@ export function EquipmentsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar equipamentos..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 sm:w-64"
@@ -108,7 +112,7 @@ export function EquipmentsPage() {
               <Button variant="outline" size="sm" className="justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <ListFilter className="h-4 w-4" />
-                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as EquipmentStatus].label}
+                  {statusFilter === 'todos' ? t('filters.all') : statusLabel(statusFilter as EquipmentStatus)}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
@@ -116,7 +120,7 @@ export function EquipmentsPage() {
             <DropdownMenuContent align="start">
               {(['todos', 'disponivel', 'alugado', 'reservado', 'manutencao', 'encerrado'] as const).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
-                  {s === 'todos' ? 'Todos' : statusConfig[s].label}
+                  {s === 'todos' ? t('filters.all') : statusLabel(s)}
                   {statusFilter === s && <Check className="h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               ))}
@@ -128,23 +132,23 @@ export function EquipmentsPage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 {viewMode === 'grid' ? <LayoutGrid className="h-4 w-4" /> : <Table2 className="h-4 w-4" />}
-                {viewMode === 'grid' ? 'Cards' : 'Lista'}
+                {viewMode === 'grid' ? t('common:viewMode.cards') : t('common:viewMode.list')}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => setViewMode('grid')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Cards</span>
+                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> {t('common:viewMode.cards')}</span>
                 {viewMode === 'grid' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setViewMode('table')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Lista</span>
+                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> {t('common:viewMode.list')}</span>
                 {viewMode === 'table' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => { setEditingEquipment(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Equipamento
+            <Plus className="mr-2 h-4 w-4" /> {t('new')}
           </Button>
         </div>
       </div>
@@ -158,7 +162,7 @@ export function EquipmentsPage() {
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold">{count}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {s === 'todos' ? 'Total' : statusConfig[s].label}
+                  {s === 'todos' ? t('common:ui.total') : statusLabel(s)}
                 </p>
               </CardContent>
             </Card>
@@ -178,9 +182,9 @@ export function EquipmentsPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <HardHat className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum equipamento encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.noResults')}</p>
           <Button className="mt-4" onClick={() => { setEditingEquipment(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Cadastrar Equipamento
+            <Plus className="mr-2 h-4 w-4" /> {t('add')}
           </Button>
         </div>
       ) : viewMode === 'table' ? (
@@ -188,18 +192,18 @@ export function EquipmentsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Equipamento</TableHead>
-                <TableHead>Tipo</TableHead>
-                <TableHead>Nº de Série</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Locatário</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('title')}</TableHead>
+                <TableHead>{t('common:ui.type')}</TableHead>
+                <TableHead>{t('form.serial')}</TableHead>
+                <TableHead>{t('common:ui.value')}</TableHead>
+                <TableHead>{t('tenantLabel')}</TableHead>
+                <TableHead>{t('form.status')}</TableHead>
+                <TableHead className="text-right">{t('common:ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pag.pageItems.map((equipment) => {
-                const sc = statusConfig[equipment.status]
+                const variant = statusVariants[equipment.status]
                 return (
                   <TableRow key={equipment.id}>
                     <TableCell>
@@ -231,7 +235,7 @@ export function EquipmentsPage() {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 shrink-0"
-                              title="Ver locatário"
+                              title={t('view')}
                               onClick={() => setViewTenant(tenantById[equipment.activeTenantId!])}
                             >
                               <Eye className="h-3.5 w-3.5" />
@@ -242,20 +246,20 @@ export function EquipmentsPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell><Badge variant={sc.variant}>{sc.label}</Badge></TableCell>
+                    <TableCell><Badge variant={variant}>{statusLabel(equipment.status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" title="Ver" onClick={() => setViewEquipment(equipment)}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.view')} onClick={() => setViewEquipment(equipment)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" title="Editar" onClick={() => { setEditingEquipment(equipment); setShowForm(true) }}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} onClick={() => { setEditingEquipment(equipment); setShowForm(true) }}>
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          title="Excluir"
+                          title={t('common:actions.delete')}
                           onClick={() => handleDelete(equipment.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -271,7 +275,7 @@ export function EquipmentsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pag.pageItems.map((equipment) => {
-            const sc = statusConfig[equipment.status]
+            const variant = statusVariants[equipment.status]
             return (
               <Card key={equipment.id} className="overflow-hidden transition-shadow hover:shadow-md">
                 <div className="relative h-36 bg-gradient-to-br from-slate-100 to-zinc-200 dark:from-slate-900 dark:to-zinc-900">
@@ -287,7 +291,7 @@ export function EquipmentsPage() {
                     </div>
                   )}
                   <div className="absolute right-2 top-2">
-                    <Badge variant={sc.variant}>{sc.label}</Badge>
+                    <Badge variant={variant}>{statusLabel(equipment.status)}</Badge>
                   </div>
                   <div className="absolute left-2 top-2">
                     <Badge variant="secondary" className="text-xs">{equipment.code}</Badge>
@@ -314,14 +318,14 @@ export function EquipmentsPage() {
                   {equipment.activeTenantName && (
                     <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                       <span className="truncate">
-                        Locatário: <span className="font-medium text-foreground">{equipment.activeTenantName}</span>
+                        {t('tenantLabel')}: <span className="font-medium text-foreground">{equipment.activeTenantName}</span>
                       </span>
                       {equipment.activeTenantId && tenantById[equipment.activeTenantId] && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0"
-                          title="Ver locatário"
+                          title={t('view')}
                           onClick={() => setViewTenant(tenantById[equipment.activeTenantId!])}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -336,7 +340,7 @@ export function EquipmentsPage() {
                       className="flex-1"
                       onClick={() => setViewEquipment(equipment)}
                     >
-                      <Eye className="mr-1 h-3 w-3" /> Ver
+                      <Eye className="mr-1 h-3 w-3" /> {t('common:actions.view')}
                     </Button>
                     <Button
                       variant="outline"
@@ -369,7 +373,7 @@ export function EquipmentsPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="equipamentos"
+          itemLabel={t('itemLabel')}
         />
       )}
 
@@ -377,7 +381,7 @@ export function EquipmentsPage() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingEquipment ? 'Editar Equipamento' : 'Novo Equipamento'}</DialogTitle>
+            <DialogTitle>{editingEquipment ? t('edit') : t('new')}</DialogTitle>
           </DialogHeader>
           <EquipmentForm
             equipment={editingEquipment}
@@ -394,7 +398,7 @@ export function EquipmentsPage() {
       <Dialog open={!!viewEquipment} onOpenChange={() => setViewEquipment(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Equipamento</DialogTitle>
+            <DialogTitle>{t('detail.title')}</DialogTitle>
           </DialogHeader>
           {viewEquipment && <EquipmentDetail equipment={viewEquipment} />}
         </DialogContent>
@@ -404,7 +408,7 @@ export function EquipmentsPage() {
       <Dialog open={!!viewTenant} onOpenChange={() => setViewTenant(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Locatário</DialogTitle>
+            <DialogTitle>{t('tenants:detail.title')}</DialogTitle>
           </DialogHeader>
           {viewTenant && <TenantDetail tenant={viewTenant} />}
         </DialogContent>

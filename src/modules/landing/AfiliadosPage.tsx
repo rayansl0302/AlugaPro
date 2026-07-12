@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   Gift, Percent, Clock, Users, Building2, Megaphone, Briefcase,
   Share2, Zap, UserCheck, Wallet, CheckCircle2, ArrowRight,
@@ -11,48 +12,66 @@ import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from '@/lib/motion'
 
-const AFFILIATE_COMMISSION_RATE = 7
-
-const COMMISSION_PERKS = [
-  'Pago automaticamente, direto na sua conta',
-  'Sem limite de indicações',
-  'Renda recorrente, mês a mês',
-]
-
-const AUDIENCES = [
-  {
-    icon: Users,
-    title: 'Qualquer pessoa',
-    description: 'Não precisa ser corretor nem ter experiência em vendas. Se você conhece alguém que aluga imóveis, veículos ou equipamentos, já pode indicar.',
-  },
-  {
-    icon: Briefcase,
-    title: 'Vendedores e profissionais liberais',
-    description: 'Vendedores profissionais, advogados, contadores e despachantes também participam — não há nenhuma restrição.',
-  },
-  {
-    icon: Building2,
-    title: 'Corretores e imobiliárias',
-    description: 'Já em contato direto com proprietários — indique o AlugaPro durante o próprio atendimento.',
-  },
-  {
-    icon: Megaphone,
-    title: 'Influenciadores e criadores de conteúdo',
-    description: 'De qualquer nicho, não só do mercado imobiliário — recomende para sua audiência e transforme isso em renda recorrente.',
-  },
-]
-
-const STEPS = [
-  { step: '01', icon: Share2, title: 'Indique', description: 'Apresente o AlugaPro para alguém que administra aluguéis de imóveis, veículos ou equipamentos.' },
-  { step: '02', icon: Zap, title: 'Teste grátis', description: 'Seu indicado testa a plataforma por 14 dias, sem cartão de crédito e sem compromisso.' },
-  { step: '03', icon: UserCheck, title: 'Cliente ativo', description: 'Quando ele assina um plano pago, a indicação é confirmada e fica registrada no seu nome.' },
-  { step: '04', icon: Wallet, title: 'Você recebe', description: `Receba ${AFFILIATE_COMMISSION_RATE}% de comissão recorrente sobre a mensalidade, a partir de 15 dias de cliente ativo.` },
-]
-
 export function AfiliadosPage() {
+  const { t } = useTranslation('landing')
   const { user } = useAuth()
   const ctaHref = user?.role === 'afiliado' ? '/painel-afiliado' : '/login?mode=signup&tab=afiliado'
-  const ctaLabel = user?.role === 'afiliado' ? 'Ir para o meu painel' : 'Quero ser afiliado'
+  const ctaLabel = user?.role === 'afiliado'
+    ? t('affiliatesPage.ctaGoToPanel')
+    : t('affiliatesPage.ctaBecomeAffiliate')
+
+  const COMMISSION_PERKS = t('affiliatesPage.commissionPerks', { returnObjects: true }) as string[]
+  const WAITING_PERIOD_PERKS = t('affiliatesPage.waitingPeriodPerks', { returnObjects: true }) as string[]
+
+  const AUDIENCES = [
+    {
+      icon: Users,
+      title: t('affiliatesPage.audiences.anyone.title'),
+      description: t('affiliatesPage.audiences.anyone.description'),
+    },
+    {
+      icon: Briefcase,
+      title: t('affiliatesPage.audiences.professionals.title'),
+      description: t('affiliatesPage.audiences.professionals.description'),
+    },
+    {
+      icon: Building2,
+      title: t('affiliatesPage.audiences.brokers.title'),
+      description: t('affiliatesPage.audiences.brokers.description'),
+    },
+    {
+      icon: Megaphone,
+      title: t('affiliatesPage.audiences.creators.title'),
+      description: t('affiliatesPage.audiences.creators.description'),
+    },
+  ]
+
+  const STEPS = [
+    {
+      step: t('affiliatesPage.steps.indicate.step'),
+      icon: Share2,
+      title: t('affiliatesPage.steps.indicate.title'),
+      description: t('affiliatesPage.steps.indicate.description'),
+    },
+    {
+      step: t('affiliatesPage.steps.freeTrial.step'),
+      icon: Zap,
+      title: t('affiliatesPage.steps.freeTrial.title'),
+      description: t('affiliatesPage.steps.freeTrial.description'),
+    },
+    {
+      step: t('affiliatesPage.steps.activeClient.step'),
+      icon: UserCheck,
+      title: t('affiliatesPage.steps.activeClient.title'),
+      description: t('affiliatesPage.steps.activeClient.description'),
+    },
+    {
+      step: t('affiliatesPage.steps.youEarn.step'),
+      icon: Wallet,
+      title: t('affiliatesPage.steps.youEarn.title'),
+      description: t('affiliatesPage.steps.youEarn.description'),
+    },
+  ]
 
   return (
     <div className="light min-h-screen bg-white text-foreground">
@@ -75,23 +94,21 @@ export function AfiliadosPage() {
               className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
             >
               <Gift className="h-3.5 w-3.5" />
-              Programa de Afiliados
+              {t('affiliatesPage.badge')}
             </motion.span>
 
             <motion.h1
               variants={fadeInUp}
               className="mt-5 text-4xl font-bold leading-tight tracking-tight text-[#032B61] sm:text-5xl"
             >
-              Ganhe dinheiro indicando o AlugaPro
+              {t('affiliatesPage.heroTitle')}
             </motion.h1>
 
             <motion.p
               variants={fadeInUp}
               className="mt-5 text-lg leading-relaxed text-muted-foreground"
             >
-              Qualquer pessoa pode indicar — corretor, vendedor profissional, influenciador ou simplesmente
-              quem conhece um proprietário de imóveis, veículos ou equipamentos. Indique o AlugaPro e
-              receba por cada cliente ativo.
+              {t('affiliatesPage.heroSubtitle')}
             </motion.p>
 
             <motion.div
@@ -109,7 +126,7 @@ export function AfiliadosPage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-11 border-slate-300 text-[#032B61] hover:bg-slate-50" asChild>
-                <a href="#como-funciona">Ver como funciona</a>
+                <a href="#como-funciona">{t('affiliatesPage.ctaSeeHowItWorks')}</a>
               </Button>
             </motion.div>
           </motion.div>
@@ -126,11 +143,10 @@ export function AfiliadosPage() {
               variants={staggerContainer(0.12)}
             >
               <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
-                Como você ganha
+                {t('affiliatesPage.earnTitle')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Comissão recorrente de {AFFILIATE_COMMISSION_RATE}% sobre a mensalidade de cada cliente
-                ativo indicado por você.
+                {t('affiliatesPage.earnSubtitle')}
               </motion.p>
             </motion.div>
 
@@ -148,10 +164,9 @@ export function AfiliadosPage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
                   <Percent className="h-6 w-6" />
                 </span>
-                <h3 className="mt-5 text-2xl font-bold text-emerald-700">{AFFILIATE_COMMISSION_RATE}% de comissão recorrente</h3>
+                <h3 className="mt-5 text-2xl font-bold text-emerald-700">{t('affiliatesPage.commissionTitle')}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  Todo mês, enquanto o cliente que você indicou continuar ativo, você recebe sua parte —
-                  sem precisar fazer nada além de manter seus dados de recebimento em dia.
+                  {t('affiliatesPage.commissionDescription')}
                 </p>
                 <ul className="mt-6 space-y-2.5">
                   {COMMISSION_PERKS.map((perk) => (
@@ -170,20 +185,17 @@ export function AfiliadosPage() {
                 <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 text-blue-700">
                   <Clock className="h-6 w-6" />
                 </span>
-                <h3 className="mt-5 text-2xl font-bold text-blue-700">15 dias de carência</h3>
+                <h3 className="mt-5 text-2xl font-bold text-blue-700">{t('affiliatesPage.waitingPeriodTitle')}</h3>
                 <p className="mt-3 text-sm leading-relaxed text-slate-600">
-                  O pagamento da comissão começa a contar apenas depois que o cliente indicado completa
-                  15 dias consecutivos como cliente ativo — garantindo que a indicação realmente vingou.
+                  {t('affiliatesPage.waitingPeriodDescription')}
                 </p>
                 <ul className="mt-6 space-y-2.5">
-                  <li className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                    Sem burocracia — a contagem é automática no seu painel
-                  </li>
-                  <li className="flex items-start gap-2.5 text-sm text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
-                    Você acompanha o status de cada indicação em tempo real
-                  </li>
+                  {WAITING_PERIOD_PERKS.map((perk) => (
+                    <li key={perk} className="flex items-start gap-2.5 text-sm text-slate-700">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-blue-700" />
+                      {perk}
+                    </li>
+                  ))}
                 </ul>
               </motion.div>
             </motion.div>
@@ -201,16 +213,15 @@ export function AfiliadosPage() {
               variants={staggerContainer(0.12)}
             >
               <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
-                Para quem é o programa
+                {t('affiliatesPage.forWhomTitle')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Não importa a sua profissão. Vale para corretores, vendedores profissionais,
-                influenciadores ou qualquer pessoa que conheça um proprietário de imóveis, veículos ou equipamentos.
+                {t('affiliatesPage.forWhomSubtitle')}
               </motion.p>
               <motion.div variants={fadeInUp} className="mt-5 flex justify-center">
                 <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
                   <CheckCircle2 className="mr-1.5 h-3 w-3" />
-                  Aberto a todos — inclusive vendedores profissionais
+                  {t('affiliatesPage.forWhomBadge')}
                 </Badge>
               </motion.div>
             </motion.div>
@@ -250,10 +261,10 @@ export function AfiliadosPage() {
               variants={staggerContainer(0.12)}
             >
               <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
-                Como funciona
+                {t('affiliatesPage.howItWorksTitle')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Da indicação ao pagamento, em quatro passos simples.
+                {t('affiliatesPage.howItWorksSubtitle')}
               </motion.p>
             </motion.div>
 
@@ -300,21 +311,21 @@ export function AfiliadosPage() {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
             >
               <Gift className="h-3.5 w-3.5" />
-              Indicações ilimitadas
+              {t('affiliatesPage.ctaBannerBadge')}
             </motion.span>
 
             <motion.h2
               variants={fadeInUp}
               className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl"
             >
-              Pronto para começar a indicar?
+              {t('affiliatesPage.ctaBannerTitle')}
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="mt-4 text-lg text-white/70"
             >
-              Fale com a gente e entre no programa de afiliados do AlugaPro.
+              {t('affiliatesPage.ctaBannerSubtitle')}
             </motion.p>
 
             <motion.div
@@ -332,7 +343,7 @@ export function AfiliadosPage() {
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60" asChild>
-                <Link to="/recursos">Conhecer a plataforma</Link>
+                <Link to="/recursos">{t('affiliatesPage.ctaKnowPlatform')}</Link>
               </Button>
             </motion.div>
           </motion.div>

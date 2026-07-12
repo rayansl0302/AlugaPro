@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
@@ -20,7 +21,7 @@ import { getSharedExpensesByTenant, resolveExpenseParticipantIndex, submitShared
 import { uploadReceipt } from '@/services/storage'
 import { useTenantContractActions } from '@/hooks/useTenantContractActions'
 import { TenantPortalHeader } from './TenantPortalHeader'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Owner, Property, PropertyType, Vehicle } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Owner, Property, Vehicle } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -47,16 +48,6 @@ import { PropertyDetail } from '@/modules/properties/PropertyDetail'
 import { VehicleDetail } from '@/modules/vehicles/VehicleDetail'
 import { OwnerDetail } from '@/modules/owners/OwnerDetail'
 
-const propertyTypeLabels: Record<PropertyType, string> = {
-  apartamento: 'Apartamento',
-  casa: 'Casa',
-  kitnet: 'Kitnet',
-  sala_comercial: 'Sala Comercial',
-  galpao: 'Galpão',
-  terreno: 'Terreno',
-  outro: 'Outro',
-}
-
 const statusVariant = {
   pendente: 'warning',
   pago: 'success',
@@ -64,48 +55,56 @@ const statusVariant = {
   cancelado: 'secondary',
 } as const
 
-const statusLabel: Record<string, string> = {
-  pendente: 'Pendente',
-  pago: 'Pago',
-  atrasado: 'Atrasado',
-  cancelado: 'Cancelado',
+const STATUS_I18N: Record<string, string> = {
+  pendente: 'pending',
+  pago: 'paid',
+  atrasado: 'overdue',
+  cancelado: 'canceled',
+  ativo: 'active',
+  renovado: 'renewed',
+  encerrado: 'closed',
+  aberto: 'open',
+  em_analise: 'underReview',
+  em_andamento: 'inProgress',
+  finalizado: 'finished',
 }
 
-const methodLabel: Record<PaymentMethod, string> = {
-  pix: 'Pix',
-  dinheiro: 'Dinheiro',
-  transferencia: 'Transferência',
-  cartao: 'Cartão',
-  boleto: 'Boleto',
+const METHOD_I18N: Record<PaymentMethod, string> = {
+  pix: 'pix',
+  dinheiro: 'cash',
+  transferencia: 'transfer',
+  cartao: 'card',
+  boleto: 'boleto',
 }
 
-const maintenanceCategoryLabels: Record<MaintenanceCategory, string> = {
-  eletrica: 'Elétrica',
-  hidraulica: 'Hidráulica',
-  pintura: 'Pintura',
-  estrutura: 'Estrutura',
-  limpeza: 'Limpeza',
-  seguranca: 'Segurança',
-  outro: 'Outro',
+const MAINTENANCE_CATEGORY_I18N: Record<MaintenanceCategory, string> = {
+  eletrica: 'electrical',
+  hidraulica: 'plumbing',
+  pintura: 'painting',
+  estrutura: 'structure',
+  limpeza: 'cleaning',
+  seguranca: 'security',
+  outro: 'other',
 }
 
-const maintenanceStatusConfig = {
-  aberto: { label: 'Aberto', variant: 'info' as const },
-  em_analise: { label: 'Em análise', variant: 'warning' as const },
-  em_andamento: { label: 'Em andamento', variant: 'secondary' as const },
-  finalizado: { label: 'Finalizado', variant: 'success' as const },
+const maintenanceStatusVariant = {
+  aberto: 'info' as const,
+  em_analise: 'warning' as const,
+  em_andamento: 'secondary' as const,
+  finalizado: 'success' as const,
 }
 
-const expenseTypeLabels: Record<ExpenseType, string> = {
-  internet: 'Internet',
-  energia: 'Energia',
-  agua: 'Água',
-  gas: 'Gás',
-  iptu: 'IPTU',
-  condominio: 'Condomínio',
-  seguranca: 'Segurança',
-  outro: 'Outro',
+const EXPENSE_TYPE_I18N: Record<ExpenseType, string> = {
+  internet: 'internet',
+  energia: 'energy',
+  agua: 'water',
+  gas: 'gas',
+  iptu: 'iptu',
+  condominio: 'condo',
+  seguranca: 'security',
+  outro: 'other',
 }
+
 
 const expenseTypeIcons: Record<ExpenseType, LucideIcon> = {
   internet: Wifi,
@@ -122,22 +121,22 @@ type ChargeCategory = { label: string; Icon: LucideIcon }
 
 function getChargeCategory(charge: Pick<Charge, 'type' | 'description'>): ChargeCategory {
   const byType: Partial<Record<ChargeType, ChargeCategory>> = {
-    aluguel: { label: 'Aluguel', Icon: Home },
-    caucao: { label: 'Caução', Icon: ShieldCheck },
-    multa: { label: 'Multa', Icon: AlertTriangle },
-    juros: { label: 'Juros', Icon: Percent },
+    aluguel: { label: 'rent', Icon: Home },
+    caucao: { label: 'deposit', Icon: ShieldCheck },
+    multa: { label: 'fine', Icon: AlertTriangle },
+    juros: { label: 'interest', Icon: Percent },
   }
   if (byType[charge.type]) return byType[charge.type] as ChargeCategory
 
   const text = (charge.description ?? '').toLowerCase()
-  if (/inter|wi-?fi/.test(text)) return { label: 'Internet', Icon: Wifi }
-  if (/energia|luz|el[eé]tr/.test(text)) return { label: 'Energia', Icon: Zap }
-  if (/[aá]gua/.test(text)) return { label: 'Água', Icon: Droplets }
-  if (/condom/.test(text)) return { label: 'Condomínio', Icon: Building2 }
-  if (/iptu/.test(text)) return { label: 'IPTU', Icon: Landmark }
-  if (/g[aá]s/.test(text)) return { label: 'Gás', Icon: Flame }
-  if (/segur/.test(text)) return { label: 'Segurança', Icon: ShieldCheck }
-  return { label: 'Outros', Icon: Receipt }
+  if (/inter|wi-?fi/.test(text)) return { label: 'internet', Icon: Wifi }
+  if (/energia|luz|el[eé]tr/.test(text)) return { label: 'energy', Icon: Zap }
+  if (/[aá]gua/.test(text)) return { label: 'water', Icon: Droplets }
+  if (/condom/.test(text)) return { label: 'condo', Icon: Building2 }
+  if (/iptu/.test(text)) return { label: 'iptu', Icon: Landmark }
+  if (/g[aá]s/.test(text)) return { label: 'gas', Icon: Flame }
+  if (/segur/.test(text)) return { label: 'security', Icon: ShieldCheck }
+  return { label: 'other', Icon: Receipt }
 }
 
 const TODAY = new Date().toISOString().slice(0, 10)
@@ -147,11 +146,11 @@ function chargeStatus(charge: Charge): keyof typeof statusVariant {
   return charge.dueDate && charge.dueDate < TODAY ? 'atrasado' : 'pendente'
 }
 
-function greeting() {
+function greetingKey() {
   const h = new Date().getHours()
-  if (h < 12) return 'Bom dia'
-  if (h < 18) return 'Boa tarde'
-  return 'Boa noite'
+  if (h < 12) return 'morning'
+  if (h < 18) return 'afternoon'
+  return 'evening'
 }
 
 interface TenantPaymentInfo {
@@ -184,13 +183,14 @@ function resolvePaymentInfo(contract: Contract | undefined, owner: Owner | undef
 }
 
 function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
+  const { t } = useTranslation('portal')
   const handleCopyPix = async () => {
     if (!info.pixKey) return
     try {
       await navigator.clipboard.writeText(info.pixKey)
-      toast({ title: 'Chave PIX copiada!' })
+      toast({ title: t('charges.pixKeyCopied') })
     } catch {
-      toast({ title: 'Não foi possível copiar a chave.', variant: 'destructive' })
+      toast({ title: t('charges.copyFailed'), variant: 'destructive' })
     }
   }
 
@@ -199,18 +199,18 @@ function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
   if (!hasInfo) {
     return (
       <p className="rounded-lg border border-dashed px-3 py-2 text-xs text-muted-foreground">
-        Dados de pagamento não cadastrados. Entre em contato com o gestor.
+        {t('charges.paymentDataMissing')}
       </p>
     )
   }
 
   return (
     <div className="space-y-3 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 p-3">
-      <p className="text-xs font-semibold text-[#032B61]">Dados para pagamento PIX</p>
+      <p className="text-xs font-semibold text-[#032B61]">{t('charges.paymentDataTitle')}</p>
 
       {info.bank && (
         <div className="text-sm">
-          <span className="text-muted-foreground">Banco: </span>
+          <span className="text-muted-foreground">{t('charges.bank')}: </span>
           <span className="font-medium">{info.bank}</span>
         </div>
       )}
@@ -219,13 +219,13 @@ function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
           {info.agency && (
             <span>
-              <span className="text-muted-foreground">Agência: </span>
+              <span className="text-muted-foreground">{t('charges.agency')}: </span>
               <span className="font-medium">{info.agency}</span>
             </span>
           )}
           {info.account && (
             <span>
-              <span className="text-muted-foreground">Conta: </span>
+              <span className="text-muted-foreground">{t('charges.account')}: </span>
               <span className="font-medium">{info.account}</span>
             </span>
           )}
@@ -234,7 +234,7 @@ function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
 
       {info.pixKey && (
         <div className="space-y-1.5 border-t border-[#032B61]/10 pt-2">
-          <p className="text-xs text-muted-foreground">Chave PIX</p>
+          <p className="text-xs text-muted-foreground">{t('charges.pixKey')}</p>
           <div className="flex items-start gap-2">
             <p className="flex-1 break-all font-mono text-sm font-medium leading-snug">{info.pixKey}</p>
             <Button
@@ -245,7 +245,7 @@ function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
               onClick={handleCopyPix}
             >
               <Copy className="mr-1.5 h-3.5 w-3.5" />
-              Copiar
+              {t('common.copy')}
             </Button>
           </div>
         </div>
@@ -255,6 +255,7 @@ function PaymentInfoBox({ info }: { info: TenantPaymentInfo }) {
 }
 
 export function TenantPortal() {
+  const { t } = useTranslation('portal')
   const { user, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -434,7 +435,7 @@ export function TenantPortal() {
       const url = await uploadReceipt(companyId, uploadingCharge?.id ?? 'unknown', file)
       setReceiptUrl(url)
     } catch {
-      toast({ title: 'Erro ao enviar arquivo.', variant: 'destructive' })
+      toast({ title: t('receiptsExtra.uploadFileError'), variant: 'destructive' })
     } finally {
       setUploading(false)
     }
@@ -450,11 +451,11 @@ export function TenantPortal() {
         paidBy: 'tenant',
       })
       qc.invalidateQueries({ queryKey: ['charges'] })
-      toast({ title: 'Comprovante enviado!', description: 'Aguarde a confirmação do gestor.' })
+      toast({ title: t('receiptsExtra.uploadSuccessTitle'), description: t('receiptsExtra.uploadSuccessDesc') })
       setUploadingCharge(null)
       setReceiptUrl(undefined)
     } catch {
-      toast({ title: 'Erro ao enviar comprovante.', variant: 'destructive' })
+      toast({ title: t('receipts.uploadError'), variant: 'destructive' })
     } finally {
       setSubmitting(false)
     }
@@ -473,7 +474,7 @@ export function TenantPortal() {
       tenantId,
     )
     if (participantIndex < 0) {
-      toast({ title: 'Não foi possível identificar sua parcela nesta despesa.', variant: 'destructive' })
+      toast({ title: t('receiptsExtra.shareIdentifyError'), variant: 'destructive' })
       return
     }
     setExpenseReceiptUrl(item.participant.receipt)
@@ -487,7 +488,7 @@ export function TenantPortal() {
       const url = await uploadReceipt(companyId, `expense-${uploadingExpense.expense.id}`, file)
       setExpenseReceiptUrl(url)
     } catch {
-      toast({ title: 'Erro ao enviar arquivo.', variant: 'destructive' })
+      toast({ title: t('receiptsExtra.uploadFileError'), variant: 'destructive' })
     } finally {
       setExpenseUploading(false)
     }
@@ -512,19 +513,19 @@ export function TenantPortal() {
         uploadingExpense.participant.tenantId ?? tenantId,
       )
       qc.invalidateQueries({ queryKey: ['sharedExpenses'] })
-      toast({ title: 'Comprovante enviado!', description: 'Aguarde a confirmação do gestor.' })
+      toast({ title: t('receiptsExtra.uploadSuccessTitle'), description: t('receiptsExtra.uploadSuccessDesc') })
       setUploadingExpense(null)
       setExpenseReceiptUrl(undefined)
     } catch (err) {
       const description = err instanceof Error ? err.message : undefined
-      toast({ title: 'Erro ao enviar comprovante.', description, variant: 'destructive' })
+      toast({ title: t('receipts.uploadError'), description, variant: 'destructive' })
     } finally {
       setExpenseSubmitting(false)
     }
   }
 
   const contractAssetLabel = (contract: Contract) =>
-    contract.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+    contract.assetType === 'veiculo' ? t('contracts.vehicle') : t('contracts.property')
 
   const resetMaintenanceForm = () => {
     setMaintenanceForm({
@@ -538,11 +539,11 @@ export function TenantPortal() {
   const handleCreateMaintenance = async () => {
     if (!user) return
     if (!selectedContract) {
-      toast({ title: 'Contrato ativo necessário', description: 'Você precisa de um contrato ativo para abrir um chamado.', variant: 'destructive' })
+      toast({ title: t('maintenanceExtra.needsActiveContractTitle'), description: t('maintenanceExtra.needsActiveContractDesc'), variant: 'destructive' })
       return
     }
     if (!maintenanceForm.title.trim() || !maintenanceForm.description.trim()) {
-      toast({ title: 'Preencha título e descrição.', variant: 'destructive' })
+      toast({ title: t('maintenanceExtra.fillTitleDescription'), variant: 'destructive' })
       return
     }
 
@@ -569,11 +570,11 @@ export function TenantPortal() {
         ],
       })
       qc.invalidateQueries({ queryKey: ['maintenance'] })
-      toast({ title: 'Chamado aberto!', description: 'O proprietário/gestor foi notificado sobre sua solicitação.' })
+      toast({ title: t('maintenanceExtra.openedTitle'), description: t('maintenanceExtra.openedDesc') })
       setShowMaintenanceForm(false)
       resetMaintenanceForm()
     } catch {
-      toast({ title: 'Erro ao abrir chamado.', variant: 'destructive' })
+      toast({ title: t('maintenanceExtra.openError'), variant: 'destructive' })
     } finally {
       setMaintenanceLoading(false)
     }
@@ -601,9 +602,9 @@ export function TenantPortal() {
       )
       setCommentText('')
       qc.invalidateQueries({ queryKey: ['maintenance'] })
-      toast({ title: 'Comentário enviado.' })
+      toast({ title: t('maintenanceExtra.commentSent') })
     } catch {
-      toast({ title: 'Erro ao enviar comentário.', variant: 'destructive' })
+      toast({ title: t('maintenanceExtra.commentError'), variant: 'destructive' })
     } finally {
       setCommentLoading(false)
     }
@@ -627,10 +628,10 @@ export function TenantPortal() {
         {/* ── Greeting ── */}
         <div>
           <h1 className="text-xl font-bold text-foreground">
-            {greeting()}, {user?.name?.split(' ')[0]} 👋
+            {t(`greeting.${greetingKey()}`)}, {user?.name?.split(' ')[0]} 👋
           </h1>
           <p className="text-sm text-muted-foreground mt-0.5">
-            Aqui está um resumo do seu aluguel
+            {t('home.summarySubtitle')}
           </p>
         </div>
 
@@ -642,7 +643,7 @@ export function TenantPortal() {
                 <TrendingDown className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Total a pagar</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('home.kpi.totalToPay')}</p>
                 <p className={cn('text-lg font-bold leading-tight', totalPending > 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground')}>
                   {formatCurrency(totalPending)}
                 </p>
@@ -656,7 +657,7 @@ export function TenantPortal() {
                 <AlertTriangle className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Em atraso</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('home.kpi.overdue')}</p>
                 <p className={cn('text-lg font-bold leading-tight', totalOverdue > 0 ? 'text-orange-600 dark:text-orange-400' : 'text-foreground')}>
                   {formatCurrency(totalOverdue)}
                 </p>
@@ -670,7 +671,7 @@ export function TenantPortal() {
                 <Receipt className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Em aberto</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('home.kpi.open')}</p>
                 <p className="text-lg font-bold leading-tight">{pendingCharges.length}</p>
               </div>
             </CardContent>
@@ -682,7 +683,7 @@ export function TenantPortal() {
                 <CalendarClock className="h-5 w-5" />
               </span>
               <div className="min-w-0">
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">Próx. vencimento</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wide">{t('home.kpi.nextDue')}</p>
                 <p className="text-base font-bold leading-tight">
                   {nextDue ? formatDateOptional(nextDue.dueDate) : '—'}
                 </p>
@@ -705,7 +706,7 @@ export function TenantPortal() {
                     <div className="flex items-center gap-2">
                       <FileText className="h-4 w-4 opacity-80" />
                       <span className="text-sm font-semibold">
-                        {activeContracts.length > 1 ? 'Seus contratos' : 'Contrato ativo'}
+                        {activeContracts.length > 1 ? t('contracts.title') : t('home.activeContract')}
                       </span>
                     </div>
                     {activeContracts.length > 1 && (
@@ -717,7 +718,7 @@ export function TenantPortal() {
                   {activeContracts.length > 1 && (
                     <Select value={selectedContractId} onValueChange={setSelectedContractId}>
                       <SelectTrigger className="h-9 bg-white/15 border-white/20 text-primary-foreground">
-                        <SelectValue placeholder="Selecione um contrato" />
+                        <SelectValue placeholder={t('contractsExtra.selectContract')} />
                       </SelectTrigger>
                       <SelectContent>
                         {activeContracts.map((contract) => (
@@ -732,14 +733,14 @@ export function TenantPortal() {
                 <CardContent className="p-0">
                   <div className="divide-y">
                     {[
-                      { label: 'Número', value: selectedContract.contractNumber, mono: true },
+                      { label: t('contractsExtra.number'), value: selectedContract.contractNumber, mono: true },
                       { label: contractAssetLabel(selectedContract), value: selectedContract.propertyName },
-                      { label: 'Proprietário', value: selectedContract.ownerName ?? selectedOwner?.name },
-                      { label: 'Valor', value: formatCurrency(selectedContract.rentValue), bold: true },
-                      { label: 'Vence todo dia', value: String(selectedContract.dueDay) },
+                      { label: t('contracts.owner'), value: selectedContract.ownerName ?? selectedOwner?.name },
+                      { label: t('contractsExtra.value'), value: formatCurrency(selectedContract.rentValue), bold: true },
+                      { label: t('contractsExtra.dueEveryDay'), value: String(selectedContract.dueDay) },
                       {
-                        label: 'Vigência',
-                        value: `${formatDate(selectedContract.startDate)} — ${formatDateOptional(selectedContract.endDate, 'Indeterminado')}`,
+                        label: t('contractsExtra.validity'),
+                        value: `${formatDate(selectedContract.startDate)} — ${formatDateOptional(selectedContract.endDate, t('contracts.indefinite'))}`,
                         small: true,
                       },
                     ].map(({ label, value, mono, bold, small }) => (
@@ -760,19 +761,19 @@ export function TenantPortal() {
                     {selectedContract.assetType !== 'veiculo' && selectedProperty && (
                       <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewProperty(selectedProperty)}>
                         <Building2 className="mr-1.5 h-4 w-4" />
-                        Ver {propertyTypeLabels[selectedProperty.type]}
+                        {t('contractsExtra.viewPropertyType', { type: t(`propertyTypes.${selectedProperty.type}`) })}
                       </Button>
                     )}
                     {selectedContract.assetType === 'veiculo' && selectedVehicle && (
                       <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewVehicle(selectedVehicle)}>
                         <Car className="mr-1.5 h-4 w-4" />
-                        Ver veículo
+                        {t('contractsExtra.viewVehicle')}
                       </Button>
                     )}
                     {selectedOwner && (
                       <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewOwner(selectedOwner)}>
                         <User className="mr-1.5 h-4 w-4" />
-                        Ver proprietário
+                        {t('contractsExtra.viewOwner')}
                       </Button>
                     )}
                   </div>
@@ -787,7 +788,7 @@ export function TenantPortal() {
                       {selectedContract && isContractLoading(selectedContract.id, 'view')
                         ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
                         : <Eye className="mr-1.5 h-4 w-4" />}
-                      Visualizar
+                      {t('contracts.viewPdf')}
                     </Button>
                     <Button
                       variant="outline"
@@ -799,7 +800,7 @@ export function TenantPortal() {
                       {selectedContract && isContractLoading(selectedContract.id, 'download')
                         ? <Clock className="mr-1.5 h-4 w-4 animate-spin" />
                         : <Download className="mr-1.5 h-4 w-4" />}
-                      Baixar
+                      {t('contracts.downloadPdf')}
                     </Button>
                   </div>
                 </CardContent>
@@ -812,7 +813,7 @@ export function TenantPortal() {
                 <CardHeader className="pb-2 px-4 pt-4">
                   <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                     <Wallet className="h-4 w-4 text-primary" />
-                    Cobranças por categoria
+                    {t('home.chargesByCategory')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-1">
@@ -823,8 +824,8 @@ export function TenantPortal() {
                           <Icon className="h-3.5 w-3.5" />
                         </span>
                         <div>
-                          <p className="text-sm font-medium leading-none">{label}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{count} {count === 1 ? 'item' : 'itens'}</p>
+                          <p className="text-sm font-medium leading-none">{t(`charges.categories.${label}`)}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{count} {count === 1 ? t('home.itemOne') : t('home.itemOther')}</p>
                         </div>
                       </div>
                       <span className="text-sm font-semibold">{formatCurrency(total)}</span>
@@ -840,7 +841,7 @@ export function TenantPortal() {
                 <CardHeader className="pb-2 px-4 pt-4">
                   <CardTitle className="flex items-center gap-2 text-sm font-semibold">
                     <CreditCard className="h-4 w-4 text-primary" />
-                    Últimos pagamentos
+                    {t('home.recentPayments')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="px-4 pb-4 space-y-1">
@@ -854,7 +855,7 @@ export function TenantPortal() {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-medium truncate leading-none">{payment.description}</p>
                           <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {payment.paidDate ? `Pago em ${formatDateOptional(payment.paidDate)}` : '—'}
+                            {payment.paidDate ? t('home.paidOn', { date: formatDateOptional(payment.paidDate) }) : '—'}
                           </p>
                         </div>
                         <span className="text-sm font-semibold text-green-600 dark:text-green-400 shrink-0">
@@ -873,16 +874,16 @@ export function TenantPortal() {
             <Tabs defaultValue="a-pagar">
               <TabsList className="w-full mb-4">
                 <TabsTrigger value="a-pagar" className="flex-1">
-                  A pagar
+                  {t('tabs.toPay')}
                   {pendingCharges.length > 0 && (
                     <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary/15 px-1.5 text-[11px] font-bold text-primary">
                       {pendingCharges.length}
                     </span>
                   )}
                 </TabsTrigger>
-                <TabsTrigger value="historico" className="flex-1">Histórico de pagamentos</TabsTrigger>
+                <TabsTrigger value="historico" className="flex-1">{t('tabs.paymentHistory')}</TabsTrigger>
                 <TabsTrigger value="despesas" className="flex-1">
-                  Despesas
+                  {t('tabs.expenses')}
                   {pendingSharedExpenses.length > 0 && (
                     <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500/15 px-1.5 text-[11px] font-bold text-amber-600">
                       {pendingSharedExpenses.length}
@@ -890,7 +891,7 @@ export function TenantPortal() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="chamados" className="flex-1">
-                  Chamados
+                  {t('tabs.tickets')}
                   {openMaintenanceRequests.length > 0 && (
                     <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500/15 px-1.5 text-[11px] font-bold text-orange-600">
                       {openMaintenanceRequests.length}
@@ -903,8 +904,8 @@ export function TenantPortal() {
                 {toPay.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
                     <CheckCircle className="h-12 w-12 text-green-500 mb-3" />
-                    <p className="font-semibold text-foreground">Tudo em dia!</p>
-                    <p className="text-sm text-muted-foreground mt-1">Nenhuma cobrança em aberto.</p>
+                    <p className="font-semibold text-foreground">{t('chargesExtra.allCaughtUpTitle')}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('charges.emptyPending')}</p>
                   </div>
                 ) : (
                   toPay.map((charge) => {
@@ -937,15 +938,15 @@ export function TenantPortal() {
                                 <p className="font-semibold truncate leading-tight">{charge.description}</p>
                                 <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                                   <CalendarClock className="h-3 w-3" />
-                                  {charge.dueDate ? `Vence ${formatDateOptional(charge.dueDate)}` : 'Sem vencimento'}
-                                  <span className="text-muted-foreground/50">· {label}</span>
+                                  {charge.dueDate ? t('chargesExtra.dueOn', { date: formatDateOptional(charge.dueDate) }) : t('chargesExtra.noDueDate')}
+                                  <span className="text-muted-foreground/50">· {t(`charges.categories.${label}`)}</span>
                                 </p>
                               </div>
                             </div>
                             <div className="text-right shrink-0">
                               <p className="text-lg font-bold">{formatCurrency(amount)}</p>
                               <Badge variant={statusVariant[status]} className="text-xs mt-0.5">
-                                {statusLabel[status]}
+                                {t(`status.${STATUS_I18N[status]}`)}
                               </Badge>
                             </div>
                           </div>
@@ -953,21 +954,21 @@ export function TenantPortal() {
                           {receiptStatus === 'aguardando' ? (
                             <div className="flex items-center gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 px-3 py-2.5 text-sm text-yellow-700 dark:text-yellow-300">
                               <Clock className="h-4 w-4 shrink-0" />
-                              <span>Comprovante enviado — aguardando confirmação do gestor</span>
+                              <span>{t('receiptsExtra.awaitingConfirmation')}</span>
                             </div>
                           ) : receiptStatus === 'confirmado' ? (
                             <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-3 py-2.5 text-sm text-green-700 dark:text-green-300">
                               <CheckCircle className="h-4 w-4 shrink-0" />
-                              <span>Pagamento confirmado pelo gestor</span>
+                              <span>{t('receiptsExtra.confirmedByManager')}</span>
                             </div>
                           ) : receiptStatus === 'rejeitado' ? (
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-sm text-destructive">
                                 <X className="h-4 w-4 shrink-0" />
-                                <span>Comprovante rejeitado — envie novamente</span>
+                                <span>{t('receiptsExtra.rejected')}</span>
                               </div>
                               <Button size="sm" variant="outline" className="w-full" onClick={() => openUpload(charge)}>
-                                <Upload className="mr-2 h-4 w-4" /> Reenviar comprovante
+                                <Upload className="mr-2 h-4 w-4" /> {t('chargesExtra.resendReceipt')}
                               </Button>
                             </div>
                           ) : (
@@ -978,7 +979,7 @@ export function TenantPortal() {
                               onClick={() => openUpload(charge)}
                             >
                               <Upload className="h-4 w-4" />
-                              {charge.receipt ? 'Alterar comprovante' : 'Enviar comprovante de pagamento'}
+                              {charge.receipt ? t('chargesExtra.changeReceipt') : t('chargesExtra.sendPaymentReceipt')}
                             </Button>
                           )}
                         </CardContent>
@@ -992,8 +993,8 @@ export function TenantPortal() {
                 {payments.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
                     <Receipt className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                    <p className="font-semibold text-foreground">Sem histórico</p>
-                    <p className="text-sm text-muted-foreground mt-1">Nenhum pagamento registrado ainda.</p>
+                    <p className="font-semibold text-foreground">{t('chargesExtra.emptyHistoryTitle')}</p>
+                    <p className="text-sm text-muted-foreground mt-1">{t('charges.emptyPaid')}</p>
                   </div>
                 ) : (
                   historyPag.pageItems.map((payment) => {
@@ -1008,13 +1009,13 @@ export function TenantPortal() {
                             <p className="font-semibold truncate leading-tight">{payment.description}</p>
                             <p className="text-xs text-muted-foreground mt-0.5">
                               {payment.paidDate
-                                ? `Pago em ${formatDateOptional(payment.paidDate)}`
+                                ? t('home.paidOn', { date: formatDateOptional(payment.paidDate) })
                                 : payment.dueDate
                                   ? `Vence ${formatDateOptional(payment.dueDate)}`
-                                  : 'Sem vencimento'}
+                                  : t('chargesExtra.noDueDate')}
                               {payment.paymentMethod && (
                                 <span className="text-muted-foreground/60">
-                                  {' '}· {methodLabel[payment.paymentMethod]}
+                                  {' '}· {t(`paymentMethods.${METHOD_I18N[payment.paymentMethod]}`)}
                                 </span>
                               )}
                             </p>
@@ -1022,7 +1023,7 @@ export function TenantPortal() {
                           <div className="text-right shrink-0">
                             <p className="font-bold">{formatCurrency(payment.amount)}</p>
                             <Badge variant={statusVariant[payment.status]} className="text-xs mt-0.5">
-                              {statusLabel[payment.status]}
+                              {t(`status.${STATUS_I18N[payment.status]}`)}
                             </Badge>
                           </div>
                         </CardContent>
@@ -1038,37 +1039,37 @@ export function TenantPortal() {
                     rangeStart={historyPag.rangeStart}
                     rangeEnd={historyPag.rangeEnd}
                     onPageChange={historyPag.setPage}
-                    itemLabel="pagamentos"
+                    itemLabel={t('pagination.payments')}
                   />
                 )}
               </TabsContent>
 
               <TabsContent value="despesas" className="space-y-3">
                 <div>
-                  <p className="text-sm font-semibold">Despesas compartilhadas</p>
+                  <p className="text-sm font-semibold">{t('sharedExpenses.title')}</p>
                   <p className="text-xs text-muted-foreground">
-                    Internet, condomínio, energia e outras despesas divididas do imóvel
+                    {t('sharedExpensesExtra.subtitle')}
                   </p>
                 </div>
 
                 {sharedExpenses.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
                     <DollarSign className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                    <p className="font-semibold text-foreground">Nenhuma despesa compartilhada</p>
+                    <p className="font-semibold text-foreground">{t('sharedExpenses.empty')}</p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Quando o gestor dividir despesas do imóvel com você, elas aparecerão aqui.
+                      {t('sharedExpensesExtra.emptyHint')}
                     </p>
                   </div>
                 ) : (
                   sharedExpensesPag.pageItems.map(({ expense, participant, participantIndex }) => {
                     const ExpenseIcon = expenseTypeIcons[expense.type]
-                    const typeLabel = expenseTypeLabels[expense.type]
+                    const typeLabel = t(`sharedExpenses.types.${EXPENSE_TYPE_I18N[expense.type]}`)
                     const isPaid = participant.status === 'pago'
                     const dueLabel = expense.recurring
-                      ? `Todo dia ${expense.dueDay ?? 1}`
+                      ? t('contracts.dueDayValue', { day: expense.dueDay ?? 1 })
                       : expense.dueDate
-                        ? `Vence ${formatDateOptional(expense.dueDate)}`
-                        : 'Sem vencimento'
+                        ? t('chargesExtra.dueOn', { date: formatDateOptional(expense.dueDate) })
+                        : t('chargesExtra.noDueDate')
 
                     return (
                       <Card key={expense.id} className="border-0 shadow-sm overflow-hidden">
@@ -1081,13 +1082,13 @@ export function TenantPortal() {
                               <div className="min-w-0">
                                 <p className="font-semibold leading-tight">{expense.description}</p>
                                 <p className="text-xs text-muted-foreground mt-0.5">
-                                  {expense.propertyName ?? 'Imóvel'} · {typeLabel}
+                                  {expense.propertyName ?? t('contracts.property')} · {typeLabel}
                                 </p>
                                 <p className="flex items-center gap-1 text-xs text-muted-foreground mt-0.5">
                                   <CalendarClock className="h-3 w-3" />
                                   {dueLabel}
                                   {expense.recurring && (
-                                    <span className="text-muted-foreground/60">· Recorrente</span>
+                                    <span className="text-muted-foreground/60">· {t('sharedExpensesExtra.recurring')}</span>
                                   )}
                                 </p>
                               </div>
@@ -1095,30 +1096,30 @@ export function TenantPortal() {
                             <div className="text-right shrink-0">
                               <p className="text-lg font-bold">{formatCurrency(participant.amount)}</p>
                               <Badge variant={isPaid ? 'success' : 'warning'} className="text-xs mt-0.5">
-                                {isPaid ? 'Pago' : 'Pendente'}
+                                {isPaid ? t('status.paid') : t('status.pending')}
                               </Badge>
                             </div>
                           </div>
 
                           <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                            <span>Total da despesa: {formatCurrency(expense.totalAmount)}</span>
+                            <span>{t('sharedExpensesExtra.totalExpense')}: {formatCurrency(expense.totalAmount)}</span>
                             <span>
                               {expense.participants.length}{' '}
-                              {expense.participants.length === 1 ? 'participante' : 'participantes'}
+                              {t('sharedExpensesExtra.participants')}
                             </span>
                           </div>
 
                           {isPaid && participant.paidDate && (
                             <div className="flex items-center gap-2 rounded-xl bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 px-3 py-2.5 text-sm text-green-700 dark:text-green-300">
                               <CheckCircle className="h-4 w-4 shrink-0" />
-                              <span>Pago em {formatDateOptional(participant.paidDate)}</span>
+                              <span>{t('home.paidOn', { date: formatDateOptional(participant.paidDate) })}</span>
                             </div>
                           )}
 
                           {!isPaid && participant.receiptStatus === 'aguardando' && (
                             <div className="flex items-center gap-2 rounded-xl bg-yellow-50 dark:bg-yellow-950/30 border border-yellow-200 dark:border-yellow-800 px-3 py-2.5 text-sm text-yellow-700 dark:text-yellow-300">
                               <Clock className="h-4 w-4 shrink-0" />
-                              <span>Comprovante enviado — aguardando confirmação do gestor</span>
+                              <span>{t('receiptsExtra.awaitingConfirmation')}</span>
                             </div>
                           )}
 
@@ -1126,7 +1127,7 @@ export function TenantPortal() {
                             <div className="space-y-2">
                               <div className="flex items-center gap-2 rounded-xl bg-destructive/10 border border-destructive/30 px-3 py-2.5 text-sm text-destructive">
                                 <X className="h-4 w-4 shrink-0" />
-                                <span>Comprovante rejeitado — envie novamente</span>
+                                <span>{t('receiptsExtra.rejected')}</span>
                               </div>
                               <Button
                                 size="sm"
@@ -1135,7 +1136,7 @@ export function TenantPortal() {
                                 onClick={() => openExpenseUpload({ expense, participant, participantIndex })}
                               >
                                 <Upload className="h-4 w-4" />
-                                Reenviar comprovante
+                                {t('chargesExtra.resendReceipt')}
                               </Button>
                             </div>
                           )}
@@ -1148,7 +1149,7 @@ export function TenantPortal() {
                               onClick={() => openExpenseUpload({ expense, participant, participantIndex })}
                             >
                               <Upload className="h-4 w-4" />
-                              Enviar comprovante de pagamento
+                              {t('chargesExtra.sendPaymentReceipt')}
                             </Button>
                           )}
                         </CardContent>
@@ -1165,7 +1166,7 @@ export function TenantPortal() {
                     rangeStart={sharedExpensesPag.rangeStart}
                     rangeEnd={sharedExpensesPag.rangeEnd}
                     onPageChange={sharedExpensesPag.setPage}
-                    itemLabel="despesas"
+                    itemLabel={t('pagination.expenses')}
                   />
                 )}
               </TabsContent>
@@ -1173,9 +1174,9 @@ export function TenantPortal() {
               <TabsContent value="chamados" className="space-y-3">
                 <div className="flex items-center justify-between gap-3">
                   <div>
-                    <p className="text-sm font-semibold">Manutenção e reparos</p>
+                    <p className="text-sm font-semibold">{t('maintenanceExtra.sectionTitle')}</p>
                     <p className="text-xs text-muted-foreground">
-                      Abra um chamado para o proprietário ou gestor
+                      {t('maintenanceExtra.sectionSubtitle')}
                     </p>
                   </div>
                   <Button
@@ -1184,31 +1185,32 @@ export function TenantPortal() {
                     disabled={!selectedContract}
                   >
                     <Plus className="mr-1.5 h-4 w-4" />
-                    Novo chamado
+                    {t('maintenance.openTicket')}
                   </Button>
                 </div>
 
                 {!selectedContract && (
                   <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-                    É necessário um contrato ativo para abrir chamados de manutenção.
+                    {t('maintenanceExtra.needsActiveContractDesc')}
                   </div>
                 )}
 
                 {maintenanceRequests.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
                     <Wrench className="h-12 w-12 text-muted-foreground/30 mb-3" />
-                    <p className="font-semibold text-foreground">Nenhum chamado</p>
+                    <p className="font-semibold text-foreground">{t('maintenanceExtra.emptyTitle')}</p>
                     <p className="text-sm text-muted-foreground mt-1">
                       {selectedContract
-                        ? 'Reporte um problema no imóvel ou veículo alugado.'
-                        : 'Aguarde a ativação do seu contrato.'}
+                        ? t('maintenance.emptyHint')
+                        : t('contracts.emptyActive')}
                     </p>
                   </div>
                 ) : (
                   maintenancePag.pageItems.map((request) => {
-                    const status = maintenanceStatusConfig[request.status]
+                    const mStatusVariant = maintenanceStatusVariant[request.status]
+                    const mStatusLabel = t(`status.${STATUS_I18N[request.status]}`)
                     const entityPhotos = resolveMaintenanceEntityPhotos(request, photoLookups)
-                    const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+                    const assetLabel = entityPhotos.assetType === 'veiculo' ? t('contracts.vehicle') : t('contracts.property')
                     return (
                       <Card key={request.id} className="border-0 shadow-sm">
                         <CardContent className="p-4 space-y-3">
@@ -1221,17 +1223,17 @@ export function TenantPortal() {
                                   {entityPhotos.assetName ?? request.propertyName ?? assetLabel} · {formatMaintenanceDate(request)}
                                 </p>
                               </div>
-                              <Badge variant={status.variant} className="shrink-0 text-xs">
-                                {status.label}
+                              <Badge variant={mStatusVariant} className="shrink-0 text-xs">
+                                {mStatusLabel}
                               </Badge>
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-2 text-xs">
                             <span className="rounded bg-muted px-2 py-0.5 text-muted-foreground">
-                              {maintenanceCategoryLabels[request.category]}
+                              {t(`maintenance.categories.${MAINTENANCE_CATEGORY_I18N[request.category]}`)}
                             </span>
                             <span className="rounded bg-muted px-2 py-0.5 text-muted-foreground capitalize">
-                              Prioridade {request.priority}
+                              {t('maintenanceExtra.priorityLabel', { priority: t(`maintenanceExtra.priorities.${request.priority}`) })}
                             </span>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">{request.description}</p>
@@ -1242,7 +1244,7 @@ export function TenantPortal() {
                             onClick={() => setViewingRequest(request)}
                           >
                             <Eye className="mr-1.5 h-4 w-4" />
-                            Visualizar
+                            {t('common.seeMore')}
                           </Button>
                         </CardContent>
                       </Card>
@@ -1258,7 +1260,7 @@ export function TenantPortal() {
                     rangeStart={maintenancePag.rangeStart}
                     rangeEnd={maintenancePag.rangeEnd}
                     onPageChange={maintenancePag.setPage}
-                    itemLabel="chamados"
+                    itemLabel={t('pagination.tickets')}
                   />
                 )}
               </TabsContent>
@@ -1274,7 +1276,7 @@ export function TenantPortal() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Enviar comprovante PIX</DialogTitle>
+            <DialogTitle>{t('chargesExtra.uploadPixTitle')}</DialogTitle>
           </DialogHeader>
 
           {uploadingCharge && (
@@ -1286,14 +1288,14 @@ export function TenantPortal() {
                 </p>
                 {uploadingCharge.dueDate && (
                   <p className="text-muted-foreground text-xs">
-                    Vence {formatDateOptional(uploadingCharge.dueDate)}
+                    {t('chargesExtra.dueOn', { date: formatDateOptional(uploadingCharge.dueDate) })}
                   </p>
                 )}
               </div>
 
               <div className="flex items-center gap-2 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 px-3 py-2.5 text-xs text-[#032B61]">
                 <QrCode className="h-4 w-4 shrink-0" />
-                <span>Realize o pagamento via <strong>PIX</strong> e envie o comprovante abaixo.</span>
+                <span>{t('chargesExtra.uploadPixHint')}</span>
               </div>
 
               <PaymentInfoBox info={chargePaymentInfo} />
@@ -1303,11 +1305,11 @@ export function TenantPortal() {
                 onChange={setReceiptUrl}
                 onFileSelect={handleReceiptFile}
                 uploading={uploading}
-                label="Comprovante do PIX"
+                label={t('chargesExtra.receiptLabel')}
               />
 
               <p className="text-xs text-muted-foreground">
-                Aceito: foto do comprovante PIX, print do app ou PDF. Após o envio, o gestor confirmará o pagamento.
+                {t('receiptsExtra.acceptHint')}
               </p>
 
               <Button
@@ -1316,8 +1318,8 @@ export function TenantPortal() {
                 onClick={handleSubmitReceipt}
               >
                 {submitting
-                  ? <><CheckCircle className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
-                  : <><Upload className="mr-2 h-4 w-4" /> Enviar comprovante PIX</>
+                  ? <><CheckCircle className="mr-2 h-4 w-4 animate-spin" /> {t('chargesExtra.sending')}</>
+                  : <><Upload className="mr-2 h-4 w-4" /> {t('charges.sendReceipt')}</>
                 }
               </Button>
             </div>
@@ -1336,7 +1338,7 @@ export function TenantPortal() {
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Enviar comprovante PIX</DialogTitle>
+            <DialogTitle>{t('chargesExtra.uploadPixTitle')}</DialogTitle>
           </DialogHeader>
 
           {uploadingExpense && (
@@ -1345,13 +1347,13 @@ export function TenantPortal() {
                 <p className="font-semibold">{uploadingExpense.expense.description}</p>
                 <p className="text-2xl font-bold">{formatCurrency(uploadingExpense.participant.amount)}</p>
                 <p className="text-muted-foreground text-xs">
-                  {uploadingExpense.expense.propertyName ?? 'Despesa compartilhada'}
+                  {uploadingExpense.expense.propertyName ?? t('sharedExpenses.title')}
                 </p>
               </div>
 
               <div className="flex items-center gap-2 rounded-lg border border-[#032B61]/15 bg-[#032B61]/5 px-3 py-2.5 text-xs text-[#032B61]">
                 <QrCode className="h-4 w-4 shrink-0" />
-                <span>Realize o pagamento via <strong>PIX</strong> e envie o comprovante abaixo.</span>
+                <span>{t('chargesExtra.uploadPixHint')}</span>
               </div>
 
               <PaymentInfoBox info={expensePaymentInfo} />
@@ -1361,11 +1363,11 @@ export function TenantPortal() {
                 onChange={setExpenseReceiptUrl}
                 onFileSelect={handleExpenseReceiptFile}
                 uploading={expenseUploading}
-                label="Comprovante do PIX"
+                label={t('chargesExtra.receiptLabel')}
               />
 
               <p className="text-xs text-muted-foreground">
-                Aceito: foto do comprovante PIX, print do app ou PDF. Após o envio, o gestor confirmará o pagamento.
+                {t('receiptsExtra.acceptHint')}
               </p>
 
               <Button
@@ -1374,8 +1376,8 @@ export function TenantPortal() {
                 onClick={handleSubmitExpenseReceipt}
               >
                 {expenseSubmitting
-                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
-                  : <><Upload className="mr-2 h-4 w-4" /> Enviar comprovante PIX</>
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('chargesExtra.sending')}</>
+                  : <><Upload className="mr-2 h-4 w-4" /> {t('charges.sendReceipt')}</>
                 }
               </Button>
             </div>
@@ -1392,23 +1394,23 @@ export function TenantPortal() {
       >
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Abrir chamado de manutenção</DialogTitle>
+            <DialogTitle>{t('maintenanceExtra.dialogTitle')}</DialogTitle>
           </DialogHeader>
 
           {selectedContract && (
             <div className="space-y-4">
               <div className="rounded-xl border bg-muted/30 p-3 text-sm">
-                <p className="text-xs text-muted-foreground">Local</p>
-                <p className="font-medium">{selectedContract.propertyName ?? 'Imóvel alugado'}</p>
-                <p className="text-xs text-muted-foreground mt-2">Contrato</p>
+                <p className="text-xs text-muted-foreground">{t('maintenanceExtra.location')}</p>
+                <p className="font-medium">{selectedContract.propertyName ?? t('contracts.property')}</p>
+                <p className="text-xs text-muted-foreground mt-2">{t('maintenanceExtra.contract')}</p>
                 <p className="font-mono text-xs">{selectedContract.contractNumber}</p>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="maintenance-title">Título *</Label>
+                <Label htmlFor="maintenance-title">{t('maintenanceExtra.titleRequired')}</Label>
                 <Input
                   id="maintenance-title"
-                  placeholder="Ex.: Vazamento na torneira da cozinha"
+                  placeholder={t('maintenanceExtra.titlePlaceholder')}
                   value={maintenanceForm.title}
                   onChange={(e) => setMaintenanceForm((p) => ({ ...p, title: e.target.value }))}
                 />
@@ -1416,42 +1418,42 @@ export function TenantPortal() {
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label>Categoria</Label>
+                  <Label>{t('maintenance.category')}</Label>
                   <Select
                     value={maintenanceForm.category}
                     onValueChange={(v) => setMaintenanceForm((p) => ({ ...p, category: v as MaintenanceCategory }))}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      {Object.entries(maintenanceCategoryLabels).map(([value, label]) => (
-                        <SelectItem key={value} value={value}>{label}</SelectItem>
+                      {(Object.keys(MAINTENANCE_CATEGORY_I18N) as MaintenanceCategory[]).map((value) => (
+                        <SelectItem key={value} value={value}>{t(`maintenance.categories.${MAINTENANCE_CATEGORY_I18N[value]}`)}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label>Prioridade</Label>
+                  <Label>{t('maintenance.priority')}</Label>
                   <Select
                     value={maintenanceForm.priority}
                     onValueChange={(v) => setMaintenanceForm((p) => ({ ...p, priority: v as MaintenanceRequest['priority'] }))}
                   >
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="baixa">Baixa</SelectItem>
-                      <SelectItem value="media">Média</SelectItem>
-                      <SelectItem value="alta">Alta</SelectItem>
-                      <SelectItem value="urgente">Urgente</SelectItem>
+                      <SelectItem value="baixa">{t('maintenanceExtra.priorities.baixa')}</SelectItem>
+                      <SelectItem value="media">{t('maintenanceExtra.priorities.media')}</SelectItem>
+                      <SelectItem value="alta">{t('maintenanceExtra.priorities.alta')}</SelectItem>
+                      <SelectItem value="urgente">{t('maintenanceExtra.priorities.urgente')}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="maintenance-description">Descrição *</Label>
+                <Label htmlFor="maintenance-description">{t('maintenanceExtra.descriptionRequired')}</Label>
                 <textarea
                   id="maintenance-description"
                   className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                  placeholder="Descreva o problema com o máximo de detalhes possível..."
+                  placeholder={t('maintenanceExtra.descriptionPlaceholder')}
                   value={maintenanceForm.description}
                   onChange={(e) => setMaintenanceForm((p) => ({ ...p, description: e.target.value }))}
                 />
@@ -1463,8 +1465,8 @@ export function TenantPortal() {
                 disabled={maintenanceLoading}
               >
                 {maintenanceLoading
-                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</>
-                  : <><Wrench className="mr-2 h-4 w-4" /> Enviar chamado</>
+                  ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('chargesExtra.sending')}</>
+                  : <><Wrench className="mr-2 h-4 w-4" /> {t('maintenanceExtra.submitTicket')}</>
                 }
               </Button>
             </div>
@@ -1488,19 +1490,19 @@ export function TenantPortal() {
 
           {viewingRequest && (() => {
             const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
-            const assetLabel = entityPhotos.assetType === 'veiculo' ? 'Veículo' : 'Imóvel'
+            const assetLabel = entityPhotos.assetType === 'veiculo' ? t('contracts.vehicle') : t('contracts.property')
             return (
             <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
               <div className="space-y-4 overflow-y-auto pr-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant={maintenanceStatusConfig[viewingRequest.status].variant}>
-                    {maintenanceStatusConfig[viewingRequest.status].label}
+                  <Badge variant={maintenanceStatusVariant[viewingRequest.status]}>
+                    {t(`status.${STATUS_I18N[viewingRequest.status]}`)}
                   </Badge>
                   <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">
-                    {maintenanceCategoryLabels[viewingRequest.category]}
+                    {t(`maintenance.categories.${MAINTENANCE_CATEGORY_I18N[viewingRequest.category]}`)}
                   </span>
                   <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground capitalize">
-                    Prioridade {viewingRequest.priority}
+                    {t('maintenanceExtra.priorityLabel', { priority: t(`maintenanceExtra.priorities.${viewingRequest.priority}`) })}
                   </span>
                 </div>
 
@@ -1512,13 +1514,13 @@ export function TenantPortal() {
                     <span className="font-medium text-right">{entityPhotos.assetName ?? viewingRequest.propertyName ?? '—'}</span>
                   </div>
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground">Aberto em</span>
+                    <span className="text-muted-foreground">{t('maintenanceExtra.openedAt')}</span>
                     <span className="text-right">{formatMaintenanceDate(viewingRequest)}</span>
                   </div>
                 </div>
 
                 <div>
-                  <p className="text-xs font-medium text-muted-foreground mb-1">Descrição</p>
+                  <p className="text-xs font-medium text-muted-foreground mb-1">{t('charges.description')}</p>
                   <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
                 </div>
 
@@ -1537,7 +1539,7 @@ export function TenantPortal() {
                 loading={commentLoading}
                 canComment={viewingRequest.status !== 'finalizado'}
                 inputId="tenant-maintenance-comment"
-                placeholder="Escreva uma mensagem para o gestor ou proprietário..."
+                placeholder={t('maintenanceExtra.commentPlaceholder')}
               />
             </div>
             )
@@ -1548,7 +1550,7 @@ export function TenantPortal() {
       <Dialog open={!!viewProperty} onOpenChange={() => setViewProperty(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do imóvel</DialogTitle>
+            <DialogTitle>{t('contractsExtra.dialogs.propertyDetails')}</DialogTitle>
           </DialogHeader>
           {viewProperty && <PropertyDetail property={viewProperty} />}
         </DialogContent>
@@ -1557,7 +1559,7 @@ export function TenantPortal() {
       <Dialog open={!!viewVehicle} onOpenChange={() => setViewVehicle(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do veículo</DialogTitle>
+            <DialogTitle>{t('contractsExtra.dialogs.vehicleDetails')}</DialogTitle>
           </DialogHeader>
           {viewVehicle && <VehicleDetail vehicle={viewVehicle} />}
         </DialogContent>
@@ -1566,7 +1568,7 @@ export function TenantPortal() {
       <Dialog open={!!viewOwner} onOpenChange={() => setViewOwner(null)}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do proprietário</DialogTitle>
+            <DialogTitle>{t('contractsExtra.dialogs.ownerDetails')}</DialogTitle>
           </DialogHeader>
           {viewOwner && <OwnerDetail owner={viewOwner} />}
         </DialogContent>

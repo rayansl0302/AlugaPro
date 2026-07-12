@@ -1,0 +1,130 @@
+{
+  "title": "Suscripción",
+  "subtitle": "Administra tu plan y formas de pago",
+  "subscribe": "Suscribirse",
+  "subscribeNow": "Suscribirse ahora",
+  "currentPlan": "Plan actual",
+  "choosePlan": "Elige un plan",
+  "changePlan": "Cambiar plan",
+  "activatePlan": "Activar plan",
+  "manage": "Administrar",
+  "regularize": "Regularizar",
+  "reactivate": "Reactivar",
+  "viewPlans": "Ver planes",
+  "downgrade": "Bajar de plan",
+  "wait": "Espera...",
+  "mostPopular": "Más popular",
+  "freeTrial": "Prueba gratuita",
+  "trialPeriod": "Periodo de evaluación",
+  "trialDays": "14 días",
+  "noCreditCard": "Sin tarjeta de crédito",
+  "cancelAnytime": "Cancela cuando quieras",
+  "perMonth": "/mes",
+  "plans": {
+    "starter": {
+      "name": "Starter",
+      "price": "R$ 39",
+      "priceValue": 39,
+      "description": "Para gestores principiantes"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "R$ 79",
+      "priceValue": 79,
+      "description": "Para administradoras en crecimiento"
+    },
+    "business": {
+      "name": "Business",
+      "price": "R$ 129",
+      "priceValue": 129,
+      "description": "Para operaciones más grandes"
+    }
+  },
+  "features": {
+    "starter": {
+      "properties": "Hasta 10 inmuebles/vehículos",
+      "users": "2 usuarios gestores",
+      "contracts": "Contratos digitales",
+      "charges": "Cobros automáticos",
+      "portal": "Portal del inquilino",
+      "support": "Soporte por correo"
+    },
+    "pro": {
+      "properties": "Hasta 50 inmuebles/vehículos",
+      "users": "5 usuarios gestores",
+      "contracts": "Contratos digitales",
+      "charges": "Cobros automáticos",
+      "portal": "Portal del inquilino",
+      "reports": "Informes avanzados",
+      "export": "Exportación de datos",
+      "support": "Soporte prioritario"
+    },
+    "business": {
+      "properties": "Inmuebles/vehículos ilimitados",
+      "users": "Usuarios ilimitados",
+      "contracts": "Contratos digitales",
+      "charges": "Cobros automáticos",
+      "portal": "Portal del inquilino",
+      "reports": "Informes avanzados",
+      "export": "Exportación de datos",
+      "api": "API de integraciones (próximamente)",
+      "onboarding": "Onboarding asistido"
+    }
+  },
+  "status": {
+    "trialing": "Prueba activa",
+    "active": "Activo",
+    "past_due": "Pago pendiente",
+    "canceled": "Cancelado",
+    "expired": "Expirado",
+    "demo": "Admin"
+  },
+  "banner": {
+    "trialing": "Tu periodo de prueba termina en {{count}} día(s). Suscríbete para seguir usando todas las funciones.",
+    "past_due": "Pago pendiente. El acceso de escritura está suspendido. Regulariza para retomar.",
+    "canceled": "Suscripción cancelada. Tendrás acceso hasta el final del periodo actual ({{count}} días restantes)."
+  },
+  "trial": {
+    "endsIn": "La prueba termina en {{count}} día(s). Suscríbete a un plan para no perder el acceso.",
+    "daysLeft": "{{count}} día(s) restante(s) de prueba",
+    "offer": "14 días gratis · sin tarjeta de crédito · cancela cuando quieras"
+  },
+  "expired": {
+    "title": "Acceso suspendido",
+    "description": "Tu periodo de prueba expiró. Elige un plan para seguir usando AlugaPro.",
+    "logout": "Salir de la cuenta"
+  },
+  "pastDue": {
+    "message": "El pago falló. Acceso de escritura suspendido. Regulariza para continuar."
+  },
+  "usage": {
+    "properties": "de {{max}} inmuebles",
+    "vehicles": "de {{max}} vehículos",
+    "users": "de {{max}} usuarios"
+  },
+  "mobileNote": "El pago se procesa exclusivamente en el sitio web para evitar tarifas de las tiendas de aplicaciones. Si estás en la app móvil, el botón \"Suscribirse ahora\" abrirá el navegador de tu teléfono.",
+  "toast": {
+    "activated": "¡Suscripción activada!",
+    "activatedDesc": "Su plan está activo.",
+    "verifyError": "Error al verificar la suscripción",
+    "affiliateOk": "¡Código de referidos validado!",
+    "affiliateOkDesc": "La comisión del afiliado se activará tras el período de carencia de 15 días.",
+    "redirectPay": "Redirigiendo al pago...",
+    "redirectPayDesc": "Se abrió una nueva pestaña para completar el pago.",
+    "startError": "Error al iniciar la suscripción",
+    "invalidDocument": "Indique un CPF o CNPJ válido."
+  },
+  "verifying": "Verificando el pago con Mercado Pago...",
+  "demoTitle": "Cuenta de demostración",
+  "demoDescription": "Esta cuenta tiene acceso completo al plan Business para presentaciones comerciales. No aplican cobros reales.",
+  "confirmDocumentTitle": "Confirme su CPF o CNPJ",
+  "confirmDocumentDesc": "Necesitamos el CPF (persona física) o CNPJ (empresa) para generar el cobro. Solo se pedirá una vez.",
+  "documentLabel": "CPF o CNPJ",
+  "continuePayment": "Continuar al pago",
+  "unlimited": "Ilimitados",
+  "upToProperties": "Hasta {{count}} inmuebles",
+  "upToUsers": "Hasta {{count}} usuarios",
+  "unlimitedProperties": "Inmuebles ilimitados",
+  "unlimitedUsers": "Usuarios ilimitados",
+  "chooseWhatsApp": "¡Hola! Quiero suscribirme al plan {{plan}} de AlugaPro.\n\nEmpresa: {{company}}\nCorreo: {{email}}"
+}

@@ -1,0 +1,132 @@
+{
+  "title": "Vehicles",
+  "subtitle": "Manage your rental vehicle fleet.",
+  "add": "Add vehicle",
+  "new": "New vehicle",
+  "edit": "Edit vehicle",
+  "delete": "Delete vehicle",
+  "view": "View vehicle",
+  "searchPlaceholder": "Search by brand, model, or plate...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "brand": "Brand",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No vehicles yet",
+    "description": "Add your first vehicle to manage your fleet.",
+    "noResults": "No vehicles match the current filters."
+  },
+  "form": {
+    "title": "Vehicle details",
+    "brand": "Brand",
+    "model": "Model",
+    "plate": "License plate",
+    "year": "Year",
+    "color": "Color",
+    "fipe": "FIPE value",
+    "fipeCode": "FIPE code",
+    "status": "Status",
+    "value": "Rental value",
+    "owner": "Owner",
+    "mileage": "Mileage",
+    "fuelType": "Fuel type",
+    "transmission": "Transmission",
+    "description": "Description",
+    "observations": "Notes",
+    "photos": "Photos",
+    "type": "Type",
+    "renavam": "RENAVAM",
+    "chassi": "Chassis",
+    "photosLabel": "Vehicle photos"
+  },
+  "placeholders": {
+    "brand": "e.g. Volkswagen",
+    "model": "e.g. Gol 1.0",
+    "year": "2020",
+    "plate": "ABC1D23",
+    "color": "Silver",
+    "mileage": "0",
+    "renavam": "00000000000",
+    "chassi": "9BWZZZ...",
+    "value": "0.00",
+    "notes": "Internal notes...",
+    "select": "Select",
+    "selectBrand": "Select the brand",
+    "selectModel": "Select the model",
+    "selectOwner": "Select the owner",
+    "searchOwner": "Search owner...",
+    "noOwners": "No owners registered."
+  },
+  "hints": {
+    "fipeBrands": "FIPE table brands",
+    "fipeModels": "FIPE table models"
+  },
+  "fuels": {
+    "gasolina": "Gasoline",
+    "etanol": "Ethanol",
+    "flex": "Flex",
+    "diesel": "Diesel",
+    "gnv": "CNG",
+    "eletrico": "Electric",
+    "hibrido": "Hybrid"
+  },
+  "validation": {
+    "brandRequired": "Brand is required",
+    "modelRequired": "Model is required",
+    "yearInvalid": "Invalid year",
+    "plateInvalid": "Invalid plate",
+    "valueRequired": "Value is required",
+    "ownerRequired": "Owner is required"
+  },
+  "buttons": {
+    "save": "Save changes",
+    "create": "Add vehicle"
+  },
+  "fields": {
+    "rentValue": "Rental value",
+    "photoAlt": "Photo {{index}}"
+  },
+  "caution": "Security deposit",
+  "currentTenant": "Current tenant",
+  "detail": {
+    "title": "Vehicle details",
+    "overview": "Overview",
+    "financial": "Financial",
+    "contracts": "Contracts",
+    "documents": "Documents",
+    "maintenance": "Maintenance",
+    "history": "History"
+  },
+  "types": {
+    "carro": "Car",
+    "moto": "Motorcycle",
+    "caminhao": "Truck",
+    "van": "Van",
+    "onibus": "Bus",
+    "outro": "Other"
+  },
+  "statuses": {
+    "disponivel": "Available",
+    "alugado": "Rented",
+    "reservado": "Reserved",
+    "manutencao": "Maintenance",
+    "encerrado": "Closed"
+  },
+  "tenantLabel": "Tenant",
+  "itemLabel": "vehicles",
+  "toast": {
+    "created": "Vehicle created successfully.",
+    "updated": "Vehicle updated successfully.",
+    "deleted": "Vehicle deleted successfully.",
+    "loadError": "Failed to load vehicles.",
+    "createError": "Failed to create vehicle.",
+    "updateError": "Failed to update vehicle.",
+    "deleteError": "Failed to delete vehicle.",
+    "deleteConfirm": "Are you sure you want to delete this vehicle?",
+    "fipeError": "Failed to fetch FIPE value.",
+    "saveError": "Failed to save vehicle."
+  }
+}

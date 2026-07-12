@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Plus, Search, Car, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getVehicles, deleteVehicle } from '@/services/vehicles'
@@ -20,24 +21,16 @@ import { VehicleForm } from './VehicleForm'
 import { VehicleDetail } from './VehicleDetail'
 import { TenantDetail } from '../tenants/TenantDetail'
 
-const statusConfig: Record<VehicleStatus, { label: string; variant: 'success' | 'destructive' | 'warning' | 'secondary' | 'info' }> = {
-  disponivel: { label: 'Disponível', variant: 'success' },
-  alugado: { label: 'Alugado', variant: 'info' },
-  reservado: { label: 'Reservado', variant: 'warning' },
-  manutencao: { label: 'Manutenção', variant: 'secondary' },
-  encerrado: { label: 'Encerrado', variant: 'destructive' },
-}
-
-const typeLabels: Record<VehicleType, string> = {
-  carro: 'Carro',
-  moto: 'Moto',
-  caminhao: 'Caminhão',
-  van: 'Van',
-  onibus: 'Ônibus',
-  outro: 'Outro',
+const statusVariants: Record<VehicleStatus, 'success' | 'destructive' | 'warning' | 'secondary' | 'info'> = {
+  disponivel: 'success',
+  alugado: 'info',
+  reservado: 'warning',
+  manutencao: 'secondary',
+  encerrado: 'destructive',
 }
 
 export function VehiclesPage() {
+  const { t } = useTranslation('vehicles')
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -64,7 +57,7 @@ export function VehiclesPage() {
 
   const tenantById = useMemo(() => {
     const map: Record<string, Tenant> = {}
-    tenants.forEach((t) => { map[t.id] = t })
+    tenants.forEach((tn) => { map[tn.id] = tn })
     return map
   }, [tenants])
 
@@ -72,9 +65,9 @@ export function VehiclesPage() {
     mutationFn: deleteVehicle,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['vehicles'] })
-      toast({ title: 'Veículo excluído com sucesso.' })
+      toast({ title: t('toast.deleted') })
     },
-    onError: () => toast({ title: 'Erro ao excluir veículo.', variant: 'destructive' }),
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
   })
 
   const filtered = vehicles.filter((v) => {
@@ -90,10 +83,13 @@ export function VehiclesPage() {
   const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
-    if (confirm('Excluir veículo? Esta ação não pode ser desfeita.')) {
+    if (confirm(t('toast.deleteConfirm'))) {
       deleteMutation.mutate(id)
     }
   }
+
+  const statusLabel = (s: VehicleStatus) => t(`common:status.${s}`)
+  const typeLabel = (type: VehicleType) => t(`types.${type}`)
 
   return (
     <div className="space-y-6">
@@ -103,7 +99,7 @@ export function VehiclesPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar veículos..."
+              placeholder={t('searchPlaceholder')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 sm:w-64"
@@ -114,7 +110,7 @@ export function VehiclesPage() {
               <Button variant="outline" size="sm" className="justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <ListFilter className="h-4 w-4" />
-                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as VehicleStatus].label}
+                  {statusFilter === 'todos' ? t('filters.all') : statusLabel(statusFilter as VehicleStatus)}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
@@ -122,7 +118,7 @@ export function VehiclesPage() {
             <DropdownMenuContent align="start">
               {(['todos', 'disponivel', 'alugado', 'reservado', 'manutencao', 'encerrado'] as const).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
-                  {s === 'todos' ? 'Todos' : statusConfig[s].label}
+                  {s === 'todos' ? t('filters.all') : statusLabel(s)}
                   {statusFilter === s && <Check className="h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               ))}
@@ -134,23 +130,23 @@ export function VehiclesPage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 {viewMode === 'grid' ? <LayoutGrid className="h-4 w-4" /> : <Table2 className="h-4 w-4" />}
-                {viewMode === 'grid' ? 'Cards' : 'Lista'}
+                {viewMode === 'grid' ? t('common:viewMode.cards') : t('common:viewMode.list')}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => setViewMode('grid')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Cards</span>
+                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> {t('common:viewMode.cards')}</span>
                 {viewMode === 'grid' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setViewMode('table')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Lista</span>
+                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> {t('common:viewMode.list')}</span>
                 {viewMode === 'table' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => { setEditingVehicle(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Veículo
+            <Plus className="mr-2 h-4 w-4" /> {t('new')}
           </Button>
         </div>
       </div>
@@ -164,7 +160,7 @@ export function VehiclesPage() {
               <CardContent className="p-4 text-center">
                 <p className="text-2xl font-bold">{count}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {s === 'todos' ? 'Total' : statusConfig[s].label}
+                  {s === 'todos' ? t('common:ui.total') : statusLabel(s)}
                 </p>
               </CardContent>
             </Card>
@@ -184,9 +180,9 @@ export function VehiclesPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Car className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum veículo encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.noResults')}</p>
           <Button className="mt-4" onClick={() => { setEditingVehicle(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Cadastrar Veículo
+            <Plus className="mr-2 h-4 w-4" /> {t('add')}
           </Button>
         </div>
       ) : viewMode === 'table' ? (
@@ -194,18 +190,18 @@ export function VehiclesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Veículo</TableHead>
-                <TableHead>Tipo / Ano</TableHead>
-                <TableHead>Placa</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Locatário</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('title')}</TableHead>
+                <TableHead>{t('common:ui.type')} / {t('form.year')}</TableHead>
+                <TableHead>{t('form.plate')}</TableHead>
+                <TableHead>{t('common:ui.value')}</TableHead>
+                <TableHead>{t('tenantLabel')}</TableHead>
+                <TableHead>{t('form.status')}</TableHead>
+                <TableHead className="text-right">{t('common:ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {pag.pageItems.map((vehicle) => {
-                const sc = statusConfig[vehicle.status]
+                const variant = statusVariants[vehicle.status]
                 return (
                   <TableRow key={vehicle.id}>
                     <TableCell>
@@ -225,7 +221,7 @@ export function VehiclesPage() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="text-muted-foreground">{typeLabels[vehicle.type]} • {vehicle.year}</TableCell>
+                    <TableCell className="text-muted-foreground">{typeLabel(vehicle.type)} • {vehicle.year}</TableCell>
                     <TableCell className="font-mono uppercase text-sm">{vehicle.plate}</TableCell>
                     <TableCell className="font-semibold text-primary">{formatCurrency(vehicle.rentValue)}</TableCell>
                     <TableCell>
@@ -237,7 +233,7 @@ export function VehiclesPage() {
                               variant="ghost"
                               size="icon"
                               className="h-6 w-6 shrink-0"
-                              title="Ver locatário"
+                              title={t('view')}
                               onClick={() => setViewTenant(tenantById[vehicle.activeTenantId!])}
                             >
                               <Eye className="h-3.5 w-3.5" />
@@ -248,20 +244,20 @@ export function VehiclesPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell><Badge variant={sc.variant}>{sc.label}</Badge></TableCell>
+                    <TableCell><Badge variant={variant}>{statusLabel(vehicle.status)}</Badge></TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
-                        <Button variant="ghost" size="sm" title="Ver" onClick={() => setViewVehicle(vehicle)}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.view')} onClick={() => setViewVehicle(vehicle)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" title="Editar" onClick={() => { setEditingVehicle(vehicle); setShowForm(true) }}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} onClick={() => { setEditingVehicle(vehicle); setShowForm(true) }}>
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           className="text-destructive hover:text-destructive"
-                          title="Excluir"
+                          title={t('common:actions.delete')}
                           onClick={() => handleDelete(vehicle.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -277,7 +273,7 @@ export function VehiclesPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pag.pageItems.map((vehicle) => {
-            const sc = statusConfig[vehicle.status]
+            const variant = statusVariants[vehicle.status]
             return (
               <Card key={vehicle.id} className="overflow-hidden transition-shadow hover:shadow-md">
                 <div className="relative h-36 bg-gradient-to-br from-slate-100 to-zinc-200 dark:from-slate-900 dark:to-zinc-900">
@@ -293,7 +289,7 @@ export function VehiclesPage() {
                     </div>
                   )}
                   <div className="absolute right-2 top-2">
-                    <Badge variant={sc.variant}>{sc.label}</Badge>
+                    <Badge variant={variant}>{statusLabel(vehicle.status)}</Badge>
                   </div>
                   <div className="absolute left-2 top-2">
                     <Badge variant="secondary" className="text-xs">{vehicle.code}</Badge>
@@ -304,7 +300,7 @@ export function VehiclesPage() {
                     <div className="min-w-0">
                       <p className="truncate font-semibold">{vehicle.brand} {vehicle.model}</p>
                       <p className="text-xs text-muted-foreground">
-                        {typeLabels[vehicle.type]} • {vehicle.year}
+                        {typeLabel(vehicle.type)} • {vehicle.year}
                       </p>
                     </div>
                     <p className="shrink-0 font-bold text-primary">
@@ -318,14 +314,14 @@ export function VehiclesPage() {
                   {vehicle.activeTenantName && (
                     <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground">
                       <span className="truncate">
-                        Locatário: <span className="font-medium text-foreground">{vehicle.activeTenantName}</span>
+                        {t('tenantLabel')}: <span className="font-medium text-foreground">{vehicle.activeTenantName}</span>
                       </span>
                       {vehicle.activeTenantId && tenantById[vehicle.activeTenantId] && (
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0"
-                          title="Ver locatário"
+                          title={t('view')}
                           onClick={() => setViewTenant(tenantById[vehicle.activeTenantId!])}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -340,7 +336,7 @@ export function VehiclesPage() {
                       className="flex-1"
                       onClick={() => setViewVehicle(vehicle)}
                     >
-                      <Eye className="mr-1 h-3 w-3" /> Ver
+                      <Eye className="mr-1 h-3 w-3" /> {t('common:actions.view')}
                     </Button>
                     <Button
                       variant="outline"
@@ -373,7 +369,7 @@ export function VehiclesPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="veículos"
+          itemLabel={t('itemLabel')}
         />
       )}
 
@@ -381,7 +377,7 @@ export function VehiclesPage() {
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingVehicle ? 'Editar Veículo' : 'Novo Veículo'}</DialogTitle>
+            <DialogTitle>{editingVehicle ? t('edit') : t('new')}</DialogTitle>
           </DialogHeader>
           <VehicleForm
             vehicle={editingVehicle}
@@ -398,7 +394,7 @@ export function VehiclesPage() {
       <Dialog open={!!viewVehicle} onOpenChange={() => setViewVehicle(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Veículo</DialogTitle>
+            <DialogTitle>{t('detail.title')}</DialogTitle>
           </DialogHeader>
           {viewVehicle && <VehicleDetail vehicle={viewVehicle} />}
         </DialogContent>
@@ -408,7 +404,7 @@ export function VehiclesPage() {
       <Dialog open={!!viewTenant} onOpenChange={() => setViewTenant(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Locatário</DialogTitle>
+            <DialogTitle>{t('tenants:detail.title')}</DialogTitle>
           </DialogHeader>
           {viewTenant && <TenantDetail tenant={viewTenant} />}
         </DialogContent>

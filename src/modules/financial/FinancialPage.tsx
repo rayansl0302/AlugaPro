@@ -1,16 +1,17 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { TrendingUp, TrendingDown, DollarSign, BarChart3 } from 'lucide-react'
+import { TrendingUp, TrendingDown, BarChart3 } from 'lucide-react'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line, Legend,
+  ResponsiveContainer, Legend,
 } from 'recharts'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges } from '@/services/charges'
 import { Charge } from '@/types'
 import { formatCurrency, formatDate } from '@/lib/utils'
+import { getDateFnsLocale } from '@/i18n/dateLocales'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -18,14 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
-
-const methodLabels: Record<string, string> = {
-  pix: 'PIX',
-  dinheiro: 'Dinheiro',
-  transferencia: 'Transferência',
-  cartao: 'Cartão',
-  boleto: 'Boleto',
-}
 
 const statusVariant = {
   pago: 'success',
@@ -35,9 +28,20 @@ const statusVariant = {
 } as const
 
 export function FinancialPage() {
+  const { t, i18n } = useTranslation('financial')
+  const { t: tCommon } = useTranslation('common')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
+  const dateLocale = getDateFnsLocale(i18n.language)
   const [monthFilter, setMonthFilter] = useState(format(new Date(), 'yyyy-MM'))
+
+  const methodLabels: Record<string, string> = {
+    pix: t('methods.pix'),
+    dinheiro: t('methods.dinheiro'),
+    transferencia: t('methods.transferencia'),
+    cartao: t('methods.cartao'),
+    boleto: t('methods.boleto'),
+  }
 
   const { data: charges = [], isLoading } = useQuery({
     queryKey: ['charges', companyId],
@@ -63,7 +67,7 @@ export function FinancialPage() {
     if (!key) return
     if (!monthlyMap[key]) {
       monthlyMap[key] = {
-        mes: format(new Date(key + '-01'), 'MMM/yy', { locale: ptBR }),
+        mes: format(new Date(key + '-01'), 'MMM/yy', { locale: dateLocale }),
         recebido: 0,
         pendente: 0,
       }
@@ -81,11 +85,14 @@ export function FinancialPage() {
     }
   })
 
+  const statusLabel = (status: Charge['status']) =>
+    tCommon(`status.${status}`, { defaultValue: status })
+
   return (
     <div className="space-y-6">
       {/* Month filter */}
       <div className="flex items-center gap-3">
-        <label className="text-sm font-medium text-muted-foreground">Mês:</label>
+        <label className="text-sm font-medium text-muted-foreground">{t('monthLabel')}</label>
         <Input
           type="month"
           value={monthFilter}
@@ -102,7 +109,7 @@ export function FinancialPage() {
               <BarChart3 className="h-6 w-6 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Receita Esperada</p>
+              <p className="text-sm text-muted-foreground">{t('expectedRevenue')}</p>
               <p className="text-2xl font-bold">{formatCurrency(totalExpected)}</p>
             </div>
           </CardContent>
@@ -113,7 +120,7 @@ export function FinancialPage() {
               <TrendingUp className="h-6 w-6 text-green-600 dark:text-green-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Recebido</p>
+              <p className="text-sm text-muted-foreground">{t('sections.received')}</p>
               <p className="text-2xl font-bold text-green-600">{formatCurrency(totalReceived)}</p>
             </div>
           </CardContent>
@@ -124,7 +131,7 @@ export function FinancialPage() {
               <TrendingDown className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Pendente</p>
+              <p className="text-sm text-muted-foreground">{t('sections.pending')}</p>
               <p className="text-2xl font-bold text-yellow-600">{formatCurrency(totalPending)}</p>
             </div>
           </CardContent>
@@ -133,8 +140,8 @@ export function FinancialPage() {
 
       <Tabs defaultValue="lancamentos">
         <TabsList>
-          <TabsTrigger value="lancamentos">Lançamentos</TabsTrigger>
-          <TabsTrigger value="graficos">Gráficos</TabsTrigger>
+          <TabsTrigger value="lancamentos">{t('tabs.entries')}</TabsTrigger>
+          <TabsTrigger value="graficos">{t('tabs.charts')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="lancamentos" className="space-y-4">
@@ -146,7 +153,7 @@ export function FinancialPage() {
             </div>
           ) : filtered.length === 0 ? (
             <div className="rounded-lg border py-8 text-center text-muted-foreground">
-              Nenhum lançamento neste mês
+              {t('emptyMonth')}
             </div>
           ) : (
             <>
@@ -158,14 +165,14 @@ export function FinancialPage() {
                       <div className="flex items-start justify-between gap-2">
                         <p className="min-w-0 truncate font-medium">{payment.description}</p>
                         <Badge variant={statusVariant[payment.status]} className="shrink-0">
-                          {payment.status === 'pago' ? 'Pago' : payment.status === 'pendente' ? 'Pendente' : payment.status === 'atrasado' ? 'Atrasado' : 'Cancelado'}
+                          {statusLabel(payment.status)}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{payment.tenantName || '—'}</p>
                       <div className="flex items-end justify-between border-t pt-2">
                         <div className="space-y-0.5 text-xs text-muted-foreground">
-                          <p>Venc: {payment.dueDate ? formatDate(payment.dueDate) : '—'}</p>
-                          {payment.paidDate && <p>Pago: {formatDate(payment.paidDate)}</p>}
+                          <p>{t('dueShort', { date: payment.dueDate ? formatDate(payment.dueDate) : '—' })}</p>
+                          {payment.paidDate && <p>{t('paidShort', { date: formatDate(payment.paidDate) })}</p>}
                           {payment.paymentMethod && <p>{methodLabels[payment.paymentMethod]}</p>}
                         </div>
                         <p className="text-base font-semibold">{formatCurrency(payment.amount)}</p>
@@ -181,7 +188,7 @@ export function FinancialPage() {
                     rangeStart={pag.rangeStart}
                     rangeEnd={pag.rangeEnd}
                     onPageChange={pag.setPage}
-                    itemLabel="lançamentos"
+                    itemLabel={t('itemLabel')}
                   />
                 )}
               </div>
@@ -191,13 +198,13 @@ export function FinancialPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Inquilino</TableHead>
-                      <TableHead>Vencimento</TableHead>
-                      <TableHead>Pagamento</TableHead>
-                      <TableHead>Forma</TableHead>
-                      <TableHead>Valor</TableHead>
-                      <TableHead>Status</TableHead>
+                      <TableHead>{t('columns.description')}</TableHead>
+                      <TableHead>{t('columns.tenant')}</TableHead>
+                      <TableHead>{t('columns.due')}</TableHead>
+                      <TableHead>{t('columns.payment')}</TableHead>
+                      <TableHead>{t('columns.method')}</TableHead>
+                      <TableHead>{t('columns.value')}</TableHead>
+                      <TableHead>{t('columns.status')}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -219,7 +226,7 @@ export function FinancialPage() {
                         </TableCell>
                         <TableCell>
                           <Badge variant={statusVariant[payment.status]}>
-                            {payment.status === 'pago' ? 'Pago' : payment.status === 'pendente' ? 'Pendente' : payment.status === 'atrasado' ? 'Atrasado' : 'Cancelado'}
+                            {statusLabel(payment.status)}
                           </Badge>
                         </TableCell>
                       </TableRow>
@@ -235,7 +242,7 @@ export function FinancialPage() {
                       rangeStart={pag.rangeStart}
                       rangeEnd={pag.rangeEnd}
                       onPageChange={pag.setPage}
-                      itemLabel="lançamentos"
+                      itemLabel={t('itemLabel')}
                     />
                   </div>
                 )}
@@ -247,8 +254,8 @@ export function FinancialPage() {
         <TabsContent value="graficos" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Fluxo Financeiro (6 meses)</CardTitle>
-              <CardDescription>Recebido vs Pendente</CardDescription>
+              <CardTitle>{t('chartTitle')}</CardTitle>
+              <CardDescription>{t('chartDescription')}</CardDescription>
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -258,8 +265,8 @@ export function FinancialPage() {
                   <YAxis className="text-xs" tickFormatter={(v) => `R$${(v / 1000).toFixed(0)}k`} />
                   <Tooltip formatter={(v: number) => formatCurrency(v)} />
                   <Legend />
-                  <Bar dataKey="recebido" name="Recebido" fill="#10b981" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="pendente" name="Pendente" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="recebido" name={t('chartSeries.received')} fill="#10b981" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="pendente" name={t('chartSeries.pending')} fill="#f59e0b" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardContent>
@@ -268,7 +275,7 @@ export function FinancialPage() {
           {Object.keys(byMethod).length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle>Formas de Pagamento</CardTitle>
+                <CardTitle>{t('paymentMethods')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">

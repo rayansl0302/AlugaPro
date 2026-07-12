@@ -1,17 +1,19 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { FileText, Home, LogOut, UserCircle, ShieldCheck, ShieldAlert } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-
+import { LanguageSelector } from '@/i18n/LanguageSelector'
 const navItems = [
-  { label: 'Início', href: '/portal', icon: Home, exact: true },
-  { label: 'Seus contratos', href: '/portal/contratos', icon: FileText, exact: false },
+  { key: 'home', href: '/portal', icon: Home, exact: true },
+  { key: 'yourContracts', href: '/portal/contratos', icon: FileText, exact: false },
 ] as const
 
 export function TenantPortalHeader() {
+  const { t } = useTranslation('portal')
   const { user, logout } = useAuth()
   const location = useLocation()
 
@@ -31,7 +33,7 @@ export function TenantPortalHeader() {
           </Link>
 
           <nav className="flex items-center gap-1">
-            {navItems.map(({ label, href, icon: Icon, exact }) => {
+            {navItems.map(({ key, href, icon: Icon, exact }) => {
               const active = isActive(href, exact)
               return (
                 <Link
@@ -45,7 +47,7 @@ export function TenantPortalHeader() {
                   )}
                 >
                   <Icon className="h-4 w-4 shrink-0" />
-                  <span className="hidden md:inline">{label}</span>
+                  <span className="hidden md:inline">{t(`nav.${key}`)}</span>
                 </Link>
               )
             })}
@@ -53,6 +55,7 @@ export function TenantPortalHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <LanguageSelector />
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-[#032B61]/10 text-[#032B61] text-xs font-bold">
               {user ? getInitials(user.name) : 'U'}
@@ -61,15 +64,15 @@ export function TenantPortalHeader() {
           <span className="hidden items-center gap-1 text-sm font-medium lg:flex">
             {user?.name}
             {user?.phoneVerified ? (
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label="Telefone verificado" />
+              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label={t('profile.phoneVerified')} />
             ) : (
-              <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Telefone não verificado" />
+              <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label={t('profile.phoneNotVerified')} />
             )}
           </span>
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8" title="Meu perfil">
+          <Button asChild variant="ghost" size="icon" className="h-8 w-8" title={t('nav.myProfile')}>
             <Link to="/perfil"><UserCircle className="h-4 w-4" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title="Sair">
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title={t('nav.logout')}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

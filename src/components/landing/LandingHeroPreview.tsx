@@ -1,17 +1,26 @@
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import { Building2, Car, FileText, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { easeTransition } from '@/lib/motion'
 
 const CHART_HEIGHTS = ['h-6', 'h-9', 'h-7', 'h-11', 'h-9', 'h-12', 'h-10'] as const
 
-const LIST_ITEMS = [
-  { name: 'Apto. Centro — Maria S.', value: 1850, status: 'pago' as const },
-  { name: 'Casa Jardins — João P.', value: 2400, status: 'pendente' as const },
-  { name: 'Honda Civic — Ana R.', value: 980, status: 'pago' as const },
-]
-
 export function LandingHeroPreview() {
+  const { t } = useTranslation('landing')
+
+  const LIST_ITEMS = [
+    { name: t('heroPreview.items.aptCentro'), value: 1850, status: 'pago' as const },
+    { name: t('heroPreview.items.casaJardins'), value: 2400, status: 'pendente' as const },
+    { name: t('heroPreview.items.hondaCivic'), value: 980, status: 'pago' as const },
+  ]
+
+  const STATS = [
+    { icon: Building2, value: '24', label: t('heroPreview.properties'), cls: 'bg-slate-50', iconCls: 'text-[#032B61]', valCls: 'text-slate-900' },
+    { icon: Car, value: '8', label: t('heroPreview.vehicles'), cls: 'bg-slate-50', iconCls: 'text-[#032B61]', valCls: 'text-slate-900' },
+    { icon: TrendingUp, value: '+12%', label: t('heroPreview.revenue'), cls: 'bg-emerald-50', iconCls: 'text-emerald-600', valCls: 'text-emerald-700 text-sm' },
+  ]
+
   return (
     <motion.div
       className="relative w-full min-w-0 max-w-[480px] lg:ml-auto"
@@ -34,16 +43,12 @@ export function LandingHeroPreview() {
             <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
             <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           </div>
-          <span className="text-xs font-medium text-slate-500">Painel — AlugaPro</span>
+          <span className="text-xs font-medium text-slate-500">{t('heroPreview.panelTitle')}</span>
         </div>
 
         <div className="space-y-4 p-5">
           <div className="grid grid-cols-3 gap-3">
-            {[
-              { icon: Building2, value: '24', label: 'Imóveis', cls: 'bg-slate-50', iconCls: 'text-[#032B61]', valCls: 'text-slate-900' },
-              { icon: Car, value: '8', label: 'Veículos', cls: 'bg-slate-50', iconCls: 'text-[#032B61]', valCls: 'text-slate-900' },
-              { icon: TrendingUp, value: '+12%', label: 'Receita', cls: 'bg-emerald-50', iconCls: 'text-emerald-600', valCls: 'text-emerald-700 text-sm' },
-            ].map((stat, i) => {
+            {STATS.map((stat, i) => {
               const Icon = stat.icon
               return (
                 <motion.div
@@ -68,7 +73,7 @@ export function LandingHeroPreview() {
             transition={{ delay: 0.75, duration: 0.5 }}
           >
             <div className="mb-3 flex items-center justify-between">
-              <p className="text-xs font-semibold text-slate-700">Receitas do mês</p>
+              <p className="text-xs font-semibold text-slate-700">{t('heroPreview.monthlyRevenue')}</p>
               <span className="text-xs font-bold text-[#032B61]">{formatCurrency(42850)}</span>
             </div>
             <div className="flex h-16 items-end gap-1.5">
@@ -106,7 +111,7 @@ export function LandingHeroPreview() {
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
                   ) : (
                     <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700">
-                      Pendente
+                      {t('heroPreview.pending')}
                     </span>
                   )}
                 </div>

@@ -1,5 +1,6 @@
 import jsPDF from 'jspdf'
 import { ContractBlock } from './contractTemplates/imovel'
+import { saveOrShareFile } from './nativeFile'
 
 interface PDFState {
   y: number
@@ -342,8 +343,10 @@ export function contractPDFToBlob(doc: jsPDF): Blob {
   return doc.output('blob')
 }
 
-export function downloadContractPDF(doc: jsPDF, filename: string) {
-  doc.save(filename)
+export async function downloadContractPDF(doc: jsPDF, filename: string) {
+  // doc.save() depende do download do browser, que não existe no WebView
+  // nativo — saveOrShareFile cobre web (download) e app (share sheet).
+  await saveOrShareFile(contractPDFToBlob(doc), filename)
 }
 
 // ─── Sale contract (compra e venda de terreno) ────────────────────────────────

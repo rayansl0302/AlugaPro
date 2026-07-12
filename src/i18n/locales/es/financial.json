@@ -1,0 +1,99 @@
+{
+  "title": "Financiero",
+  "subtitle": "Siga el flujo de caja, ingresos y gastos.",
+  "add": "Agregar movimiento",
+  "new": "Nuevo movimiento",
+  "edit": "Editar movimiento",
+  "delete": "Eliminar movimiento",
+  "view": "Ver movimiento",
+  "searchPlaceholder": "Buscar por descripción o categoría...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "type": "Tipo",
+    "period": "Período",
+    "category": "Categoría",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún movimiento encontrado",
+    "description": "Registre ingresos y gastos para seguir el flujo de caja.",
+    "noResults": "Ningún movimiento coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del movimiento",
+    "type": "Tipo",
+    "category": "Categoría",
+    "description": "Descripción",
+    "amount": "Monto",
+    "date": "Fecha",
+    "property": "Inmueble",
+    "owner": "Propietario",
+    "tenant": "Inquilino",
+    "paymentMethod": "Forma de pago",
+    "observations": "Observaciones"
+  },
+  "detail": {
+    "title": "Detalles del movimiento",
+    "overview": "Resumen",
+    "related": "Relacionados",
+    "history": "Historial"
+  },
+  "sections": {
+    "cashFlow": "Flujo de caja",
+    "revenue": "Ingresos",
+    "expenses": "Gastos",
+    "sharedExpenses": "Gastos compartidos",
+    "balance": "Saldo",
+    "expected": "Previsto",
+    "received": "Recibido",
+    "pending": "Pendiente"
+  },
+  "types": {
+    "receita": "Ingreso",
+    "despesa": "Gasto"
+  },
+  "toast": {
+    "created": "Movimiento creado con éxito.",
+    "updated": "Movimiento actualizado con éxito.",
+    "deleted": "Movimiento eliminado con éxito.",
+    "loadError": "Error al cargar datos financieros.",
+    "createError": "Error al crear movimiento.",
+    "updateError": "Error al actualizar movimiento.",
+    "deleteError": "Error al eliminar movimiento.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este movimiento?"
+  },
+  "monthLabel": "Mes:",
+  "expectedRevenue": "Ingresos esperados",
+  "tabs": {
+    "entries": "Movimientos",
+    "charts": "Gráficos"
+  },
+  "emptyMonth": "Ningún movimiento este mes",
+  "itemLabel": "movimientos",
+  "columns": {
+    "description": "Descripción",
+    "tenant": "Inquilino",
+    "due": "Vencimiento",
+    "payment": "Pago",
+    "method": "Forma",
+    "value": "Valor",
+    "status": "Estado"
+  },
+  "dueShort": "Venc: {{date}}",
+  "paidShort": "Pago: {{date}}",
+  "chartTitle": "Flujo financiero (6 meses)",
+  "chartDescription": "Recibido vs Pendiente",
+  "paymentMethods": "Formas de pago",
+  "methods": {
+    "pix": "PIX",
+    "dinheiro": "Efectivo",
+    "transferencia": "Transferencia",
+    "cartao": "Tarjeta",
+    "boleto": "Boleto"
+  },
+  "chartSeries": {
+    "received": "Recibido",
+    "pending": "Pendiente"
+  }
+}

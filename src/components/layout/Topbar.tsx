@@ -1,35 +1,36 @@
 import { Moon, Sun, Search, Zap, AlertTriangle, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useTheme } from '@/contexts/ThemeContext'
 import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
+import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { cn } from '@/lib/utils'
-
 interface TopbarProps {
   title: string
   onMenuClick: () => void
 }
 
 export function Topbar({ title, onMenuClick }: TopbarProps) {
+  const { t } = useTranslation(['nav', 'subscription'])
   const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { status, daysRemaining, isAdmin, isLoading } = useSubscription()
 
-  // Show for any gestor that isn't a real admin and hasn't paid yet
   const showUpgrade =
     !isLoading && !isAdmin && user?.role === 'gestor' && status !== 'active'
 
   const isUrgent = ['expired', 'canceled', 'past_due'].includes(status)
 
   const upgradeLabel =
-    status === 'trialing' ? `${daysRemaining}d de trial` :
-    status === 'past_due' ? 'Regularizar pagamento' :
-    status === 'demo'     ? 'Ativar plano' :
-    'Assinar agora'
+    status === 'trialing' ? t('nav:trialDaysLeft', { count: daysRemaining }) :
+    status === 'past_due' ? t('nav:regularizePayment') :
+    status === 'demo'     ? t('subscription:activatePlan') :
+    t('nav:subscribeNow')
 
   return (
     <header className="flex h-16 items-center justify-between gap-2 border-b bg-card px-3 sm:px-6">
@@ -57,13 +58,13 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
               : <Zap className="h-3.5 w-3.5 fill-current" />
             }
             <span className="hidden sm:inline">{upgradeLabel}</span>
-            <span className="sm:hidden">{isUrgent ? 'Assinar' : `${daysRemaining}d`}</span>
+            <span className="sm:hidden">{isUrgent ? t('nav:subscribeNow') : `${daysRemaining}d`}</span>
           </Button>
         )}
 
         <div className="relative hidden md:block">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Pesquisar..." className="h-9 w-56 pl-9" />
+          <Input placeholder={t('nav:searchPlaceholder')} className="h-9 w-56 pl-9" />
         </div>
 
         <Button
@@ -73,6 +74,8 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
         >
           {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
+
+        <LanguageSelector className="hidden sm:inline-flex" />
 
         <NotificationBell />
       </div>

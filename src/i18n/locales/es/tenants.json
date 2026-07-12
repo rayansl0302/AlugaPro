@@ -1,0 +1,101 @@
+{
+  "title": "Inquilinos",
+  "subtitle": "Gestione inquilinos y arrendatarios.",
+  "add": "Agregar inquilino",
+  "new": "Nuevo inquilino",
+  "edit": "Editar inquilino",
+  "delete": "Eliminar inquilino",
+  "view": "Ver inquilino",
+  "searchPlaceholder": "Buscar por nombre, CPF o correo...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún inquilino registrado",
+    "description": "Registre el primer inquilino para vincular contratos.",
+    "noResults": "Ningún inquilino coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos personales",
+    "name": "Nombre completo",
+    "email": "Correo electrónico",
+    "phone": "Teléfono",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "rg": "Documento de identidad",
+    "birthDate": "Fecha de nacimiento",
+    "nationality": "Nacionalidad",
+    "maritalStatus": "Estado civil",
+    "profession": "Profesión",
+    "income": "Ingresos mensuales",
+    "address": "Dirección",
+    "street": "Calle",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Barrio",
+    "city": "Ciudad",
+    "state": "Estado",
+    "zipCode": "Código postal",
+    "emergencyContact": "Contacto de emergencia",
+    "guarantor": "Garante",
+    "observations": "Observaciones",
+    "documents": "Documentos",
+    "photoLabel": "Foto del inquilino"
+  },
+  "placeholders": {
+    "name": "Juan Pérez",
+    "email": "juan@email.com"
+  },
+  "validation": {
+    "nameRequired": "Nombre obligatorio",
+    "cpfInvalid": "CPF inválido",
+    "rgInvalid": "RG inválido",
+    "emailInvalid": "Correo inválido",
+    "phoneInvalid": "Teléfono inválido"
+  },
+  "buttons": {
+    "save": "Guardar cambios",
+    "create": "Agregar inquilino"
+  },
+  "fields": {
+    "situation": "Situación"
+  },
+  "detail": {
+    "title": "Detalles del inquilino",
+    "personalData": "Datos personales",
+    "contact": "Contacto",
+    "documents": "Documentos",
+    "contracts": "Contratos",
+    "charges": "Cargos",
+    "warnings": "Advertencias",
+    "history": "Historial"
+  },
+  "statuses": {
+    "ativo": "Activo",
+    "inativo": "Inactivo",
+    "inadimplente": "Moroso"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Activos",
+    "noContract": "Sin contrato"
+  },
+  "withContract": "Con contrato",
+  "noContract": "Sin contrato",
+  "itemLabel": "inquilinos",
+  "toast": {
+    "created": "Inquilino creado con éxito.",
+    "updated": "Inquilino actualizado con éxito.",
+    "deleted": "Inquilino eliminado con éxito.",
+    "loadError": "Error al cargar inquilinos.",
+    "createError": "Error al crear inquilino.",
+    "updateError": "Error al actualizar inquilino.",
+    "deleteError": "Error al eliminar inquilino.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este inquilino?",
+    "saveError": "Error al guardar el inquilino.",
+    "photoError": "Error al subir la foto."
+  }
+}

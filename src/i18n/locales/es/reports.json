@@ -1,0 +1,100 @@
+{
+  "title": "Informes",
+  "subtitle": "Exporte y visualice informes de la operación.",
+  "exportExcel": "Excel",
+  "exportPdf": "Exportar PDF",
+  "searchPlaceholder": "Buscar informe...",
+  "filters": {
+    "title": "Filtros",
+    "period": "Período",
+    "startDate": "Fecha inicial",
+    "endDate": "Fecha final",
+    "type": "Tipo de informe",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Sin datos para el período",
+    "description": "Ajuste el período o espere nuevos movimientos.",
+    "noResults": "Ningún resultado para exportar.",
+    "noData": "Ningún dato para exportar."
+  },
+  "types": {
+    "financial": "Informe financiero",
+    "properties": "Informe de inmuebles",
+    "tenants": "Informe de inquilinos",
+    "overdue": "Informe de morosidad",
+    "contracts": "Informe de contratos",
+    "maintenance": "Informe de mantenimientos"
+  },
+  "charts": {
+    "title": "Gráficos",
+    "revenueByMonth": "Ingresos por mes",
+    "occupancy": "Ocupación",
+    "overdueTrend": "Tendencia de morosidad",
+    "expensesByCategory": "Gastos por categoría"
+  },
+  "columns": {
+    "period": "Período",
+    "property": "Inmueble",
+    "tenant": "Inquilino",
+    "amount": "Monto",
+    "status": "Estado",
+    "dueDate": "Vencimiento",
+    "paidAt": "Pago"
+  },
+  "toast": {
+    "exported": "{{title}} exportado en {{format}}.",
+    "exportError": "Error al exportar informe.",
+    "exportCancelled": "Exportación cancelada.",
+    "loadError": "Error al cargar informe.",
+    "noData": "Ningún dato para exportar."
+  },
+  "summary": {
+    "properties": "Inmuebles",
+    "tenants": "Inquilinos",
+    "totalReceived": "Total recibido",
+    "overdue": "En atraso"
+  },
+  "exportTitle": "Exportar informes",
+  "exportCsv": "CSV",
+  "descriptions": {
+    "financial": "Todos los cobros y pagos del sistema",
+    "properties": "Registro completo de inmuebles con estado y valores",
+    "tenants": "Lista completa de inquilinos y estado de contratos",
+    "overdue": "Cobros vencidos con días de mora"
+  },
+  "sheetNames": {
+    "financial": "Financiero",
+    "properties": "Inmuebles",
+    "tenants": "Inquilinos",
+    "overdue": "Morosidad",
+    "data": "Datos"
+  },
+  "contractStatus": {
+    "active": "Activo",
+    "none": "Sin contrato"
+  },
+  "csvColumns": {
+    "description": "Descripción",
+    "tenant": "Inquilino",
+    "property": "Inmueble",
+    "dueDate": "Vencimiento",
+    "paymentDate": "Fecha de Pago",
+    "paymentMethod": "Forma de Pago",
+    "amount": "Importe (R$)",
+    "totalWithCharges": "Total con Cargos (R$)",
+    "status": "Estado",
+    "code": "Código",
+    "name": "Nombre",
+    "type": "Tipo",
+    "address": "Dirección",
+    "rentValue": "Valor de Alquiler (R$)",
+    "currentTenant": "Inquilino Actual",
+    "cpf": "CPF",
+    "email": "Email",
+    "phone": "Teléfono",
+    "whatsapp": "WhatsApp",
+    "contractStatus": "Estado del Contrato",
+    "daysOverdue": "Días de Atraso"
+  }
+}

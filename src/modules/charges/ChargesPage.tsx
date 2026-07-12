@@ -3,7 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   addMonths, format, parseISO, startOfMonth, endOfMonth, setDate,
 } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
+import i18n from '@/i18n'
+import { getDateFnsLocale } from '@/i18n/dateLocales'
 import {
   Search, CheckCircle, Clock, AlertTriangle, RefreshCw,
   ChevronLeft, ChevronRight, LayoutList, CalendarDays, Plus,
@@ -90,6 +92,7 @@ function MonthCell({
   contract, monthDate, monthStr, currentMonthStr, todayStr,
   charge, canManage, onMarkPaid, onViewDetails, onGenerate,
 }: MonthCellProps) {
+  const { t } = useTranslation('charges')
   const isCurrentMonth = monthStr === currentMonthStr
 
   const contractStartMonth = contract.startDate.slice(0, 7)
@@ -112,7 +115,7 @@ function MonthCell({
     return (
       <div className={cn(base, 'border border-dashed border-muted-foreground/20 text-muted-foreground/40')}>
         <span className="text-base leading-none">·</span>
-        <span className="mt-0.5">futuro</span>
+        <span className="mt-0.5">{t('futureShort')}</span>
       </div>
     )
   }
@@ -128,7 +131,7 @@ function MonthCell({
     }
     return (
       <button
-        title={`Gerar cobrança de ${format(monthDate, 'MMM/yyyy', { locale: ptBR })}`}
+        title={t('generateChargeOf', { month: format(monthDate, 'MMM/yyyy', { locale: getDateFnsLocale(i18n.language) }) })}
         onClick={() => onGenerate(contract, monthDate)}
         className={cn(
           base,
@@ -138,7 +141,7 @@ function MonthCell({
         )}
       >
         <Plus className="h-3.5 w-3.5" />
-        <span className="mt-0.5">gerar</span>
+        <span className="mt-0.5">{t('generateShort')}</span>
       </button>
     )
   }
@@ -147,7 +150,7 @@ function MonthCell({
     return (
       <button
         type="button"
-        title="Comprovante enviado — clique para visualizar e confirmar"
+        title={t('timeline.receiptSentTitle')}
         onClick={() => onViewDetails(charge)}
         className={cn(
           base,
@@ -157,7 +160,7 @@ function MonthCell({
         )}
       >
         <FileCheck className="h-3.5 w-3.5" />
-        <span className="mt-0.5 text-[9px] leading-tight">validar</span>
+        <span className="mt-0.5 text-[9px] leading-tight">{t('timeline.validate')}</span>
       </button>
     )
   }
@@ -166,7 +169,7 @@ function MonthCell({
   if (charge.status === 'pago') {
     return (
       <button
-        title={`Pago em ${charge.paidDate ? format(parseISO(charge.paidDate), 'dd/MM/yyyy') : '—'}`}
+        title={t('timeline.paidOnTitle', { date: charge.paidDate ? format(parseISO(charge.paidDate), 'dd/MM/yyyy') : '—' })}
         onClick={() => onViewDetails(charge)}
         className={cn(
           base,
@@ -176,7 +179,7 @@ function MonthCell({
         )}
       >
         <CheckCircle className="h-3.5 w-3.5" />
-        <span className="mt-0.5">pago</span>
+        <span className="mt-0.5">{t('timeline.paid')}</span>
       </button>
     )
   }
@@ -187,7 +190,7 @@ function MonthCell({
     const days = charge.daysLate ?? getDaysLate(charge.dueDate ?? '')
     return (
       <button
-        title={`${days} dia(s) em atraso — clique para registrar pagamento`}
+        title={t('timeline.overdueTitle', { count: days })}
         onClick={() => canManage && onMarkPaid(charge)}
         className={cn(
           base,
@@ -197,7 +200,7 @@ function MonthCell({
         )}
       >
         <AlertTriangle className="h-3.5 w-3.5" />
-        <span className="mt-0.5">{days}d atr.</span>
+        <span className="mt-0.5">{t('timeline.daysLateShort', { count: days })}</span>
       </button>
     )
   }
@@ -206,7 +209,7 @@ function MonthCell({
   const isFutureCharge = monthStr > currentMonthStr
   return (
     <button
-      title={`Vence dia ${charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM') : '—'}`}
+      title={t('timeline.dueOnTitle', { date: charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM') : '—' })}
       onClick={() => canManage && !isFutureCharge && onMarkPaid(charge)}
       className={cn(
         base,
@@ -217,7 +220,7 @@ function MonthCell({
       )}
     >
       <Clock className="h-3.5 w-3.5" />
-      <span className="mt-0.5">{isFutureCharge ? 'agendado' : 'pendente'}</span>
+      <span className="mt-0.5">{isFutureCharge ? t('timeline.scheduled') : t('timeline.pending')}</span>
     </button>
   )
 }
@@ -256,11 +259,12 @@ function NotifyDropdown({
   tenantWhatsApp, tenantEmail, message, emailSubject,
   chargeId, companyId, trigger, disabled,
 }: NotifyDropdownProps) {
+  const { t } = useTranslation('charges')
   const [sending, setSending] = useState(false)
 
   const handleWhatsApp = () => {
     if (!tenantWhatsApp) {
-      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      toast({ title: t('toast.noWhatsapp'), variant: 'destructive' })
       return
     }
     window.open(buildWhatsAppLink(tenantWhatsApp, message), '_blank')
@@ -268,7 +272,7 @@ function NotifyDropdown({
 
   const handleEmail = () => {
     if (!tenantEmail) {
-      toast({ title: 'E-mail não cadastrado para este inquilino.', variant: 'destructive' })
+      toast({ title: t('toast.noEmail'), variant: 'destructive' })
       return
     }
     window.location.href = `mailto:${tenantEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(message)}`
@@ -277,7 +281,7 @@ function NotifyDropdown({
   // Envio automático via servidor (Evolution API) — requer EVOLUTION_API configurado
   const handleAutoSend = async () => {
     if (!tenantWhatsApp) {
-      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      toast({ title: t('toast.noWhatsapp'), variant: 'destructive' })
       return
     }
     setSending(true)
@@ -297,13 +301,13 @@ function NotifyDropdown({
         }),
       })
       if (res.ok) {
-        toast({ title: 'WhatsApp enviado pelo servidor com sucesso.' })
+        toast({ title: t('toast.whatsappSent') })
       } else {
         const { error } = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
-        toast({ title: `Falha: ${error}`, variant: 'destructive' })
+        toast({ title: t('toast.sendFail', { error }), variant: 'destructive' })
       }
     } catch {
-      toast({ title: 'Erro de rede ao enviar.', variant: 'destructive' })
+      toast({ title: t('toast.networkError'), variant: 'destructive' })
     } finally {
       setSending(false)
     }
@@ -314,21 +318,21 @@ function NotifyDropdown({
       <DropdownMenuTrigger asChild>
         <Button size="sm" variant="outline" disabled={disabled || sending} className="gap-1.5">
           <Bell className="h-3.5 w-3.5" />
-          {sending ? 'Enviando…' : 'Notificar'}
+          {sending ? t('buttons.sending') : t('buttons.notify')}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={handleWhatsApp}>
           <MessageSquare className="mr-2 h-4 w-4 text-green-600" />
-          WhatsApp (abre app)
+          {t('notify.whatsappApp')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleAutoSend}>
           <Send className="mr-2 h-4 w-4 text-green-700" />
-          WhatsApp automático
+          {t('notify.whatsappAuto')}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEmail}>
           <Mail className="mr-2 h-4 w-4 text-blue-600" />
-          E-mail
+          {t('notify.email')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -338,6 +342,16 @@ function NotifyDropdown({
 // ─── Main page ────────────────────────────────────────────────────────────────
 
 export function ChargesPage() {
+  const { t } = useTranslation('charges')
+  const { t: tCommon } = useTranslation('common')
+  const assetFilterLabel: Record<AssetFilter, string> = {
+    todos: t('filters.all'),
+    imovel: t('assetTypes.imovel'),
+    veiculo: t('assetTypes.veiculo'),
+    equipamento: t('assetTypes.equipamento'),
+  }
+  const statusLabel = (status: string) =>
+    status === 'todos' ? t('filters.all') : tCommon(`status.${status}`, { defaultValue: STATUS_LABEL[status] ?? status })
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -487,15 +501,15 @@ export function ChargesPage() {
 
   // Actions
   const handleGenerateAll = async () => {
-    if (activeContracts.length === 0) { toast({ title: 'Nenhum contrato ativo.' }); return }
+    if (activeContracts.length === 0) { toast({ title: t('toast.noActiveContract') }); return }
     setGenerating(true)
     try {
       let total = 0
       for (const contract of activeContracts) total += await generateChargesForContract(contract)
       qc.invalidateQueries({ queryKey: ['charges'] })
-      toast({ title: total > 0 ? `${total} cobrança(s) gerada(s).` : 'Cobranças já atualizadas.' })
+      toast({ title: total > 0 ? t('toast.generatedCount', { count: total }) : t('toast.alreadyUpdated') })
     } catch {
-      toast({ title: 'Erro ao gerar cobranças.', variant: 'destructive' })
+      toast({ title: t('toast.generateError'), variant: 'destructive' })
     } finally {
       setGenerating(false)
     }
@@ -520,9 +534,9 @@ export function ChargesPage() {
         status: 'pendente',
       })
       qc.invalidateQueries({ queryKey: ['charges'] })
-      toast({ title: `Cobrança de ${format(monthDate, 'MMM/yyyy', { locale: ptBR })} gerada.` })
+      toast({ title: t('toast.generatedMonth', { month: format(monthDate, 'MMM/yyyy', { locale: getDateFnsLocale(i18n.language) }) }) })
     } catch {
-      toast({ title: 'Erro ao gerar cobrança.', variant: 'destructive' })
+      toast({ title: t('toast.generateOneError'), variant: 'destructive' })
     }
   }
 
@@ -530,10 +544,10 @@ export function ChargesPage() {
     try {
       await updateCharge(charge.id, { receiptStatus: 'confirmado', status: 'pago', paidBy: 'admin' })
       qc.invalidateQueries({ queryKey: ['charges'] })
-      toast({ title: 'Comprovante confirmado e pagamento registrado.' })
+      toast({ title: t('toast.receiptConfirmed') })
       setViewingCharge(null)
     } catch {
-      toast({ title: 'Erro ao confirmar.', variant: 'destructive' })
+      toast({ title: t('toast.confirmError'), variant: 'destructive' })
     }
   }
 
@@ -541,10 +555,10 @@ export function ChargesPage() {
     try {
       await updateCharge(charge.id, { receiptStatus: 'rejeitado' })
       qc.invalidateQueries({ queryKey: ['charges'] })
-      toast({ title: 'Comprovante rejeitado. Inquilino precisará reenviar.' })
+      toast({ title: t('toast.receiptRejected') })
       setViewingCharge(null)
     } catch {
-      toast({ title: 'Erro ao rejeitar.', variant: 'destructive' })
+      toast({ title: t('toast.rejectError'), variant: 'destructive' })
     }
   }
 
@@ -560,7 +574,7 @@ export function ChargesPage() {
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar inquilino, imóvel ou veículo..."
+                placeholder={t('searchPlaceholderPage')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 sm:w-64"
@@ -571,7 +585,7 @@ export function ChargesPage() {
                 <Button variant="outline" size="sm" className="justify-between gap-2">
                   <span className="flex items-center gap-2">
                     <ListFilter className="h-4 w-4" />
-                    {ASSET_FILTER_LABEL[assetFilter]}
+                    {assetFilterLabel[assetFilter]}
                   </span>
                   <ChevronDown className="h-3.5 w-3.5 opacity-50" />
                 </Button>
@@ -579,7 +593,7 @@ export function ChargesPage() {
               <DropdownMenuContent align="start">
                 {(['todos', 'imovel', 'veiculo', 'equipamento'] as const).map((type) => (
                   <DropdownMenuItem key={type} onClick={() => setAssetFilter(type)} className="justify-between gap-4">
-                    {ASSET_FILTER_LABEL[type]}
+                    {assetFilterLabel[type]}
                     {assetFilter === type && <Check className="h-3.5 w-3.5" />}
                   </DropdownMenuItem>
                 ))}
@@ -588,10 +602,10 @@ export function ChargesPage() {
             {tenantOptions.length > 1 && (
               <Select value={tenantFilter} onValueChange={setTenantFilter}>
                 <SelectTrigger className="w-52">
-                  <SelectValue placeholder="Todos os inquilinos" />
+                  <SelectValue placeholder={t('allTenants')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="todos">Todos os inquilinos</SelectItem>
+                  <SelectItem value="todos">{t('allTenants')}</SelectItem>
                   {tenantOptions.map(([id, name]) => (
                     <SelectItem key={id} value={id}>{name}</SelectItem>
                   ))}
@@ -610,7 +624,7 @@ export function ChargesPage() {
                 onClick={() => setViewMode('timeline')}
               >
                 <CalendarDays className="h-3.5 w-3.5" />
-                Calendário
+                {t('view.calendar')}
               </Button>
               <Button
                 variant={viewMode === 'list' ? 'default' : 'ghost'}
@@ -619,14 +633,14 @@ export function ChargesPage() {
                 onClick={() => setViewMode('list')}
               >
                 <LayoutList className="h-3.5 w-3.5" />
-                Lista
+                {t('view.list')}
               </Button>
             </div>
 
             {canManage && (
               <Button variant="outline" size="sm" onClick={handleGenerateAll} disabled={generating}>
                 <RefreshCw className={cn('mr-1.5 h-3.5 w-3.5', generating && 'animate-spin')} />
-                Gerar Cobranças
+                {t('generateCharges')}
               </Button>
             )}
           </div>
@@ -639,7 +653,7 @@ export function ChargesPage() {
               <Button variant="outline" size="sm" className="justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <ListFilter className="h-4 w-4" />
-                  {statusFilter === 'todos' ? 'Todos' : STATUS_LABEL[statusFilter]}
+                  {statusLabel(statusFilter)}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
@@ -647,7 +661,7 @@ export function ChargesPage() {
             <DropdownMenuContent align="start">
               {(['todos', 'pendente', 'atrasado', 'pago', 'cancelado'] as const).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
-                  {s === 'todos' ? 'Todos' : STATUS_LABEL[s]}
+                  {statusLabel(s)}
                   {statusFilter === s && <Check className="h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               ))}
@@ -662,7 +676,7 @@ export function ChargesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <Clock className="h-7 w-7 text-yellow-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Pendente</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.pending')}</p>
               <p className="font-bold">{formatCurrency(kpiPending)}</p>
             </div>
           </CardContent>
@@ -671,7 +685,7 @@ export function ChargesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <AlertTriangle className="h-7 w-7 text-red-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Em Atraso</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.overdue')}</p>
               <p className="font-bold text-destructive">{formatCurrency(kpiOverdue)}</p>
             </div>
           </CardContent>
@@ -680,7 +694,7 @@ export function ChargesPage() {
           <CardContent className="p-4 flex items-center gap-3">
             <CheckCircle className="h-7 w-7 text-green-500 shrink-0" />
             <div>
-              <p className="text-xs text-muted-foreground">Recebido</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.received')}</p>
               <p className="font-bold text-green-600">{formatCurrency(kpiPaid)}</p>
             </div>
           </CardContent>
@@ -691,8 +705,8 @@ export function ChargesPage() {
               {pendingReceipts}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-xs text-muted-foreground">Compr. Pendentes</p>
-              <p className="text-sm font-medium">{pendingReceipts === 0 ? 'Nenhum' : `${pendingReceipts} para validar`}</p>
+              <p className="text-xs text-muted-foreground">{t('kpi.pendingReceipts')}</p>
+              <p className="text-sm font-medium">{pendingReceipts === 0 ? t('none') : t('toValidate', { count: pendingReceipts })}</p>
             </div>
             {pendingReceipts > 0 && canManage && (
               <Button
@@ -702,7 +716,7 @@ export function ChargesPage() {
                 onClick={() => setViewingCharge(firstPendingReceipt)}
               >
                 <Eye className="mr-1.5 h-4 w-4" />
-                Visualizar
+                {tCommon('actions.view')}
               </Button>
             )}
           </CardContent>
@@ -715,8 +729,8 @@ export function ChargesPage() {
             <FileCheck className="h-4 w-4 shrink-0" />
             <span>
               {pendingReceipts === 1
-                ? 'Há 1 comprovante aguardando confirmação de pagamento.'
-                : `Há ${pendingReceipts} comprovantes aguardando confirmação de pagamento.`}
+                ? t('pendingReceiptOne')
+                : t('pendingReceiptMany', { count: pendingReceipts })}
             </span>
           </div>
           <Button
@@ -725,7 +739,7 @@ export function ChargesPage() {
             onClick={() => setViewingCharge(firstPendingReceipt)}
           >
             <Eye className="mr-1.5 h-4 w-4" />
-            Visualizar comprovante
+            {t('viewReceipt')}
           </Button>
         </div>
       )}
@@ -748,13 +762,13 @@ export function ChargesPage() {
               {/* Month header with navigation */}
               <div className="flex items-center border-b bg-muted/30 px-4 py-2.5 gap-2">
                 <div className="w-[240px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  Inquilino / Bem
+                  {t('tenantAsset')}
                 </div>
                 <div className="w-[72px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-right pr-2">
-                  Aluguel
+                  {t('rent')}
                 </div>
                 <div className="w-[140px] shrink-0 text-xs font-semibold uppercase tracking-wide text-muted-foreground text-center">
-                  Ações
+                  {t('table.actions')}
                 </div>
                 <Button
                   variant="ghost" size="icon" className="h-6 w-6 shrink-0"
@@ -774,7 +788,7 @@ export function ChargesPage() {
                           isCurrent ? 'text-primary font-bold' : 'text-muted-foreground',
                         )}
                       >
-                        <div className="text-xs uppercase">{format(m, 'MMM', { locale: ptBR })}</div>
+                        <div className="text-xs uppercase">{format(m, 'MMM', { locale: getDateFnsLocale(i18n.language) })}</div>
                         <div className="text-[10px]">{format(m, 'yyyy')}</div>
                         {isCurrent && (
                           <div className="mx-auto mt-0.5 h-0.5 w-4 rounded-full bg-primary" />
@@ -795,9 +809,9 @@ export function ChargesPage() {
               {filteredContracts.length === 0 ? (
                 <div className="py-16 text-center">
                   <CalendarDays className="mx-auto mb-3 h-10 w-10 text-muted-foreground/30" />
-                  <p className="font-medium text-muted-foreground">Nenhum contrato ativo</p>
+                  <p className="font-medium text-muted-foreground">{t('noActiveContracts')}</p>
                   <p className="mt-1 text-sm text-muted-foreground/70">
-                    Crie um contrato para ver as cobranças mensais aqui
+                    {t('createContractHint')}
                   </p>
                 </div>
               ) : (
@@ -853,14 +867,14 @@ export function ChargesPage() {
                       {/* Rent value */}
                       <div className="w-[72px] shrink-0 text-right pr-2">
                         <p className="text-sm font-bold text-primary">{formatCurrency(contract.rentValue)}</p>
-                        <p className="text-[10px] text-muted-foreground">dia {contract.dueDay}</p>
+                        <p className="text-[10px] text-muted-foreground">{t('dayShort', { day: contract.dueDay })}</p>
                       </div>
 
                       <div className="w-[140px] shrink-0 flex flex-col items-center justify-center gap-1">
                         {pendingReceiptCount > 0 && (
                           <>
                             <Badge variant="warning" className="h-5 px-1.5 text-[10px]">
-                              {pendingReceiptCount} aguardando
+                              {t('awaitingCount', { count: pendingReceiptCount })}
                             </Badge>
                             {canManage && firstPendingReceipt && (
                               <Button
@@ -870,7 +884,7 @@ export function ChargesPage() {
                                 onClick={() => setViewingCharge(firstPendingReceipt)}
                               >
                                 <Eye className="mr-1 h-3 w-3" />
-                                Validar
+                                {t('buttons.validate')}
                               </Button>
                             )}
                           </>
@@ -939,13 +953,13 @@ export function ChargesPage() {
 
           {/* Legend — outside scroll so it stays visible */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t bg-muted/10 px-4 py-2 text-[11px] text-muted-foreground">
-            <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> Pago</span>
-            <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> Atrasado</span>
-            <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> Pendente</span>
-            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> Comprovante</span>
-            <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> Agendado</span>
-            <span className="flex items-center gap-1 text-orange-400"><Plus className="h-3 w-3" /> Gerar cobrança</span>
-            <span>— Fora da vigência</span>
+            <span className="flex items-center gap-1"><CheckCircle className="h-3 w-3 text-green-500" /> {tCommon('status.pago')}</span>
+            <span className="flex items-center gap-1"><AlertTriangle className="h-3 w-3 text-red-500" /> {tCommon('status.atrasado')}</span>
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3 text-yellow-500" /> {tCommon('status.pendente')}</span>
+            <span className="flex items-center gap-1 text-orange-500"><FileCheck className="h-3 w-3" /> {t('legend.receipt')}</span>
+            <span className="flex items-center gap-1 text-blue-500"><Clock className="h-3 w-3" /> {t('legend.scheduled')}</span>
+            <span className="flex items-center gap-1 text-orange-400"><Plus className="h-3 w-3" /> {t('generateCharge')}</span>
+            <span>— {t('legend.outOfRange')}</span>
           </div>
         </div>
 
@@ -956,20 +970,20 @@ export function ChargesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Descrição</TableHead>
-                <TableHead>Inquilino</TableHead>
-                <TableHead>Bem</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('table.description')}</TableHead>
+                <TableHead>{t('table.tenant')}</TableHead>
+                <TableHead>{t('table.asset')}</TableHead>
+                <TableHead>{t('table.dueDate')}</TableHead>
+                <TableHead>{t('table.amount')}</TableHead>
+                <TableHead>{t('table.status')}</TableHead>
+                <TableHead className="text-right">{t('table.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredList.length === 0 ? (
                 <TableRow>
                   <td colSpan={7} className="py-12 text-center text-muted-foreground text-sm">
-                    Nenhuma cobrança encontrada
+                    {t('emptyTitle')}
                   </td>
                 </TableRow>
               ) : (
@@ -1015,15 +1029,15 @@ export function ChargesPage() {
                     <TableCell>
                       <div className="flex flex-col items-start gap-1">
                         <Badge variant={STATUS_VARIANT[charge.status]}>
-                          {STATUS_LABEL[charge.status]}
+                          {statusLabel(charge.status)}
                         </Badge>
                         {charge.receiptStatus === 'aguardando' && (
-                          <Badge variant="warning" className="text-[10px]">Compr. pendente</Badge>
+                          <Badge variant="warning" className="text-[10px]">{t('receiptPendingBadge')}</Badge>
                         )}
                         {(charge.notificationsSent?.length ?? 0) > 0 && (
                           <Badge variant="secondary" className="text-[10px] gap-1">
                             <Send className="h-2.5 w-2.5" />
-                            {charge.notificationsSent!.length} WA enviado{charge.notificationsSent!.length > 1 ? 's' : ''}
+                            {t('waSent', { count: charge.notificationsSent!.length })}
                           </Badge>
                         )}
                       </div>
@@ -1037,17 +1051,17 @@ export function ChargesPage() {
                             onClick={() => setViewingCharge(charge)}
                           >
                             <Eye className="mr-1 h-3 w-3" />
-                            Visualizar comprovante
+                            {t('viewReceipt')}
                           </Button>
                         )}
                         {charge.status === 'pago' && (
                           <Button size="sm" variant="ghost" onClick={() => setViewingCharge(charge)}>
-                            Ver
+                            {t('buttons.see')}
                           </Button>
                         )}
                         {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && charge.receiptStatus !== 'aguardando' && (
                           <Button size="sm" onClick={() => setPayingCharge(charge)}>
-                            <CheckCircle className="mr-1 h-3 w-3" /> Pago
+                            <CheckCircle className="mr-1 h-3 w-3" /> {t('buttons.paid')}
                           </Button>
                         )}
                         {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && (
@@ -1078,7 +1092,7 @@ export function ChargesPage() {
                 rangeStart={listPag.rangeStart}
                 rangeEnd={listPag.rangeEnd}
                 onPageChange={listPag.setPage}
-                itemLabel="cobranças"
+                itemLabel={t('itemLabel')}
               />
             </div>
           )}
@@ -1102,7 +1116,7 @@ export function ChargesPage() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {viewingCharge?.receiptStatus === 'aguardando' ? 'Validar Comprovante' : 'Detalhes do Pagamento'}
+              {viewingCharge?.receiptStatus === 'aguardando' ? t('dialog.validateReceipt') : t('dialog.paymentDetails')}
             </DialogTitle>
           </DialogHeader>
           {viewingCharge && (
@@ -1110,38 +1124,38 @@ export function ChargesPage() {
               {/* Charge summary */}
               <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Cobrança</span>
+                  <span className="text-muted-foreground">{t('dialog.charge')}</span>
                   <span className="font-medium">{viewingCharge.description}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Inquilino</span>
+                  <span className="text-muted-foreground">{t('dialog.tenant')}</span>
                   <span>{viewingCharge.tenantName}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-muted-foreground">Valor original</span>
+                  <span className="text-muted-foreground">{t('dialog.originalAmount')}</span>
                   <span className="font-bold">{formatCurrency(viewingCharge.amount)}</span>
                 </div>
                 {viewingCharge.paidAmount && viewingCharge.paidAmount !== viewingCharge.amount && (
                   <div className="flex justify-between border-t pt-1.5">
-                    <span className="text-muted-foreground">Valor pago</span>
+                    <span className="text-muted-foreground">{t('dialog.paidAmount')}</span>
                     <span className="font-bold text-green-600">{formatCurrency(viewingCharge.paidAmount)}</span>
                   </div>
                 )}
                 {viewingCharge.paymentMethod && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Forma</span>
+                    <span className="text-muted-foreground">{t('dialog.method')}</span>
                     <span className="capitalize">{viewingCharge.paymentMethod}</span>
                   </div>
                 )}
                 {viewingCharge.paidDate && (
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Data do pagamento</span>
+                    <span className="text-muted-foreground">{t('dialog.paymentDate')}</span>
                     <span>{format(parseISO(viewingCharge.paidDate), 'dd/MM/yyyy')}</span>
                   </div>
                 )}
                 {viewingCharge.notes && (
                   <div className="flex justify-between gap-4">
-                    <span className="text-muted-foreground shrink-0">Obs.</span>
+                    <span className="text-muted-foreground shrink-0">{t('dialog.notes')}</span>
                     <span className="text-right">{viewingCharge.notes}</span>
                   </div>
                 )}
@@ -1152,11 +1166,11 @@ export function ChargesPage() {
                 <a href={viewingCharge.receipt} target="_blank" rel="noreferrer" className="block">
                   <img
                     src={viewingCharge.receipt}
-                    alt="Comprovante"
+                    alt={t('dialog.receiptAlt')}
                     className="w-full rounded-lg border object-contain max-h-64"
                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                   />
-                  <p className="mt-1.5 text-center text-xs text-primary underline">Abrir comprovante em nova aba</p>
+                  <p className="mt-1.5 text-center text-xs text-primary underline">{t('dialog.openReceiptNewTab')}</p>
                 </a>
               )}
 
@@ -1167,13 +1181,13 @@ export function ChargesPage() {
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={() => handleConfirmReceipt(viewingCharge)}
                   >
-                    <CheckCircle className="mr-2 h-4 w-4" /> Confirmar pago
+                    <CheckCircle className="mr-2 h-4 w-4" /> {t('dialog.confirmPaid')}
                   </Button>
                   <Button
                     variant="destructive" className="flex-1"
                     onClick={() => handleRejectReceipt(viewingCharge)}
                   >
-                    Rejeitar
+                    {t('dialog.reject')}
                   </Button>
                 </div>
               )}
@@ -1181,7 +1195,7 @@ export function ChargesPage() {
               {viewingCharge.status === 'pago' && viewingCharge.receiptStatus !== 'aguardando' && (
                 <Badge variant="success" className="w-full justify-center py-1.5">
                   <CheckCircle className="mr-2 h-4 w-4" />
-                  Pagamento confirmado
+                  {t('dialog.paymentConfirmed')}
                 </Badge>
               )}
             </div>

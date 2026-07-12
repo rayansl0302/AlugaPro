@@ -1,0 +1,132 @@
+{
+  "title": "Vehículos",
+  "subtitle": "Gestione la flota de vehículos en alquiler.",
+  "add": "Agregar vehículo",
+  "new": "Nuevo vehículo",
+  "edit": "Editar vehículo",
+  "delete": "Eliminar vehículo",
+  "view": "Ver vehículo",
+  "searchPlaceholder": "Buscar por marca, modelo o placa...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "brand": "Marca",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún vehículo registrado",
+    "description": "Registre el primer vehículo para gestionar su flota.",
+    "noResults": "Ningún vehículo coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del vehículo",
+    "brand": "Marca",
+    "model": "Modelo",
+    "plate": "Placa",
+    "year": "Año",
+    "color": "Color",
+    "fipe": "Valor FIPE",
+    "fipeCode": "Código FIPE",
+    "status": "Estado",
+    "value": "Valor del alquiler",
+    "owner": "Propietario",
+    "mileage": "Kilometraje",
+    "fuelType": "Combustible",
+    "transmission": "Transmisión",
+    "description": "Descripción",
+    "observations": "Observaciones",
+    "photos": "Fotos",
+    "type": "Tipo",
+    "renavam": "RENAVAM",
+    "chassi": "Chasis",
+    "photosLabel": "Fotos del vehículo"
+  },
+  "placeholders": {
+    "brand": "Ej: Volkswagen",
+    "model": "Ej: Gol 1.0",
+    "year": "2020",
+    "plate": "ABC1D23",
+    "color": "Plateado",
+    "mileage": "0",
+    "renavam": "00000000000",
+    "chassi": "9BWZZZ...",
+    "value": "0,00",
+    "notes": "Notas internas...",
+    "select": "Seleccione",
+    "selectBrand": "Seleccione la marca",
+    "selectModel": "Seleccione el modelo",
+    "selectOwner": "Seleccione el propietario",
+    "searchOwner": "Buscar propietario...",
+    "noOwners": "Ningún propietario registrado."
+  },
+  "hints": {
+    "fipeBrands": "Marcas de la tabla FIPE",
+    "fipeModels": "Modelos de la tabla FIPE"
+  },
+  "fuels": {
+    "gasolina": "Gasolina",
+    "etanol": "Etanol",
+    "flex": "Flex",
+    "diesel": "Diésel",
+    "gnv": "GNC",
+    "eletrico": "Eléctrico",
+    "hibrido": "Híbrido"
+  },
+  "validation": {
+    "brandRequired": "Marca obligatoria",
+    "modelRequired": "Modelo obligatorio",
+    "yearInvalid": "Año inválido",
+    "plateInvalid": "Placa inválida",
+    "valueRequired": "Valor obligatorio",
+    "ownerRequired": "Propietario obligatorio"
+  },
+  "buttons": {
+    "save": "Guardar cambios",
+    "create": "Agregar vehículo"
+  },
+  "fields": {
+    "rentValue": "Valor del alquiler",
+    "photoAlt": "Foto {{index}}"
+  },
+  "caution": "Depósito",
+  "currentTenant": "Arrendatario actual",
+  "detail": {
+    "title": "Detalles del vehículo",
+    "overview": "Resumen",
+    "financial": "Financiero",
+    "contracts": "Contratos",
+    "documents": "Documentos",
+    "maintenance": "Mantenimientos",
+    "history": "Historial"
+  },
+  "types": {
+    "carro": "Coche",
+    "moto": "Moto",
+    "caminhao": "Camión",
+    "van": "Van",
+    "onibus": "Autobús",
+    "outro": "Otro"
+  },
+  "statuses": {
+    "disponivel": "Disponible",
+    "alugado": "Alquilado",
+    "reservado": "Reservado",
+    "manutencao": "Mantenimiento",
+    "encerrado": "Cerrado"
+  },
+  "tenantLabel": "Arrendatario",
+  "itemLabel": "vehículos",
+  "toast": {
+    "created": "Vehículo creado con éxito.",
+    "updated": "Vehículo actualizado con éxito.",
+    "deleted": "Vehículo eliminado con éxito.",
+    "loadError": "Error al cargar vehículos.",
+    "createError": "Error al crear vehículo.",
+    "updateError": "Error al actualizar vehículo.",
+    "deleteError": "Error al eliminar vehículo.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este vehículo?",
+    "fipeError": "Error al consultar el valor FIPE.",
+    "saveError": "Error al guardar el vehículo."
+  }
+}

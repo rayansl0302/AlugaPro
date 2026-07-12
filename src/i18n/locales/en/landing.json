@@ -1,0 +1,397 @@
+{
+  "site": {
+    "name": "AlugaPro",
+    "domain": "alugapro.tech.br",
+    "supportEmail": "suporte@alugapro.com.br",
+    "tagline": "Complete platform for property and vehicle rental management, with digital contracts and financial control."
+  },
+  "nav": {
+    "resources": "Resources",
+    "howItWorks": "How it works",
+    "pricing": "Pricing",
+    "forWhom": "Who it's for",
+    "affiliates": "Affiliates",
+    "tenantPortal": "Tenant portal",
+    "accessSystem": "Sign in",
+    "goToPanel": "Go to panel",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu"
+  },
+  "hero": {
+    "badge": "Smart rental management",
+    "title": "Your rentals organized, from contract to payment",
+    "subtitle": "Properties, vehicles, digital contracts, charges, and tenant portal — everything integrated for people who manage rentals every day.",
+    "ctaStart": "Get started",
+    "ctaTenant": "I'm a tenant",
+    "ctaOpenPanel": "Open panel",
+    "ctaSeeFeatures": "See features",
+    "perks": {
+      "freeTrial": "14 days free",
+      "noCreditCard": "No credit card required",
+      "cancelAnytime": "Cancel anytime"
+    }
+  },
+  "stats": {
+    "properties": {
+      "label": "Properties",
+      "description": "Full management"
+    },
+    "vehicles": {
+      "label": "Vehicles",
+      "description": "Integrated rentals"
+    },
+    "contracts": {
+      "label": "Contracts",
+      "description": "Digital signature"
+    },
+    "charges": {
+      "label": "Charges",
+      "description": "Financial control"
+    }
+  },
+  "features": {
+    "title": "Everything you need to manage rentals",
+    "subtitle": "Features designed to simplify the manager's routine and improve the tenant experience.",
+    "propertiesVehicles": {
+      "title": "Properties and vehicles",
+      "description": "Register, organize, and track your entire rental portfolio in one place."
+    },
+    "digitalContracts": {
+      "title": "Digital contracts",
+      "description": "Create, customize, and sign contracts with landlord, tenant, and witnesses remotely."
+    },
+    "autoCharges": {
+      "title": "Automatic charges",
+      "description": "Track rent payments, receipts, delinquency, and cash flow with a clear view."
+    },
+    "tenantPortal": {
+      "title": "Tenant portal",
+      "description": "Tenants track payments, submit receipts, and access their active contract."
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Due-date and charge alerts to keep communication up to date with tenants."
+    },
+    "reports": {
+      "title": "Reports and dashboard",
+      "description": "Indicators, charts, and exports for fast, confident decisions."
+    }
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "subtitle": "In three steps you structure your entire rental operation on AlugaPro.",
+    "steps": {
+      "register": {
+        "step": "01",
+        "title": "Register your assets",
+        "description": "Properties, vehicles, owners, and tenants enter the system in a few minutes."
+      },
+      "formalize": {
+        "step": "02",
+        "title": "Formalize contracts",
+        "description": "Use system templates or customize clauses and collect digital signatures."
+      },
+      "manageCharges": {
+        "step": "03",
+        "title": "Manage charges",
+        "description": "Generate monthly rent, track payments, and reduce delinquency with full visibility."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "14 days free on any plan",
+    "title": "Simple plans, no surprises",
+    "subtitle": "Start free for 14 days. No card required. Cancel anytime.",
+    "popular": "Most popular",
+    "popularShort": "Popular",
+    "perMonth": "/month",
+    "ctaStartFree": "Start free",
+    "tenantPortalFree": "Tenant portal is always free. Tenants never pay.",
+    "compareTitle": "Compare plans",
+    "compareSubtitle": "See exactly what is included in each subscription level.",
+    "featureColumn": "Feature",
+    "swipeHint": "← swipe to see all plans →",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "For new managers",
+        "features": [
+          "Up to 10 properties or vehicles",
+          "2 manager users",
+          "Contracts and charges",
+          "Tenant portal",
+          "Delinquency control",
+          "Automatic notifications"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "For growing property managers",
+        "features": [
+          "Up to 50 properties or vehicles",
+          "5 manager users",
+          "Digital contract signature",
+          "Advanced reports",
+          "Excel and PDF export",
+          "Custom templates"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "description": "For larger operations",
+        "features": [
+          "Unlimited properties and vehicles",
+          "Unlimited users",
+          "Everything in Pro",
+          "Multiple teams",
+          "Assisted onboarding",
+          "Integrations API (coming soon)"
+        ]
+      }
+    },
+    "comparison": {
+      "groups": {
+        "management": "Management",
+        "contractsCharges": "Contracts and charges",
+        "finance": "Finance",
+        "operations": "Operations"
+      },
+      "rows": {
+        "propertiesVehicles": "Properties and vehicles",
+        "managerUsers": "Manager users",
+        "ownersTenants": "Owners and tenants",
+        "tenantPortal": "Tenant portal",
+        "contractGeneration": "Contract generation",
+        "digitalSignature": "Digital signature",
+        "customTemplates": "Custom templates",
+        "autoCharges": "Automatic charges",
+        "delinquencyControl": "Delinquency control",
+        "financeDashboard": "Finance dashboard",
+        "sharedExpenses": "Shared expenses",
+        "advancedReports": "Advanced reports",
+        "exportExcelPdf": "Excel / PDF export",
+        "indexAdjustment": "IPCA / IGPM adjustment",
+        "ticketsMaintenance": "Tickets and maintenance",
+        "autoNotifications": "Automatic notifications",
+        "multipleTeams": "Multiple teams",
+        "assistedOnboarding": "Assisted onboarding",
+        "integrationsApi": "Integrations API"
+      },
+      "values": {
+        "upTo10": "Up to 10",
+        "upTo50": "Up to 50",
+        "unlimited": "Unlimited",
+        "comingSoon": "Coming soon",
+        "two": "2",
+        "five": "5"
+      }
+    }
+  },
+  "heroPreview": {
+    "panelTitle": "Dashboard — AlugaPro",
+    "properties": "Properties",
+    "vehicles": "Vehicles",
+    "revenue": "Revenue",
+    "monthlyRevenue": "Monthly revenue",
+    "pending": "Pending",
+    "items": {
+      "aptCentro": "Downtown Apt — Maria S.",
+      "casaJardins": "Jardins House — João P.",
+      "hondaCivic": "Honda Civic — Ana R."
+    }
+  },
+  "forWhom": {
+    "title": "Who AlugaPro is for",
+    "subtitle": "A complete solution for anyone who needs to professionalize rental management without losing agility.",
+    "audiences": [
+      "Rental managers and property management companies",
+      "Owners with multiple properties or vehicles",
+      "Businesses that need integrated financial control",
+      "Tenants who want autonomy in the payment portal"
+    ],
+    "cardTitle": "Ready to organize your rentals?",
+    "cardDescription": "Access the system as a manager or enter the tenant portal to track payments and contracts.",
+    "tenantPortalCta": "Tenant portal"
+  },
+  "ctaBanner": {
+    "badge": "No credit card · Cancel anytime",
+    "title": "Start your free trial today",
+    "subtitle": "14 days with full access to the Pro plan. No commitment. Set up your company in under 5 minutes.",
+    "ctaCreateAccount": "Create free account",
+    "ctaTenant": "I'm a tenant",
+    "perks": [
+      "Unlimited properties and vehicles during trial",
+      "Contracts with digital signature",
+      "Tenant portal included",
+      "Email support"
+    ]
+  },
+  "recursos": {
+    "badge": "Complete management platform",
+    "heroTitle": "Every feature you need",
+    "heroSubtitle": "From registering a property to collecting rent. Contracts, charges, tenant portal, reports — all integrated in one platform.",
+    "ctaStartTrial": "Start free for 14 days",
+    "ctaSeePricing": "See plans and pricing",
+    "ctaBannerBadge": "14 days free · No credit card",
+    "ctaBannerTitle": "Ready to try it all?",
+    "ctaBannerSubtitle": "Start your free trial and explore every feature with no commitment.",
+    "blocks": {
+      "propertiesVehicles": {
+        "badge": "Portfolio",
+        "title": "Properties and vehicles in one place",
+        "description": "Register, organize, and track your entire rental portfolio — residential, commercial properties, and vehicles — with a full view of status, active contracts, and history.",
+        "items": [
+          "Residential and commercial properties",
+          "Vehicles with rental control",
+          "Linked owners and tenants",
+          "Occupancy and contract history"
+        ]
+      },
+      "digitalContracts": {
+        "badge": "Contracts",
+        "title": "Digital contracts with electronic signature",
+        "description": "Generate professional contracts from customizable templates and collect signatures from landlord, tenant, and witnesses remotely — no paper, no travel.",
+        "items": [
+          "Customizable contract templates",
+          "Digital signature for all parties",
+          "Guaranteed legal validity",
+          "Remote witness signatures"
+        ]
+      },
+      "autoCharges": {
+        "badge": "Finance",
+        "title": "Automatic charges and financial control",
+        "description": "Track rent, register payment receipts, monitor delinquency, and get a clear view of cash flow across the whole operation.",
+        "items": [
+          "Charge posting and settlement",
+          "Delinquency control",
+          "Real-time cash flow",
+          "Automated IPCA / IGPM adjustment"
+        ]
+      },
+      "tenantPortal": {
+        "badge": "Portal",
+        "title": "Tenant portal — always free",
+        "description": "Tenants get their own panel to view the active contract, track charges, submit payment receipts, and open requests — without calling the manager.",
+        "highlight": "Free for all tenants",
+        "items": [
+          "Active contract and history",
+          "View and submit receipts",
+          "Open maintenance tickets",
+          "Due-date notifications"
+        ]
+      },
+      "notifications": {
+        "badge": "Automation",
+        "title": "Automatic notifications and reminders",
+        "description": "Reduce delinquency with automatic due-date alerts, open charges, and contract updates. Communication stays current without manual effort.",
+        "items": [
+          "Rent due-date alerts",
+          "Delinquency notifications",
+          "Contract renewal reminders",
+          "Ticket status updates"
+        ]
+      },
+      "reports": {
+        "badge": "Reports",
+        "title": "Dashboard and advanced reports",
+        "description": "Make decisions based on data. Track performance indicators, generate financial reports, and export everything to Excel or PDF for full operational control.",
+        "items": [
+          "Dashboard with real-time indicators",
+          "Income and expense reports",
+          "Excel and PDF export",
+          "Delinquency report"
+        ]
+      }
+    }
+  },
+  "affiliatesPage": {
+    "badge": "Affiliate Program",
+    "heroTitle": "Earn money by referring AlugaPro",
+    "heroSubtitle": "Anyone can refer — brokers, professional sellers, influencers, or anyone who knows an owner of properties, vehicles, or equipment. Refer AlugaPro and earn for every active client.",
+    "ctaBecomeAffiliate": "I want to be an affiliate",
+    "ctaGoToPanel": "Go to my panel",
+    "ctaSeeHowItWorks": "See how it works",
+    "earnTitle": "How you earn",
+    "earnSubtitle": "Recurring 7% commission on the monthly fee of every active client you refer.",
+    "commissionTitle": "7% recurring commission",
+    "commissionDescription": "Every month, as long as the client you referred stays active, you receive your share — you only need to keep your payout details up to date.",
+    "commissionPerks": [
+      "Paid automatically, straight to your account",
+      "No referral limit",
+      "Recurring income, month after month"
+    ],
+    "waitingPeriodTitle": "15-day waiting period",
+    "waitingPeriodDescription": "Commission payment only starts after the referred client completes 15 consecutive days as an active client — ensuring the referral truly stuck.",
+    "waitingPeriodPerks": [
+      "No bureaucracy — counting is automatic in your panel",
+      "You track each referral's status in real time"
+    ],
+    "forWhomTitle": "Who the program is for",
+    "forWhomSubtitle": "Your profession does not matter. It works for brokers, professional sellers, influencers, or anyone who knows an owner of properties, vehicles, or equipment.",
+    "forWhomBadge": "Open to everyone — including professional sellers",
+    "audiences": {
+      "anyone": {
+        "title": "Anyone",
+        "description": "You do not need to be a broker or have sales experience. If you know someone who rents properties, vehicles, or equipment, you can already refer."
+      },
+      "professionals": {
+        "title": "Sellers and independent professionals",
+        "description": "Professional sellers, lawyers, accountants, and agents can also join — there is no restriction."
+      },
+      "brokers": {
+        "title": "Brokers and real estate agencies",
+        "description": "Already in direct contact with owners — refer AlugaPro during your own client meetings."
+      },
+      "creators": {
+        "title": "Influencers and content creators",
+        "description": "From any niche, not only real estate — recommend it to your audience and turn it into recurring income."
+      }
+    },
+    "howItWorksTitle": "How it works",
+    "howItWorksSubtitle": "From referral to payment, in four simple steps.",
+    "steps": {
+      "indicate": {
+        "step": "01",
+        "title": "Refer",
+        "description": "Introduce AlugaPro to someone who manages rentals of properties, vehicles, or equipment."
+      },
+      "freeTrial": {
+        "step": "02",
+        "title": "Free trial",
+        "description": "Your referral tries the platform for 14 days, with no credit card and no commitment."
+      },
+      "activeClient": {
+        "step": "03",
+        "title": "Active client",
+        "description": "When they subscribe to a paid plan, the referral is confirmed and registered under your name."
+      },
+      "youEarn": {
+        "step": "04",
+        "title": "You get paid",
+        "description": "Receive 7% recurring commission on the monthly fee, starting after 15 days as an active client."
+      }
+    },
+    "ctaBannerBadge": "Unlimited referrals",
+    "ctaBannerTitle": "Ready to start referring?",
+    "ctaBannerSubtitle": "Talk to us and join the AlugaPro affiliate program.",
+    "ctaKnowPlatform": "Explore the platform"
+  },
+  "footer": {
+    "access": "Access",
+    "platform": "Platform",
+    "legal": "Legal",
+    "contact": "Contact",
+    "accessSystem": "Sign in",
+    "tenantPortal": "Tenant portal",
+    "resources": "Resources",
+    "howItWorks": "How it works",
+    "forWhom": "Who it's for",
+    "affiliateProgram": "Affiliate program",
+    "termsOfUse": "Terms of Use",
+    "privacyPolicy": "Privacy Policy",
+    "contactTagline": "Smart rental management",
+    "rightsReserved": "© {{year}} AlugaPro. All rights reserved.",
+    "login": "Sign in"
+  }
+}

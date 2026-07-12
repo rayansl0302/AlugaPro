@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import {
   collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
+import i18n from '@/i18n'
 import { Plus, Search, Home, Edit, Trash2 } from 'lucide-react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -12,7 +14,10 @@ import { z } from 'zod'
 import { useAuth } from '@/contexts/AuthContext'
 import { Owner } from '@/types'
 import { uploadOwnerPhoto } from '@/services/storage'
-import { formatCPF, formatPhone, getInitials } from '@/lib/utils'
+import { formatCPF, formatPhone, getInitials, maskCPF, maskPhone } from '@/lib/utils'
+import { isValidCPF, isValidPhoneBR } from '@/lib/documents'
+import { fieldErrorClass } from '@/lib/formErrors'
+import { requiredString } from '@/lib/validation'
 // Phone/Mail used in card variant below
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,15 +44,16 @@ async function getOwners(companyId: string): Promise<Owner[]> {
 }
 
 const schema = z.object({
-  name: z.string().min(2, 'Nome obrigatório'),
-  cpf: z.string().optional(),
-  email: z.string().email('E-mail inválido').optional().or(z.literal('')),
-  phone: z.string().optional(),
-  whatsapp: z.string().optional(),
+  name: requiredString(i18n.t('owners:validation.nameRequired')),
+  cpf: z.string().optional().refine((v) => !v || isValidCPF(v), i18n.t('owners:validation.cpfInvalid')),
+  email: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
+  phone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
+  whatsapp: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
 })
 type FormData = z.infer<typeof schema>
 
 export function OwnersPage() {
+  const { t } = useTranslation('owners')
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -68,31 +74,40 @@ export function OwnersPage() {
     mutationFn: (id: string) => deleteDoc(doc(db, 'owners', id)),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['owners'] })
-      toast({ title: 'Proprietário removido.' })
+      toast({ title: t('toast.deleted') })
     },
   })
 
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
     defaultValues: {},
   })
 
   const onSubmit = async (data: FormData) => {
     setFormLoading(true)
     try {
-      const payload = { companyId, ...data, photoUrl: photoUrl || '', active: true }
+      const payload = {
+        companyId,
+        ...data,
+        cpf: data.cpf ? data.cpf.replace(/\D/g, '') : data.cpf,
+        phone: data.phone ? data.phone.replace(/\D/g, '') : data.phone,
+        whatsapp: data.whatsapp ? data.whatsapp.replace(/\D/g, '') : data.whatsapp,
+        photoUrl: photoUrl || '',
+        active: true,
+      }
       if (editingOwner) {
         await updateDoc(doc(db, 'owners', editingOwner.id), { ...payload, updatedAt: serverTimestamp() })
-        toast({ title: 'Proprietário atualizado.' })
+        toast({ title: t('toast.updated') })
       } else {
         await addDoc(collection(db, 'owners'), { ...payload, createdAt: serverTimestamp(), updatedAt: serverTimestamp() })
-        toast({ title: 'Proprietário cadastrado.' })
+        toast({ title: t('toast.created') })
       }
       qc.invalidateQueries({ queryKey: ['owners'] })
       setShowForm(false)
       reset()
     } catch {
-      toast({ title: 'Erro ao salvar.', variant: 'destructive' })
+      toast({ title: t('common:errors.generic'), variant: 'destructive' })
     } finally {
       setFormLoading(false)
     }
@@ -104,7 +119,7 @@ export function OwnersPage() {
       const url = await uploadOwnerPhoto(companyId, editingOwner?.id ?? 'novos', file)
       setPhotoUrl(url)
     } catch {
-      toast({ title: 'Erro ao enviar a foto.', variant: 'destructive' })
+      toast({ title: t('toast.photoError'), variant: 'destructive' })
     } finally {
       setUploadingPhoto(false)
     }
@@ -125,14 +140,14 @@ export function OwnersPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar proprietários..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 sm:w-64"
           />
         </div>
         <Button onClick={() => { setEditingOwner(null); reset({}); setPhotoUrl(''); setShowForm(true) }}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Proprietário
+          <Plus className="mr-2 h-4 w-4" /> {t('new')}
         </Button>
       </div>
 
@@ -145,9 +160,9 @@ export function OwnersPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Home className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum proprietário encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.noResults')}</p>
           <Button className="mt-4" onClick={() => { setEditingOwner(null); reset({}); setPhotoUrl(''); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Cadastrar Proprietário
+            <Plus className="mr-2 h-4 w-4" /> {t('add')}
           </Button>
         </div>
       ) : (
@@ -168,7 +183,7 @@ export function OwnersPage() {
                       <div className="min-w-0">
                         <p className="truncate font-medium">{owner.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {owner.cpf ? formatCPF(owner.cpf) : 'CPF não informado'}
+                          {owner.cpf ? formatCPF(owner.cpf) : t('cpfMissing')}
                         </p>
                       </div>
                     </div>
@@ -179,7 +194,7 @@ export function OwnersPage() {
                         className="h-8 w-8"
                         onClick={() => {
                           setEditingOwner(owner)
-                          reset({ name: owner.name, cpf: owner.cpf ?? '', email: owner.email ?? '', phone: owner.phone ?? '', whatsapp: owner.whatsapp ?? '' })
+                          reset({ name: owner.name, cpf: owner.cpf ? maskCPF(owner.cpf) : '', email: owner.email ?? '', phone: owner.phone ? maskPhone(owner.phone) : '', whatsapp: owner.whatsapp ? maskPhone(owner.whatsapp) : '' })
                           setPhotoUrl(owner.photoUrl ?? '')
                           setShowForm(true)
                         }}
@@ -191,7 +206,7 @@ export function OwnersPage() {
                         size="icon"
                         className="h-8 w-8 text-destructive hover:text-destructive"
                         onClick={() => {
-                          if (confirm('Remover proprietário?')) deleteMutation.mutate(owner.id)
+                          if (confirm(t('toast.deleteConfirm'))) deleteMutation.mutate(owner.id)
                         }}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -214,10 +229,10 @@ export function OwnersPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Proprietário</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>Contato</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('title')}</TableHead>
+                  <TableHead>{t('form.cpf')}</TableHead>
+                  <TableHead>{t('detail.contact')}</TableHead>
+                  <TableHead className="text-right">{t('common:ui.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -247,7 +262,7 @@ export function OwnersPage() {
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" onClick={() => {
                             setEditingOwner(owner)
-                            reset({ name: owner.name, cpf: owner.cpf ?? '', email: owner.email ?? '', phone: owner.phone ?? '', whatsapp: owner.whatsapp ?? '' })
+                            reset({ name: owner.name, cpf: owner.cpf ? maskCPF(owner.cpf) : '', email: owner.email ?? '', phone: owner.phone ? maskPhone(owner.phone) : '', whatsapp: owner.whatsapp ? maskPhone(owner.whatsapp) : '' })
                             setPhotoUrl(owner.photoUrl ?? '')
                             setShowForm(true)
                           }}>
@@ -258,7 +273,7 @@ export function OwnersPage() {
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           onClick={() => {
-                            if (confirm('Remover proprietário?')) deleteMutation.mutate(owner.id)
+                            if (confirm(t('toast.deleteConfirm'))) deleteMutation.mutate(owner.id)
                           }}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -281,18 +296,18 @@ export function OwnersPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="proprietários"
+          itemLabel={t('itemLabel')}
         />
       )}
 
       <Dialog open={showForm} onOpenChange={(v) => { setShowForm(v); if (!v) reset() }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingOwner ? 'Editar Proprietário' : 'Novo Proprietário'}</DialogTitle>
+            <DialogTitle>{editingOwner ? t('edit') : t('new')}</DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <ReceiptUpload
-              label="Foto do proprietário"
+              label={t('photoLabel')}
               value={photoUrl}
               onChange={(v) => setPhotoUrl(v ?? '')}
               onFileSelect={handlePhotoUpload}
@@ -300,32 +315,51 @@ export function OwnersPage() {
               accept="image/*"
             />
             <div className="space-y-2">
-              <Label>Nome Completo *</Label>
-              <Input placeholder="Maria Silva" {...register('name')} />
+              <Label>{t('form.name')} *</Label>
+              <Input placeholder={t('placeholders.name')} className={fieldErrorClass(errors.name)} {...register('name')} />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label>CPF</Label>
-              <Input placeholder="000.000.000-00" {...register('cpf')} />
+              <Label>{t('form.cpf')}</Label>
+              <Input
+                placeholder="000.000.000-00"
+                className={fieldErrorClass(errors.cpf)}
+                {...register('cpf')}
+                onChange={(e) => setValue('cpf', maskCPF(e.target.value))}
+              />
+              {errors.cpf && <p className="text-xs text-destructive">{errors.cpf.message}</p>}
             </div>
             <div className="space-y-2">
-              <Label>E-mail</Label>
-              <Input type="email" placeholder="maria@email.com" {...register('email')} />
+              <Label>{t('form.email')}</Label>
+              <Input type="email" placeholder={t('placeholders.email')} className={fieldErrorClass(errors.email)} {...register('email')} />
+              {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Telefone</Label>
-                <Input placeholder="(00) 00000-0000" {...register('phone')} />
+                <Label>{t('form.phone')}</Label>
+                <Input
+                  placeholder="(00) 00000-0000"
+                  className={fieldErrorClass(errors.phone)}
+                  {...register('phone')}
+                  onChange={(e) => setValue('phone', maskPhone(e.target.value))}
+                />
+                {errors.phone && <p className="text-xs text-destructive">{errors.phone.message}</p>}
               </div>
               <div className="space-y-2">
-                <Label>WhatsApp</Label>
-                <Input placeholder="(00) 00000-0000" {...register('whatsapp')} />
+                <Label>{t('form.whatsapp')}</Label>
+                <Input
+                  placeholder="(00) 00000-0000"
+                  className={fieldErrorClass(errors.whatsapp)}
+                  {...register('whatsapp')}
+                  onChange={(e) => setValue('whatsapp', maskPhone(e.target.value))}
+                />
+                {errors.whatsapp && <p className="text-xs text-destructive">{errors.whatsapp.message}</p>}
               </div>
             </div>
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={formLoading}>
                 {formLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {editingOwner ? 'Salvar' : 'Cadastrar'}
+                {editingOwner ? t('common:actions.save') : t('register')}
               </Button>
             </div>
           </form>

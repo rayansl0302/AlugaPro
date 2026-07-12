@@ -1,0 +1,397 @@
+{
+  "site": {
+    "name": "AlugaPro",
+    "domain": "alugapro.tech.br",
+    "supportEmail": "suporte@alugapro.com.br",
+    "tagline": "Plataforma completa para la gestión de alquileres de inmuebles y vehículos, con contratos digitales y control financiero."
+  },
+  "nav": {
+    "resources": "Recursos",
+    "howItWorks": "Cómo funciona",
+    "pricing": "Precios",
+    "forWhom": "Para quién",
+    "affiliates": "Afiliados",
+    "tenantPortal": "Portal del inquilino",
+    "accessSystem": "Acceder al sistema",
+    "goToPanel": "Ir al panel",
+    "openMenu": "Abrir menú",
+    "closeMenu": "Cerrar menú"
+  },
+  "hero": {
+    "badge": "Gestión inteligente de alquileres",
+    "title": "Tu alquiler organizado, del contrato al cobro",
+    "subtitle": "Inmuebles, vehículos, contratos digitales, cobros y portal del inquilino — todo integrado para quien administra alquileres todos los días.",
+    "ctaStart": "Empezar ahora",
+    "ctaTenant": "Soy inquilino",
+    "ctaOpenPanel": "Abrir panel",
+    "ctaSeeFeatures": "Ver recursos",
+    "perks": {
+      "freeTrial": "14 días gratis",
+      "noCreditCard": "Sin tarjeta de crédito",
+      "cancelAnytime": "Cancela cuando quieras"
+    }
+  },
+  "stats": {
+    "properties": {
+      "label": "Inmuebles",
+      "description": "Gestión completa"
+    },
+    "vehicles": {
+      "label": "Vehículos",
+      "description": "Alquiler integrado"
+    },
+    "contracts": {
+      "label": "Contratos",
+      "description": "Firma digital"
+    },
+    "charges": {
+      "label": "Cobros",
+      "description": "Control financiero"
+    }
+  },
+  "features": {
+    "title": "Todo lo que necesitas para administrar alquileres",
+    "subtitle": "Recursos pensados para simplificar la rutina del gestor y mejorar la experiencia del inquilino.",
+    "propertiesVehicles": {
+      "title": "Inmuebles y vehículos",
+      "description": "Registra, organiza y sigue todo tu portafolio de alquileres en un solo lugar."
+    },
+    "digitalContracts": {
+      "title": "Contratos digitales",
+      "description": "Genera, personaliza y firma contratos con arrendador, arrendatario y testigos de forma remota."
+    },
+    "autoCharges": {
+      "title": "Cobros automáticos",
+      "description": "Controla mensualidades, comprobantes, morosidad y flujo de caja con una visión clara."
+    },
+    "tenantPortal": {
+      "title": "Portal del inquilino",
+      "description": "Los inquilinos siguen pagos, envían comprobantes y acceden al contrato activo."
+    },
+    "notifications": {
+      "title": "Notificaciones",
+      "description": "Alertas de vencimiento y cobro para mantener la comunicación al día con los arrendatarios."
+    },
+    "reports": {
+      "title": "Informes y panel",
+      "description": "Indicadores, gráficos y exportaciones para decisiones rápidas y seguras."
+    }
+  },
+  "howItWorks": {
+    "title": "Cómo funciona",
+    "subtitle": "En tres pasos estructuras toda la operación de alquiler en AlugaPro.",
+    "steps": {
+      "register": {
+        "step": "01",
+        "title": "Registra tu patrimonio",
+        "description": "Inmuebles, vehículos, propietarios e inquilinos entran al sistema en pocos minutos."
+      },
+      "formalize": {
+        "step": "02",
+        "title": "Formaliza los contratos",
+        "description": "Usa plantillas del sistema o personaliza cláusulas y recoge firmas digitales."
+      },
+      "manageCharges": {
+        "step": "03",
+        "title": "Gestiona los cobros",
+        "description": "Genera mensualidades, sigue pagos y reduce la morosidad con visibilidad total."
+      }
+    }
+  },
+  "pricing": {
+    "badge": "14 días gratis en cualquier plan",
+    "title": "Planes simples, sin sorpresas",
+    "subtitle": "Empieza gratis por 14 días. Sin tarjeta necesaria. Cancela cuando quieras.",
+    "popular": "Más popular",
+    "popularShort": "Popular",
+    "perMonth": "/mes",
+    "ctaStartFree": "Empezar gratis",
+    "tenantPortalFree": "El portal del inquilino siempre es gratuito. Los inquilinos nunca pagan.",
+    "compareTitle": "Compara los planes",
+    "compareSubtitle": "Mira exactamente qué incluye cada nivel de suscripción.",
+    "featureColumn": "Recurso",
+    "swipeHint": "← desliza para ver todos los planes →",
+    "plans": {
+      "starter": {
+        "name": "Starter",
+        "description": "Para gestores principiantes",
+        "features": [
+          "Hasta 10 inmuebles o vehículos",
+          "2 usuarios gestores",
+          "Contratos y cobros",
+          "Portal del inquilino",
+          "Control de morosidad",
+          "Notificaciones automáticas"
+        ]
+      },
+      "pro": {
+        "name": "Pro",
+        "description": "Para administradoras en crecimiento",
+        "features": [
+          "Hasta 50 inmuebles o vehículos",
+          "5 usuarios gestores",
+          "Firma digital de contratos",
+          "Informes avanzados",
+          "Exportación Excel y PDF",
+          "Plantillas personalizadas"
+        ]
+      },
+      "business": {
+        "name": "Business",
+        "description": "Para operaciones más grandes",
+        "features": [
+          "Inmuebles y vehículos ilimitados",
+          "Usuarios ilimitados",
+          "Todo del plan Pro",
+          "Múltiples equipos",
+          "Onboarding asistido",
+          "API de integraciones (próximamente)"
+        ]
+      }
+    },
+    "comparison": {
+      "groups": {
+        "management": "Gestión",
+        "contractsCharges": "Contratos y cobros",
+        "finance": "Financiero",
+        "operations": "Operación"
+      },
+      "rows": {
+        "propertiesVehicles": "Inmuebles y vehículos",
+        "managerUsers": "Usuarios gestores",
+        "ownersTenants": "Propietarios e inquilinos",
+        "tenantPortal": "Portal del inquilino",
+        "contractGeneration": "Generación de contratos",
+        "digitalSignature": "Firma digital",
+        "customTemplates": "Plantillas personalizadas",
+        "autoCharges": "Cobros automáticos",
+        "delinquencyControl": "Control de morosidad",
+        "financeDashboard": "Panel financiero",
+        "sharedExpenses": "Gastos compartidos",
+        "advancedReports": "Informes avanzados",
+        "exportExcelPdf": "Exportación Excel / PDF",
+        "indexAdjustment": "Reajuste IPCA / IGPM",
+        "ticketsMaintenance": "Tickets y mantenimientos",
+        "autoNotifications": "Notificaciones automáticas",
+        "multipleTeams": "Múltiples equipos",
+        "assistedOnboarding": "Onboarding asistido",
+        "integrationsApi": "API de integraciones"
+      },
+      "values": {
+        "upTo10": "Hasta 10",
+        "upTo50": "Hasta 50",
+        "unlimited": "Ilimitado",
+        "comingSoon": "Próximamente",
+        "two": "2",
+        "five": "5"
+      }
+    }
+  },
+  "heroPreview": {
+    "panelTitle": "Panel — AlugaPro",
+    "properties": "Inmuebles",
+    "vehicles": "Vehículos",
+    "revenue": "Ingresos",
+    "monthlyRevenue": "Ingresos del mes",
+    "pending": "Pendiente",
+    "items": {
+      "aptCentro": "Apto. Centro — María S.",
+      "casaJardins": "Casa Jardines — João P.",
+      "hondaCivic": "Honda Civic — Ana R."
+    }
+  },
+  "forWhom": {
+    "title": "Para quién es AlugaPro",
+    "subtitle": "Una solución completa para quien necesita profesionalizar la gestión de alquileres sin perder agilidad.",
+    "audiences": [
+      "Gestores y administradoras de alquiler",
+      "Propietarios con múltiples inmuebles o vehículos",
+      "Empresas que necesitan control financiero integrado",
+      "Inquilinos que quieren autonomía en el portal de pagos"
+    ],
+    "cardTitle": "¿Listo para organizar tus alquileres?",
+    "cardDescription": "Accede al sistema como gestor o entra al portal del inquilino para seguir pagos y contratos.",
+    "tenantPortalCta": "Portal del inquilino"
+  },
+  "ctaBanner": {
+    "badge": "Sin tarjeta de crédito · Cancela cuando quieras",
+    "title": "Empieza tu prueba gratis hoy",
+    "subtitle": "14 días con acceso completo al plan Pro. Sin compromiso. Configura tu empresa en menos de 5 minutos.",
+    "ctaCreateAccount": "Crear cuenta gratuita",
+    "ctaTenant": "Soy inquilino",
+    "perks": [
+      "Inmuebles y vehículos ilimitados en la prueba",
+      "Contratos con firma digital",
+      "Portal del inquilino incluido",
+      "Soporte por correo electrónico"
+    ]
+  },
+  "recursos": {
+    "badge": "Plataforma completa de gestión",
+    "heroTitle": "Todos los recursos que necesitas",
+    "heroSubtitle": "Del registro del inmueble al cobro del alquiler. Contratos, cobros, portal del inquilino, informes — todo integrado en una sola plataforma.",
+    "ctaStartTrial": "Empezar gratis por 14 días",
+    "ctaSeePricing": "Ver planes y precios",
+    "ctaBannerBadge": "14 días gratis · Sin tarjeta de crédito",
+    "ctaBannerTitle": "¿Listo para probarlo todo?",
+    "ctaBannerSubtitle": "Empieza tu prueba gratuita y explora todos los recursos sin compromiso.",
+    "blocks": {
+      "propertiesVehicles": {
+        "badge": "Portafolio",
+        "title": "Inmuebles y vehículos en un solo lugar",
+        "description": "Registra, organiza y sigue todo tu portafolio de alquileres — inmuebles residenciales, comerciales y vehículos — con visión completa de estado, contratos activos e historial.",
+        "items": [
+          "Inmuebles residenciales y comerciales",
+          "Vehículos con control de alquiler",
+          "Propietarios e inquilinos vinculados",
+          "Historial de ocupación y contratos"
+        ]
+      },
+      "digitalContracts": {
+        "badge": "Contratos",
+        "title": "Contratos digitales con firma electrónica",
+        "description": "Genera contratos profesionales a partir de plantillas personalizables y recoge firmas del arrendador, arrendatario y testigos de forma remota — sin papel, sin desplazamientos.",
+        "items": [
+          "Plantillas de contrato personalizables",
+          "Firma digital de todas las partes",
+          "Validez jurídica garantizada",
+          "Firma remota de testigos"
+        ]
+      },
+      "autoCharges": {
+        "badge": "Financiero",
+        "title": "Cobros automáticos y control financiero",
+        "description": "Controla mensualidades, registra comprobantes de pago, monitorea la morosidad y ten una visión clara del flujo de caja de toda la operación.",
+        "items": [
+          "Registro y liquidación de cobros",
+          "Control de morosidad",
+          "Flujo de caja en tiempo real",
+          "Reajuste IPCA / IGPM automatizado"
+        ]
+      },
+      "tenantPortal": {
+        "badge": "Portal",
+        "title": "Portal del inquilino — siempre gratuito",
+        "description": "Los inquilinos tienen acceso a un panel propio donde ven el contrato activo, siguen cobros, envían comprobantes de pago y registran solicitudes — todo sin llamar al gestor.",
+        "highlight": "Gratuito para todos los inquilinos",
+        "items": [
+          "Contrato activo e historial",
+          "Visualización y envío de comprobantes",
+          "Apertura de tickets de mantenimiento",
+          "Notificaciones de vencimiento"
+        ]
+      },
+      "notifications": {
+        "badge": "Automatización",
+        "title": "Notificaciones automáticas y recordatorios",
+        "description": "Reduce la morosidad con alertas automáticas de vencimiento, cobros pendientes y actualizaciones de contrato. Comunicación al día, sin esfuerzo manual.",
+        "items": [
+          "Alertas de vencimiento de alquiler",
+          "Notificaciones de morosidad",
+          "Recordatorios de renovación de contrato",
+          "Actualizaciones de tickets"
+        ]
+      },
+      "reports": {
+        "badge": "Informes",
+        "title": "Panel e informes avanzados",
+        "description": "Toma decisiones basadas en datos. Sigue indicadores de desempeño, genera informes financieros y exporta todo en Excel o PDF para tener control total de la operación.",
+        "items": [
+          "Panel con indicadores en tiempo real",
+          "Informe de ingresos y gastos",
+          "Exportación en Excel y PDF",
+          "Informe de morosidad"
+        ]
+      }
+    }
+  },
+  "affiliatesPage": {
+    "badge": "Programa de Afiliados",
+    "heroTitle": "Gana dinero recomendando AlugaPro",
+    "heroSubtitle": "Cualquier persona puede recomendar — corredor, vendedor profesional, influencer o simplemente quien conoce a un propietario de inmuebles, vehículos o equipos. Recomienda AlugaPro y recibe por cada cliente activo.",
+    "ctaBecomeAffiliate": "Quiero ser afiliado",
+    "ctaGoToPanel": "Ir a mi panel",
+    "ctaSeeHowItWorks": "Ver cómo funciona",
+    "earnTitle": "Cómo ganas",
+    "earnSubtitle": "Comisión recurrente del 7% sobre la mensualidad de cada cliente activo que indiques.",
+    "commissionTitle": "7% de comisión recurrente",
+    "commissionDescription": "Cada mes, mientras el cliente que indicaste siga activo, recibes tu parte — solo necesitas mantener actualizados tus datos de cobro.",
+    "commissionPerks": [
+      "Pagado automáticamente, directo a tu cuenta",
+      "Sin límite de recomendaciones",
+      "Ingreso recurrente, mes a mes"
+    ],
+    "waitingPeriodTitle": "15 días de carencia",
+    "waitingPeriodDescription": "El pago de la comisión empieza a contar solo después de que el cliente indicado complete 15 días consecutivos como cliente activo — garantizando que la recomendación realmente funcionó.",
+    "waitingPeriodPerks": [
+      "Sin burocracia — el conteo es automático en tu panel",
+      "Sigues el estado de cada recomendación en tiempo real"
+    ],
+    "forWhomTitle": "Para quién es el programa",
+    "forWhomSubtitle": "No importa tu profesión. Sirve para corredores, vendedores profesionales, influencers o cualquier persona que conozca a un propietario de inmuebles, vehículos o equipos.",
+    "forWhomBadge": "Abierto a todos — inclusive vendedores profesionales",
+    "audiences": {
+      "anyone": {
+        "title": "Cualquier persona",
+        "description": "No necesitas ser corredor ni tener experiencia en ventas. Si conoces a alguien que alquila inmuebles, vehículos o equipos, ya puedes recomendar."
+      },
+      "professionals": {
+        "title": "Vendedores y profesionales liberales",
+        "description": "Vendedores profesionales, abogados, contadores y gestores también participan — no hay ninguna restricción."
+      },
+      "brokers": {
+        "title": "Corredores e inmobiliarias",
+        "description": "Ya en contacto directo con propietarios — recomienda AlugaPro durante tu propio servicio."
+      },
+      "creators": {
+        "title": "Influencers y creadores de contenido",
+        "description": "De cualquier nicho, no solo del mercado inmobiliario — recomiéndalo a tu audiencia y conviértelo en ingreso recurrente."
+      }
+    },
+    "howItWorksTitle": "Cómo funciona",
+    "howItWorksSubtitle": "De la recomendación al pago, en cuatro pasos simples.",
+    "steps": {
+      "indicate": {
+        "step": "01",
+        "title": "Recomienda",
+        "description": "Presenta AlugaPro a alguien que administra alquileres de inmuebles, vehículos o equipos."
+      },
+      "freeTrial": {
+        "step": "02",
+        "title": "Prueba gratis",
+        "description": "Tu recomendado prueba la plataforma por 14 días, sin tarjeta de crédito y sin compromiso."
+      },
+      "activeClient": {
+        "step": "03",
+        "title": "Cliente activo",
+        "description": "Cuando se suscribe a un plan de pago, la recomendación se confirma y queda registrada a tu nombre."
+      },
+      "youEarn": {
+        "step": "04",
+        "title": "Tú recibes",
+        "description": "Recibe 7% de comisión recurrente sobre la mensualidad, a partir de 15 días de cliente activo."
+      }
+    },
+    "ctaBannerBadge": "Recomendaciones ilimitadas",
+    "ctaBannerTitle": "¿Listo para empezar a recomendar?",
+    "ctaBannerSubtitle": "Habla con nosotros y únete al programa de afiliados de AlugaPro.",
+    "ctaKnowPlatform": "Conocer la plataforma"
+  },
+  "footer": {
+    "access": "Acceso",
+    "platform": "Plataforma",
+    "legal": "Legal",
+    "contact": "Contacto",
+    "accessSystem": "Acceder al sistema",
+    "tenantPortal": "Portal del inquilino",
+    "resources": "Recursos",
+    "howItWorks": "Cómo funciona",
+    "forWhom": "Para quién es",
+    "affiliateProgram": "Programa de afiliados",
+    "termsOfUse": "Términos de Uso",
+    "privacyPolicy": "Política de Privacidad",
+    "contactTagline": "Gestión de alquileres inteligente",
+    "rightsReserved": "© {{year}} AlugaPro. Todos los derechos reservados.",
+    "login": "Entrar"
+  }
+}

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { FileWarning, Plus, Search, Trash2, Music, ShieldAlert } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -19,6 +20,7 @@ import { WarningForm } from './WarningForm'
 const RESCISSION_THRESHOLD = 4
 
 export function WarningsPage() {
+  const { t } = useTranslation('warnings')
   const { user, firebaseUser } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -38,9 +40,9 @@ export function WarningsPage() {
     mutationFn: deleteWarning,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['warnings'] })
-      toast({ title: 'Advertência removida.' })
+      toast({ title: t('toast.deleted') })
     },
-    onError: () => toast({ title: 'Erro ao remover advertência.', variant: 'destructive' }),
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
   })
 
   const filtered = warnings.filter((w) =>
@@ -60,7 +62,7 @@ export function WarningsPage() {
   const pag = usePagination(tenantGroups, 10)
 
   const handleDelete = (w: ContractWarning) => {
-    if (confirm('Remover esta advertência? Esta ação não pode ser desfeita.')) {
+    if (confirm(t('toast.deleteConfirm'))) {
       deleteMutation.mutate(w.id)
     }
   }
@@ -76,14 +78,14 @@ export function WarningsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar inquilino ou imóvel..."
+            placeholder={t('searchPlaceholderPage')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 sm:w-64"
           />
         </div>
         <Button onClick={() => openNew(undefined)}>
-          <Plus className="mr-2 h-4 w-4" /> Nova Advertência
+          <Plus className="mr-2 h-4 w-4" /> {t('newWarning')}
         </Button>
       </div>
 
@@ -92,13 +94,13 @@ export function WarningsPage() {
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{warnings.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Total de advertências</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('totalWarnings')}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="p-4 text-center">
             <p className="text-2xl font-bold">{Object.keys(byTenant).length}</p>
-            <p className="text-xs text-muted-foreground mt-1">Inquilinos advertidos</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('warnedTenants')}</p>
           </CardContent>
         </Card>
         <Card className="border-destructive/30">
@@ -106,7 +108,7 @@ export function WarningsPage() {
             <p className="text-2xl font-bold text-destructive">
               {Object.values(byTenant).filter((w) => w.length >= RESCISSION_THRESHOLD).length}
             </p>
-            <p className="text-xs text-muted-foreground mt-1">Em risco de rescisão (≥4)</p>
+            <p className="text-xs text-muted-foreground mt-1">{t('atRisk')}</p>
           </CardContent>
         </Card>
       </div>
@@ -120,14 +122,14 @@ export function WarningsPage() {
       ) : tenantGroups.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <FileWarning className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhuma advertência registrada</p>
-          <p className="text-sm text-muted-foreground">Ótimo sinal — nenhum inquilino foi advertido até agora.</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.title')}</p>
+          <p className="text-sm text-muted-foreground">{t('emptyDescription')}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {pag.pageItems.map(([tenantId, items]) => {
             const atRisk = items.length >= RESCISSION_THRESHOLD
-            const tenantName = items[0].tenantName || 'Inquilino'
+            const tenantName = items[0].tenantName || t('tenantFallback')
             const propertyName = items[0].propertyName
             return (
               <Card key={tenantId} className={atRisk ? 'border-l-4 border-l-destructive overflow-hidden' : 'overflow-hidden'}>
@@ -139,17 +141,17 @@ export function WarningsPage() {
                   <div className="flex items-center gap-2 shrink-0">
                     <Badge variant={atRisk ? 'destructive' : 'warning'} className="gap-1">
                       {atRisk && <ShieldAlert className="h-3 w-3" />}
-                      {items.length} advertência{items.length > 1 ? 's' : ''}
+                      {t('warningCount', { count: items.length })}
                     </Badge>
                     <Button variant="outline" size="sm" onClick={() => openNew(items[0].contractId)}>
-                      <Plus className="mr-1 h-3.5 w-3.5" /> Advertir
+                      <Plus className="mr-1 h-3.5 w-3.5" /> {t('warn')}
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2 pt-0">
                   {atRisk && (
                     <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                      Limite de 4 advertências atingido — o proprietário pode rescindir o contrato imediatamente, sem devolução dos valores pagos, conforme cláusula contratual.
+                      {t('rescissionNotice')}
                     </p>
                   )}
                   {items.map((w) => (
@@ -161,14 +163,14 @@ export function WarningsPage() {
                           )}
                           <p className="text-sm">{w.reason}</p>
                           <p className="mt-1 text-xs text-muted-foreground">
-                            {formatDate(w.createdAt?.toDate ? w.createdAt.toDate().toISOString() : new Date().toISOString())} — por {w.issuedByName}
+                            {t('issuedBy', { date: formatDate(w.createdAt?.toDate ? w.createdAt.toDate().toISOString() : new Date().toISOString()), name: w.issuedByName })}
                           </p>
                         </div>
                         <Button
                           variant="ghost"
                           size="icon"
                           className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                          title="Remover"
+                          title={t('remove')}
                           onClick={() => handleDelete(w)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -188,7 +190,7 @@ export function WarningsPage() {
                           ))}
                           {(w.evidenceAudio?.length ?? 0) > 0 && (
                             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                              <Music className="h-3.5 w-3.5" /> {w.evidenceAudio?.length} áudio(s)
+                              <Music className="h-3.5 w-3.5" /> {t('audioCount', { count: w.evidenceAudio?.length })}
                             </div>
                           )}
                         </div>
@@ -210,7 +212,7 @@ export function WarningsPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="inquilinos"
+          itemLabel={t('itemLabel')}
         />
       )}
 
@@ -218,7 +220,7 @@ export function WarningsPage() {
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <FileWarning className="h-5 w-5" /> Nova Advertência
+              <FileWarning className="h-5 w-5" /> {t('newWarning')}
             </DialogTitle>
           </DialogHeader>
           <WarningForm

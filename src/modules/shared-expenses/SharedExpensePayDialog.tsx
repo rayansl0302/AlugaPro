@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
+import i18n from '@/i18n'
+import { getDateFnsLocale } from '@/i18n/dateLocales'
 import {
   CheckCircle, Loader2, X, Eye, FileCheck,
   Banknote, QrCode, ArrowLeftRight, CreditCard, Receipt,
@@ -21,12 +23,12 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
 
-const METHODS: { value: PaymentMethod; label: string; icon: React.ElementType }[] = [
-  { value: 'dinheiro',      label: 'Dinheiro',  icon: Banknote },
-  { value: 'pix',           label: 'PIX',        icon: QrCode },
-  { value: 'transferencia', label: 'Transf.',    icon: ArrowLeftRight },
-  { value: 'cartao',        label: 'Cartão',     icon: CreditCard },
-  { value: 'boleto',        label: 'Boleto',     icon: Receipt },
+const METHODS: { value: PaymentMethod; icon: React.ElementType }[] = [
+  { value: 'dinheiro',      icon: Banknote },
+  { value: 'pix',           icon: QrCode },
+  { value: 'transferencia', icon: ArrowLeftRight },
+  { value: 'cartao',        icon: CreditCard },
+  { value: 'boleto',        icon: Receipt },
 ]
 
 interface Props {
@@ -42,6 +44,8 @@ export function SharedExpensePayDialog({
   onClose,
   onSuccess,
 }: Props) {
+  const { t } = useTranslation('sharedExpenses')
+  const { t: tCommon } = useTranslation('common')
   const today = format(new Date(), 'yyyy-MM-dd')
   const [payingId, setPayingId] = useState<string | null>(null)
   const [validatingIdx, setValidatingIdx] = useState<number | null>(null)
@@ -73,11 +77,11 @@ export function SharedExpensePayDialog({
     setSaving(true)
     try {
       await markParticipantPaid(expense.id, idx, { paidDate, paymentMethod: method })
-      toast({ title: 'Pagamento registrado!' })
+      toast({ title: t('toast.paymentRegistered') })
       onSuccess()
       setPayingId(null)
     } catch {
-      toast({ title: 'Erro ao registrar pagamento.', variant: 'destructive' })
+      toast({ title: t('toast.paymentError'), variant: 'destructive' })
     } finally {
       setSaving(false)
     }
@@ -87,10 +91,10 @@ export function SharedExpensePayDialog({
     setUndoing(String(idx))
     try {
       await markParticipantUnpaid(expense.id, idx)
-      toast({ title: 'Pagamento desfeito.' })
+      toast({ title: t('toast.paymentUndone') })
       onSuccess()
     } catch {
-      toast({ title: 'Erro ao desfazer pagamento.', variant: 'destructive' })
+      toast({ title: t('toast.undoError'), variant: 'destructive' })
     } finally {
       setUndoing(null)
     }
@@ -100,11 +104,11 @@ export function SharedExpensePayDialog({
     setValidating(true)
     try {
       await confirmParticipantReceipt(expense.id, idx)
-      toast({ title: 'Comprovante confirmado e pagamento registrado.' })
+      toast({ title: t('toast.receiptConfirmed') })
       onSuccess()
       setValidatingIdx(null)
     } catch {
-      toast({ title: 'Erro ao confirmar comprovante.', variant: 'destructive' })
+      toast({ title: t('toast.confirmError'), variant: 'destructive' })
     } finally {
       setValidating(false)
     }
@@ -114,11 +118,11 @@ export function SharedExpensePayDialog({
     setValidating(true)
     try {
       await rejectParticipantReceipt(expense.id, idx)
-      toast({ title: 'Comprovante rejeitado. Inquilino precisará reenviar.' })
+      toast({ title: t('toast.receiptRejected') })
       onSuccess()
       setValidatingIdx(null)
     } catch {
-      toast({ title: 'Erro ao rejeitar comprovante.', variant: 'destructive' })
+      toast({ title: t('toast.rejectError'), variant: 'destructive' })
     } finally {
       setValidating(false)
     }
@@ -134,33 +138,33 @@ export function SharedExpensePayDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-500" />
-            Pagamentos — {expense.description}
+            {t('paymentsTitle', { name: expense.description })}
           </DialogTitle>
         </DialogHeader>
 
         <div className="rounded-lg border bg-muted/30 p-3 text-sm space-y-1.5">
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Imóvel</span>
+            <span className="text-muted-foreground">{t('form.property')}</span>
             <span className="font-medium">{expense.propertyName ?? '—'}</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Vencimento</span>
+            <span className="text-muted-foreground">{t('form.dueDate')}</span>
             <span>
               {expense.recurring
-                ? `Todo dia ${expense.dueDay ?? 1}`
+                ? t('everyDay', { day: expense.dueDay ?? 1 })
                 : expense.dueDate ? formatDateOptional(expense.dueDate) : '—'}
             </span>
           </div>
           <div className="flex justify-between border-t pt-1.5">
-            <span className="font-semibold">Total</span>
+            <span className="font-semibold">{tCommon('ui.total')}</span>
             <span className="font-bold">{formatCurrency(expense.totalAmount)}</span>
           </div>
           <div className="flex gap-3 text-xs text-muted-foreground pt-0.5">
             <span className="flex items-center gap-1">
-              <CheckCircle className="h-3 w-3 text-green-500" /> {paidCount} pagos
+              <CheckCircle className="h-3 w-3 text-green-500" /> {t('paidCount', { count: paidCount })}
             </span>
             <span className="flex items-center gap-1">
-              <X className="h-3 w-3 text-yellow-500" /> {pendingCount} pendentes
+              <X className="h-3 w-3 text-yellow-500" /> {t('pendingCount', { count: pendingCount })}
             </span>
           </div>
         </div>
@@ -175,14 +179,14 @@ export function SharedExpensePayDialog({
                 </div>
                 <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
                   {p.receiptStatus === 'aguardando' && (
-                    <Badge variant="warning" className="text-xs">Comprovante enviado</Badge>
+                    <Badge variant="warning" className="text-xs">{t('receiptSent')}</Badge>
                   )}
                   {p.receiptStatus === 'rejeitado' && (
-                    <Badge variant="destructive" className="text-xs">Comprovante rejeitado</Badge>
+                    <Badge variant="destructive" className="text-xs">{t('receiptRejectedBadge')}</Badge>
                   )}
                   {p.status === 'pago'
-                    ? <Badge variant="success">Pago</Badge>
-                    : <Badge variant="warning">Pendente</Badge>
+                    ? <Badge variant="success">{tCommon('status.pago')}</Badge>
+                    : <Badge variant="warning">{tCommon('status.pendente')}</Badge>
                   }
                   {p.receiptStatus === 'aguardando' && (
                     <Button
@@ -194,7 +198,7 @@ export function SharedExpensePayDialog({
                         setPayingId(null)
                       }}
                     >
-                      <Eye className="mr-1 h-3 w-3" /> Validar
+                      <Eye className="mr-1 h-3 w-3" /> {t('validate')}
                     </Button>
                   )}
                   {p.status === 'pago' ? (
@@ -206,7 +210,7 @@ export function SharedExpensePayDialog({
                     >
                       {undoing === toKey(idx)
                         ? <Loader2 className="h-3 w-3 animate-spin" />
-                        : <><X className="mr-1 h-3 w-3" /> Desfazer</>
+                        : <><X className="mr-1 h-3 w-3" /> {t('undo')}</>
                       }
                     </Button>
                   ) : p.receiptStatus !== 'aguardando' && (
@@ -218,7 +222,7 @@ export function SharedExpensePayDialog({
                         setValidatingIdx(null)
                       }}
                     >
-                      <CheckCircle className="mr-1 h-3 w-3" /> Pago
+                      <CheckCircle className="mr-1 h-3 w-3" /> {tCommon('status.pago')}
                     </Button>
                   )}
                 </div>
@@ -226,7 +230,7 @@ export function SharedExpensePayDialog({
 
               {p.status === 'pago' && p.paidDate && (
                 <p className="text-xs text-muted-foreground">
-                  Pago em {format(new Date(p.paidDate + 'T12:00:00'), "dd 'de' MMMM", { locale: ptBR })}
+                  {t('paidOn', { date: format(new Date(p.paidDate + 'T12:00:00'), "dd 'de' MMMM", { locale: getDateFnsLocale(i18n.language) }) })}
                 </p>
               )}
 
@@ -234,19 +238,19 @@ export function SharedExpensePayDialog({
                 <div className="border-t pt-3 space-y-3">
                   <div className="flex items-center gap-2 text-xs font-medium text-orange-700">
                     <FileCheck className="h-4 w-4" />
-                    Validar comprovante PIX
+                    {t('validatePixReceipt')}
                   </div>
 
                   {p.receipt && (
                     <a href={p.receipt} target="_blank" rel="noreferrer" className="block">
                       <img
                         src={p.receipt}
-                        alt="Comprovante"
+                        alt={t('receiptAlt')}
                         className="w-full rounded-lg border object-contain max-h-52"
                         onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
                       <p className="mt-1.5 text-center text-xs text-primary underline">
-                        Abrir comprovante em nova aba
+                        {t('openReceiptNewTab')}
                       </p>
                     </a>
                   )}
@@ -260,7 +264,7 @@ export function SharedExpensePayDialog({
                     >
                       {validating
                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        : <><CheckCircle className="mr-1 h-3.5 w-3.5" /> Confirmar pago</>
+                        : <><CheckCircle className="mr-1 h-3.5 w-3.5" /> {t('confirmPaid')}</>
                       }
                     </Button>
                     <Button
@@ -270,7 +274,7 @@ export function SharedExpensePayDialog({
                       disabled={validating}
                       onClick={() => handleRejectReceipt(idx)}
                     >
-                      Rejeitar
+                      {t('reject')}
                     </Button>
                   </div>
                 </div>
@@ -279,7 +283,7 @@ export function SharedExpensePayDialog({
               {payingId === toKey(idx) && p.status !== 'pago' && p.receiptStatus !== 'aguardando' && (
                 <div className="border-t pt-3 space-y-3">
                   <div className="grid grid-cols-5 gap-1">
-                    {METHODS.map(({ value, label, icon: Icon }) => (
+                    {METHODS.map(({ value, icon: Icon }) => (
                       <button
                         key={value}
                         type="button"
@@ -292,13 +296,13 @@ export function SharedExpensePayDialog({
                         )}
                       >
                         <Icon className="h-3.5 w-3.5" />
-                        {label}
+                        {t(`methods.${value}`)}
                       </button>
                     ))}
                   </div>
 
                   <div className="space-y-1">
-                    <Label className="text-xs">Data do pagamento</Label>
+                    <Label className="text-xs">{t('paymentDate')}</Label>
                     <Input
                       type="date"
                       max={today}
@@ -313,7 +317,7 @@ export function SharedExpensePayDialog({
                       size="sm" variant="outline" className="flex-1"
                       onClick={() => setPayingId(null)}
                     >
-                      Cancelar
+                      {tCommon('actions.cancel')}
                     </Button>
                     <Button
                       size="sm" className="flex-1"
@@ -322,7 +326,7 @@ export function SharedExpensePayDialog({
                     >
                       {saving
                         ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        : <><CheckCircle className="mr-1 h-3.5 w-3.5" /> Confirmar</>
+                        : <><CheckCircle className="mr-1 h-3.5 w-3.5" /> {tCommon('actions.confirm')}</>
                       }
                     </Button>
                   </div>
@@ -333,7 +337,7 @@ export function SharedExpensePayDialog({
         </div>
 
         <Button variant="outline" className="w-full" onClick={onClose}>
-          Fechar
+          {tCommon('actions.close')}
         </Button>
       </DialogContent>
     </Dialog>

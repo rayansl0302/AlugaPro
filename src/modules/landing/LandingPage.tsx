@@ -1,6 +1,7 @@
 import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   Building2, Car, FileText, CreditCard, Users, Bell,
   BarChart3, ShieldCheck, ArrowRight, CheckCircle2, Zap, X, Check,
@@ -19,148 +20,131 @@ import {
 import { PLANS, PlanId } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 
-const FEATURES = [
-  {
-    icon: Building2,
-    title: 'Imóveis e veículos',
-    description: 'Cadastre, organize e acompanhe todo o seu portfólio de locações em um só lugar.',
-  },
-  {
-    icon: FileText,
-    title: 'Contratos digitais',
-    description: 'Gere, personalize e assine contratos com locador, locatário e testemunhas remotamente.',
-  },
-  {
-    icon: CreditCard,
-    title: 'Cobranças automáticas',
-    description: 'Controle mensalidades, comprovantes, inadimplência e fluxo de caixa com visão clara.',
-  },
-  {
-    icon: Users,
-    title: 'Portal do inquilino',
-    description: 'Inquilinos acompanham pagamentos, enviam comprovantes e acessam o contrato ativo.',
-  },
-  {
-    icon: Bell,
-    title: 'Notificações',
-    description: 'Alertas de vencimento e cobrança para manter a comunicação em dia com os locatários.',
-  },
-  {
-    icon: BarChart3,
-    title: 'Relatórios e dashboard',
-    description: 'Indicadores, gráficos e exportações para decisões rápidas e seguras.',
-  },
-]
-
-const STEPS = [
-  {
-    step: '01',
-    title: 'Cadastre seu patrimônio',
-    description: 'Imóveis, veículos, proprietários e inquilinos entram no sistema em poucos minutos.',
-  },
-  {
-    step: '02',
-    title: 'Formalize os contratos',
-    description: 'Use modelos do sistema ou personalize cláusulas e colete assinaturas digitais.',
-  },
-  {
-    step: '03',
-    title: 'Gerencie as cobranças',
-    description: 'Gere mensalidades, acompanhe pagamentos e reduza a inadimplência com visibilidade total.',
-  },
-]
-
-const AUDIENCES = [
-  'Gestores e administradoras de locação',
-  'Proprietários com múltiplos imóveis ou veículos',
-  'Empresas que precisam de controle financeiro integrado',
-  'Inquilinos que querem autonomia no portal de pagamentos',
-]
-
-const STATS = [
-  { value: 'Imóveis', label: 'Gestão completa', icon: Building2 },
-  { value: 'Veículos', label: 'Locação integrada', icon: Car },
-  { value: 'Contratos', label: 'Assinatura digital', icon: FileText },
-  { value: 'Cobranças', label: 'Controle financeiro', icon: CreditCard },
-]
-
-const HERO_PERKS = ['14 dias grátis', 'Sem cartão de crédito', 'Cancele quando quiser']
-
 type CellValue = boolean | string
 interface CompRow { label: string; starter: CellValue; pro: CellValue; business: CellValue }
 interface CompGroup { group: string; rows: CompRow[] }
 
-const COMPARISON: CompGroup[] = [
-  {
-    group: 'Gestão',
-    rows: [
-      { label: 'Imóveis e veículos', starter: 'Até 10', pro: 'Até 50', business: 'Ilimitado' },
-      { label: 'Usuários gestores', starter: '2', pro: '5', business: 'Ilimitado' },
-      { label: 'Proprietários e inquilinos', starter: true, pro: true, business: true },
-      { label: 'Portal do inquilino', starter: true, pro: true, business: true },
-    ],
-  },
-  {
-    group: 'Contratos e cobranças',
-    rows: [
-      { label: 'Geração de contratos', starter: true, pro: true, business: true },
-      { label: 'Assinatura digital', starter: false, pro: true, business: true },
-      { label: 'Modelos personalizados', starter: false, pro: true, business: true },
-      { label: 'Cobranças automáticas', starter: true, pro: true, business: true },
-      { label: 'Controle de inadimplência', starter: true, pro: true, business: true },
-    ],
-  },
-  {
-    group: 'Financeiro',
-    rows: [
-      { label: 'Dashboard financeiro', starter: true, pro: true, business: true },
-      { label: 'Despesas compartilhadas', starter: true, pro: true, business: true },
-      { label: 'Relatórios avançados', starter: false, pro: true, business: true },
-      { label: 'Exportação Excel / PDF', starter: false, pro: true, business: true },
-      { label: 'Reajuste IPCA / IGPM', starter: false, pro: true, business: true },
-    ],
-  },
-  {
-    group: 'Operação',
-    rows: [
-      { label: 'Chamados e manutenções', starter: true, pro: true, business: true },
-      { label: 'Notificações automáticas', starter: true, pro: true, business: true },
-      { label: 'Múltiplas equipes', starter: false, pro: false, business: true },
-      { label: 'Onboarding assistido', starter: false, pro: false, business: true },
-      { label: 'API de integrações', starter: false, pro: false, business: 'Em breve' },
-    ],
-  },
-]
-
-const PRICING_FEATURES: Record<PlanId, string[]> = {
-  starter: [
-    'Até 10 imóveis ou veículos',
-    '2 usuários gestores',
-    'Contratos e cobranças',
-    'Portal do inquilino',
-    'Controle de inadimplência',
-    'Notificações automáticas',
-  ],
-  pro: [
-    'Até 50 imóveis ou veículos',
-    '5 usuários gestores',
-    'Assinatura digital de contratos',
-    'Relatórios avançados',
-    'Exportação Excel e PDF',
-    'Modelos personalizados',
-  ],
-  business: [
-    'Imóveis e veículos ilimitados',
-    'Usuários ilimitados',
-    'Tudo do plano Pro',
-    'Múltiplas equipes',
-    'Onboarding assistido',
-    'API de integrações (em breve)',
-  ],
-}
-
 export function LandingPage() {
+  const { t } = useTranslation('landing')
   const { user } = useAuth()
+
+  const FEATURES = [
+    {
+      icon: Building2,
+      title: t('features.propertiesVehicles.title'),
+      description: t('features.propertiesVehicles.description'),
+    },
+    {
+      icon: FileText,
+      title: t('features.digitalContracts.title'),
+      description: t('features.digitalContracts.description'),
+    },
+    {
+      icon: CreditCard,
+      title: t('features.autoCharges.title'),
+      description: t('features.autoCharges.description'),
+    },
+    {
+      icon: Users,
+      title: t('features.tenantPortal.title'),
+      description: t('features.tenantPortal.description'),
+    },
+    {
+      icon: Bell,
+      title: t('features.notifications.title'),
+      description: t('features.notifications.description'),
+    },
+    {
+      icon: BarChart3,
+      title: t('features.reports.title'),
+      description: t('features.reports.description'),
+    },
+  ]
+
+  const STEPS = [
+    {
+      step: t('howItWorks.steps.register.step'),
+      title: t('howItWorks.steps.register.title'),
+      description: t('howItWorks.steps.register.description'),
+    },
+    {
+      step: t('howItWorks.steps.formalize.step'),
+      title: t('howItWorks.steps.formalize.title'),
+      description: t('howItWorks.steps.formalize.description'),
+    },
+    {
+      step: t('howItWorks.steps.manageCharges.step'),
+      title: t('howItWorks.steps.manageCharges.title'),
+      description: t('howItWorks.steps.manageCharges.description'),
+    },
+  ]
+
+  const AUDIENCES = t('forWhom.audiences', { returnObjects: true }) as string[]
+
+  const STATS = [
+    { value: t('stats.properties.label'), label: t('stats.properties.description'), icon: Building2 },
+    { value: t('stats.vehicles.label'), label: t('stats.vehicles.description'), icon: Car },
+    { value: t('stats.contracts.label'), label: t('stats.contracts.description'), icon: FileText },
+    { value: t('stats.charges.label'), label: t('stats.charges.description'), icon: CreditCard },
+  ]
+
+  const HERO_PERKS = [
+    t('hero.perks.freeTrial'),
+    t('hero.perks.noCreditCard'),
+    t('hero.perks.cancelAnytime'),
+  ]
+
+  const COMPARISON: CompGroup[] = [
+    {
+      group: t('pricing.comparison.groups.management'),
+      rows: [
+        { label: t('pricing.comparison.rows.propertiesVehicles'), starter: t('pricing.comparison.values.upTo10'), pro: t('pricing.comparison.values.upTo50'), business: t('pricing.comparison.values.unlimited') },
+        { label: t('pricing.comparison.rows.managerUsers'), starter: t('pricing.comparison.values.two'), pro: t('pricing.comparison.values.five'), business: t('pricing.comparison.values.unlimited') },
+        { label: t('pricing.comparison.rows.ownersTenants'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.tenantPortal'), starter: true, pro: true, business: true },
+      ],
+    },
+    {
+      group: t('pricing.comparison.groups.contractsCharges'),
+      rows: [
+        { label: t('pricing.comparison.rows.contractGeneration'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.digitalSignature'), starter: false, pro: true, business: true },
+        { label: t('pricing.comparison.rows.customTemplates'), starter: false, pro: true, business: true },
+        { label: t('pricing.comparison.rows.autoCharges'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.delinquencyControl'), starter: true, pro: true, business: true },
+      ],
+    },
+    {
+      group: t('pricing.comparison.groups.finance'),
+      rows: [
+        { label: t('pricing.comparison.rows.financeDashboard'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.sharedExpenses'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.advancedReports'), starter: false, pro: true, business: true },
+        { label: t('pricing.comparison.rows.exportExcelPdf'), starter: false, pro: true, business: true },
+        { label: t('pricing.comparison.rows.indexAdjustment'), starter: false, pro: true, business: true },
+      ],
+    },
+    {
+      group: t('pricing.comparison.groups.operations'),
+      rows: [
+        { label: t('pricing.comparison.rows.ticketsMaintenance'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.autoNotifications'), starter: true, pro: true, business: true },
+        { label: t('pricing.comparison.rows.multipleTeams'), starter: false, pro: false, business: true },
+        { label: t('pricing.comparison.rows.assistedOnboarding'), starter: false, pro: false, business: true },
+        { label: t('pricing.comparison.rows.integrationsApi'), starter: false, pro: false, business: t('pricing.comparison.values.comingSoon') },
+      ],
+    },
+  ]
+
+  const asFeatureList = (value: unknown): string[] => (Array.isArray(value) ? (value as string[]) : [])
+
+  const PRICING_FEATURES: Record<PlanId, string[]> = {
+    starter: asFeatureList(t('pricing.plans.starter.features', { returnObjects: true })),
+    pro: asFeatureList(t('pricing.plans.pro.features', { returnObjects: true })),
+    business: asFeatureList(t('pricing.plans.business.features', { returnObjects: true })),
+  }
+
+  const CTA_PERKS = t('ctaBanner.perks', { returnObjects: true }) as string[]
 
   const primaryHref = user
     ? user.role === 'inquilino'
@@ -170,10 +154,16 @@ export function LandingPage() {
         : '/dashboard'
     : '/login'
 
-  const primaryLabel = user ? 'Abrir painel' : 'Começar agora'
+  const primaryLabel = user ? t('hero.ctaOpenPanel') : t('hero.ctaStart')
   const secondaryHref = user ? '#recursos' : '/login?tab=inquilino'
-  const secondaryLabel = user ? 'Ver recursos' : 'Sou inquilino'
+  const secondaryLabel = user ? t('hero.ctaSeeFeatures') : t('hero.ctaTenant')
   const secondaryIsAnchor = !!user
+
+  const mobilePlans = [
+    { id: 'starter' as const, name: t('pricing.plans.starter.name'), price: `${formatCurrency(PLANS.starter.price)}${t('pricing.perMonth')}`, popular: false },
+    { id: 'pro' as const, name: t('pricing.plans.pro.name'), price: `${formatCurrency(PLANS.pro.price)}${t('pricing.perMonth')}`, popular: true },
+    { id: 'business' as const, name: t('pricing.plans.business.name'), price: `${formatCurrency(PLANS.business.price)}${t('pricing.perMonth')}`, popular: false },
+  ]
 
   return (
     <div className="light min-h-screen bg-white text-foreground">
@@ -197,21 +187,21 @@ export function LandingPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
               >
                 <ShieldCheck className="h-3.5 w-3.5" />
-                Gestão inteligente de aluguéis
+                {t('hero.badge')}
               </motion.span>
 
               <motion.h1
                 variants={fadeInUp}
                 className="mt-5 text-3xl font-bold leading-[1.15] tracking-tight text-[#032B61] sm:text-4xl lg:text-5xl"
               >
-                Sua locação organizada, do contrato ao recebimento
+                {t('hero.title')}
               </motion.h1>
 
               <motion.p
                 variants={fadeInUp}
                 className="mt-5 text-base leading-relaxed text-muted-foreground sm:text-lg"
               >
-                Imóveis, veículos, contratos digitais, cobranças e portal do inquilino — tudo integrado para quem administra aluguéis todos os dias.
+                {t('hero.subtitle')}
               </motion.p>
 
               <motion.div
@@ -310,10 +300,10 @@ export function LandingPage() {
                 variants={fadeInUp}
                 className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl"
               >
-                Tudo que você precisa para administrar locações
+                {t('features.title')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Recursos pensados para simplificar a rotina do gestor e melhorar a experiência do inquilino.
+                {t('features.subtitle')}
               </motion.p>
             </motion.div>
 
@@ -360,10 +350,10 @@ export function LandingPage() {
               variants={staggerContainer(0.12)}
             >
               <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
-                Como funciona
+                {t('howItWorks.title')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Em três passos você estrutura toda a operação de locação no AlugaPro.
+                {t('howItWorks.subtitle')}
               </motion.p>
             </motion.div>
 
@@ -407,16 +397,16 @@ export function LandingPage() {
                 className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
               >
                 <Zap className="h-3.5 w-3.5" />
-                14 dias grátis em qualquer plano
+                {t('pricing.badge')}
               </motion.span>
               <motion.h2
                 variants={fadeInUp}
                 className="mt-4 text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl"
               >
-                Planos simples, sem surpresas
+                {t('pricing.title')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Comece grátis por 14 dias. Nenhum cartão necessário. Cancele quando quiser.
+                {t('pricing.subtitle')}
               </motion.p>
             </motion.div>
 
@@ -435,17 +425,17 @@ export function LandingPage() {
                     <Card className={`relative flex h-full flex-col ${isPro ? 'border-[#032B61] shadow-xl ring-1 ring-[#032B61]/20' : 'border-slate-200 shadow-md'}`}>
                       {isPro && (
                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                          <Badge className="bg-[#032B61] text-white px-4 py-1 text-xs">Mais popular</Badge>
+                          <Badge className="bg-[#032B61] text-white px-4 py-1 text-xs">{t('pricing.popular')}</Badge>
                         </div>
                       )}
                       <CardContent className="flex flex-col flex-1 p-6">
-                        <p className="text-sm font-semibold text-[#032B61]">{plan.name}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{plan.description}</p>
+                        <p className="text-sm font-semibold text-[#032B61]">{t(`pricing.plans.${planId}.name`)}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t(`pricing.plans.${planId}.description`)}</p>
                         <div className="mt-4 flex items-baseline gap-1">
                           <span className="text-4xl font-bold text-[#032B61]">
                             {formatCurrency(plan.price)}
                           </span>
-                          <span className="text-sm text-muted-foreground">/mês</span>
+                          <span className="text-sm text-muted-foreground">{t('pricing.perMonth')}</span>
                         </div>
                         <ul className="mt-6 flex-1 space-y-2.5">
                           {PRICING_FEATURES[planId].map((feat) => (
@@ -460,7 +450,7 @@ export function LandingPage() {
                           variant={isPro ? 'default' : 'outline'}
                           asChild
                         >
-                          <Link to="/login?mode=signup">Começar grátis</Link>
+                          <Link to="/login?mode=signup">{t('pricing.ctaStartFree')}</Link>
                         </Button>
                       </CardContent>
                     </Card>
@@ -475,7 +465,7 @@ export function LandingPage() {
               whileInView={{ opacity: 1 }}
               viewport={viewportOnce}
             >
-              Portal do inquilino sempre gratuito. Inquilinos nunca pagam.
+              {t('pricing.tenantPortalFree')}
             </motion.p>
           </div>
         </section>
@@ -491,10 +481,10 @@ export function LandingPage() {
               variants={staggerContainer(0.1)}
             >
               <motion.h2 variants={fadeInUp} className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl">
-                Compare os planos
+                {t('pricing.compareTitle')}
               </motion.h2>
               <motion.p variants={fadeInUp} className="mt-4 text-muted-foreground">
-                Veja exatamente o que está incluído em cada nível de assinatura.
+                {t('pricing.compareSubtitle')}
               </motion.p>
             </motion.div>
 
@@ -507,11 +497,7 @@ export function LandingPage() {
               transition={{ duration: 0.5 }}
             >
               <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory scrollbar-hide">
-                {([
-                  { id: 'starter', name: 'Starter', price: 'R$ 39/mês', popular: false },
-                  { id: 'pro',     name: 'Pro',     price: 'R$ 79/mês', popular: true },
-                  { id: 'business',name: 'Business',price: 'R$ 129/mês',popular: false },
-                ] as const).map((plan) => (
+                {mobilePlans.map((plan) => (
                   <div
                     key={plan.id}
                     className={`snap-center shrink-0 w-[80vw] max-w-xs rounded-2xl border bg-white shadow-sm ${plan.popular ? 'border-[#032B61] ring-1 ring-[#032B61]/20' : 'border-slate-200'}`}
@@ -519,7 +505,7 @@ export function LandingPage() {
                     <div className={`rounded-t-2xl px-5 py-4 ${plan.popular ? 'bg-[#032B61]' : 'bg-slate-50'}`}>
                       {plan.popular && (
                         <span className="mb-1 inline-block rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-medium text-white">
-                          Mais popular
+                          {t('pricing.popular')}
                         </span>
                       )}
                       <p className={`font-bold text-lg ${plan.popular ? 'text-white' : 'text-[#032B61]'}`}>{plan.name}</p>
@@ -560,13 +546,13 @@ export function LandingPage() {
                         size="sm"
                         asChild
                       >
-                        <Link to="/login?mode=signup">Começar grátis</Link>
+                        <Link to="/login?mode=signup">{t('pricing.ctaStartFree')}</Link>
                       </Button>
                     </div>
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-center text-xs text-slate-400">← deslize para ver todos os planos →</p>
+              <p className="mt-3 text-center text-xs text-slate-400">{t('pricing.swipeHint')}</p>
             </motion.div>
 
             {/* Desktop: tabela completa */}
@@ -580,21 +566,21 @@ export function LandingPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-200">
-                    <th className="px-5 py-4 text-left font-medium text-slate-500 w-1/2">Recurso</th>
+                    <th className="px-5 py-4 text-left font-medium text-slate-500 w-1/2">{t('pricing.featureColumn')}</th>
                     <th className="px-4 py-4 text-center font-semibold text-[#032B61]">
-                      <div>Starter</div>
-                      <div className="text-xs font-normal text-slate-400">R$ 39/mês</div>
+                      <div>{t('pricing.plans.starter.name')}</div>
+                      <div className="text-xs font-normal text-slate-400">{formatCurrency(PLANS.starter.price)}{t('pricing.perMonth')}</div>
                     </th>
                     <th className="px-4 py-4 text-center font-semibold text-[#032B61] bg-[#032B61]/[0.03]">
                       <div className="flex flex-col items-center gap-1">
-                        <span className="rounded-full bg-[#032B61] px-2 py-0.5 text-[10px] text-white font-medium">Popular</span>
-                        <span>Pro</span>
-                        <span className="text-xs font-normal text-slate-400">R$ 79/mês</span>
+                        <span className="rounded-full bg-[#032B61] px-2 py-0.5 text-[10px] text-white font-medium">{t('pricing.popularShort')}</span>
+                        <span>{t('pricing.plans.pro.name')}</span>
+                        <span className="text-xs font-normal text-slate-400">{formatCurrency(PLANS.pro.price)}{t('pricing.perMonth')}</span>
                       </div>
                     </th>
                     <th className="px-4 py-4 text-center font-semibold text-[#032B61]">
-                      <div>Business</div>
-                      <div className="text-xs font-normal text-slate-400">R$ 129/mês</div>
+                      <div>{t('pricing.plans.business.name')}</div>
+                      <div className="text-xs font-normal text-slate-400">{formatCurrency(PLANS.business.price)}{t('pricing.perMonth')}</div>
                     </th>
                   </tr>
                 </thead>
@@ -638,7 +624,7 @@ export function LandingPage() {
                           className={plan === 'pro' ? 'bg-[#032B61] text-white hover:bg-[#032B61]/90' : ''}
                           asChild
                         >
-                          <Link to="/login?mode=signup">Começar grátis</Link>
+                          <Link to="/login?mode=signup">{t('pricing.ctaStartFree')}</Link>
                         </Button>
                       </td>
                     ))}
@@ -663,19 +649,19 @@ export function LandingPage() {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
             >
               <Zap className="h-3.5 w-3.5" />
-              Sem cartão de crédito · Cancele quando quiser
+              {t('ctaBanner.badge')}
             </motion.span>
             <motion.h2
               variants={fadeInUp}
               className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl"
             >
-              Comece seu trial grátis hoje
+              {t('ctaBanner.title')}
             </motion.h2>
             <motion.p
               variants={fadeInUp}
               className="mt-5 text-lg text-white/70 max-w-xl mx-auto"
             >
-              14 dias com acesso completo ao plano Pro. Sem compromisso. Configure sua empresa em menos de 5 minutos.
+              {t('ctaBanner.subtitle')}
             </motion.p>
             <motion.div
               variants={fadeInUp}
@@ -687,7 +673,7 @@ export function LandingPage() {
                 asChild
               >
                 <Link to="/login?mode=signup">
-                  Criar conta gratuita
+                  {t('ctaBanner.ctaCreateAccount')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
@@ -697,19 +683,14 @@ export function LandingPage() {
                 className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60"
                 asChild
               >
-                <Link to="/login?tab=inquilino">Sou inquilino</Link>
+                <Link to="/login?tab=inquilino">{t('ctaBanner.ctaTenant')}</Link>
               </Button>
             </motion.div>
             <motion.div
               variants={staggerContainer(0.08)}
               className="mt-10 flex flex-wrap justify-center gap-x-8 gap-y-3"
             >
-              {[
-                'Imóveis e veículos ilimitados no trial',
-                'Contratos com assinatura digital',
-                'Portal do inquilino incluso',
-                'Suporte por e-mail',
-              ].map((perk) => (
+              {CTA_PERKS.map((perk) => (
                 <motion.span key={perk} variants={fadeInUp} className="flex items-center gap-2 text-sm text-white/60">
                   <CheckCircle2 className="h-4 w-4 text-emerald-400 shrink-0" />
                   {perk}
@@ -732,10 +713,10 @@ export function LandingPage() {
                 variants={fadeInLeft}
                 className="text-3xl font-bold tracking-tight text-[#032B61] sm:text-4xl"
               >
-                Para quem é o AlugaPro
+                {t('forWhom.title')}
               </motion.h2>
               <motion.p variants={fadeInLeft} className="mt-4 text-muted-foreground">
-                Uma solução completa para quem precisa profissionalizar a gestão de aluguéis sem perder agilidade.
+                {t('forWhom.subtitle')}
               </motion.p>
               <motion.ul
                 variants={staggerContainer(0.08)}
@@ -763,9 +744,9 @@ export function LandingPage() {
             >
               <Card className="border-[#032B61]/15 bg-white shadow-xl">
                 <CardContent className="p-8">
-                  <h3 className="text-2xl font-bold text-[#032B61]">Pronto para organizar suas locações?</h3>
+                  <h3 className="text-2xl font-bold text-[#032B61]">{t('forWhom.cardTitle')}</h3>
                   <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                    Acesse o sistema como gestor ou entre no portal do inquilino para acompanhar pagamentos e contratos.
+                    {t('forWhom.cardDescription')}
                   </p>
                   <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                     <Button className="bg-[#032B61] text-white hover:bg-[#032B61]/90" asChild>
@@ -777,7 +758,7 @@ export function LandingPage() {
                         className="border-slate-300 text-[#032B61] hover:bg-slate-50"
                         asChild
                       >
-                        <Link to="/login?tab=inquilino">Portal do inquilino</Link>
+                        <Link to="/login?tab=inquilino">{t('forWhom.tenantPortalCta')}</Link>
                       </Button>
                     )}
                   </div>

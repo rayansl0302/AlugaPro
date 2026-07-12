@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
+import { useTranslation } from 'react-i18next'
 import {
   Building2, Car, FileText, CreditCard, Users, Bell,
   BarChart3, ArrowRight, CheckCircle2, Zap, Shield,
@@ -13,100 +14,6 @@ import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { fadeInUp, fadeInLeft, fadeInRight, staggerContainer, viewportOnce, easeTransition } from '@/lib/motion'
 
-const FEATURES = [
-  {
-    id: 'imoveis-veiculos',
-    icon: Building2,
-    badge: 'Portfólio',
-    title: 'Imóveis e veículos em um só lugar',
-    description:
-      'Cadastre, organize e acompanhe todo o seu portfólio de locações — imóveis residenciais, comerciais e veículos — com visão completa de status, contratos ativos e histórico.',
-    items: [
-      { icon: Building2, label: 'Imóveis residenciais e comerciais' },
-      { icon: Car, label: 'Veículos com controle de locação' },
-      { icon: Users, label: 'Proprietários e inquilinos vinculados' },
-      { icon: CalendarClock, label: 'Histórico de ocupação e contratos' },
-    ],
-    accent: 'emerald',
-  },
-  {
-    id: 'contratos',
-    icon: FileText,
-    badge: 'Contratos',
-    title: 'Contratos digitais com assinatura eletrônica',
-    description:
-      'Gere contratos profissionais a partir de modelos personalizáveis, colete assinaturas do locador, locatário e testemunhas remotamente — sem papel, sem deslocamento.',
-    items: [
-      { icon: FileText, label: 'Modelos personalizáveis de contrato' },
-      { icon: PenLine, label: 'Assinatura digital de todas as partes' },
-      { icon: Shield, label: 'Validade jurídica garantida' },
-      { icon: Users, label: 'Assinatura de testemunhas remotas' },
-    ],
-    accent: 'blue',
-  },
-  {
-    id: 'cobrancas',
-    icon: CreditCard,
-    badge: 'Financeiro',
-    title: 'Cobranças automáticas e controle financeiro',
-    description:
-      'Controle mensalidades, registre comprovantes de pagamento, monitore inadimplência e tenha visão clara do fluxo de caixa de toda a operação.',
-    items: [
-      { icon: CreditCard, label: 'Lançamento e baixa de cobranças' },
-      { icon: AlertCircle, label: 'Controle de inadimplência' },
-      { icon: TrendingUp, label: 'Fluxo de caixa em tempo real' },
-      { icon: RefreshCw, label: 'Reajuste IPCA / IGPM automatizado' },
-    ],
-    accent: 'violet',
-  },
-  {
-    id: 'portal-inquilino',
-    icon: Users,
-    badge: 'Portal',
-    title: 'Portal do inquilino — sempre gratuito',
-    description:
-      'Inquilinos têm acesso a um painel próprio onde visualizam o contrato ativo, acompanham cobranças, enviam comprovantes de pagamento e registram solicitações — tudo sem ligar para o gestor.',
-    items: [
-      { icon: FileText, label: 'Contrato ativo e histórico' },
-      { icon: CreditCard, label: 'Visualização e envio de comprovantes' },
-      { icon: MessageSquare, label: 'Abertura de chamados de manutenção' },
-      { icon: Bell, label: 'Notificações de vencimento' },
-    ],
-    accent: 'sky',
-    highlight: 'Gratuito para todos os inquilinos',
-  },
-  {
-    id: 'notificacoes',
-    icon: Bell,
-    badge: 'Automação',
-    title: 'Notificações automáticas e lembretes',
-    description:
-      'Reduza a inadimplência com alertas automáticos de vencimento, cobranças em aberto e atualizações de contrato. Comunicação em dia, sem esforço manual.',
-    items: [
-      { icon: Bell, label: 'Alertas de vencimento de aluguel' },
-      { icon: AlertCircle, label: 'Notificações de inadimplência' },
-      { icon: CalendarClock, label: 'Lembretes de renovação de contrato' },
-      { icon: Wrench, label: 'Atualizações de chamados' },
-    ],
-    accent: 'amber',
-  },
-  {
-    id: 'relatorios',
-    icon: BarChart3,
-    badge: 'Relatórios',
-    title: 'Dashboard e relatórios avançados',
-    description:
-      'Tome decisões com base em dados. Acompanhe indicadores de desempenho, gere relatórios financeiros e exporte tudo em Excel ou PDF para ter controle total da operação.',
-    items: [
-      { icon: BarChart3, label: 'Dashboard com indicadores em tempo real' },
-      { icon: TrendingUp, label: 'Relatório de receitas e despesas' },
-      { icon: FileSpreadsheet, label: 'Exportação em Excel e PDF' },
-      { icon: AlertCircle, label: 'Relatório de inadimplência' },
-    ],
-    accent: 'rose',
-  },
-]
-
 const accentMap: Record<string, { bg: string; text: string; border: string; badge: string }> = {
   emerald: { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', badge: 'bg-emerald-100 text-emerald-700' },
   blue:    { bg: 'bg-blue-50',    text: 'text-blue-700',    border: 'border-blue-200',    badge: 'bg-blue-100 text-blue-700' },
@@ -117,11 +24,107 @@ const accentMap: Record<string, { bg: string; text: string; border: string; badg
 }
 
 export function RecursosPage() {
+  const { t } = useTranslation('landing')
   const { user } = useAuth()
 
   const primaryHref = user
     ? user.role === 'inquilino' ? '/portal' : user.role === 'afiliado' ? '/painel-afiliado' : '/dashboard'
     : '/login'
+
+  const propertiesVehiclesItems = t('recursos.blocks.propertiesVehicles.items', { returnObjects: true }) as string[]
+  const digitalContractsItems = t('recursos.blocks.digitalContracts.items', { returnObjects: true }) as string[]
+  const autoChargesItems = t('recursos.blocks.autoCharges.items', { returnObjects: true }) as string[]
+  const tenantPortalItems = t('recursos.blocks.tenantPortal.items', { returnObjects: true }) as string[]
+  const notificationsItems = t('recursos.blocks.notifications.items', { returnObjects: true }) as string[]
+  const reportsItems = t('recursos.blocks.reports.items', { returnObjects: true }) as string[]
+
+  const FEATURES = [
+    {
+      id: 'imoveis-veiculos',
+      icon: Building2,
+      badge: t('recursos.blocks.propertiesVehicles.badge'),
+      title: t('recursos.blocks.propertiesVehicles.title'),
+      description: t('recursos.blocks.propertiesVehicles.description'),
+      items: [
+        { icon: Building2, label: propertiesVehiclesItems[0] },
+        { icon: Car, label: propertiesVehiclesItems[1] },
+        { icon: Users, label: propertiesVehiclesItems[2] },
+        { icon: CalendarClock, label: propertiesVehiclesItems[3] },
+      ],
+      accent: 'emerald',
+    },
+    {
+      id: 'contratos',
+      icon: FileText,
+      badge: t('recursos.blocks.digitalContracts.badge'),
+      title: t('recursos.blocks.digitalContracts.title'),
+      description: t('recursos.blocks.digitalContracts.description'),
+      items: [
+        { icon: FileText, label: digitalContractsItems[0] },
+        { icon: PenLine, label: digitalContractsItems[1] },
+        { icon: Shield, label: digitalContractsItems[2] },
+        { icon: Users, label: digitalContractsItems[3] },
+      ],
+      accent: 'blue',
+    },
+    {
+      id: 'cobrancas',
+      icon: CreditCard,
+      badge: t('recursos.blocks.autoCharges.badge'),
+      title: t('recursos.blocks.autoCharges.title'),
+      description: t('recursos.blocks.autoCharges.description'),
+      items: [
+        { icon: CreditCard, label: autoChargesItems[0] },
+        { icon: AlertCircle, label: autoChargesItems[1] },
+        { icon: TrendingUp, label: autoChargesItems[2] },
+        { icon: RefreshCw, label: autoChargesItems[3] },
+      ],
+      accent: 'violet',
+    },
+    {
+      id: 'portal-inquilino',
+      icon: Users,
+      badge: t('recursos.blocks.tenantPortal.badge'),
+      title: t('recursos.blocks.tenantPortal.title'),
+      description: t('recursos.blocks.tenantPortal.description'),
+      items: [
+        { icon: FileText, label: tenantPortalItems[0] },
+        { icon: CreditCard, label: tenantPortalItems[1] },
+        { icon: MessageSquare, label: tenantPortalItems[2] },
+        { icon: Bell, label: tenantPortalItems[3] },
+      ],
+      accent: 'sky',
+      highlight: t('recursos.blocks.tenantPortal.highlight'),
+    },
+    {
+      id: 'notificacoes',
+      icon: Bell,
+      badge: t('recursos.blocks.notifications.badge'),
+      title: t('recursos.blocks.notifications.title'),
+      description: t('recursos.blocks.notifications.description'),
+      items: [
+        { icon: Bell, label: notificationsItems[0] },
+        { icon: AlertCircle, label: notificationsItems[1] },
+        { icon: CalendarClock, label: notificationsItems[2] },
+        { icon: Wrench, label: notificationsItems[3] },
+      ],
+      accent: 'amber',
+    },
+    {
+      id: 'relatorios',
+      icon: BarChart3,
+      badge: t('recursos.blocks.reports.badge'),
+      title: t('recursos.blocks.reports.title'),
+      description: t('recursos.blocks.reports.description'),
+      items: [
+        { icon: BarChart3, label: reportsItems[0] },
+        { icon: TrendingUp, label: reportsItems[1] },
+        { icon: FileSpreadsheet, label: reportsItems[2] },
+        { icon: AlertCircle, label: reportsItems[3] },
+      ],
+      accent: 'rose',
+    },
+  ]
 
   return (
     <div className="light min-h-screen bg-white text-foreground">
@@ -144,21 +147,21 @@ export function RecursosPage() {
               className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700"
             >
               <Zap className="h-3.5 w-3.5" />
-              Plataforma completa de gestão
+              {t('recursos.badge')}
             </motion.span>
 
             <motion.h1
               variants={fadeInUp}
               className="mt-5 text-4xl font-bold leading-tight tracking-tight text-[#032B61] sm:text-5xl"
             >
-              Todos os recursos que você precisa
+              {t('recursos.heroTitle')}
             </motion.h1>
 
             <motion.p
               variants={fadeInUp}
               className="mt-5 text-lg leading-relaxed text-muted-foreground"
             >
-              Do cadastro do imóvel ao recebimento do aluguel. Contratos, cobranças, portal do inquilino, relatórios — tudo integrado em uma só plataforma.
+              {t('recursos.heroSubtitle')}
             </motion.p>
 
             <motion.div
@@ -167,12 +170,12 @@ export function RecursosPage() {
             >
               <Button size="lg" className="h-11 bg-[#032B61] px-6 text-white hover:bg-[#032B61]/90" asChild>
                 <Link to={primaryHref}>
-                  Começar grátis por 14 dias
+                  {t('recursos.ctaStartTrial')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-11 border-slate-300 text-[#032B61] hover:bg-slate-50" asChild>
-                <Link to="/#precos">Ver planos e preços</Link>
+                <Link to="/#precos">{t('recursos.ctaSeePricing')}</Link>
               </Button>
             </motion.div>
           </motion.div>
@@ -293,21 +296,21 @@ export function RecursosPage() {
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80"
             >
               <Zap className="h-3.5 w-3.5" />
-              14 dias grátis · Sem cartão de crédito
+              {t('recursos.ctaBannerBadge')}
             </motion.span>
 
             <motion.h2
               variants={fadeInUp}
               className="mt-6 text-3xl font-bold tracking-tight text-white sm:text-4xl"
             >
-              Pronto para testar tudo isso?
+              {t('recursos.ctaBannerTitle')}
             </motion.h2>
 
             <motion.p
               variants={fadeInUp}
               className="mt-4 text-lg text-white/70"
             >
-              Comece seu trial gratuito e explore todos os recursos sem compromisso.
+              {t('recursos.ctaBannerSubtitle')}
             </motion.p>
 
             <motion.div
@@ -316,12 +319,12 @@ export function RecursosPage() {
             >
               <Button size="lg" className="h-12 bg-white px-8 text-[#032B61] font-semibold hover:bg-white/90" asChild>
                 <Link to="/login?mode=signup">
-                  Criar conta gratuita
+                  {t('ctaBanner.ctaCreateAccount')}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 border-white/40 bg-transparent text-white hover:bg-white/10 hover:border-white/60" asChild>
-                <Link to="/#precos">Ver planos e preços</Link>
+                <Link to="/#precos">{t('recursos.ctaSeePricing')}</Link>
               </Button>
             </motion.div>
           </motion.div>

@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useViaCEP } from '@/hooks/useViaCEP'
 import { useStates, useCities } from '@/hooks/useIBGE'
+import { fieldErrorClass } from '@/lib/formErrors'
 
 interface AddressFormFields {
   street?: string
@@ -75,6 +76,7 @@ export function AddressFields({ register, setValue, watch, prefix = '', errors =
           <Input
             placeholder="00000-000"
             maxLength={9}
+            className={fieldErrorClass(errors[p('zipCode')])}
             {...register(p('zipCode'))}
             onChange={(e) => {
               const formatted = formatCEP(e.target.value)
@@ -126,7 +128,7 @@ export function AddressFields({ register, setValue, watch, prefix = '', errors =
       {/* Rua */}
       <div className="space-y-2 sm:col-span-2">
         <Label>Rua / Logradouro *</Label>
-        <Input placeholder="Rua das Flores" {...register(p('street'))} />
+        <Input placeholder="Rua das Flores" className={fieldErrorClass(errors[p('street')])} {...register(p('street'))} />
         {errors[p('street')]?.message && (
           <p className="text-xs text-destructive">{errors[p('street')].message}</p>
         )}
@@ -135,7 +137,10 @@ export function AddressFields({ register, setValue, watch, prefix = '', errors =
       {/* Número + Complemento */}
       <div className="space-y-2">
         <Label>Número *</Label>
-        <Input placeholder="123" {...register(p('number'))} />
+        <Input placeholder="123" className={fieldErrorClass(errors[p('number')])} {...register(p('number'))} />
+        {errors[p('number')]?.message && (
+          <p className="text-xs text-destructive">{errors[p('number')].message}</p>
+        )}
       </div>
       <div className="space-y-2">
         <Label>Complemento</Label>
@@ -145,7 +150,7 @@ export function AddressFields({ register, setValue, watch, prefix = '', errors =
       {/* Bairro */}
       <div className="space-y-2">
         <Label>Bairro *</Label>
-        <Input placeholder="Centro" {...register(p('neighborhood'))} />
+        <Input placeholder="Centro" className={fieldErrorClass(errors[p('neighborhood')])} {...register(p('neighborhood'))} />
         {errors[p('neighborhood')]?.message && (
           <p className="text-xs text-destructive">{errors[p('neighborhood')].message}</p>
         )}
@@ -172,7 +177,7 @@ export function AddressFields({ register, setValue, watch, prefix = '', errors =
             </SelectContent>
           </Select>
         ) : (
-          <Input placeholder="Cidade" {...register(p('city'))} />
+          <Input placeholder="Cidade" className={fieldErrorClass(errors[p('city')])} {...register(p('city'))} />
         )}
         {errors[p('city')]?.message && (
           <p className="text-xs text-destructive">{errors[p('city')].message}</p>

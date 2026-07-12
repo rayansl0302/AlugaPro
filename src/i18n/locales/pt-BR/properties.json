@@ -1,0 +1,104 @@
+{
+  "title": "Imóveis",
+  "subtitle": "Gerencie o portfólio de imóveis para locação.",
+  "add": "Adicionar imóvel",
+  "new": "Novo imóvel",
+  "edit": "Editar imóvel",
+  "delete": "Excluir imóvel",
+  "view": "Ver imóvel",
+  "searchPlaceholder": "Buscar por nome, código ou endereço...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "type": "Tipo",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum imóvel cadastrado",
+    "description": "Cadastre o primeiro imóvel para começar a gerenciar suas locações.",
+    "noResults": "Nenhum imóvel encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados do imóvel",
+    "name": "Nome",
+    "code": "Código",
+    "type": "Tipo",
+    "status": "Status",
+    "address": "Endereço",
+    "street": "Rua",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Bairro",
+    "city": "Cidade",
+    "state": "Estado",
+    "zipCode": "CEP",
+    "value": "Valor do aluguel",
+    "condominium": "Condomínio",
+    "iptu": "IPTU",
+    "area": "Área (m²)",
+    "bedrooms": "Quartos",
+    "bathrooms": "Banheiros",
+    "parkingSpaces": "Vagas",
+    "owner": "Proprietário",
+    "description": "Descrição",
+    "observations": "Observações",
+    "photos": "Fotos"
+  },
+  "detail": {
+    "title": "Detalhes do imóvel",
+    "overview": "Visão geral",
+    "financial": "Financeiro",
+    "contracts": "Contratos",
+    "tenants": "Inquilinos",
+    "maintenance": "Manutenções",
+    "documents": "Documentos",
+    "history": "Histórico"
+  },
+  "types": {
+    "apartamento": "Apartamento",
+    "casa": "Casa",
+    "kitnet": "Kitnet",
+    "sala_comercial": "Sala comercial",
+    "galpao": "Galpão",
+    "terreno": "Terreno",
+    "outro": "Outro"
+  },
+  "statuses": {
+    "disponivel": "Disponível",
+    "alugado": "Alugado",
+    "reservado": "Reservado",
+    "manutencao": "Manutenção",
+    "encerrado": "Encerrado"
+  },
+  "tenantLabel": "Inquilino",
+  "currentTenant": "Inquilino atual",
+  "caution": "Caução",
+  "itemLabel": "imóveis",
+  "placeholders": {
+    "name": "Ex: Apto 101 - Edifício Central",
+    "notes": "Notas internas..."
+  },
+  "validation": {
+    "nameRequired": "Nome obrigatório",
+    "valueRequired": "Valor obrigatório",
+    "ownerRequired": "Proprietário obrigatório",
+    "streetRequired": "Rua obrigatória",
+    "numberRequired": "Número obrigatório",
+    "neighborhoodRequired": "Bairro obrigatório",
+    "cityRequired": "Cidade obrigatória",
+    "stateLength": "UF deve ter 2 caracteres",
+    "zipInvalid": "CEP inválido"
+  },
+  "toast": {
+    "created": "Imóvel criado com sucesso.",
+    "updated": "Imóvel atualizado com sucesso.",
+    "deleted": "Imóvel excluído com sucesso.",
+    "loadError": "Erro ao carregar imóveis.",
+    "createError": "Erro ao criar imóvel.",
+    "updateError": "Erro ao atualizar imóvel.",
+    "deleteError": "Erro ao excluir imóvel.",
+    "deleteConfirm": "Tem certeza que deseja excluir este imóvel?",
+    "saveError": "Erro ao salvar imóvel."
+  }
+}

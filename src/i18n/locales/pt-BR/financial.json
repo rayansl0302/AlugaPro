@@ -1,0 +1,99 @@
+{
+  "title": "Financeiro",
+  "subtitle": "Acompanhe fluxo de caixa, receitas e despesas.",
+  "add": "Adicionar lançamento",
+  "new": "Novo lançamento",
+  "edit": "Editar lançamento",
+  "delete": "Excluir lançamento",
+  "view": "Ver lançamento",
+  "searchPlaceholder": "Buscar por descrição ou categoria...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "type": "Tipo",
+    "period": "Período",
+    "category": "Categoria",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum lançamento encontrado",
+    "description": "Registre receitas e despesas para acompanhar o fluxo de caixa.",
+    "noResults": "Nenhum lançamento encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados do lançamento",
+    "type": "Tipo",
+    "category": "Categoria",
+    "description": "Descrição",
+    "amount": "Valor",
+    "date": "Data",
+    "property": "Imóvel",
+    "owner": "Proprietário",
+    "tenant": "Inquilino",
+    "paymentMethod": "Forma de pagamento",
+    "observations": "Observações"
+  },
+  "detail": {
+    "title": "Detalhes do lançamento",
+    "overview": "Visão geral",
+    "related": "Vinculados",
+    "history": "Histórico"
+  },
+  "sections": {
+    "cashFlow": "Fluxo de caixa",
+    "revenue": "Receitas",
+    "expenses": "Despesas",
+    "sharedExpenses": "Despesas compartilhadas",
+    "balance": "Saldo",
+    "expected": "Previsto",
+    "received": "Recebido",
+    "pending": "Pendente"
+  },
+  "types": {
+    "receita": "Receita",
+    "despesa": "Despesa"
+  },
+  "toast": {
+    "created": "Lançamento criado com sucesso.",
+    "updated": "Lançamento atualizado com sucesso.",
+    "deleted": "Lançamento excluído com sucesso.",
+    "loadError": "Erro ao carregar dados financeiros.",
+    "createError": "Erro ao criar lançamento.",
+    "updateError": "Erro ao atualizar lançamento.",
+    "deleteError": "Erro ao excluir lançamento.",
+    "deleteConfirm": "Tem certeza que deseja excluir este lançamento?"
+  },
+  "monthLabel": "Mês:",
+  "expectedRevenue": "Receita Esperada",
+  "tabs": {
+    "entries": "Lançamentos",
+    "charts": "Gráficos"
+  },
+  "emptyMonth": "Nenhum lançamento neste mês",
+  "itemLabel": "lançamentos",
+  "columns": {
+    "description": "Descrição",
+    "tenant": "Inquilino",
+    "due": "Vencimento",
+    "payment": "Pagamento",
+    "method": "Forma",
+    "value": "Valor",
+    "status": "Status"
+  },
+  "dueShort": "Venc: {{date}}",
+  "paidShort": "Pago: {{date}}",
+  "chartTitle": "Fluxo Financeiro (6 meses)",
+  "chartDescription": "Recebido vs Pendente",
+  "paymentMethods": "Formas de Pagamento",
+  "methods": {
+    "pix": "PIX",
+    "dinheiro": "Dinheiro",
+    "transferencia": "Transferência",
+    "cartao": "Cartão",
+    "boleto": "Boleto"
+  },
+  "chartSeries": {
+    "received": "Recebido",
+    "pending": "Pendente"
+  }
+}

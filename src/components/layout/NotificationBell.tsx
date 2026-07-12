@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   AlertTriangle, Bell, FileCheck, Loader2, Wrench,
 } from 'lucide-react'
@@ -30,6 +31,7 @@ const TYPE_COLOR: Record<NotificationAlertType, string> = {
 const PREVIEW_LIMIT = 8
 
 export function NotificationBell() {
+  const { t } = useTranslation('nav')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
   const { alerts, count, isLoading } = useNotificationAlerts(companyId)
@@ -39,7 +41,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative" aria-label="Notificações">
+        <Button variant="ghost" size="icon" className="relative" aria-label={t('notificationsTitle')}>
           <Bell className="h-4 w-4" />
           {count > 0 && (
             <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
@@ -51,7 +53,7 @@ export function NotificationBell() {
 
       <DropdownMenuContent align="end" className="w-80 p-0">
         <DropdownMenuLabel className="border-b px-4 py-3 font-semibold">
-          Notificações
+          {t('notificationsTitle')}
           {count > 0 && (
             <span className="ml-2 text-xs font-normal text-muted-foreground">
               {count} pendente{count !== 1 ? 's' : ''}
@@ -62,12 +64,12 @@ export function NotificationBell() {
         {isLoading ? (
           <div className="flex items-center justify-center gap-2 px-4 py-8 text-sm text-muted-foreground">
             <Loader2 className="h-4 w-4 animate-spin" />
-            Carregando...
+            {t('loading')}
           </div>
         ) : count === 0 ? (
           <div className="px-4 py-8 text-center">
             <Bell className="mx-auto mb-2 h-8 w-8 text-muted-foreground/30" />
-            <p className="text-sm font-medium">Tudo em dia</p>
+            <p className="text-sm font-medium">{t('allGood')}</p>
             <p className="mt-1 text-xs text-muted-foreground">
               Nenhum alerta no momento.
             </p>
@@ -104,7 +106,7 @@ export function NotificationBell() {
             })}
             {hiddenCount > 0 && (
               <p className="px-4 py-2 text-center text-xs text-muted-foreground">
-                + {hiddenCount} {hiddenCount === 1 ? 'outra notificação' : 'outras notificações'}
+                {t('moreNotifications', { count: hiddenCount })}
               </p>
             )}
           </div>
@@ -113,7 +115,7 @@ export function NotificationBell() {
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer">
           <Link to="/notificacoes" className="w-full justify-center text-center text-xs text-muted-foreground">
-            Ver todos os alertas
+            {t('openPanel')}
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>

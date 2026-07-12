@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -21,48 +22,23 @@ const PLAN_ICONS: Record<PlanId, React.ReactNode> = {
   business: <BarChart3 className="h-5 w-5" />,
 }
 
-const PLAN_FEATURES: Record<PlanId, string[]> = {
-  starter: [
-    'Até 10 imóveis/veículos',
-    '2 usuários gestores',
-    'Contratos digitais',
-    'Cobranças automáticas',
-    'Portal do inquilino',
-    'Suporte por e-mail',
-  ],
-  pro: [
-    'Até 50 imóveis/veículos',
-    '5 usuários gestores',
-    'Contratos digitais',
-    'Cobranças automáticas',
-    'Portal do inquilino',
-    'Relatórios avançados',
-    'Exportação de dados',
-    'Suporte prioritário',
-  ],
-  business: [
-    'Imóveis/veículos ilimitados',
-    'Usuários ilimitados',
-    'Contratos digitais',
-    'Cobranças automáticas',
-    'Portal do inquilino',
-    'Relatórios avançados',
-    'Exportação de dados',
-    'API de integrações (em breve)',
-    'Onboarding assistido',
-  ],
+const PLAN_FEATURE_KEYS: Record<PlanId, string[]> = {
+  starter: ['properties', 'users', 'contracts', 'charges', 'portal', 'support'],
+  pro: ['properties', 'users', 'contracts', 'charges', 'portal', 'reports', 'export', 'support'],
+  business: ['properties', 'users', 'contracts', 'charges', 'portal', 'reports', 'export', 'api', 'onboarding'],
 }
 
-const STATUS_BADGE: Record<string, { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' | 'info' }> = {
-  trialing:  { label: 'Trial ativo',       variant: 'info' },
-  active:    { label: 'Ativo',             variant: 'success' },
-  past_due:  { label: 'Pagamento pendente', variant: 'destructive' },
-  canceled:  { label: 'Cancelado',         variant: 'warning' },
-  expired:   { label: 'Expirado',          variant: 'secondary' },
-  demo:      { label: 'Admin',             variant: 'secondary' },
+const STATUS_BADGE_VARIANT: Record<string, 'success' | 'warning' | 'destructive' | 'secondary' | 'info'> = {
+  trialing: 'info',
+  active: 'success',
+  past_due: 'destructive',
+  canceled: 'warning',
+  expired: 'secondary',
+  demo: 'secondary',
 }
 
 export function SubscriptionPage() {
+  const { t } = useTranslation('subscription')
   const { user } = useAuth()
   const { sub, status, planId, isAdmin } = useSubscription()
   const [checkoutLoading, setCheckoutLoading] = useState<PlanId | null>(null)
@@ -84,16 +60,17 @@ export function SubscriptionPage() {
       .then(r => r.json())
       .then(data => {
         if (data.status === 'active') {
-          toast({ title: 'Assinatura ativada!', description: 'Seu plano está ativo.' })
+          toast({ title: t('toast.activated'), description: t('toast.activatedDesc') })
         }
         setSearchParams({}, { replace: true })
       })
-      .catch(() => toast({ title: 'Erro ao verificar assinatura', variant: 'destructive' }))
+      .catch(() => toast({ title: t('toast.verifyError'), variant: 'destructive' }))
       .finally(() => setVerifying(false))
   }, [searchParams, user?.companyId])
 
   const daysLeft = sub ? getDaysRemaining(sub) : 0
-  const statusInfo = STATUS_BADGE[status] ?? STATUS_BADGE.expired
+  const statusVariant = STATUS_BADGE_VARIANT[status] ?? STATUS_BADGE_VARIANT.expired
+  const statusLabel = t(`status.${status}`, { defaultValue: t('status.expired') })
 
   const startCheckout = async (plan: PlanId, documentNumber?: string) => {
     if (!user?.companyId || !user?.email) return
@@ -122,17 +99,17 @@ export function SubscriptionPage() {
       }
 
       if (data.affiliateApplied) {
-        toast({ title: 'Código de indicação validado com sucesso!', description: 'A comissão do afiliado será ativada após o período de carência de 15 dias.' })
+        toast({ title: t('toast.affiliateOk'), description: t('toast.affiliateOkDesc') })
       }
 
       // Abre em nova aba — necessário para evitar regras de pagamento in-app das lojas
       window.open(data.checkoutUrl, '_blank', 'noopener,noreferrer')
-      toast({ title: 'Redirecionando para o pagamento...', description: 'Uma nova aba foi aberta para você concluir o pagamento.' })
+      toast({ title: t('toast.redirectPay'), description: t('toast.redirectPayDesc') })
       setPendingPlan(null)
       setCpfCnpj('')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Tente novamente.'
-      toast({ title: 'Erro ao iniciar assinatura', description: msg, variant: 'destructive' })
+      toast({ title: t('toast.startError'), description: msg, variant: 'destructive' })
     } finally {
       setCheckoutLoading(null)
     }
@@ -143,7 +120,7 @@ export function SubscriptionPage() {
   const handleConfirmDocument = () => {
     const digits = cpfCnpj.replace(/\D/g, '')
     if (digits.length !== 11 && digits.length !== 14) {
-      toast({ title: 'Informe um CPF ou CNPJ válido.', variant: 'destructive' })
+      toast({ title: t('toast.invalidDocument'), variant: 'destructive' })
       return
     }
     if (pendingPlan) startCheckout(pendingPlan, digits)
@@ -154,20 +131,20 @@ export function SubscriptionPage() {
       {verifying && (
         <div className="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
           <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-          Verificando pagamento com o Mercado Pago...
+          {t('verifying')}
         </div>
       )}
 
       {/* Status atual */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Assinatura</h2>
+          <h2 className="text-2xl font-bold">{t('title')}</h2>
           <p className="text-muted-foreground text-sm mt-1">
-            Gerencie seu plano e formas de pagamento
+            {t('subtitle')}
           </p>
         </div>
-        <Badge variant={statusInfo.variant} className="text-sm px-3 py-1 w-fit">
-          {statusInfo.label}
+        <Badge variant={statusVariant} className="text-sm px-3 py-1 w-fit">
+          {statusLabel}
         </Badge>
       </div>
 
@@ -176,7 +153,7 @@ export function SubscriptionPage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base">
-              {status === 'trialing' ? 'Período de avaliação' : 'Plano atual'}
+              {status === 'trialing' ? t('trialPeriod') : t('currentPlan')}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -186,13 +163,13 @@ export function SubscriptionPage() {
                   ? <Zap className="h-5 w-5 text-amber-500" />
                   : PLAN_ICONS[sub.planId]}
                 <span className="font-semibold text-lg">
-                  {status === 'trialing' ? 'Teste gratuito' : PLANS[sub.planId].name}
+                  {status === 'trialing' ? t('freeTrial') : PLANS[sub.planId].name}
                 </span>
               </div>
               {status !== 'trialing' && (
                 <span className="text-2xl font-bold text-primary">
                   {formatCurrency(PLANS[sub.planId].price)}
-                  <span className="text-sm font-normal text-muted-foreground">/mês</span>
+                  <span className="text-sm font-normal text-muted-foreground">{t('perMonth')}</span>
                 </span>
               )}
             </div>
@@ -200,14 +177,14 @@ export function SubscriptionPage() {
             {status === 'trialing' && (
               <div className="flex items-center gap-2 text-amber-700 bg-amber-50 rounded-lg p-3 text-sm dark:bg-amber-950/30 dark:text-amber-300">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Trial termina em <strong>{daysLeft} dia{daysLeft !== 1 ? 's' : ''}</strong>. Assine um plano para não perder acesso.
+                {t('trial.endsIn', { count: daysLeft })}
               </div>
             )}
 
             {status === 'past_due' && (
               <div className="flex items-center gap-2 text-red-700 bg-red-50 rounded-lg p-3 text-sm dark:bg-red-950/30 dark:text-red-300">
                 <AlertTriangle className="h-4 w-4 shrink-0" />
-                Pagamento falhou. Acesso de escrita suspenso. Regularize para continuar.
+                {t('pastDue.message')}
               </div>
             )}
 
@@ -217,19 +194,19 @@ export function SubscriptionPage() {
               <div>
                 <p className="font-semibold text-lg">{sub.usage.propertyCount}</p>
                 <p className="text-muted-foreground">
-                  de {sub.limits.maxProperties === 999 ? '∞' : sub.limits.maxProperties} imóveis
+                  {t('usage.properties', { max: sub.limits.maxProperties === 999 ? '∞' : sub.limits.maxProperties })}
                 </p>
               </div>
               <div>
                 <p className="font-semibold text-lg">{sub.usage.vehicleCount}</p>
                 <p className="text-muted-foreground">
-                  de {sub.limits.maxVehicles === 999 ? '∞' : sub.limits.maxVehicles} veículos
+                  {t('usage.vehicles', { max: sub.limits.maxVehicles === 999 ? '∞' : sub.limits.maxVehicles })}
                 </p>
               </div>
               <div>
                 <p className="font-semibold text-lg">{sub.usage.userCount}</p>
                 <p className="text-muted-foreground">
-                  de {sub.limits.maxUsers === 999 ? '∞' : sub.limits.maxUsers} usuários
+                  {t('usage.users', { max: sub.limits.maxUsers === 999 ? '∞' : sub.limits.maxUsers })}
                 </p>
               </div>
             </div>
@@ -241,16 +218,15 @@ export function SubscriptionPage() {
       {/* Planos */}
       <div>
         <h3 className="text-lg font-semibold mb-4">
-          {status === 'active' ? 'Alterar plano' : 'Escolha um plano'}
+          {status === 'active' ? t('changePlan') : t('choosePlan')}
         </h3>
 
         {status === 'demo' ? (
           <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-8 text-center">
             <BarChart3 className="mx-auto h-10 w-10 text-primary mb-3" />
-            <p className="font-semibold text-lg">Conta de demonstração</p>
+            <p className="font-semibold text-lg">{t('demoTitle')}</p>
             <p className="text-sm text-muted-foreground mt-1 max-w-sm mx-auto">
-              Esta conta tem acesso completo ao plano <strong>Business</strong> para
-              apresentações comerciais. Cobranças reais não são aplicáveis.
+              {t('demoDescription')}
             </p>
           </div>
         ) : (
@@ -269,7 +245,7 @@ export function SubscriptionPage() {
                 >
                   {plan === 'pro' && (
                     <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-primary text-primary-foreground text-xs px-3">Mais popular</Badge>
+                      <Badge className="bg-primary text-primary-foreground text-xs px-3">{t('mostPopular')}</Badge>
                     </div>
                   )}
                   <CardHeader className="pb-2">
@@ -280,15 +256,15 @@ export function SubscriptionPage() {
                     <p className="text-xs text-muted-foreground">{PLANS[plan].description}</p>
                     <div className="pt-2">
                       <span className="text-3xl font-bold">{formatCurrency(PLANS[plan].price)}</span>
-                      <span className="text-muted-foreground text-sm">/mês</span>
+                      <span className="text-muted-foreground text-sm">{t('perMonth')}</span>
                     </div>
                   </CardHeader>
                   <CardContent className="flex flex-col flex-1 gap-4">
                     <ul className="space-y-1.5 flex-1">
-                      {PLAN_FEATURES[plan].map((feat) => (
-                        <li key={feat} className="flex items-start gap-2 text-sm">
+                      {PLAN_FEATURE_KEYS[plan].map((featKey) => (
+                        <li key={featKey} className="flex items-start gap-2 text-sm">
                           <CheckCircle className="h-3.5 w-3.5 text-green-500 mt-0.5 shrink-0" />
-                          {feat}
+                          {t(`features.${plan}.${featKey}`)}
                         </li>
                       ))}
                     </ul>
@@ -298,9 +274,9 @@ export function SubscriptionPage() {
                       disabled={isCurrentPlan || !!checkoutLoading}
                       onClick={() => handleChoosePlan(plan)}
                     >
-                      {checkoutLoading === plan ? 'Aguarde...' :
-                       isCurrentPlan ? 'Plano atual' :
-                       isCheaper ? 'Fazer downgrade' : 'Assinar agora'}
+                      {checkoutLoading === plan ? t('wait') :
+                       isCurrentPlan ? t('currentPlan') :
+                       isCheaper ? t('downgrade') : t('subscribeNow')}
                     </Button>
                   </CardContent>
                 </Card>
@@ -312,20 +288,19 @@ export function SubscriptionPage() {
 
       {/* Nota sobre mobile */}
       <p className="text-xs text-muted-foreground">
-        O pagamento é processado exclusivamente pelo site para evitar taxas de lojas de aplicativos.
-        Se estiver no app mobile, o botão "Assinar agora" abrirá o navegador do seu celular.
+        {t('mobileNote')}
       </p>
 
       <Dialog open={!!pendingPlan} onOpenChange={(open) => !open && setPendingPlan(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirme seu CPF ou CNPJ</DialogTitle>
+            <DialogTitle>{t('confirmDocumentTitle')}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">
-            Precisamos do CPF (pessoa física) ou CNPJ (empresa) para gerar a cobrança. Isso só será pedido uma vez.
+            {t('confirmDocumentDesc')}
           </p>
           <div className="space-y-1.5">
-            <Label htmlFor="checkout-document">CPF ou CNPJ</Label>
+            <Label htmlFor="checkout-document">{t('documentLabel')}</Label>
             <Input
               id="checkout-document"
               value={cpfCnpj}
@@ -337,7 +312,7 @@ export function SubscriptionPage() {
           <DialogFooter>
             <Button onClick={handleConfirmDocument} disabled={!!checkoutLoading}>
               {checkoutLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Continuar para pagamento
+              {t('continuePayment')}
             </Button>
           </DialogFooter>
         </DialogContent>

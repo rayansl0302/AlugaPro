@@ -1,0 +1,257 @@
+{
+  "common": {
+    "updatedAt": "Atualizado em {{date}}",
+    "lastUpdated": "Última atualização: {{date}}",
+    "backToSite": "Voltar ao site",
+    "supportEmail": "suporte@alugapro.com.br",
+    "siteDomain": "alugapro.tech.br"
+  },
+  "terms": {
+    "pageTitle": "Termos de Uso",
+    "updatedAt": "26 de junho de 2026",
+    "sections": {
+      "acceptance": {
+        "title": "1. Aceitação dos Termos",
+        "body": [
+          "Ao acessar ou utilizar a plataforma AlugaPro, você declara ter lido, compreendido e concordado com estes Termos de Uso. Caso não concorde com qualquer disposição, não utilize o serviço.",
+          "Estes termos constituem um acordo entre você (usuário) e o AlugaPro, aplicável a gestores, administradores, proprietários, inquilinos, afiliados e demais perfis habilitados na plataforma."
+        ]
+      },
+      "definitions": {
+        "title": "2. Definições",
+        "body": [
+          "Plataforma: sistema AlugaPro, incluindo painel web, portal do inquilino, painel de afiliados e funcionalidades de gestão de locações.",
+          "Usuário: pessoa física ou jurídica cadastrada com login e senha, ou autenticada por provedores integrados.",
+          "Empresa (company): organização à qual os dados e operações do usuário gestor estão vinculados no sistema.",
+          "Conteúdo: informações, documentos, contratos, imagens e demais dados inseridos pelos usuários na plataforma."
+        ]
+      },
+      "account": {
+        "title": "3. Cadastro e Responsabilidades da Conta",
+        "body": [
+          "O usuário é responsável por fornecer informações verdadeiras, manter suas credenciais em sigilo e notificar imediatamente qualquer uso não autorizado de sua conta.",
+          "Cada perfil de acesso possui permissões específicas. O gestor é responsável por conceder acessos adequados a colaboradores, inquilinos e demais envolvidos na operação de locação."
+        ]
+      },
+      "allowedUse": {
+        "title": "4. Uso Permitido",
+        "body": [
+          "Você concorda em utilizar o AlugaPro apenas para fins lícitos relacionados à gestão de locações, incluindo: cadastro e administração de imóveis, veículos, equipamentos, proprietários e inquilinos; geração, assinatura e armazenamento de contratos; controle de cobranças, pagamentos e inadimplência; comunicação operacional entre as partes envolvidas na locação; e indicação de novos clientes por meio do Programa de Afiliados.",
+          "É vedado utilizar a plataforma para atividades fraudulentas, ilegais, que violem direitos de terceiros ou que comprometam a segurança do sistema."
+        ]
+      },
+      "services": {
+        "title": "5. Serviços Oferecidos",
+        "body": [
+          "O AlugaPro oferece ferramentas de gestão de locações, incluindo contratos digitais, cobranças, relatórios, portal do inquilino, notificações e armazenamento de documentos. Funcionalidades podem ser atualizadas, ampliadas ou descontinuadas conforme evolução do produto.",
+          "Modelos de contrato disponibilizados pelo sistema têm caráter orientativo. A revisão jurídica do conteúdo contratual é de responsabilidade do usuário gestor ou de seu advogado."
+        ]
+      },
+      "digitalContracts": {
+        "title": "6. Contratos Digitais e Assinaturas",
+        "body": [
+          "A plataforma permite coleta de assinaturas de locador, locatário e testemunhas por meio eletrônico. O usuário é responsável por garantir a identificação das partes e a validade do processo de assinatura conforme a legislação aplicável.",
+          "O AlugaPro atua como ferramenta tecnológica de apoio e não substitui assessoria jurídica especializada na formalização de negócios de locação."
+        ]
+      },
+      "payments": {
+        "title": "7. Pagamentos, Cobranças e Comprovantes",
+        "body": [
+          "O registro de cobranças, pagamentos e comprovantes na plataforma não configura, por si só, intermediação financeira ou instituição de pagamento, salvo quando expressamente indicado.",
+          "Valores, vencimentos, multas e encargos devem ser conferidos pelo gestor. A confirmação de pagamentos com base em comprovantes enviados por inquilinos é de responsabilidade do usuário autorizado na empresa."
+        ]
+      },
+      "affiliates": {
+        "title": "8. Programa de Afiliados",
+        "body": [
+          "O Programa de Afiliados permite que qualquer pessoa indique o AlugaPro e receba comissão por clientes ativos resultantes da indicação.",
+          "A comissão é recorrente, de 7% sobre o valor da mensalidade do cliente indicado, enquanto ele permanecer ativo.",
+          "O pagamento da comissão somente é devido após o cliente indicado permanecer ativo por, no mínimo, 15 (quinze) dias consecutivos.",
+          "Para receber pagamentos, o afiliado deve completar o cadastro de verificação de identidade, fornecendo CPF, chave PIX e os documentos solicitados na plataforma.",
+          "O AlugaPro pode revisar, suspender ou recusar o pagamento de comissões em casos de indícios de fraude, indicações inválidas, dados de verificação incorretos ou descumprimento destes Termos.",
+          "As condições de comissionamento podem ser ajustadas mediante aviso prévio razoável aos afiliados ativos."
+        ]
+      },
+      "intellectualProperty": {
+        "title": "9. Propriedade Intelectual",
+        "body": [
+          "A marca, layout, código, identidade visual e funcionalidades do AlugaPro são protegidos por legislação de propriedade intelectual. É proibida a reprodução, engenharia reversa ou exploração comercial não autorizada da plataforma.",
+          "O conteúdo inserido pelo usuário permanece de sua titularidade, concedendo ao AlugaPro licença necessária para hospedar, processar e exibir tais dados na operação do serviço."
+        ]
+      },
+      "liability": {
+        "title": "10. Disponibilidade e Limitação de Responsabilidade",
+        "body": [
+          "Empregamos esforços razoáveis para manter a plataforma disponível e segura, porém não garantimos funcionamento ininterrupto ou livre de erros.",
+          "O AlugaPro não se responsabiliza por perdas decorrentes de uso inadequado da plataforma, informações incorretas inseridas por usuários, indisponibilidade de serviços de terceiros (como provedores de nuvem, e-mail ou SMS) ou decisões de negócio tomadas com base em relatórios do sistema."
+        ]
+      },
+      "suspension": {
+        "title": "11. Suspensão e Encerramento",
+        "body": [
+          "Podemos suspender ou encerrar contas em caso de violação destes Termos, suspeita de fraude, ordem legal ou risco à segurança da plataforma e de outros usuários.",
+          "O usuário pode solicitar o encerramento de sua conta conforme canais de suporte disponibilizados, observadas obrigações legais de retenção de dados."
+        ]
+      },
+      "changes": {
+        "title": "12. Alterações destes Termos",
+        "body": [
+          "Estes Termos podem ser atualizados periodicamente. Alterações relevantes serão comunicadas por meios razoáveis, como aviso na plataforma ou por e-mail. O uso continuado após a vigência das alterações implica aceitação da nova versão."
+        ]
+      },
+      "governingLaw": {
+        "title": "13. Legislação e Foro",
+        "body": [
+          "Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da comarca do domicílio do usuário consumidor, quando aplicável, ou outro foro competente conforme legislação vigente."
+        ]
+      },
+      "contact": {
+        "title": "14. Contato",
+        "body": [
+          "Dúvidas sobre estes Termos podem ser enviadas para suporte@alugapro.com.br."
+        ]
+      }
+    }
+  },
+  "privacy": {
+    "pageTitle": "Política de Privacidade",
+    "updatedAt": "25 de junho de 2026",
+    "sections": {
+      "introduction": {
+        "title": "1. Introdução",
+        "body": [
+          "Esta Política de Privacidade descreve como o AlugaPro coleta, utiliza, armazena e protege dados pessoais de usuários da plataforma, em conformidade com a Lei Geral de Proteção de Dados (Lei nº 13.709/2018 — LGPD) e demais normas aplicáveis.",
+          "Ao utilizar o AlugaPro, você concorda com as práticas descritas neste documento."
+        ]
+      },
+      "controller": {
+        "title": "2. Controlador dos Dados",
+        "body": [
+          "O controlador dos dados pessoais tratados nesta plataforma é o AlugaPro, responsável pelas decisões referentes ao tratamento de dados dos usuários cadastrados.",
+          "Contato para assuntos de privacidade: suporte@alugapro.com.br."
+        ]
+      },
+      "dataCollected": {
+        "title": "3. Dados Pessoais Coletados",
+        "body": [
+          "Podemos tratar as seguintes categorias de dados, conforme o uso da plataforma:",
+          "Identificação: nome, CPF, CNPJ, foto, documentos de identificação.",
+          "Contato: e-mail, telefone, WhatsApp, endereço.",
+          "Conta: credenciais de acesso, perfil, papel (gestor, inquilino, afiliado, admin).",
+          "Contratuais e financeiros: contratos, valores, cobranças, comprovantes, histórico de pagamentos.",
+          "Patrimoniais: dados de imóveis, veículos, equipamentos e informações de locação.",
+          "Técnicos: logs de acesso, endereço IP, identificadores de dispositivo, cookies essenciais.",
+          "Comunicação: registros de notificações enviadas (e-mail, SMS, push, quando habilitados)."
+        ]
+      },
+      "affiliateData": {
+        "title": "4. Dados do Programa de Afiliados",
+        "body": [
+          "Para participar do Programa de Afiliados e receber comissões, coletamos dados adicionais necessários à validação de identidade e ao pagamento: CPF; chave PIX para recebimento dos valores; foto de documento de identificação com foto (RG, CNH ou similar); foto do afiliado segurando o documento de identificação, para confirmação de titularidade.",
+          "Esses dados são tratados com a finalidade específica de prevenir fraudes, confirmar a identidade do afiliado e viabilizar o pagamento de comissões, com base no consentimento do titular e no cumprimento de obrigações legais aplicáveis a operações financeiras. O acesso é restrito à equipe responsável pela validação e pagamento de afiliados, e os documentos não são utilizados para qualquer outra finalidade."
+        ]
+      },
+      "purposes": {
+        "title": "5. Finalidades do Tratamento",
+        "body": [
+          "Os dados são utilizados para: autenticar usuários e controlar permissões de acesso; operar funcionalidades de gestão de locações e portal do inquilino; gerar, assinar e armazenar contratos e documentos relacionados; processar cobranças, registrar pagamentos e acompanhar inadimplência; validar identidade e processar pagamentos de comissões do programa de afiliados; enviar comunicações operacionais e alertas configurados; melhorar segurança, desempenho e experiência de uso; cumprir obrigações legais e responder a solicitações de autoridades."
+        ]
+      },
+      "legalBases": {
+        "title": "6. Bases Legais (LGPD)",
+        "body": [
+          "O tratamento de dados pessoais fundamenta-se, conforme o caso, em: execução de contrato ou procedimentos preliminares; cumprimento de obrigação legal ou regulatória; legítimo interesse, com avaliação de impacto e medidas de minimização; consentimento do titular, quando exigido (ex.: verificação de telefone, documentos do programa de afiliados, comunicações opcionais)."
+        ]
+      },
+      "sharing": {
+        "title": "7. Compartilhamento de Dados",
+        "body": [
+          "Os dados podem ser compartilhados com prestadores de serviço essenciais à operação da plataforma, tais como hospedagem em nuvem, autenticação, envio de e-mails, armazenamento de arquivos e serviços de mensageria, sempre mediante contratos e medidas de segurança compatíveis com a LGPD.",
+          "Não vendemos dados pessoais. O compartilhamento com terceiros também pode ocorrer por determinação legal, ordem judicial ou para proteção de direitos do AlugaPro e de seus usuários."
+        ]
+      },
+      "security": {
+        "title": "8. Armazenamento e Segurança",
+        "body": [
+          "Adotamos medidas técnicas e organizacionais para proteger os dados, incluindo controle de acesso por perfil, regras de segurança em banco de dados, comunicação criptografada (HTTPS) e segregação de dados por empresa (multi-tenant).",
+          "Apesar dos esforços de segurança, nenhum sistema é totalmente imune a incidentes. Em caso de violação relevante de dados, adotaremos procedimentos de resposta e comunicação conforme a legislação aplicável."
+        ]
+      },
+      "retention": {
+        "title": "9. Retenção dos Dados",
+        "body": [
+          "Os dados são mantidos pelo tempo necessário para cumprir as finalidades descritas, obrigações legais, exercício regular de direitos e resolução de disputas. Após esse período, poderão ser eliminados ou anonimizados, salvo exigência legal em contrário."
+        ]
+      },
+      "rights": {
+        "title": "10. Direitos do Titular",
+        "body": [
+          "Conforme a LGPD, você pode solicitar: confirmação da existência de tratamento; acesso, correção ou atualização de dados; anonimização, bloqueio ou eliminação de dados desnecessários; portabilidade, quando aplicável; informação sobre compartilhamentos; revogação de consentimento, quando o tratamento tiver essa base.",
+          "Solicitações podem ser enviadas para suporte@alugapro.com.br. Responderemos dentro dos prazos legais."
+        ]
+      },
+      "cookies": {
+        "title": "11. Cookies e Tecnologias Similares",
+        "body": [
+          "Utilizamos cookies e armazenamento local estritamente necessários para autenticação, preferências de interface (como tema) e funcionamento da aplicação. Não utilizamos cookies de rastreamento publicitário de terceiros sem consentimento prévio."
+        ]
+      },
+      "minors": {
+        "title": "12. Dados de Menores",
+        "body": [
+          "A plataforma não é destinada a menores de 18 anos. Não coletamos intencionalmente dados de crianças e adolescentes. Caso identifiquemos tal situação, adotaremos medidas para exclusão dos dados."
+        ]
+      },
+      "internationalTransfer": {
+        "title": "13. Transferência Internacional",
+        "body": [
+          "Alguns provedores de infraestrutura podem processar dados fora do Brasil. Nesses casos, exigimos salvaguardas contratuais e técnicas compatíveis com a LGPD para proteção dos titulares."
+        ]
+      },
+      "changes": {
+        "title": "14. Alterações desta Política",
+        "body": [
+          "Esta Política pode ser atualizada para refletir mudanças legais, técnicas ou operacionais. A data da última revisão será indicada no topo da página. Recomendamos consulta periódica a este documento."
+        ]
+      },
+      "contact": {
+        "title": "15. Contato",
+        "body": [
+          "Para dúvidas, solicitações ou reclamações relacionadas à privacidade e proteção de dados, entre em contato pelo e-mail suporte@alugapro.com.br."
+        ]
+      }
+    }
+  },
+  "accountDeletion": {
+    "pageTitle": "Exclusão de Conta e Dados",
+    "updatedAt": "6 de julho de 2026",
+    "sections": {
+      "howToRequest": {
+        "title": "1. Como solicitar a exclusão",
+        "body": [
+          "Para solicitar a exclusão da sua conta AlugaPro e dos dados pessoais associados, envie um e-mail para suporte@alugapro.com.br a partir do endereço cadastrado na plataforma, com o assunto \"Exclusão de conta\", informando: nome completo cadastrado; e-mail de login; e se você é gestor/proprietário, inquilino ou afiliado.",
+          "Confirmaremos a solicitação e o encerramento da conta em até 15 dias úteis, conforme prazos da Lei Geral de Proteção de Dados (LGPD)."
+        ]
+      },
+      "whatIsDeleted": {
+        "title": "2. O que é excluído",
+        "body": [
+          "Ao confirmar a exclusão, removemos permanentemente: dados de identificação e contato (nome, CPF, e-mail, telefone, endereço, fotos, documentos); credenciais de acesso e perfil da conta; preferências e configurações pessoais."
+        ]
+      },
+      "retention": {
+        "title": "3. O que pode ser mantido, e por quanto tempo",
+        "body": [
+          "Alguns dados vinculados a contratos, cobranças e comprovantes de pagamento podem ser mantidos mesmo após a exclusão da conta, quando exigido por obrigações legais, fiscais ou contábeis (ex.: guarda de documentos financeiros), por até 5 (cinco) anos, ou pelo prazo necessário para exercício regular de direitos e resolução de disputas. Esses dados são mantidos apenas para essas finalidades específicas e não são utilizados para nenhum outro fim.",
+          "Se a conta pertencer a um gestor com contratos ativos ou inquilinos vinculados, a exclusão da conta do gestor não apaga automaticamente os dados dos inquilinos vinculados a contratos em vigor — nesse caso, entraremos em contato para orientar sobre o encerramento adequado dos vínculos antes da exclusão."
+        ]
+      },
+      "questions": {
+        "title": "4. Dúvidas",
+        "body": [
+          "Para mais detalhes sobre como tratamos dados pessoais, consulte nossa Política de Privacidade."
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "title": "Inquilinos",
+  "subtitle": "Gerencie os inquilinos e locatários.",
+  "add": "Adicionar inquilino",
+  "new": "Novo inquilino",
+  "edit": "Editar inquilino",
+  "delete": "Excluir inquilino",
+  "view": "Ver inquilino",
+  "searchPlaceholder": "Buscar por nome, CPF ou e-mail...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum inquilino cadastrado",
+    "description": "Cadastre o primeiro inquilino para vincular aos contratos.",
+    "noResults": "Nenhum inquilino encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados pessoais",
+    "name": "Nome completo",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "rg": "RG",
+    "birthDate": "Data de nascimento",
+    "nationality": "Nacionalidade",
+    "maritalStatus": "Estado civil",
+    "profession": "Profissão",
+    "income": "Renda mensal",
+    "address": "Endereço",
+    "street": "Rua",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Bairro",
+    "city": "Cidade",
+    "state": "Estado",
+    "zipCode": "CEP",
+    "emergencyContact": "Contato de emergência",
+    "guarantor": "Fiador",
+    "observations": "Observações",
+    "documents": "Documentos",
+    "photoLabel": "Foto do inquilino"
+  },
+  "placeholders": {
+    "name": "João da Silva",
+    "email": "joao@email.com"
+  },
+  "validation": {
+    "nameRequired": "Nome obrigatório",
+    "cpfInvalid": "CPF inválido",
+    "rgInvalid": "RG inválido",
+    "emailInvalid": "E-mail inválido",
+    "phoneInvalid": "Telefone inválido"
+  },
+  "buttons": {
+    "save": "Salvar alterações",
+    "create": "Cadastrar inquilino"
+  },
+  "fields": {
+    "situation": "Situação"
+  },
+  "detail": {
+    "title": "Detalhes do inquilino",
+    "personalData": "Dados pessoais",
+    "contact": "Contato",
+    "documents": "Documentos",
+    "contracts": "Contratos",
+    "charges": "Cobranças",
+    "warnings": "Advertências",
+    "history": "Histórico"
+  },
+  "statuses": {
+    "ativo": "Ativo",
+    "inativo": "Inativo",
+    "inadimplente": "Inadimplente"
+  },
+  "stats": {
+    "total": "Total",
+    "active": "Ativos",
+    "noContract": "Sem Contrato"
+  },
+  "withContract": "Com contrato",
+  "noContract": "Sem contrato",
+  "itemLabel": "inquilinos",
+  "toast": {
+    "created": "Inquilino criado com sucesso.",
+    "updated": "Inquilino atualizado com sucesso.",
+    "deleted": "Inquilino excluído com sucesso.",
+    "loadError": "Erro ao carregar inquilinos.",
+    "createError": "Erro ao criar inquilino.",
+    "updateError": "Erro ao atualizar inquilino.",
+    "deleteError": "Erro ao excluir inquilino.",
+    "deleteConfirm": "Tem certeza que deseja excluir este inquilino?",
+    "saveError": "Erro ao salvar inquilino.",
+    "photoError": "Erro ao enviar a foto."
+  }
+}

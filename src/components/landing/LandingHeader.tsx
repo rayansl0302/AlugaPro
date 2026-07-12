@@ -1,22 +1,25 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion, AnimatePresence } from 'framer-motion'
 
 const MotionLink = motion(Link)
 import { Menu, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
+import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { easeTransition } from '@/lib/motion'
 
 const NAV_LINKS = [
-  { label: 'Recursos', href: '/recursos' },
-  { label: 'Como funciona', href: '#como-funciona' },
-  { label: 'Preços', href: '#precos' },
-  { label: 'Para quem', href: '#para-quem' },
-  { label: 'Afiliados', href: '/afiliados' },
-]
+  { key: 'resources', href: '/recursos' },
+  { key: 'howItWorks', href: '#como-funciona' },
+  { key: 'pricing', href: '#precos' },
+  { key: 'forWhom', href: '#para-quem' },
+  { key: 'affiliates', href: '/afiliados' },
+] as const
 
 export function LandingHeader() {
+  const { t } = useTranslation('landing')
   const { user } = useAuth()
   const [open, setOpen] = useState(false)
 
@@ -28,7 +31,7 @@ export function LandingHeader() {
         : '/dashboard'
     : '/login'
 
-  const systemLabel = user ? 'Ir para o painel' : 'Acessar sistema'
+  const systemLabel = user ? t('nav.goToPanel') : t('nav.accessSystem')
 
   return (
     <motion.header
@@ -54,19 +57,21 @@ export function LandingHeader() {
               animate: { opacity: 1, y: 0 },
               transition: { ...easeTransition, delay: 0.1 + i * 0.06 },
             }
+            const label = t(`nav.${link.key}`)
             return link.href.startsWith('/') ? (
               <MotionLink key={link.href} to={link.href} className={cls} {...motionProps}>
-                {link.label}
+                {label}
               </MotionLink>
             ) : (
               <motion.a key={link.href} href={link.href} className={cls} {...motionProps}>
-                {link.label}
+                {label}
               </motion.a>
             )
           })}
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
+          <LanguageSelector />
           {!user && (
             <Button
               variant="ghost"
@@ -74,7 +79,7 @@ export function LandingHeader() {
               className="text-slate-600 hover:bg-slate-100 hover:text-[#032B61]"
               asChild
             >
-              <Link to="/login?tab=inquilino">Portal do inquilino</Link>
+              <Link to="/login?tab=inquilino">{t('nav.tenantPortal')}</Link>
             </Button>
           )}
           <Button size="sm" className="bg-[#032B61] px-5 text-white hover:bg-[#032B61]/90" asChild>
@@ -86,7 +91,7 @@ export function LandingHeader() {
           type="button"
           className="rounded-md p-2 text-slate-700 md:hidden"
           onClick={() => setOpen((v) => !v)}
-          aria-label={open ? 'Fechar menu' : 'Abrir menu'}
+          aria-label={open ? t('nav.closeMenu') : t('nav.openMenu')}
         >
           {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -104,13 +109,14 @@ export function LandingHeader() {
             <nav className="flex flex-col gap-1 pt-3">
               {NAV_LINKS.map((link) => {
                 const cls = "rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-[#032B61]"
+                const label = t(`nav.${link.key}`)
                 return link.href.startsWith('/') ? (
                   <Link key={link.href} to={link.href} className={cls} onClick={() => setOpen(false)}>
-                    {link.label}
+                    {label}
                   </Link>
                 ) : (
                   <a key={link.href} href={link.href} className={cls} onClick={() => setOpen(false)}>
-                    {link.label}
+                    {label}
                   </a>
                 )
               })}
@@ -120,9 +126,12 @@ export function LandingHeader() {
                   className="rounded-md px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 hover:text-[#032B61]"
                   onClick={() => setOpen(false)}
                 >
-                  Portal do inquilino
+                  {t('nav.tenantPortal')}
                 </Link>
               )}
+              <div className="px-3 py-2">
+                <LanguageSelector />
+              </div>
               <Button className="mt-2 w-full bg-[#032B61] text-white hover:bg-[#032B61]/90" asChild>
                 <Link to={systemHref} onClick={() => setOpen(false)}>
                   {systemLabel}

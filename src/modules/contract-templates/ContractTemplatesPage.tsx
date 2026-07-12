@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Copy, Edit, Trash2, Eye, Plus, ArrowUp, ArrowDown, Lock, Save, X,
@@ -18,12 +19,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/useToast'
 
-const assetLabel: Record<ContractAssetType, string> = {
-  imovel: 'Imóvel',
-  veiculo: 'Veículo',
-  equipamento: 'Equipamento',
-}
-
 const VARIABLE_HELP = '{{valorAluguel}}, {{caucao}}, {{multa}}, {{juros}}, {{diaVencimento}}, {{indiceReajuste}}, {{foro}}, {{imovel.endereco}}, {{veiculo.placa}}, {{equipamento.descricao}}...'
 
 interface EditorState {
@@ -34,7 +29,13 @@ interface EditorState {
 }
 
 export function ContractTemplatesPage() {
+  const { t } = useTranslation('contracts')
   const { user } = useAuth()
+  const assetLabel: Record<ContractAssetType, string> = {
+    imovel: t('form.property'),
+    veiculo: t('form.vehicle'),
+    equipamento: t('form.equipment'),
+  }
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
 
@@ -49,7 +50,7 @@ export function ContractTemplatesPage() {
   })
 
   const systemClauses = useMemo(() => getDefaultClauses(assetType), [assetType])
-  const customTemplates = templates.filter((t) => t.assetType === assetType)
+  const customTemplates = templates.filter((template) => template.assetType === assetType)
 
   const saveMutation = useMutation({
     mutationFn: async (state: EditorState) => {
@@ -63,42 +64,42 @@ export function ContractTemplatesPage() {
       await createContractTemplate({
         companyId,
         assetType: state.assetType,
-        name: state.name.trim() || `Meu modelo (${assetLabel[state.assetType]})`,
+        name: state.name.trim() || t('templates.myModel', { asset: assetLabel[state.assetType] }),
         clauses,
       })
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contractTemplates'] })
-      toast({ title: 'Modelo salvo com sucesso.' })
+      toast({ title: t('templates.toast.saved') })
       setEditor(null)
     },
-    onError: () => toast({ title: 'Erro ao salvar modelo.', variant: 'destructive' }),
+    onError: () => toast({ title: t('templates.toast.saveError'), variant: 'destructive' }),
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteContractTemplate,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['contractTemplates'] })
-      toast({ title: 'Modelo excluído.' })
+      toast({ title: t('templates.toast.deleted') })
     },
-    onError: () => toast({ title: 'Erro ao excluir modelo.', variant: 'destructive' }),
+    onError: () => toast({ title: t('templates.toast.deleteError'), variant: 'destructive' }),
   })
 
   const openClone = () => {
     setEditor({
       assetType,
-      name: `Meu modelo (${assetLabel[assetType]})`,
+      name: t('templates.myModel', { asset: assetLabel[assetType] }),
       clauses: cloneClauses(systemClauses),
     })
   }
 
-  const openEdit = (t: ContractTemplate) => {
-    setEditor({ id: t.id, assetType: t.assetType, name: t.name, clauses: cloneClauses(t.clauses) })
+  const openEdit = (template: ContractTemplate) => {
+    setEditor({ id: template.id, assetType: template.assetType, name: template.name, clauses: cloneClauses(template.clauses) })
   }
 
-  const handleDelete = (t: ContractTemplate) => {
-    if (confirm(`Excluir o modelo "${t.name}"? Esta ação não pode ser desfeita.`)) {
-      deleteMutation.mutate(t.id)
+  const handleDelete = (template: ContractTemplate) => {
+    if (confirm(t('templates.toast.deleteConfirm', { name: template.name }))) {
+      deleteMutation.mutate(template.id)
     }
   }
 
@@ -106,21 +107,21 @@ export function ContractTemplatesPage() {
     <div className="space-y-6">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-xl font-bold">Modelos de Contrato</h1>
+          <h1 className="text-xl font-bold">{t('templates.title')}</h1>
           <p className="text-sm text-muted-foreground">
-            Os modelos do sistema estão sempre disponíveis. Clone-os para criar versões personalizadas da sua empresa.
+            {t('templates.subtitle')}
           </p>
         </div>
         <Button onClick={openClone}>
-          <Copy className="mr-2 h-4 w-4" /> Clonar modelo do sistema
+          <Copy className="mr-2 h-4 w-4" /> {t('templates.cloneSystem')}
         </Button>
       </div>
 
       <Tabs value={assetType} onValueChange={(v) => setAssetType(v as ContractAssetType)}>
         <TabsList>
-          <TabsTrigger value="imovel">Imóvel</TabsTrigger>
-          <TabsTrigger value="veiculo">Veículo</TabsTrigger>
-          <TabsTrigger value="equipamento">Equipamento</TabsTrigger>
+          <TabsTrigger value="imovel">{t('form.property')}</TabsTrigger>
+          <TabsTrigger value="veiculo">{t('form.vehicle')}</TabsTrigger>
+          <TabsTrigger value="equipamento">{t('form.equipment')}</TabsTrigger>
         </TabsList>
       </Tabs>
 
@@ -130,27 +131,27 @@ export function ContractTemplatesPage() {
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <FileText className="h-4 w-4 text-primary" />
-              Modelo do sistema
+              {t('templates.systemModel')}
               <Badge variant="secondary" className="ml-auto gap-1">
-                <Lock className="h-3 w-3" /> Padrão
+                <Lock className="h-3 w-3" /> {t('templates.default')}
               </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <p className="text-sm text-muted-foreground">
-              Modelo oficial de locação de {assetLabel[assetType].toLowerCase()} ({systemClauses.length} cláusulas).
+              {t('templates.systemDescription', { asset: assetLabel[assetType].toLowerCase(), count: systemClauses.length })}
             </p>
             <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 className="flex-1"
-                onClick={() => setPreview({ name: `Modelo do sistema (${assetLabel[assetType]})`, clauses: systemClauses })}
+                onClick={() => setPreview({ name: t('templates.systemPreviewName', { asset: assetLabel[assetType] }), clauses: systemClauses })}
               >
-                <Eye className="mr-1 h-3.5 w-3.5" /> Visualizar
+                <Eye className="mr-1 h-3.5 w-3.5" /> {t('templates.preview')}
               </Button>
               <Button variant="outline" size="sm" className="flex-1" onClick={openClone}>
-                <Copy className="mr-1 h-3.5 w-3.5" /> Clonar
+                <Copy className="mr-1 h-3.5 w-3.5" /> {t('templates.clone')}
               </Button>
             </div>
           </CardContent>
@@ -160,34 +161,34 @@ export function ContractTemplatesPage() {
         {isLoading ? (
           <Card className="animate-pulse"><CardContent className="h-40" /></Card>
         ) : (
-          customTemplates.map((t) => (
-            <Card key={t.id}>
+          customTemplates.map((template) => (
+            <Card key={template.id}>
               <CardHeader className="pb-2">
                 <CardTitle className="flex items-center gap-2 text-base">
                   <FileText className="h-4 w-4 text-muted-foreground" />
-                  <span className="truncate">{t.name}</span>
-                  <Badge variant="info" className="ml-auto shrink-0">Personalizado</Badge>
+                  <span className="truncate">{template.name}</span>
+                  <Badge variant="info" className="ml-auto shrink-0">{t('templates.custom')}</Badge>
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <p className="text-sm text-muted-foreground">{t.clauses.length} cláusulas</p>
+                <p className="text-sm text-muted-foreground">{t('templates.clausesCount', { count: template.clauses.length })}</p>
                 <div className="flex gap-2">
                   <Button
                     variant="outline"
                     size="sm"
                     className="flex-1"
-                    onClick={() => setPreview({ name: t.name, clauses: t.clauses })}
+                    onClick={() => setPreview({ name: template.name, clauses: template.clauses })}
                   >
-                    <Eye className="mr-1 h-3.5 w-3.5" /> Ver
+                    <Eye className="mr-1 h-3.5 w-3.5" /> {t('templates.view')}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={() => openEdit(t)}>
+                  <Button variant="outline" size="sm" onClick={() => openEdit(template)}>
                     <Edit className="h-3.5 w-3.5" />
                   </Button>
                   <Button
                     variant="outline"
                     size="sm"
                     className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                    onClick={() => handleDelete(t)}
+                    onClick={() => handleDelete(template)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -202,7 +203,7 @@ export function ContractTemplatesPage() {
       <Dialog open={!!editor} onOpenChange={(open) => { if (!open) setEditor(null) }}>
         <DialogContent className="max-w-3xl max-h-[90dvh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editor?.id ? 'Editar modelo' : 'Novo modelo personalizado'}</DialogTitle>
+            <DialogTitle>{editor?.id ? t('templates.editTitle') : t('templates.newTitle')}</DialogTitle>
           </DialogHeader>
           {editor && (
             <ClauseEditor
@@ -225,7 +226,7 @@ export function ContractTemplatesPage() {
           <div className="space-y-4">
             {preview?.clauses.map((c, i) => (
               <div key={c.id}>
-                <p className="text-sm font-semibold">CLÁUSULA {i + 1}ª — {c.title}</p>
+                <p className="text-sm font-semibold">{t('templates.clauseTitle', { n: i + 1, title: c.title })}</p>
                 <div className="mt-1 space-y-1">
                   {c.items.map((item, j) => (
                     <p key={j} className="text-sm text-muted-foreground">
@@ -251,6 +252,8 @@ interface EditorProps {
 }
 
 function ClauseEditor({ state, onChange, onSave, onCancel, saving }: EditorProps) {
+  const { t } = useTranslation('contracts')
+  const { t: tCommon } = useTranslation('common')
   const setClauses = (clauses: ContractTemplateClause[]) => onChange({ ...state, clauses })
 
   const updateClause = (idx: number, patch: Partial<ContractTemplateClause>) => {
@@ -268,42 +271,42 @@ function ClauseEditor({ state, onChange, onSave, onCancel, saving }: EditorProps
   const removeClause = (idx: number) => setClauses(state.clauses.filter((_, i) => i !== idx))
 
   const addClause = () => {
-    setClauses([...state.clauses, { id: `c${Date.now()}`, title: 'NOVA CLÁUSULA', items: [''] }])
+    setClauses([...state.clauses, { id: `c${Date.now()}`, title: t('templates.newClause'), items: [''] }])
   }
 
   return (
     <div className="space-y-4">
       <div className="space-y-1.5">
-        <Label>Nome do modelo</Label>
+        <Label>{t('templates.modelName')}</Label>
         <Input value={state.name} onChange={(e) => onChange({ ...state, name: e.target.value })} />
       </div>
 
       <p className="rounded-md bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
-        Variáveis automáticas disponíveis (mantenha-as no texto para serem preenchidas): {VARIABLE_HELP}
-        <br />Cada linha do texto vira um item numerado da cláusula.
+        {t('templates.variablesHelp', { vars: VARIABLE_HELP })}
+        <br />{t('templates.variablesHelpLine2')}
       </p>
 
       <div className="space-y-3">
         {state.clauses.map((c, idx) => (
           <div key={c.id} className="rounded-lg border p-3 space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-muted-foreground shrink-0">CLÁUSULA {idx + 1}ª</span>
+              <span className="text-xs font-semibold text-muted-foreground shrink-0">{t('templates.clauseLabel', { n: idx + 1 })}</span>
               <Input
                 value={c.title}
                 onChange={(e) => updateClause(idx, { title: e.target.value })}
                 className="h-8"
               />
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Mover para cima" onClick={() => move(idx, -1)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title={t('templates.moveUp')} onClick={() => move(idx, -1)}>
                 <ArrowUp className="h-3.5 w-3.5" />
               </Button>
-              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title="Mover para baixo" onClick={() => move(idx, 1)}>
+              <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" title={t('templates.moveDown')} onClick={() => move(idx, 1)}>
                 <ArrowDown className="h-3.5 w-3.5" />
               </Button>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-7 w-7 shrink-0 text-destructive"
-                title="Remover cláusula"
+                title={t('templates.removeClause')}
                 onClick={() => removeClause(idx)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -313,22 +316,22 @@ function ClauseEditor({ state, onChange, onSave, onCancel, saving }: EditorProps
               className="flex min-h-[120px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               value={c.items.join('\n')}
               onChange={(e) => updateClause(idx, { items: e.target.value.split('\n') })}
-              placeholder="Um item por linha..."
+              placeholder={t('templates.itemPlaceholder')}
             />
           </div>
         ))}
       </div>
 
       <Button variant="outline" className="w-full" onClick={addClause}>
-        <Plus className="mr-2 h-4 w-4" /> Adicionar cláusula
+        <Plus className="mr-2 h-4 w-4" /> {t('templates.addClause')}
       </Button>
 
       <div className="flex justify-end gap-2 border-t pt-4">
         <Button variant="outline" onClick={onCancel}>
-          <X className="mr-2 h-4 w-4" /> Cancelar
+          <X className="mr-2 h-4 w-4" /> {tCommon('actions.cancel')}
         </Button>
         <Button onClick={onSave} disabled={saving}>
-          <Save className="mr-2 h-4 w-4" /> {saving ? 'Salvando...' : 'Salvar modelo'}
+          <Save className="mr-2 h-4 w-4" /> {saving ? t('templates.saving') : t('templates.save')}
         </Button>
       </div>
     </div>

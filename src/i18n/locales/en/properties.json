@@ -1,0 +1,104 @@
+{
+  "title": "Properties",
+  "subtitle": "Manage your rental property portfolio.",
+  "add": "Add property",
+  "new": "New property",
+  "edit": "Edit property",
+  "delete": "Delete property",
+  "view": "View property",
+  "searchPlaceholder": "Search by name, code, or address...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "type": "Type",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No properties yet",
+    "description": "Add your first property to start managing rentals.",
+    "noResults": "No properties match the current filters."
+  },
+  "form": {
+    "title": "Property details",
+    "name": "Name",
+    "code": "Code",
+    "type": "Type",
+    "status": "Status",
+    "address": "Address",
+    "street": "Street",
+    "number": "Number",
+    "complement": "Complement",
+    "neighborhood": "Neighborhood",
+    "city": "City",
+    "state": "State",
+    "zipCode": "ZIP code",
+    "value": "Rent value",
+    "condominium": "Condo fee",
+    "iptu": "Property tax",
+    "area": "Area (m²)",
+    "bedrooms": "Bedrooms",
+    "bathrooms": "Bathrooms",
+    "parkingSpaces": "Parking spaces",
+    "owner": "Owner",
+    "description": "Description",
+    "observations": "Notes",
+    "photos": "Photos"
+  },
+  "detail": {
+    "title": "Property details",
+    "overview": "Overview",
+    "financial": "Financial",
+    "contracts": "Contracts",
+    "tenants": "Tenants",
+    "maintenance": "Maintenance",
+    "documents": "Documents",
+    "history": "History"
+  },
+  "types": {
+    "apartamento": "Apartment",
+    "casa": "House",
+    "kitnet": "Studio",
+    "sala_comercial": "Commercial office",
+    "galpao": "Warehouse",
+    "terreno": "Land",
+    "outro": "Other"
+  },
+  "statuses": {
+    "disponivel": "Available",
+    "alugado": "Rented",
+    "reservado": "Reserved",
+    "manutencao": "Maintenance",
+    "encerrado": "Closed"
+  },
+  "tenantLabel": "Tenant",
+  "currentTenant": "Current tenant",
+  "caution": "Security deposit",
+  "itemLabel": "properties",
+  "placeholders": {
+    "name": "e.g. Apt 101 - Central Building",
+    "notes": "Internal notes..."
+  },
+  "validation": {
+    "nameRequired": "Name is required",
+    "valueRequired": "Value is required",
+    "ownerRequired": "Owner is required",
+    "streetRequired": "Street is required",
+    "numberRequired": "Number is required",
+    "neighborhoodRequired": "Neighborhood is required",
+    "cityRequired": "City is required",
+    "stateLength": "State must have 2 characters",
+    "zipInvalid": "Invalid ZIP code"
+  },
+  "toast": {
+    "created": "Property created successfully.",
+    "updated": "Property updated successfully.",
+    "deleted": "Property deleted successfully.",
+    "loadError": "Failed to load properties.",
+    "createError": "Failed to create property.",
+    "updateError": "Failed to update property.",
+    "deleteError": "Failed to delete property.",
+    "deleteConfirm": "Are you sure you want to delete this property?",
+    "saveError": "Failed to save property."
+  }
+}

@@ -1,4 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
@@ -13,34 +14,34 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-
+import { LanguageSelector } from '@/i18n/LanguageSelector'
 interface NavItem {
-  label: string
+  key: string
   href: string
   icon: React.ElementType
   roles?: string[]
 }
 
 const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Imóveis', href: '/imoveis', icon: Building2 },
-  { label: 'Veículos', href: '/veiculos', icon: Car },
-  { label: 'Equipamentos', href: '/equipamentos', icon: HardHat },
-  { label: 'Proprietários', href: '/proprietarios', icon: Home },
-  { label: 'Inquilinos', href: '/inquilinos', icon: Users },
-  { label: 'Contratos', href: '/contratos', icon: FileText },
-  { label: 'Modelos de Contrato', href: '/modelos-contrato', icon: FileText },
-  { label: 'Financeiro', href: '/financeiro', icon: CreditCard },
-  { label: 'Cobranças', href: '/cobrancas', icon: DollarSign },
-  { label: 'Inadimplência', href: '/inadimplencia', icon: AlertTriangle },
-  { label: 'Advertências', href: '/advertencias', icon: FileWarning },
-  { label: 'Despesas Compartilhadas', href: '/despesas', icon: DollarSign },
-  { label: 'Chamados', href: '/chamados', icon: Wrench },
-  { label: 'Notificações', href: '/notificacoes', icon: Bell },
-  { label: 'Relatórios', href: '/relatorios', icon: BarChart3 },
-  { label: 'Meu Perfil', href: '/perfil', icon: UserCircle },
-  { label: 'Contratos de Terreno', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
-  { label: 'Configurações', href: '/configuracoes', icon: Settings, roles: ['admin'] },
+  { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
+  { key: 'properties', href: '/imoveis', icon: Building2 },
+  { key: 'vehicles', href: '/veiculos', icon: Car },
+  { key: 'equipment', href: '/equipamentos', icon: HardHat },
+  { key: 'owners', href: '/proprietarios', icon: Home },
+  { key: 'tenants', href: '/inquilinos', icon: Users },
+  { key: 'contracts', href: '/contratos', icon: FileText },
+  { key: 'contractTemplates', href: '/modelos-contrato', icon: FileText },
+  { key: 'financial', href: '/financeiro', icon: CreditCard },
+  { key: 'charges', href: '/cobrancas', icon: DollarSign },
+  { key: 'defaulters', href: '/inadimplencia', icon: AlertTriangle },
+  { key: 'warnings', href: '/advertencias', icon: FileWarning },
+  { key: 'sharedExpenses', href: '/despesas', icon: DollarSign },
+  { key: 'maintenance', href: '/chamados', icon: Wrench },
+  { key: 'notifications', href: '/notificacoes', icon: Bell },
+  { key: 'reports', href: '/relatorios', icon: BarChart3 },
+  { key: 'profile', href: '/perfil', icon: UserCircle },
+  { key: 'saleContracts', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
+  { key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] },
 ]
 
 interface SidebarProps {
@@ -51,6 +52,7 @@ interface SidebarProps {
 }
 
 export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: SidebarProps) {
+  const { t } = useTranslation(['nav', 'common', 'subscription'])
   const { user, logout } = useAuth()
   const { status, daysRemaining, isAdmin } = useSubscription()
   const location = useLocation()
@@ -68,7 +70,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
   return (
     <>
-      {/* Backdrop — somente mobile, fecha o drawer ao tocar fora */}
       {mobileOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
@@ -85,7 +86,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           collapsed ? 'md:w-16' : 'md:w-64'
         )}
       >
-      {/* Logo */}
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
@@ -96,7 +96,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         {collapsed && (
           <div className="mx-auto hidden flex-col items-center gap-1 md:flex">
             <img src="/favicon.png" alt="AlugaPro" className="h-8 w-8 object-contain" />
-            <Button variant="ghost" size="icon" onClick={onToggle} className="h-6 w-6" title="Expandir">
+            <Button variant="ghost" size="icon" onClick={onToggle} className="h-6 w-6" title={t('common:actions.open')}>
               <ChevronRight className="h-4 w-4" />
             </Button>
           </div>
@@ -106,17 +106,16 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
             <ChevronLeft className="h-4 w-4" />
           </Button>
         )}
-        {/* Fechar — somente mobile */}
         <Button variant="ghost" size="icon" onClick={onMobileClose} className="h-8 w-8 md:hidden">
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Navigation */}
       <ScrollArea className="flex-1 py-2">
         <nav className="grid gap-0.5 px-2">
           {filteredNav.map((item) => {
             const Icon = item.icon
+            const label = t(item.key)
             const active = location.pathname.startsWith(item.href)
             const showAlertBadge = (sidebarBadgeByHref[item.href] ?? 0) > 0
             const badgeCount = sidebarBadgeByHref[item.href] ?? 0
@@ -125,7 +124,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                 key={item.href}
                 to={item.href}
                 onClick={onMobileClose}
-                title={collapsed ? item.label : undefined}
+                title={collapsed ? label : undefined}
                 className={cn(
                   'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
                   active
@@ -142,7 +141,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                     </span>
                   )}
                 </span>
-                {!collapsed && <span className="flex-1">{item.label}</span>}
+                {!collapsed && <span className="flex-1">{label}</span>}
                 {showAlertBadge && !collapsed && (
                   <Badge
                     variant="destructive"
@@ -157,7 +156,6 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
         </nav>
       </ScrollArea>
 
-      {/* Subscription chip */}
       {!isAdmin && status !== 'demo' && status !== 'active' && (
         <div className={cn('px-3 pb-2', collapsed && 'flex justify-center')}>
           <NavLink
@@ -169,12 +167,14 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                 : 'bg-red-50 text-red-800 hover:bg-red-100 dark:bg-red-950/30 dark:text-red-300',
               collapsed && 'px-2 justify-center'
             )}
-            title="Gerenciar assinatura"
+            title={t('subscription:manage')}
           >
             <Zap className="h-3.5 w-3.5 shrink-0" />
             {!collapsed && (
               <span>
-                {status === 'trialing' ? `Trial — ${daysRemaining}d` : 'Assinatura'}
+                {status === 'trialing'
+                  ? t('trialDaysLeft', { count: daysRemaining })
+                  : t('subscription:title')}
               </span>
             )}
             {!collapsed && status === 'trialing' && daysRemaining <= 3 && (
@@ -186,13 +186,18 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
       <Separator />
 
-      {/* User section */}
       <div className={cn('p-3', collapsed && 'flex flex-col items-center gap-2')}>
+        {!collapsed && (
+          <div className="mb-2 flex justify-end">
+            <LanguageSelector />
+          </div>
+        )}
+        {collapsed && <LanguageSelector size="icon" className="mb-1" />}
         {!collapsed ? (
           <div className="flex items-center gap-2 rounded-md p-1">
             <Link
               to="/perfil"
-              title="Meu perfil"
+              title={t('profile')}
               className="flex flex-1 items-center gap-3 overflow-hidden rounded-md p-1 transition-colors hover:bg-accent"
             >
             <Avatar className="h-8 w-8">
@@ -205,25 +210,27 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
               <p className="flex items-center gap-1 truncate text-sm font-medium">
                 <span className="truncate">{user?.name}</span>
                 {user?.phoneVerified ? (
-                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label="Telefone verificado">
-                    <title>Telefone verificado</title>
+                  <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label={t('common:phoneVerified')}>
+                    <title>{t('common:phoneVerified')}</title>
                   </ShieldCheck>
                 ) : (
-                  <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label="Telefone não verificado">
-                    <title>Telefone não verificado</title>
+                  <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label={t('common:phoneUnverified')}>
+                    <title>{t('common:phoneUnverified')}</title>
                   </ShieldAlert>
                 )}
               </p>
-              <p className="truncate text-xs text-muted-foreground capitalize">{user?.role}</p>
+              <p className="truncate text-xs text-muted-foreground capitalize">
+                {user?.role ? t(`common:roles.${user.role}`, { defaultValue: user.role }) : ''}
+              </p>
             </div>
             </Link>
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={logout} title="Sair">
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={logout} title={t('logout')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
         ) : (
           <>
-            <Link to="/perfil" title="Meu perfil">
+            <Link to="/perfil" title={t('profile')}>
               <Avatar className="h-8 w-8 cursor-pointer">
                 <AvatarImage src={user?.avatar} />
                 <AvatarFallback className="bg-primary text-primary-foreground text-xs">
@@ -231,7 +238,7 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
                 </AvatarFallback>
               </Avatar>
             </Link>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title="Sair">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title={t('logout')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </>

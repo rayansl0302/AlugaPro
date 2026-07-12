@@ -1,0 +1,71 @@
+{
+  "title": "Notifications",
+  "subtitle": "Track system alerts and notices.",
+  "markAllRead": "Mark all as read",
+  "markRead": "Mark as read",
+  "delete": "Delete notification",
+  "searchPlaceholder": "Search notifications...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "unread": "Unread",
+    "read": "Read",
+    "type": "Type",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No notifications",
+    "description": "You are all caught up. New alerts will appear here.",
+    "noResults": "No notifications found."
+  },
+  "types": {
+    "charge": "Charge",
+    "contract": "Contract",
+    "maintenance": "Maintenance",
+    "system": "System",
+    "warning": "Warning"
+  },
+  "detail": {
+    "title": "Notification detail",
+    "related": "Related"
+  },
+  "toast": {
+    "markedRead": "Notification marked as read.",
+    "markedAllRead": "All notifications marked as read.",
+    "deleted": "Notification deleted.",
+    "loadError": "Failed to load notifications.",
+    "markError": "Failed to update notification.",
+    "deleteError": "Failed to delete notification."
+  },
+  "pageSubtitle": "Real-time alerts and automatic message settings",
+  "pendingAlerts": "Pending alerts",
+  "pendingAlertsDescription": "Submitted receipts, overdue charges, and tickets awaiting action",
+  "loadingAlerts": "Loading alerts...",
+  "noPendingTitle": "No pending alerts",
+  "noPendingDescription": "New receipts and tickets will appear here automatically.",
+  "autoTitle": "Automatic charge alerts",
+  "autoSubtitle": "Configure when and how tenants receive due-date reminders",
+  "push": "Push Notification",
+  "daysBefore": "{{count}}d before",
+  "onDay": "On the day",
+  "daysAfter": "{{count}}d after",
+  "rules": {
+    "vencimento_7dias": "7 days before due date",
+    "vencimento_3dias": "3 days before due date",
+    "vencimento_1dia": "1 day before due date",
+    "vencido_dia": "On the due date",
+    "vencido_3dias": "3 days after due date",
+    "vencido_7dias": "7 days after due date",
+    "vencido_15dias": "15 days after due date"
+  },
+  "templateTitle": "Message template",
+  "templateVars": "Available variables: {{vars}}",
+  "templates": {
+    "waBeforeLabel": "WhatsApp — Before due date",
+    "waBefore": "Hi {{{{nome}}}}! Reminder that your rent for {{{{imovel}}}} amounting to {{{{valor}}}} is due on {{{{vencimento}}}}. AlugaPro 🏠",
+    "waAfterLabel": "WhatsApp — After due date",
+    "waAfter": "Hi {{{{nome}}}}, your rent for {{{{imovel}}}} amounting to {{{{valor}}}} is {{{{dias_atraso}}}} days overdue. Please settle to avoid fees. AlugaPro 🏠",
+    "emailSubjectLabel": "Email — Subject",
+    "emailSubject": "[AlugaPro] Payment reminder — {{{{imovel}}}}"
+  }
+}

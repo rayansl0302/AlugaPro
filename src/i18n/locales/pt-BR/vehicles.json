@@ -1,0 +1,132 @@
+{
+  "title": "Veículos",
+  "subtitle": "Gerencie a frota de veículos para locação.",
+  "add": "Adicionar veículo",
+  "new": "Novo veículo",
+  "edit": "Editar veículo",
+  "delete": "Excluir veículo",
+  "view": "Ver veículo",
+  "searchPlaceholder": "Buscar por marca, modelo ou placa...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "brand": "Marca",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum veículo cadastrado",
+    "description": "Cadastre o primeiro veículo para gerenciar sua frota.",
+    "noResults": "Nenhum veículo encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados do veículo",
+    "brand": "Marca",
+    "model": "Modelo",
+    "plate": "Placa",
+    "year": "Ano",
+    "color": "Cor",
+    "fipe": "Valor FIPE",
+    "fipeCode": "Código FIPE",
+    "status": "Status",
+    "value": "Valor da locação",
+    "owner": "Proprietário",
+    "mileage": "Quilometragem",
+    "fuelType": "Combustível",
+    "transmission": "Câmbio",
+    "description": "Descrição",
+    "observations": "Observações",
+    "photos": "Fotos",
+    "type": "Tipo",
+    "renavam": "RENAVAM",
+    "chassi": "Chassi",
+    "photosLabel": "Fotos do veículo"
+  },
+  "placeholders": {
+    "brand": "Ex: Volkswagen",
+    "model": "Ex: Gol 1.0",
+    "year": "2020",
+    "plate": "ABC1D23",
+    "color": "Prata",
+    "mileage": "0",
+    "renavam": "00000000000",
+    "chassi": "9BWZZZ...",
+    "value": "0,00",
+    "notes": "Notas internas...",
+    "select": "Selecione",
+    "selectBrand": "Selecione a marca",
+    "selectModel": "Selecione o modelo",
+    "selectOwner": "Selecione o proprietário",
+    "searchOwner": "Buscar proprietário...",
+    "noOwners": "Nenhum proprietário cadastrado."
+  },
+  "hints": {
+    "fipeBrands": "Marcas da tabela FIPE",
+    "fipeModels": "Modelos da tabela FIPE"
+  },
+  "fuels": {
+    "gasolina": "Gasolina",
+    "etanol": "Etanol",
+    "flex": "Flex",
+    "diesel": "Diesel",
+    "gnv": "GNV",
+    "eletrico": "Elétrico",
+    "hibrido": "Híbrido"
+  },
+  "validation": {
+    "brandRequired": "Marca obrigatória",
+    "modelRequired": "Modelo obrigatório",
+    "yearInvalid": "Ano inválido",
+    "plateInvalid": "Placa inválida",
+    "valueRequired": "Valor obrigatório",
+    "ownerRequired": "Proprietário obrigatório"
+  },
+  "buttons": {
+    "save": "Salvar alterações",
+    "create": "Cadastrar veículo"
+  },
+  "fields": {
+    "rentValue": "Valor do aluguel",
+    "photoAlt": "Foto {{index}}"
+  },
+  "caution": "Caução",
+  "currentTenant": "Locatário atual",
+  "detail": {
+    "title": "Detalhes do veículo",
+    "overview": "Visão geral",
+    "financial": "Financeiro",
+    "contracts": "Contratos",
+    "documents": "Documentos",
+    "maintenance": "Manutenções",
+    "history": "Histórico"
+  },
+  "types": {
+    "carro": "Carro",
+    "moto": "Moto",
+    "caminhao": "Caminhão",
+    "van": "Van",
+    "onibus": "Ônibus",
+    "outro": "Outro"
+  },
+  "statuses": {
+    "disponivel": "Disponível",
+    "alugado": "Alugado",
+    "reservado": "Reservado",
+    "manutencao": "Manutenção",
+    "encerrado": "Encerrado"
+  },
+  "tenantLabel": "Locatário",
+  "itemLabel": "veículos",
+  "toast": {
+    "created": "Veículo criado com sucesso.",
+    "updated": "Veículo atualizado com sucesso.",
+    "deleted": "Veículo excluído com sucesso.",
+    "loadError": "Erro ao carregar veículos.",
+    "createError": "Erro ao criar veículo.",
+    "updateError": "Erro ao atualizar veículo.",
+    "deleteError": "Erro ao excluir veículo.",
+    "deleteConfirm": "Tem certeza que deseja excluir este veículo?",
+    "fipeError": "Erro ao consultar valor FIPE.",
+    "saveError": "Erro ao salvar veículo."
+  }
+}

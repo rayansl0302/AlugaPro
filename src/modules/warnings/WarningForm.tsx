@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Loader2 } from 'lucide-react'
 import { getContracts } from '@/services/contracts'
@@ -22,6 +23,7 @@ interface Props {
 }
 
 export function WarningForm({ companyId, issuedById, issuedByName, presetContractId, onSuccess }: Props) {
+  const { t } = useTranslation('warnings')
   const [contractId, setContractId] = useState(presetContractId ?? '')
   const [reason, setReason] = useState('')
   const [clauseReference, setClauseReference] = useState('')
@@ -41,15 +43,15 @@ export function WarningForm({ companyId, issuedById, issuedByName, presetContrac
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!selected) {
-      toast({ title: 'Selecione o contrato/inquilino.', variant: 'destructive' })
+      toast({ title: t('warningForm.toast.selectContract'), variant: 'destructive' })
       return
     }
     if (!reason.trim()) {
-      toast({ title: 'Descreva o motivo da advertência.', variant: 'destructive' })
+      toast({ title: t('warningForm.toast.describeReason'), variant: 'destructive' })
       return
     }
     if (photos.length === 0 && audios.length === 0) {
-      toast({ title: 'Anexe ao menos uma prova (foto ou áudio).', variant: 'destructive' })
+      toast({ title: t('warningForm.toast.attachEvidence'), variant: 'destructive' })
       return
     }
     setLoading(true)
@@ -70,10 +72,10 @@ export function WarningForm({ companyId, issuedById, issuedByName, presetContrac
         evidencePhotos: photos,
         evidenceAudio: audios,
       })
-      toast({ title: 'Advertência registrada.' })
+      toast({ title: t('warningForm.toast.created') })
       onSuccess()
     } catch {
-      toast({ title: 'Erro ao registrar advertência.', variant: 'destructive' })
+      toast({ title: t('toast.createError'), variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -82,7 +84,7 @@ export function WarningForm({ companyId, issuedById, issuedByName, presetContrac
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label>Inquilino / Contrato *</Label>
+        <Label>{t('warningForm.tenantContract')}</Label>
         <Combobox
           options={activeContracts.map((c) => ({
             value: c.id,
@@ -91,54 +93,53 @@ export function WarningForm({ companyId, issuedById, issuedByName, presetContrac
           }))}
           value={contractId}
           onChange={setContractId}
-          placeholder="Selecione o contrato ativo"
-          searchPlaceholder="Buscar inquilino..."
-          emptyText="Nenhum contrato ativo encontrado."
+          placeholder={t('warningForm.selectActiveContract')}
+          searchPlaceholder={t('warningForm.searchTenant')}
+          emptyText={t('warningForm.noActiveContracts')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label>Cláusula contratual referenciada</Label>
+        <Label>{t('warningForm.clauseReference')}</Label>
         <Input
-          placeholder="Ex: Cláusula 11.2 — Do sossego"
+          placeholder={t('warningForm.clausePlaceholder')}
           value={clauseReference}
           onChange={(e) => setClauseReference(e.target.value)}
         />
       </div>
 
       <div className="space-y-2">
-        <Label>Motivo da advertência *</Label>
+        <Label>{t('warningForm.reason')}</Label>
         <textarea
           className="flex min-h-[100px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          placeholder="Descreva detalhadamente o ocorrido..."
+          placeholder={t('warningForm.reasonPlaceholder')}
           value={reason}
           onChange={(e) => setReason(e.target.value)}
         />
       </div>
 
       <MultiPhotoUpload
-        label="Fotos (prova)"
+        label={t('warningForm.photos')}
         value={photos}
         onChange={setPhotos}
         onUpload={(file) => uploadWarningEvidence(companyId, contractId || 'novos', file)}
       />
 
       <AudioUpload
-        label="Áudios (prova, se houver)"
+        label={t('warningForm.audios')}
         value={audios}
         onChange={setAudios}
         onUpload={(file) => uploadWarningEvidence(companyId, contractId || 'novos', file)}
       />
 
       <p className="text-xs text-muted-foreground">
-        A advertência fica registrada permanentemente e visível para o inquilino. Ao atingir 4 advertências,
-        o contrato passa a permitir rescisão imediata por parte do proprietário, conforme cláusula contratual.
+        {t('warningForm.rescissionInfo')}
       </p>
 
       <div className="flex justify-end gap-3 pt-2">
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          Registrar Advertência
+          {t('warningForm.submit')}
         </Button>
       </div>
     </form>

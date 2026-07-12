@@ -3,6 +3,7 @@ import { Timestamp } from 'firebase/firestore'
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
 export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino' | 'afiliado'
+export type AppLocale = 'pt-BR' | 'en' | 'es'
 
 export type PropertyStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
 export type PropertyType = 'apartamento' | 'casa' | 'kitnet' | 'sala_comercial' | 'galpao' | 'terreno' | 'outro'
@@ -54,6 +55,7 @@ export interface User {
   phoneVerifiedAt?: string
   avatar?: string
   companyId: string
+  locale?: AppLocale
   active: boolean
   createdAt: Timestamp
   updatedAt: Timestamp

@@ -1,0 +1,93 @@
+{
+  "panel": {
+    "title": "Affiliate panel",
+    "subtitle": "Share your link, track your referrals, and earn for every active client.",
+    "logout": "Log out"
+  },
+  "referral": {
+    "codeLabel": "Your referral code",
+    "linkLabel": "Your referral link",
+    "copyCode": "Copy code",
+    "copyLink": "Copy",
+    "codeCopied": "Code copied!",
+    "linkCopied": "Link copied!",
+    "copyFailed": "Could not copy.",
+    "share": "Share",
+    "shareWhatsAppText": "Check out AlugaPro, the system I use for rental management: {{link}}"
+  },
+  "commission": {
+    "rate": "7%",
+    "rateLabel": "7% recurring commission",
+    "description": "Your recurring commission is 7% of the monthly fee of every active client you refer.",
+    "waitingDays": 15,
+    "waitingPeriodNote": "Payment only starts after the referred client completes 15 days as an active client.",
+    "howPaymentWorks": "How payment works",
+    "keepDataUpdated": "Keep your payout details up to date so payment is not delayed.",
+    "eligible": "Eligible for commission",
+    "commissionInDays": "Commission in {{days}}d"
+  },
+  "indicate": {
+    "title": "Refer AlugaPro",
+    "description": "Introduce the platform to anyone who manages rentals and track each referral here."
+  },
+  "howItWorks": {
+    "title": "How it works",
+    "steps": {
+      "share": {
+        "title": "Share",
+        "description": "Send your referral code or link."
+      },
+      "trial": {
+        "title": "Free trial",
+        "description": "Your referral tries AlugaPro for 14 days."
+      },
+      "subscribe": {
+        "title": "Subscription",
+        "description": "When the referral subscribes to a paid plan, the referral is confirmed."
+      },
+      "earn": {
+        "title": "Get paid",
+        "description": "After 15 days as an active client, you start receiving 7% recurring commission."
+      }
+    }
+  },
+  "kyc": {
+    "title": "Payout details",
+    "description": "To receive your commissions, we need to confirm your identity. We use this data only for validation and payment, according to our Privacy Policy.",
+    "privacyPolicy": "Privacy Policy",
+    "statusSubmitted": "Verification submitted",
+    "statusPending": "Pending",
+    "fields": {
+      "cpf": "CPF (Brazilian tax ID)",
+      "cpfPlaceholder": "000.000.000-00",
+      "pixKey": "PIX key",
+      "pixKeyPlaceholder": "CPF, email, phone, or random key",
+      "phone": "Phone (with area code)",
+      "phonePlaceholder": "(00) 00000-0000",
+      "walletId": "Asaas Wallet ID",
+      "walletIdPlaceholder": "E.g.: 720806d7-aa02-48c0-83fa-6e0357157ba7",
+      "walletIdHelp": "This is where your commission will be sent automatically. Create a free account at asaas.com (if you do not already have one) and copy the Wallet ID from Integrations → Home, in the top-right menu of the Asaas panel.",
+      "documentPhoto": "Photo of ID document (ID card, driver's license, or similar)",
+      "documentSelfie": "Photo of you holding the document"
+    },
+    "save": "Save details",
+    "saveSuccess": "Payout details saved!",
+    "saveError": "Failed to save. Please try again.",
+    "validationError": "Fill in all fields — CPF, PIX, photos, phone, and Wallet ID — before saving."
+  },
+  "earnings": {
+    "referrals": "Referrals",
+    "activeClients": "Active clients",
+    "inTrial": "In trial",
+    "yourReferrals": "Your referrals",
+    "emptyTitle": "No referrals yet",
+    "emptyDescription": "Share your link to start referring and track them here."
+  },
+  "status": {
+    "trialing": "In trial",
+    "active": "Active",
+    "pastDue": "Past due",
+    "canceled": "Canceled",
+    "expired": "Expired"
+  }
+}

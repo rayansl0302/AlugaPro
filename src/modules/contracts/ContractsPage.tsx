@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning } from 'lucide-react'
@@ -29,16 +30,24 @@ import { PropertyDetail } from '../properties/PropertyDetail'
 import { VehicleDetail } from '../vehicles/VehicleDetail'
 import { EquipmentDetail } from '../equipment/EquipmentDetail'
 
-const statusConfig: Record<ContractStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'secondary' | 'destructive' }> = {
-  ativo: { label: 'Ativo', variant: 'success' },
-  renovado: { label: 'Renovado', variant: 'info' },
-  encerrado: { label: 'Encerrado', variant: 'secondary' },
-  cancelado: { label: 'Cancelado', variant: 'destructive' },
+const statusVariants: Record<ContractStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
+  ativo: 'success',
+  renovado: 'info',
+  encerrado: 'secondary',
+  cancelado: 'destructive',
 }
 
 export function ContractsPage() {
+  const { t } = useTranslation('contracts')
   const { user } = useAuth()
   const qc = useQueryClient()
+  const statusConfig = (['ativo', 'renovado', 'encerrado', 'cancelado'] as ContractStatus[]).reduce(
+    (acc, s) => {
+      acc[s] = { label: t(`statuses.${s}`), variant: statusVariants[s] }
+      return acc
+    },
+    {} as Record<ContractStatus, { label: string; variant: 'success' | 'info' | 'warning' | 'secondary' | 'destructive' }>,
+  )
   const companyId = user?.companyId ?? ''
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<ContractStatus | 'todos'>('todos')
@@ -144,13 +153,13 @@ export function ContractsPage() {
   const pag = usePagination(filtered, 10)
 
   const handleMarkComplete = async (contract: Contract) => {
-    if (!window.confirm('Marcar este contrato como completo? Após confirmar, não será mais possível editar os dados do contrato nem completar dados de locador/locatário.')) return
+    if (!window.confirm(t('toast.markCompleteConfirm'))) return
     try {
       await updateContract(contract.id, { locked: true, lockedAt: new Date().toISOString() })
       qc.invalidateQueries({ queryKey: ['contracts'] })
-      toast({ title: 'Contrato marcado como completo.' })
+      toast({ title: t('toast.markedComplete') })
     } catch {
-      toast({ title: 'Erro ao marcar como completo.', variant: 'destructive' })
+      toast({ title: t('toast.markCompleteError'), variant: 'destructive' })
     }
   }
 
@@ -171,9 +180,9 @@ export function ContractsPage() {
       qc.invalidateQueries({ queryKey: ['contracts'] })
       qc.invalidateQueries({ queryKey: ['properties'] })
       qc.invalidateQueries({ queryKey: ['vehicles'] })
-      toast({ title: 'Status atualizado.' })
+      toast({ title: t('toast.statusUpdated') })
     } catch {
-      toast({ title: 'Erro ao atualizar status.', variant: 'destructive' })
+      toast({ title: t('toast.statusError'), variant: 'destructive' })
     }
   }
 
@@ -184,7 +193,7 @@ export function ContractsPage() {
         size="sm"
         disabled={contract.locked}
         onClick={() => { setEditingContract(contract); setShowForm(true) }}
-        title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Editar'}
+        title={contract.locked ? t('actions.locked') : t('actions.edit')}
       >
         <Edit className="h-3 w-3" />
       </Button>
@@ -192,13 +201,13 @@ export function ContractsPage() {
         variant="ghost"
         size="sm"
         disabled={contract.locked}
-        title={contract.locked ? 'Contrato completo — edição bloqueada' : 'Completar dados (locador/locatário)'}
+        title={contract.locked ? t('actions.locked') : t('actions.completeData')}
         onClick={() => { setSignFlowEdit(true); setSigningContract(contract) }}
       >
         <Users className="h-3.5 w-3.5" />
       </Button>
       {contract.locked ? (
-        <Button variant="ghost" size="sm" className="text-green-600" disabled title="Contrato marcado como completo">
+        <Button variant="ghost" size="sm" className="text-green-600" disabled title={t('actions.lockedDone')}>
           <LockKeyhole className="h-3.5 w-3.5" />
         </Button>
       ) : (
@@ -206,7 +215,7 @@ export function ContractsPage() {
           variant="ghost"
           size="sm"
           className="text-muted-foreground"
-          title="Marcar como completo (bloqueia edição)"
+          title={t('actions.markComplete')}
           onClick={() => handleMarkComplete(contract)}
         >
           <Lock className="h-3.5 w-3.5" />
@@ -217,10 +226,10 @@ export function ContractsPage() {
         size="sm"
         title={
           signing.state === 'complete'
-            ? 'Contrato assinado — ver/baixar'
+            ? t('actions.signedView')
             : signing.state === 'pending'
-              ? `Assinatura pendente — falta(m) ${signing.pendingCount} assinatura(s)`
-              : 'Assinar contrato'
+              ? t('actions.pendingSignatures', { count: signing.pendingCount })
+              : t('actions.sign')
         }
         className={
           signing.state === 'complete'
@@ -245,7 +254,7 @@ export function ContractsPage() {
           className="text-muted-foreground"
           onClick={() => handleStatusChange(contract, 'encerrado')}
         >
-          Encerrar
+          {t('close')}
         </Button>
       )}
     </>
@@ -258,7 +267,7 @@ export function ContractsPage() {
           <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Buscar contratos..."
+              placeholder={t('searchPlaceholderShort')}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 sm:w-64"
@@ -269,7 +278,7 @@ export function ContractsPage() {
               <Button variant="outline" size="sm" className="justify-between gap-2">
                 <span className="flex items-center gap-2">
                   <ListFilter className="h-4 w-4" />
-                  {statusFilter === 'todos' ? 'Todos' : statusConfig[statusFilter as ContractStatus].label}
+                  {statusFilter === 'todos' ? t('filters.all') : statusConfig[statusFilter as ContractStatus].label}
                 </span>
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
@@ -277,7 +286,7 @@ export function ContractsPage() {
             <DropdownMenuContent align="start">
               {(['todos', 'ativo', 'renovado', 'encerrado', 'cancelado'] as const).map((s) => (
                 <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)} className="justify-between gap-4">
-                  {s === 'todos' ? 'Todos' : statusConfig[s].label}
+                  {s === 'todos' ? t('filters.all') : statusConfig[s].label}
                   {statusFilter === s && <Check className="h-3.5 w-3.5" />}
                 </DropdownMenuItem>
               ))}
@@ -285,7 +294,7 @@ export function ContractsPage() {
           </DropdownMenu>
         </div>
         <Button onClick={() => { setEditingContract(null); setShowForm(true) }}>
-          <Plus className="mr-2 h-4 w-4" /> Novo Contrato
+          <Plus className="mr-2 h-4 w-4" /> {t('newContract')}
         </Button>
       </div>
 
@@ -310,9 +319,9 @@ export function ContractsPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <FileText className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum contrato encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.noResults')}</p>
           <Button className="mt-4" onClick={() => { setEditingContract(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Contrato
+            <Plus className="mr-2 h-4 w-4" /> {t('newContract')}
           </Button>
         </div>
       ) : (
@@ -329,7 +338,7 @@ export function ContractsPage() {
                       <span className="font-mono text-sm font-medium">{contract.contractNumber}</span>
                       <div className="flex items-center gap-1.5">
                         {warningCountByContract[contract.id] > 0 && (
-                          <Link to="/advertencias" title="Ver advertências">
+                          <Link to="/advertencias" title={t('actions.viewWarnings')}>
                             <Badge variant={warningCountByContract[contract.id] >= 4 ? 'destructive' : 'warning'} className="gap-1">
                               <FileWarning className="h-3 w-3" />
                               {warningCountByContract[contract.id]}
@@ -341,14 +350,14 @@ export function ContractsPage() {
                     </div>
                     <div className="space-y-1.5 text-sm">
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Inquilino:</span>
+                        <span className="text-muted-foreground">{t('tenantLabel')}</span>
                         <span className="truncate">{contract.tenantName || '—'}</span>
                         {contract.tenantId && tenantById[contract.tenantId] && (
                           <Button
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0 text-muted-foreground"
-                            title="Ver inquilino"
+                            title={t('actions.viewTenant')}
                             onClick={() => setViewTenant(tenantById[contract.tenantId])}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -356,11 +365,11 @@ export function ContractsPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-1">
-                        <span className="text-muted-foreground">Imóvel/Veículo/Equipamento:</span>
+                        <span className="text-muted-foreground">{t('assetLabel')}</span>
                         <span className="truncate">
                           {contract.propertyName || '—'}
-                          {contract.assetType === 'veiculo' && <span className="ml-1 text-xs">(Veículo)</span>}
-                          {contract.assetType === 'equipamento' && <span className="ml-1 text-xs">(Equipamento)</span>}
+                          {contract.assetType === 'veiculo' && <span className="ml-1 text-xs">{t('assetVehicle')}</span>}
+                          {contract.assetType === 'equipamento' && <span className="ml-1 text-xs">{t('assetEquipment')}</span>}
                         </span>
                         {(contract.assetType === 'veiculo'
                           ? vehicleById[contract.propertyId]
@@ -371,7 +380,7 @@ export function ContractsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            title="Ver imóvel/veículo/equipamento"
+                            title={t('actions.viewAsset')}
                             onClick={() => openContractAsset(contract)}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -379,13 +388,13 @@ export function ContractsPage() {
                         )}
                       </div>
                       <p className="text-muted-foreground">
-                        {formatDate(contract.startDate)} — {formatDateOptional(contract.endDate, 'Indeterminado')}
+                        {formatDate(contract.startDate)} — {formatDateOptional(contract.endDate, t('indefinite'))}
                       </p>
                     </div>
                     <div className="flex items-center justify-between border-t pt-2">
                       <span className="font-semibold text-primary">{formatCurrency(contract.rentValue)}</span>
                       <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" /> Dia {contract.dueDay}
+                        <Calendar className="h-3 w-3" /> {t('dueDayLabel', { day: contract.dueDay })}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1 border-t pt-2">
@@ -402,14 +411,14 @@ export function ContractsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nº Contrato</TableHead>
-                <TableHead>Inquilino</TableHead>
-                <TableHead>Imóvel/Veículo</TableHead>
-                <TableHead>Vigência</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Vencimento</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('columns.number')}</TableHead>
+                <TableHead>{t('columns.tenant')}</TableHead>
+                <TableHead>{t('columns.asset')}</TableHead>
+                <TableHead>{t('columns.validity')}</TableHead>
+                <TableHead>{t('columns.value')}</TableHead>
+                <TableHead>{t('columns.due')}</TableHead>
+                <TableHead>{t('columns.status')}</TableHead>
+                <TableHead className="text-right">{t('columns.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -429,7 +438,7 @@ export function ContractsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0 text-muted-foreground"
-                            title="Ver inquilino"
+                            title={t('actions.viewTenant')}
                             onClick={() => setViewTenant(tenantById[contract.tenantId])}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -442,10 +451,10 @@ export function ContractsPage() {
                         <span>
                           {contract.propertyName || '—'}
                           {contract.assetType === 'veiculo' && (
-                            <span className="ml-1 text-xs">(Veículo)</span>
+                            <span className="ml-1 text-xs">{t('assetVehicle')}</span>
                           )}
                           {contract.assetType === 'equipamento' && (
-                            <span className="ml-1 text-xs">(Equipamento)</span>
+                            <span className="ml-1 text-xs">{t('assetEquipment')}</span>
                           )}
                         </span>
                         {(contract.assetType === 'veiculo'
@@ -457,7 +466,7 @@ export function ContractsPage() {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6 shrink-0"
-                            title="Ver imóvel/veículo/equipamento"
+                            title={t('actions.viewAsset')}
                             onClick={() => openContractAsset(contract)}
                           >
                             <Eye className="h-3.5 w-3.5" />
@@ -466,7 +475,7 @@ export function ContractsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
-                      {formatDate(contract.startDate)} — {formatDateOptional(contract.endDate, 'Indeterminado')}
+                      {formatDate(contract.startDate)} — {formatDateOptional(contract.endDate, t('indefinite'))}
                     </TableCell>
                     <TableCell className="font-semibold text-primary">
                       {formatCurrency(contract.rentValue)}
@@ -474,14 +483,14 @@ export function ContractsPage() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-3 w-3 text-muted-foreground" />
-                        Dia {contract.dueDay}
+                        {t('dueDayLabel', { day: contract.dueDay })}
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         <Badge variant={sc.variant}>{sc.label}</Badge>
                         {warningCountByContract[contract.id] > 0 && (
-                          <Link to="/advertencias" title="Ver advertências">
+                          <Link to="/advertencias" title={t('actions.viewWarnings')}>
                             <Badge variant={warningCountByContract[contract.id] >= 4 ? 'destructive' : 'warning'} className="gap-1">
                               <FileWarning className="h-3 w-3" />
                               {warningCountByContract[contract.id]}
@@ -512,14 +521,14 @@ export function ContractsPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="contratos"
+          itemLabel={t('itemLabel')}
         />
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingContract ? 'Editar Contrato' : 'Novo Contrato'}</DialogTitle>
+            <DialogTitle>{editingContract ? t('editContract') : t('newContract')}</DialogTitle>
           </DialogHeader>
           <ContractForm
             contract={editingContract}
@@ -535,7 +544,7 @@ export function ContractsPage() {
       <Dialog open={!!viewTenant} onOpenChange={() => setViewTenant(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Inquilino</DialogTitle>
+            <DialogTitle>{t('detailTenant')}</DialogTitle>
           </DialogHeader>
           {viewTenant && <TenantDetail tenant={viewTenant} />}
         </DialogContent>
@@ -544,7 +553,7 @@ export function ContractsPage() {
       <Dialog open={!!viewProperty} onOpenChange={() => setViewProperty(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Imóvel</DialogTitle>
+            <DialogTitle>{t('detailProperty')}</DialogTitle>
           </DialogHeader>
           {viewProperty && <PropertyDetail property={viewProperty} />}
         </DialogContent>
@@ -553,7 +562,7 @@ export function ContractsPage() {
       <Dialog open={!!viewVehicle} onOpenChange={() => setViewVehicle(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Veículo</DialogTitle>
+            <DialogTitle>{t('detailVehicle')}</DialogTitle>
           </DialogHeader>
           {viewVehicle && <VehicleDetail vehicle={viewVehicle} />}
         </DialogContent>
@@ -562,7 +571,7 @@ export function ContractsPage() {
       <Dialog open={!!viewEquipment} onOpenChange={() => setViewEquipment(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Equipamento</DialogTitle>
+            <DialogTitle>{t('detailEquipment')}</DialogTitle>
           </DialogHeader>
           {viewEquipment && <EquipmentDetail equipment={viewEquipment} />}
         </DialogContent>

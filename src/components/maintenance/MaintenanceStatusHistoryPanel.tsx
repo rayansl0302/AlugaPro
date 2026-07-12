@@ -1,10 +1,8 @@
+import { useTranslation } from 'react-i18next'
 import type { MaintenanceRequest, MaintenanceStatusHistory } from '@/types'
 import { formatDate } from '@/lib/utils'
-import { getCommentRoleBadgeClass, getCommentRoleLabel, resolveHistoryRole } from '@/lib/maintenanceComments'
-import {
-  maintenanceStatusBadgeVariant,
-  maintenanceStatusLabels,
-} from '@/lib/maintenanceStatus'
+import { getCommentRoleBadgeClass, resolveHistoryRole } from '@/lib/maintenanceComments'
+import { maintenanceStatusBadgeVariant } from '@/lib/maintenanceStatus'
 import { Badge } from '@/components/ui/badge'
 
 interface MaintenanceStatusHistoryPanelProps {
@@ -18,20 +16,21 @@ function formatHistoryDate(entry: MaintenanceStatusHistory) {
 }
 
 export function MaintenanceStatusHistoryPanel({ request }: MaintenanceStatusHistoryPanelProps) {
+  const { t } = useTranslation('maintenance')
   const history = [...(request.statusHistory ?? [])].sort(
     (a, b) => (a.createdAt?.seconds ?? 0) - (b.createdAt?.seconds ?? 0)
   )
 
   return (
     <div className="space-y-2">
-      <p className="text-xs font-medium text-muted-foreground">Histórico de status</p>
+      <p className="text-xs font-medium text-muted-foreground">{t('statusHistory.title')}</p>
       <div className="rounded-xl border bg-muted/20 p-3 space-y-3 max-h-48 overflow-y-auto">
         {history.length === 0 ? (
           <div className="flex items-center gap-2 text-sm">
             <Badge variant={maintenanceStatusBadgeVariant[request.status]}>
-              {maintenanceStatusLabels[request.status]}
+              {t(`statuses.${request.status}`)}
             </Badge>
-            <span className="text-xs text-muted-foreground">Status atual (sem histórico registrado)</span>
+            <span className="text-xs text-muted-foreground">{t('statusHistory.currentNoHistory')}</span>
           </div>
         ) : (
           history.map((entry, index) => {
@@ -48,11 +47,11 @@ export function MaintenanceStatusHistoryPanel({ request }: MaintenanceStatusHist
                 <div className="space-y-1.5">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={maintenanceStatusBadgeVariant[entry.status]} className="text-xs">
-                      {maintenanceStatusLabels[entry.status]}
+                      {t(`statuses.${entry.status}`)}
                     </Badge>
                     {entry.previousStatus && (
                       <span className="text-[11px] text-muted-foreground">
-                        de {maintenanceStatusLabels[entry.previousStatus]}
+                        {t('statusHistory.from', { status: t(`statuses.${entry.previousStatus}`) })}
                       </span>
                     )}
                   </div>
@@ -60,7 +59,7 @@ export function MaintenanceStatusHistoryPanel({ request }: MaintenanceStatusHist
                     <span
                       className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${getCommentRoleBadgeClass(role)}`}
                     >
-                      {getCommentRoleLabel(role)}
+                      {t(`roles.${role}`)}
                     </span>
                     <span className="font-medium">{entry.changedByName}</span>
                     <span className="text-muted-foreground">{formatHistoryDate(entry)}</span>

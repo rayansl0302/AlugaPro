@@ -1,0 +1,104 @@
+{
+  "title": "Inmuebles",
+  "subtitle": "Gestione el portafolio de inmuebles en alquiler.",
+  "add": "Agregar inmueble",
+  "new": "Nuevo inmueble",
+  "edit": "Editar inmueble",
+  "delete": "Eliminar inmueble",
+  "view": "Ver inmueble",
+  "searchPlaceholder": "Buscar por nombre, código o dirección...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Estado",
+    "type": "Tipo",
+    "clear": "Limpiar filtros"
+  },
+  "empty": {
+    "title": "Ningún inmueble registrado",
+    "description": "Registre el primer inmueble para comenzar a gestionar alquileres.",
+    "noResults": "Ningún inmueble coincide con los filtros actuales."
+  },
+  "form": {
+    "title": "Datos del inmueble",
+    "name": "Nombre",
+    "code": "Código",
+    "type": "Tipo",
+    "status": "Estado",
+    "address": "Dirección",
+    "street": "Calle",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Barrio",
+    "city": "Ciudad",
+    "state": "Estado",
+    "zipCode": "Código postal",
+    "value": "Valor del alquiler",
+    "condominium": "Expensas",
+    "iptu": "Impuesto predial",
+    "area": "Área (m²)",
+    "bedrooms": "Dormitorios",
+    "bathrooms": "Baños",
+    "parkingSpaces": "Estacionamientos",
+    "owner": "Propietario",
+    "description": "Descripción",
+    "observations": "Observaciones",
+    "photos": "Fotos"
+  },
+  "detail": {
+    "title": "Detalles del inmueble",
+    "overview": "Resumen",
+    "financial": "Financiero",
+    "contracts": "Contratos",
+    "tenants": "Inquilinos",
+    "maintenance": "Mantenimientos",
+    "documents": "Documentos",
+    "history": "Historial"
+  },
+  "types": {
+    "apartamento": "Apartamento",
+    "casa": "Casa",
+    "kitnet": "Monoambiente",
+    "sala_comercial": "Oficina comercial",
+    "galpao": "Galpón",
+    "terreno": "Terreno",
+    "outro": "Otro"
+  },
+  "statuses": {
+    "disponivel": "Disponible",
+    "alugado": "Alquilado",
+    "reservado": "Reservado",
+    "manutencao": "Mantenimiento",
+    "encerrado": "Cerrado"
+  },
+  "tenantLabel": "Inquilino",
+  "currentTenant": "Inquilino actual",
+  "caution": "Depósito",
+  "itemLabel": "inmuebles",
+  "placeholders": {
+    "name": "Ej: Apto 101 - Edificio Central",
+    "notes": "Notas internas..."
+  },
+  "validation": {
+    "nameRequired": "Nombre obligatorio",
+    "valueRequired": "Valor obligatorio",
+    "ownerRequired": "Propietario obligatorio",
+    "streetRequired": "Calle obligatoria",
+    "numberRequired": "Número obligatorio",
+    "neighborhoodRequired": "Barrio obligatorio",
+    "cityRequired": "Ciudad obligatoria",
+    "stateLength": "El estado debe tener 2 caracteres",
+    "zipInvalid": "Código postal inválido"
+  },
+  "toast": {
+    "created": "Inmueble creado con éxito.",
+    "updated": "Inmueble actualizado con éxito.",
+    "deleted": "Inmueble eliminado con éxito.",
+    "loadError": "Error al cargar inmuebles.",
+    "createError": "Error al crear inmueble.",
+    "updateError": "Error al actualizar inmueble.",
+    "deleteError": "Error al eliminar inmueble.",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este inmueble?",
+    "saveError": "Error al guardar el inmueble."
+  }
+}

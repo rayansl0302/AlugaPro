@@ -1,9 +1,11 @@
+import { useTranslation } from 'react-i18next'
 import { User, IdCard, Mail, Phone, MessageCircle, Calendar, MapPin } from 'lucide-react'
 import { Tenant } from '@/types'
 import { formatCPF, formatPhone, formatDate } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
 export function TenantDetail({ tenant }: { tenant: Tenant }) {
+  const { t } = useTranslation('tenants')
   return (
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -19,7 +21,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           </div>
         </div>
         <Badge variant={tenant.activeContractId ? 'success' : 'secondary'}>
-          {tenant.activeContractId ? 'Com contrato' : 'Sem contrato'}
+          {tenant.activeContractId ? t('withContract') : t('noContract')}
         </Badge>
       </div>
 
@@ -28,7 +30,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <IdCard className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">RG</p>
+              <p className="text-xs text-muted-foreground">{t('form.rg')}</p>
               <p className="font-medium">{tenant.rg}</p>
             </div>
           </div>
@@ -37,7 +39,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Mail className="h-5 w-5 text-muted-foreground" />
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">E-mail</p>
+              <p className="text-xs text-muted-foreground">{t('form.email')}</p>
               <p className="truncate font-medium">{tenant.email}</p>
             </div>
           </div>
@@ -46,7 +48,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Phone className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Telefone</p>
+              <p className="text-xs text-muted-foreground">{t('form.phone')}</p>
               <p className="font-medium">{formatPhone(tenant.phone)}</p>
             </div>
           </div>
@@ -55,7 +57,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <MessageCircle className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">WhatsApp</p>
+              <p className="text-xs text-muted-foreground">{t('form.whatsapp')}</p>
               <p className="font-medium">{formatPhone(tenant.whatsapp)}</p>
             </div>
           </div>
@@ -64,7 +66,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
           <div className="flex items-center gap-3 rounded-lg border p-4">
             <Calendar className="h-5 w-5 text-muted-foreground" />
             <div>
-              <p className="text-xs text-muted-foreground">Data de Nascimento</p>
+              <p className="text-xs text-muted-foreground">{t('form.birthDate')}</p>
               <p className="font-medium">{formatDate(tenant.dateOfBirth)}</p>
             </div>
           </div>
@@ -72,8 +74,8 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
         <div className="flex items-center gap-3 rounded-lg border p-4">
           <User className="h-5 w-5 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Situação</p>
-            <p className="font-medium">{tenant.active ? 'Ativo' : 'Inativo'}</p>
+            <p className="text-xs text-muted-foreground">{t('fields.situation')}</p>
+            <p className="font-medium">{tenant.active ? t('common:ui.active') : t('common:ui.inactive')}</p>
           </div>
         </div>
       </div>
@@ -82,7 +84,7 @@ export function TenantDetail({ tenant }: { tenant: Tenant }) {
         <div className="flex items-start gap-3 rounded-lg border p-4">
           <MapPin className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
           <div>
-            <p className="text-xs text-muted-foreground">Endereço</p>
+            <p className="text-xs text-muted-foreground">{t('form.address')}</p>
             <p className="font-medium">
               {tenant.address.street}, {tenant.address.number}
               {tenant.address.complement && `, ${tenant.address.complement}`}

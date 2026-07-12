@@ -1,0 +1,82 @@
+{
+  "title": "Proprietários",
+  "subtitle": "Gerencie os proprietários dos seus ativos.",
+  "add": "Adicionar proprietário",
+  "new": "Novo proprietário",
+  "edit": "Editar proprietário",
+  "delete": "Excluir proprietário",
+  "view": "Ver proprietário",
+  "searchPlaceholder": "Buscar por nome, CPF/CNPJ ou e-mail...",
+  "filters": {
+    "title": "Filtros",
+    "all": "Todos",
+    "status": "Status",
+    "clear": "Limpar filtros"
+  },
+  "empty": {
+    "title": "Nenhum proprietário cadastrado",
+    "description": "Cadastre o primeiro proprietário para vincular aos ativos.",
+    "noResults": "Nenhum proprietário encontrado com os filtros atuais."
+  },
+  "form": {
+    "title": "Dados pessoais",
+    "name": "Nome completo",
+    "email": "E-mail",
+    "phone": "Telefone",
+    "whatsapp": "WhatsApp",
+    "cpf": "CPF",
+    "cnpj": "CNPJ",
+    "rg": "RG",
+    "birthDate": "Data de nascimento",
+    "nationality": "Nacionalidade",
+    "maritalStatus": "Estado civil",
+    "profession": "Profissão",
+    "address": "Endereço",
+    "street": "Rua",
+    "number": "Número",
+    "complement": "Complemento",
+    "neighborhood": "Bairro",
+    "city": "Cidade",
+    "state": "Estado",
+    "zipCode": "CEP",
+    "bankAccount": "Dados bancários",
+    "pixKey": "Chave PIX",
+    "observations": "Observações",
+    "documents": "Documentos"
+  },
+  "detail": {
+    "title": "Detalhes do proprietário",
+    "personalData": "Dados pessoais",
+    "contact": "Contato",
+    "documents": "Documentos",
+    "assets": "Ativos",
+    "contracts": "Contratos",
+    "financial": "Financeiro",
+    "history": "Histórico"
+  },
+  "photoLabel": "Foto do proprietário",
+  "cpfMissing": "CPF não informado",
+  "itemLabel": "proprietários",
+  "register": "Cadastrar",
+  "placeholders": {
+    "name": "Maria Silva",
+    "email": "maria@email.com"
+  },
+  "validation": {
+    "nameRequired": "Nome obrigatório",
+    "cpfInvalid": "CPF inválido",
+    "emailInvalid": "E-mail inválido",
+    "phoneInvalid": "Telefone inválido"
+  },
+  "toast": {
+    "created": "Proprietário criado com sucesso.",
+    "updated": "Proprietário atualizado com sucesso.",
+    "deleted": "Proprietário excluído com sucesso.",
+    "loadError": "Erro ao carregar proprietários.",
+    "createError": "Erro ao criar proprietário.",
+    "updateError": "Erro ao atualizar proprietário.",
+    "deleteError": "Erro ao excluir proprietário.",
+    "deleteConfirm": "Tem certeza que deseja excluir este proprietário?",
+    "photoError": "Erro ao enviar a foto."
+  }
+}

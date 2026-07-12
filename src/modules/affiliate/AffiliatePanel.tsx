@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { doc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore'
 import {
   Copy, Check, Share2, Gift, Users, UserCheck, Clock, LogOut, Loader2, ShieldCheck, ShieldAlert,
@@ -18,20 +19,13 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
+import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { toast } from '@/hooks/useToast'
 
 const COMMISSION_WAIT_DAYS = 15
 const DEMO_REFERRAL_CODE = 'MARINA'
 
 type ReferralWithStatus = AffiliateReferral & { status?: SubscriptionStatus; activeSince?: Timestamp }
-
-const STATUS_CONFIG: Record<SubscriptionStatus, { label: string; variant: 'success' | 'warning' | 'destructive' | 'secondary' }> = {
-  trialing: { label: 'Em teste', variant: 'warning' },
-  active: { label: 'Ativo', variant: 'success' },
-  past_due: { label: 'Pagamento atrasado', variant: 'destructive' },
-  canceled: { label: 'Cancelado', variant: 'secondary' },
-  expired: { label: 'Expirado', variant: 'secondary' },
-}
 
 function daysAgo(n: number): Timestamp {
   return Timestamp.fromMillis(Date.now() - n * 86_400_000)
@@ -48,11 +42,19 @@ const DEMO_REFERRALS: ReferralWithStatus[] = [
 // api/checkout.ts e AfiliadosPage.tsx)
 const AFFILIATE_COMMISSION_RATE = 7
 
-function eligibility(r: ReferralWithStatus): { label: string; variant: 'success' | 'outline' } | null {
+const STATUS_VARIANT: Record<SubscriptionStatus, 'success' | 'warning' | 'destructive' | 'secondary'> = {
+  trialing: 'warning',
+  active: 'success',
+  past_due: 'destructive',
+  canceled: 'secondary',
+  expired: 'secondary',
+}
+
+function eligibilityDays(r: ReferralWithStatus): number | null {
   if (r.status !== 'active' || !r.activeSince) return null
   const daysSince = Math.floor((Date.now() - r.activeSince.toMillis()) / 86_400_000)
-  if (daysSince >= COMMISSION_WAIT_DAYS) return { label: 'Elegível p/ comissão', variant: 'success' }
-  return { label: `Comissão em ${COMMISSION_WAIT_DAYS - daysSince}d`, variant: 'outline' }
+  if (daysSince >= COMMISSION_WAIT_DAYS) return 0
+  return COMMISSION_WAIT_DAYS - daysSince
 }
 
 async function fetchReferralsWithStatus(code: string): Promise<ReferralWithStatus[]> {
@@ -66,7 +68,13 @@ async function fetchReferralsWithStatus(code: string): Promise<ReferralWithStatu
   )
 }
 
+function statusKey(status: SubscriptionStatus): string {
+  if (status === 'past_due') return 'pastDue'
+  return status
+}
+
 export function AffiliatePanel() {
+  const { t } = useTranslation('affiliate')
   const { user, logout, updateLocalUser } = useAuth()
   const [copied, setCopied] = useState<'code' | 'link' | null>(null)
   const code = user?.referralCode ?? ''
@@ -93,15 +101,15 @@ export function AffiliatePanel() {
     try {
       await navigator.clipboard.writeText(value)
       setCopied(which)
-      toast({ title: which === 'code' ? 'Código copiado!' : 'Link copiado!' })
+      toast({ title: which === 'code' ? t('referral.codeCopied') : t('referral.linkCopied') })
       setTimeout(() => setCopied((c) => (c === which ? null : c)), 2000)
     } catch {
-      toast({ title: 'Não foi possível copiar.', variant: 'destructive' })
+      toast({ title: t('referral.copyFailed'), variant: 'destructive' })
     }
   }
 
   const shareWhatsApp = () => {
-    const text = `Conheça o AlugaPro, o sistema que uso para gestão de aluguéis: ${link}`
+    const text = t('referral.shareWhatsAppText', { link })
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank')
   }
 
@@ -116,7 +124,7 @@ export function AffiliatePanel() {
       cpfDigits.length !== 11 || !pixKey.trim() || !documentPhotoUrl || !documentSelfieUrl ||
       !phone.trim() || !walletIdClean
     ) {
-      toast({ title: 'Preencha todos os campos — CPF, PIX, fotos, telefone e Wallet ID — antes de salvar.', variant: 'destructive' })
+      toast({ title: t('kyc.validationError'), variant: 'destructive' })
       return
     }
     setSavingKyc(true)
@@ -134,9 +142,9 @@ export function AffiliatePanel() {
         await setDoc(doc(db, 'users', uid), { ...patch, kycSubmittedAt: serverTimestamp(), updatedAt: serverTimestamp() }, { merge: true })
       }
       updateLocalUser({ ...patch, kycSubmittedAt: Timestamp.now() })
-      toast({ title: 'Dados de recebimento salvos!' })
+      toast({ title: t('kyc.saveSuccess') })
     } catch {
-      toast({ title: 'Erro ao salvar. Tente novamente.', variant: 'destructive' })
+      toast({ title: t('kyc.saveError'), variant: 'destructive' })
     } finally {
       setSavingKyc(false)
     }
@@ -150,8 +158,9 @@ export function AffiliatePanel() {
             <img src="/logo-completa-horizontal-alugapro.png" alt="AlugaPro" className="h-8 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-3">
+            <LanguageSelector />
             <span className="hidden text-sm font-medium text-muted-foreground sm:inline">{user?.name}</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title="Sair">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title={t('panel.logout')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -160,37 +169,37 @@ export function AffiliatePanel() {
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6">
         <div>
-          <h1 className="text-xl font-bold text-[#032B61]">Painel de afiliado</h1>
+          <h1 className="text-xl font-bold text-[#032B61]">{t('panel.title')}</h1>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            Compartilhe seu link, acompanhe suas indicações e receba por cada cliente ativo.
+            {t('panel.subtitle')}
           </p>
         </div>
 
         <Card className="border-[#032B61]/15 bg-white shadow-sm">
           <CardContent className="p-6">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Seu código de indicação</p>
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('referral.codeLabel')}</p>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <span className="rounded-lg bg-[#032B61]/5 px-4 py-2 font-mono text-2xl font-bold tracking-widest text-[#032B61]">
                 {code || '------'}
               </span>
               <Button variant="outline" size="sm" onClick={() => copy(code, 'code')}>
                 {copied === 'code' ? <Check className="mr-1.5 h-4 w-4" /> : <Copy className="mr-1.5 h-4 w-4" />}
-                Copiar código
+                {t('referral.copyCode')}
               </Button>
             </div>
 
-            <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Seu link de indicação</p>
+            <p className="mt-5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t('referral.linkLabel')}</p>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
                 {link}
               </code>
               <Button variant="outline" size="sm" onClick={() => copy(link, 'link')}>
                 {copied === 'link' ? <Check className="mr-1.5 h-4 w-4" /> : <Copy className="mr-1.5 h-4 w-4" />}
-                Copiar
+                {t('referral.copyLink')}
               </Button>
               <Button size="sm" className="bg-[#25D366] text-white hover:bg-[#25D366]/90" onClick={shareWhatsApp}>
                 <Share2 className="mr-1.5 h-4 w-4" />
-                Compartilhar
+                {t('referral.share')}
               </Button>
             </div>
           </CardContent>
@@ -199,73 +208,71 @@ export function AffiliatePanel() {
         <Card className={kycComplete ? 'border-emerald-200' : 'border-amber-200'}>
           <CardContent className="space-y-4 p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-sm font-semibold">Dados para recebimento</h2>
+              <h2 className="text-sm font-semibold">{t('kyc.title')}</h2>
               {kycComplete ? (
-                <Badge variant="success" className="gap-1"><ShieldCheck className="h-3 w-3" /> Verificação enviada</Badge>
+                <Badge variant="success" className="gap-1"><ShieldCheck className="h-3 w-3" /> {t('kyc.statusSubmitted')}</Badge>
               ) : (
-                <Badge variant="warning" className="gap-1"><ShieldAlert className="h-3 w-3" /> Pendente</Badge>
+                <Badge variant="warning" className="gap-1"><ShieldAlert className="h-3 w-3" /> {t('kyc.statusPending')}</Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Para receber suas comissões, precisamos confirmar sua identidade. Usamos esses dados apenas
-              para validação e pagamento, conforme nossa{' '}
-              <Link to="/politica-de-privacidade" className="underline">Política de Privacidade</Link>.
+              {t('kyc.description').split(t('kyc.privacyPolicy'))[0]}
+              <Link to="/politica-de-privacidade" className="underline">{t('kyc.privacyPolicy')}</Link>
+              {t('kyc.description').split(t('kyc.privacyPolicy'))[1] ?? ''}
             </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-cpf">CPF</Label>
+                <Label htmlFor="kyc-cpf">{t('kyc.fields.cpf')}</Label>
                 <Input
                   id="kyc-cpf"
                   value={cpf}
                   onChange={(e) => setCpf(maskCPF(e.target.value))}
-                  placeholder="000.000.000-00"
+                  placeholder={t('kyc.fields.cpfPlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-pix">Chave PIX</Label>
+                <Label htmlFor="kyc-pix">{t('kyc.fields.pixKey')}</Label>
                 <Input
                   id="kyc-pix"
                   value={pixKey}
                   onChange={(e) => setPixKey(e.target.value)}
-                  placeholder="CPF, e-mail, telefone ou chave aleatória"
+                  placeholder={t('kyc.fields.pixKeyPlaceholder')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-phone">Telefone (com DDD)</Label>
+                <Label htmlFor="kyc-phone">{t('kyc.fields.phone')}</Label>
                 <Input
                   id="kyc-phone"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(00) 00000-0000"
+                  placeholder={t('kyc.fields.phonePlaceholder')}
                 />
               </div>
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="kyc-wallet">Wallet ID da Asaas</Label>
+                <Label htmlFor="kyc-wallet">{t('kyc.fields.walletId')}</Label>
                 <Input
                   id="kyc-wallet"
                   value={walletId}
                   onChange={(e) => setWalletId(e.target.value)}
-                  placeholder="Ex: 720806d7-aa02-48c0-83fa-6e0357157ba7"
+                  placeholder={t('kyc.fields.walletIdPlaceholder')}
                 />
                 <p className="text-[11px] text-muted-foreground">
-                  É pra onde sua comissão será enviada automaticamente. Crie uma conta gratuita em{' '}
-                  <a href="https://www.asaas.com" target="_blank" rel="noopener noreferrer" className="underline">asaas.com</a>
-                  {' '}(se ainda não tiver uma) e copie o Wallet ID em Integrações → Início, no menu superior direito do painel da Asaas.
+                  {t('kyc.fields.walletIdHelp')}
                 </p>
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <MultiPhotoUpload
-                label="Foto do documento (RG, CNH ou similar)"
+                label={t('kyc.fields.documentPhoto')}
                 value={documentPhotoUrl ? [documentPhotoUrl] : []}
                 onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'document', file)}
                 onChange={(urls) => setDocumentPhotoUrl(urls[0] ?? '')}
                 max={1}
               />
               <MultiPhotoUpload
-                label="Foto sua segurando o documento"
+                label={t('kyc.fields.documentSelfie')}
                 value={documentSelfieUrl ? [documentSelfieUrl] : []}
                 onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'selfie', file)}
                 onChange={(urls) => setDocumentSelfieUrl(urls[0] ?? '')}
@@ -275,7 +282,7 @@ export function AffiliatePanel() {
 
             <Button onClick={handleSaveKyc} disabled={savingKyc}>
               {savingKyc && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Salvar dados
+              {t('kyc.save')}
             </Button>
           </CardContent>
         </Card>
@@ -287,7 +294,7 @@ export function AffiliatePanel() {
                 <Users className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Indicações</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t('earnings.referrals')}</p>
                 <p className="text-lg font-bold">{referrals.length}</p>
               </div>
             </CardContent>
@@ -298,7 +305,7 @@ export function AffiliatePanel() {
                 <UserCheck className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Clientes ativos</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t('earnings.activeClients')}</p>
                 <p className="text-lg font-bold">{activeCount}</p>
               </div>
             </CardContent>
@@ -309,7 +316,7 @@ export function AffiliatePanel() {
                 <Clock className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Em teste</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted-foreground">{t('earnings.inTrial')}</p>
                 <p className="text-lg font-bold">{trialCount}</p>
               </div>
             </CardContent>
@@ -319,7 +326,7 @@ export function AffiliatePanel() {
         <Card>
           <CardContent className="p-0">
             <div className="border-b px-4 py-3">
-              <h2 className="text-sm font-semibold">Suas indicações</h2>
+              <h2 className="text-sm font-semibold">{t('earnings.yourReferrals')}</h2>
             </div>
             {isLoading ? (
               <div className="space-y-2 p-4">
@@ -330,16 +337,15 @@ export function AffiliatePanel() {
             ) : referrals.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 text-center">
                 <Gift className="h-10 w-10 text-muted-foreground/30" />
-                <p className="mt-3 font-medium text-muted-foreground">Nenhuma indicação ainda</p>
+                <p className="mt-3 font-medium text-muted-foreground">{t('earnings.emptyTitle')}</p>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground/80">
-                  Compartilhe seu link para começar a indicar e acompanhar aqui.
+                  {t('earnings.emptyDescription')}
                 </p>
               </div>
             ) : (
               <ul className="divide-y">
                 {referrals.map((r) => {
-                  const sc = r.status ? STATUS_CONFIG[r.status] : null
-                  const elig = eligibility(r)
+                  const daysLeft = eligibilityDays(r)
                   return (
                     <li key={r.id} className="flex items-center justify-between gap-3 px-4 py-3">
                       <div className="min-w-0">
@@ -349,8 +355,18 @@ export function AffiliatePanel() {
                         </p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1">
-                        {sc ? <Badge variant={sc.variant}>{sc.label}</Badge> : <Badge variant="outline">—</Badge>}
-                        {elig && <Badge variant={elig.variant} className="text-[10px]">{elig.label}</Badge>}
+                        {r.status ? (
+                          <Badge variant={STATUS_VARIANT[r.status]}>{t(`status.${statusKey(r.status)}`)}</Badge>
+                        ) : (
+                          <Badge variant="outline">—</Badge>
+                        )}
+                        {daysLeft !== null && (
+                          <Badge variant={daysLeft === 0 ? 'success' : 'outline'} className="text-[10px]">
+                            {daysLeft === 0
+                              ? t('commission.eligible')
+                              : t('commission.commissionInDays', { days: daysLeft })}
+                          </Badge>
+                        )}
                       </div>
                     </li>
                   )
@@ -361,12 +377,9 @@ export function AffiliatePanel() {
         </Card>
 
         <div className="rounded-xl border border-[#032B61]/10 bg-[#032B61]/5 p-4 text-sm text-[#032B61]">
-          <p className="font-medium">Como funciona o pagamento</p>
+          <p className="font-medium">{t('commission.howPaymentWorks')}</p>
           <p className="mt-1 text-[#032B61]/80">
-            Sua comissão recorrente é de <strong>{AFFILIATE_COMMISSION_RATE}%</strong> sobre a mensalidade
-            de cada cliente ativo indicado por você. O pagamento começa a contar apenas após o cliente
-            indicado completar 15 dias ativo. Mantenha seus dados de recebimento em dia para não atrasar
-            o pagamento.
+            {t('commission.description')} {t('commission.waitingPeriodNote')} {t('commission.keepDataUpdated')}
           </p>
         </div>
       </main>

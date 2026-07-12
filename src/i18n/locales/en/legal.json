@@ -1,0 +1,257 @@
+{
+  "common": {
+    "updatedAt": "Updated on {{date}}",
+    "lastUpdated": "Last updated: {{date}}",
+    "backToSite": "Back to site",
+    "supportEmail": "suporte@alugapro.com.br",
+    "siteDomain": "alugapro.tech.br"
+  },
+  "terms": {
+    "pageTitle": "Terms of Use",
+    "updatedAt": "June 26, 2026",
+    "sections": {
+      "acceptance": {
+        "title": "1. Acceptance of Terms",
+        "body": [
+          "By accessing or using the AlugaPro platform, you declare that you have read, understood, and agreed to these Terms of Use. If you do not agree with any provision, do not use the service.",
+          "These terms constitute an agreement between you (the user) and AlugaPro, applicable to managers, administrators, owners, tenants, affiliates, and other enabled profiles on the platform."
+        ]
+      },
+      "definitions": {
+        "title": "2. Definitions",
+        "body": [
+          "Platform: the AlugaPro system, including the web panel, tenant portal, affiliate panel, and rental management features.",
+          "User: an individual or legal entity registered with a login and password, or authenticated through integrated providers.",
+          "Company: the organization to which the manager user's data and operations are linked in the system.",
+          "Content: information, documents, contracts, images, and other data entered by users on the platform."
+        ]
+      },
+      "account": {
+        "title": "3. Registration and Account Responsibilities",
+        "body": [
+          "The user is responsible for providing accurate information, keeping credentials confidential, and immediately notifying any unauthorized use of their account.",
+          "Each access profile has specific permissions. The manager is responsible for granting appropriate access to collaborators, tenants, and other parties involved in the rental operation."
+        ]
+      },
+      "allowedUse": {
+        "title": "4. Permitted Use",
+        "body": [
+          "You agree to use AlugaPro only for lawful purposes related to rental management, including: registering and managing properties, vehicles, equipment, owners, and tenants; generating, signing, and storing contracts; controlling charges, payments, and delinquency; operational communication among parties involved in the rental; and referring new clients through the Affiliate Program.",
+          "It is prohibited to use the platform for fraudulent or illegal activities, for violating third-party rights, or for compromising system security."
+        ]
+      },
+      "services": {
+        "title": "5. Services Offered",
+        "body": [
+          "AlugaPro provides rental management tools, including digital contracts, charges, reports, tenant portal, notifications, and document storage. Features may be updated, expanded, or discontinued as the product evolves.",
+          "Contract templates provided by the system are for guidance only. Legal review of contractual content is the responsibility of the manager user or their attorney."
+        ]
+      },
+      "digitalContracts": {
+        "title": "6. Digital Contracts and Signatures",
+        "body": [
+          "The platform allows collection of signatures from landlord, tenant, and witnesses electronically. The user is responsible for ensuring party identification and the validity of the signature process under applicable law.",
+          "AlugaPro acts as a supporting technology tool and does not replace specialized legal advice in formalizing rental agreements."
+        ]
+      },
+      "payments": {
+        "title": "7. Payments, Charges, and Receipts",
+        "body": [
+          "Recording charges, payments, and receipts on the platform does not, by itself, constitute financial intermediation or a payment institution, unless expressly stated.",
+          "Amounts, due dates, fines, and fees must be verified by the manager. Confirming payments based on receipts submitted by tenants is the responsibility of the authorized company user."
+        ]
+      },
+      "affiliates": {
+        "title": "8. Affiliate Program",
+        "body": [
+          "The Affiliate Program allows anyone to refer AlugaPro and receive commission for active clients resulting from the referral.",
+          "Commission is recurring, at 7% of the referred client's monthly subscription fee, for as long as they remain active.",
+          "Commission payment is only due after the referred client remains active for at least 15 (fifteen) consecutive days.",
+          "To receive payments, the affiliate must complete identity verification, providing CPF (Brazilian tax ID), a PIX key, and the documents requested on the platform.",
+          "AlugaPro may review, suspend, or refuse commission payments in cases of suspected fraud, invalid referrals, incorrect verification data, or breach of these Terms.",
+          "Commission conditions may be adjusted upon reasonable prior notice to active affiliates."
+        ]
+      },
+      "intellectualProperty": {
+        "title": "9. Intellectual Property",
+        "body": [
+          "AlugaPro's brand, layout, code, visual identity, and features are protected by intellectual property law. Unauthorized reproduction, reverse engineering, or commercial exploitation of the platform is prohibited.",
+          "Content entered by the user remains their property, granting AlugaPro the license necessary to host, process, and display such data in operating the service."
+        ]
+      },
+      "liability": {
+        "title": "10. Availability and Limitation of Liability",
+        "body": [
+          "We make reasonable efforts to keep the platform available and secure, but we do not guarantee uninterrupted or error-free operation.",
+          "AlugaPro is not liable for losses arising from improper use of the platform, incorrect information entered by users, unavailability of third-party services (such as cloud, email, or SMS providers), or business decisions made based on system reports."
+        ]
+      },
+      "suspension": {
+        "title": "11. Suspension and Termination",
+        "body": [
+          "We may suspend or terminate accounts in case of violation of these Terms, suspected fraud, legal order, or risk to the security of the platform and other users.",
+          "The user may request account termination through available support channels, subject to legal data retention obligations."
+        ]
+      },
+      "changes": {
+        "title": "12. Changes to These Terms",
+        "body": [
+          "These Terms may be updated periodically. Material changes will be communicated through reasonable means, such as a notice on the platform or by email. Continued use after changes take effect implies acceptance of the new version."
+        ]
+      },
+      "governingLaw": {
+        "title": "13. Governing Law and Venue",
+        "body": [
+          "These Terms are governed by the laws of the Federative Republic of Brazil. The court of the consumer user's domicile is elected when applicable, or another competent venue under applicable law."
+        ]
+      },
+      "contact": {
+        "title": "14. Contact",
+        "body": [
+          "Questions about these Terms may be sent to suporte@alugapro.com.br."
+        ]
+      }
+    }
+  },
+  "privacy": {
+    "pageTitle": "Privacy Policy",
+    "updatedAt": "June 25, 2026",
+    "sections": {
+      "introduction": {
+        "title": "1. Introduction",
+        "body": [
+          "This Privacy Policy describes how AlugaPro collects, uses, stores, and protects personal data of platform users, in accordance with Brazil's General Data Protection Law (Law No. 13.709/2018 — LGPD) and other applicable rules.",
+          "By using AlugaPro, you agree to the practices described in this document."
+        ]
+      },
+      "controller": {
+        "title": "2. Data Controller",
+        "body": [
+          "The controller of personal data processed on this platform is AlugaPro, responsible for decisions regarding the processing of registered users' data.",
+          "Contact for privacy matters: suporte@alugapro.com.br."
+        ]
+      },
+      "dataCollected": {
+        "title": "3. Personal Data Collected",
+        "body": [
+          "We may process the following categories of data, depending on platform use:",
+          "Identification: name, CPF, CNPJ, photo, identification documents.",
+          "Contact: email, phone, WhatsApp, address.",
+          "Account: access credentials, profile, role (manager, tenant, affiliate, admin).",
+          "Contractual and financial: contracts, amounts, charges, receipts, payment history.",
+          "Assets: property, vehicle, and equipment data, and rental information.",
+          "Technical: access logs, IP address, device identifiers, essential cookies.",
+          "Communication: records of notifications sent (email, SMS, push, when enabled)."
+        ]
+      },
+      "affiliateData": {
+        "title": "4. Affiliate Program Data",
+        "body": [
+          "To join the Affiliate Program and receive commissions, we collect additional data needed for identity validation and payment: CPF; PIX key for receiving amounts; photo of an identification document with photo (ID card, driver's license, or similar); photo of the affiliate holding the identification document, to confirm ownership.",
+          "This data is processed solely to prevent fraud, confirm the affiliate's identity, and enable commission payments, based on the data subject's consent and compliance with legal obligations applicable to financial operations. Access is restricted to the team responsible for affiliate validation and payment, and documents are not used for any other purpose."
+        ]
+      },
+      "purposes": {
+        "title": "5. Processing Purposes",
+        "body": [
+          "Data is used to: authenticate users and control access permissions; operate rental management features and the tenant portal; generate, sign, and store contracts and related documents; process charges, record payments, and track delinquency; validate identity and process Affiliate Program commission payments; send operational communications and configured alerts; improve security, performance, and user experience; comply with legal obligations and respond to authority requests."
+        ]
+      },
+      "legalBases": {
+        "title": "6. Legal Bases (LGPD)",
+        "body": [
+          "Personal data processing is based, as applicable, on: performance of a contract or pre-contractual steps; compliance with a legal or regulatory obligation; legitimate interest, with impact assessment and minimization measures; the data subject's consent, when required (e.g., phone verification, Affiliate Program documents, optional communications)."
+        ]
+      },
+      "sharing": {
+        "title": "7. Data Sharing",
+        "body": [
+          "Data may be shared with service providers essential to platform operation, such as cloud hosting, authentication, email delivery, file storage, and messaging services, always under contracts and security measures compatible with the LGPD.",
+          "We do not sell personal data. Sharing with third parties may also occur by legal requirement, court order, or to protect the rights of AlugaPro and its users."
+        ]
+      },
+      "security": {
+        "title": "8. Storage and Security",
+        "body": [
+          "We adopt technical and organizational measures to protect data, including role-based access control, database security rules, encrypted communication (HTTPS), and data segregation by company (multi-tenant).",
+          "Despite security efforts, no system is fully immune to incidents. In case of a relevant data breach, we will follow response and notification procedures under applicable law."
+        ]
+      },
+      "retention": {
+        "title": "9. Data Retention",
+        "body": [
+          "Data is kept for as long as necessary to fulfill the described purposes, legal obligations, regular exercise of rights, and dispute resolution. After that period, it may be deleted or anonymized, unless otherwise required by law."
+        ]
+      },
+      "rights": {
+        "title": "10. Data Subject Rights",
+        "body": [
+          "Under the LGPD, you may request: confirmation that processing exists; access, correction, or update of data; anonymization, blocking, or deletion of unnecessary data; portability, when applicable; information about sharing; withdrawal of consent, when processing is based on consent.",
+          "Requests may be sent to suporte@alugapro.com.br. We will respond within legal timeframes."
+        ]
+      },
+      "cookies": {
+        "title": "11. Cookies and Similar Technologies",
+        "body": [
+          "We use cookies and local storage strictly necessary for authentication, interface preferences (such as theme), and application operation. We do not use third-party advertising tracking cookies without prior consent."
+        ]
+      },
+      "minors": {
+        "title": "12. Data of Minors",
+        "body": [
+          "The platform is not intended for individuals under 18 years of age. We do not knowingly collect data from children or adolescents. If we identify such a situation, we will take steps to delete the data."
+        ]
+      },
+      "internationalTransfer": {
+        "title": "13. International Transfer",
+        "body": [
+          "Some infrastructure providers may process data outside Brazil. In those cases, we require contractual and technical safeguards compatible with the LGPD to protect data subjects."
+        ]
+      },
+      "changes": {
+        "title": "14. Changes to This Policy",
+        "body": [
+          "This Policy may be updated to reflect legal, technical, or operational changes. The date of the last revision will be shown at the top of the page. We recommend reviewing this document periodically."
+        ]
+      },
+      "contact": {
+        "title": "15. Contact",
+        "body": [
+          "For questions, requests, or complaints related to privacy and data protection, contact us at suporte@alugapro.com.br."
+        ]
+      }
+    }
+  },
+  "accountDeletion": {
+    "pageTitle": "Account and Data Deletion",
+    "updatedAt": "July 6, 2026",
+    "sections": {
+      "howToRequest": {
+        "title": "1. How to request deletion",
+        "body": [
+          "To request deletion of your AlugaPro account and associated personal data, send an email to suporte@alugapro.com.br from the address registered on the platform, with the subject \"Account deletion\", stating: full registered name; login email; and whether you are a manager/owner, tenant, or affiliate.",
+          "We will confirm the request and account closure within 15 business days, in accordance with Brazil's General Data Protection Law (LGPD) timeframes."
+        ]
+      },
+      "whatIsDeleted": {
+        "title": "2. What is deleted",
+        "body": [
+          "Upon confirming deletion, we permanently remove: identification and contact data (name, CPF, email, phone, address, photos, documents); access credentials and account profile; personal preferences and settings."
+        ]
+      },
+      "retention": {
+        "title": "3. What may be retained, and for how long",
+        "body": [
+          "Some data linked to contracts, charges, and payment receipts may be retained even after account deletion when required by legal, tax, or accounting obligations (e.g., keeping financial documents), for up to 5 (five) years, or for the period needed for regular exercise of rights and dispute resolution. This data is kept only for those specific purposes and is not used for any other purpose.",
+          "If the account belongs to a manager with active contracts or linked tenants, deleting the manager's account does not automatically erase data of tenants linked to ongoing contracts — in that case, we will contact you to guide proper termination of those relationships before deletion."
+        ]
+      },
+      "questions": {
+        "title": "4. Questions",
+        "body": [
+          "For more details on how we handle personal data, see our Privacy Policy."
+        ]
+      }
+    }
+  }
+}

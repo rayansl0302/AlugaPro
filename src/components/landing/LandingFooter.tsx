@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { motion } from 'framer-motion'
 import { Building2, Mail } from 'lucide-react'
 import { fadeInUp, staggerContainer, viewportOnce } from '@/lib/motion'
 
 export function LandingFooter() {
+  const { t } = useTranslation('landing')
   const year = new Date().getFullYear()
 
   return (
@@ -25,94 +27,94 @@ export function LandingFooter() {
               />
             </Link>
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted-foreground">
-              Plataforma completa para gestão de aluguéis de imóveis e veículos, com contratos digitais e controle financeiro.
+              {t('site.tagline')}
             </p>
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">Acesso</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">{t('footer.access')}</h3>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link to="/login" className="transition-colors hover:text-[#032B61]">
-                  Acessar sistema
+                  {t('footer.accessSystem')}
                 </Link>
               </li>
               <li>
                 <Link to="/login?tab=inquilino" className="transition-colors hover:text-[#032B61]">
-                  Portal do inquilino
+                  {t('footer.tenantPortal')}
                 </Link>
               </li>
             </ul>
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">Plataforma</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">{t('footer.platform')}</h3>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link to="/recursos" className="transition-colors hover:text-[#032B61]">
-                  Recursos
+                  {t('footer.resources')}
                 </Link>
               </li>
               <li>
                 <a href="#como-funciona" className="transition-colors hover:text-[#032B61]">
-                  Como funciona
+                  {t('footer.howItWorks')}
                 </a>
               </li>
               <li>
                 <a href="#para-quem" className="transition-colors hover:text-[#032B61]">
-                  Para quem é
+                  {t('footer.forWhom')}
                 </a>
               </li>
               <li>
                 <Link to="/afiliados" className="transition-colors hover:text-[#032B61]">
-                  Programa de afiliados
+                  {t('footer.affiliateProgram')}
                 </Link>
               </li>
             </ul>
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">Legal</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">{t('footer.legal')}</h3>
             <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
               <li>
                 <Link to="/termos" className="transition-colors hover:text-[#032B61]">
-                  Termos de Uso
+                  {t('footer.termsOfUse')}
                 </Link>
               </li>
               <li>
                 <Link to="/politica-de-privacidade" className="transition-colors hover:text-[#032B61]">
-                  Política de Privacidade
+                  {t('footer.privacyPolicy')}
                 </Link>
               </li>
             </ul>
           </motion.div>
 
           <motion.div variants={fadeInUp}>
-            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">Contato</h3>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-[#032B61]">{t('footer.contact')}</h3>
             <ul className="mt-4 space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Building2 className="h-4 w-4 shrink-0 text-[#032B61]/50" />
-                <span>Gestão de locações inteligente</span>
+                <span>{t('footer.contactTagline')}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4 shrink-0 text-[#032B61]/50" />
-                <span>suporte@alugapro.com.br</span>
+                <span>{t('site.supportEmail')}</span>
               </li>
             </ul>
           </motion.div>
         </motion.div>
 
         <div className="mt-10 flex flex-col items-center justify-between gap-4 border-t border-slate-200 pt-8 text-xs text-muted-foreground sm:flex-row">
-          <p>© {year} AlugaPro. Todos os direitos reservados.</p>
+          <p>{t('footer.rightsReserved', { year })}</p>
           <div className="flex flex-wrap justify-center gap-4 sm:gap-6">
             <Link to="/termos" className="transition-colors hover:text-[#032B61]">
-              Termos de Uso
+              {t('footer.termsOfUse')}
             </Link>
             <Link to="/politica-de-privacidade" className="transition-colors hover:text-[#032B61]">
-              Política de Privacidade
+              {t('footer.privacyPolicy')}
             </Link>
             <Link to="/login" className="transition-colors hover:text-[#032B61]">
-              Entrar
+              {t('footer.login')}
             </Link>
           </div>
         </div>

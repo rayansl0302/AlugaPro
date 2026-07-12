@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useTranslation } from 'react-i18next'
 import {
   Building2, Users, Home, TrendingUp, TrendingDown, Clock,
   AlertTriangle, Wrench, DollarSign, FileText, MessageSquare,
@@ -20,6 +20,8 @@ import { getProperties } from '@/services/properties'
 import { getCharges } from '@/services/charges'
 import { getTenants } from '@/services/tenants'
 import { getMaintenanceRequests } from '@/services/maintenance'
+import i18n from '@/i18n'
+import { getDateFnsLocale } from '@/i18n/dateLocales'
 
 const CHART_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -55,6 +57,7 @@ function KpiCard({
 }
 
 export function DashboardPage() {
+  const { t } = useTranslation('dashboard')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
 
@@ -101,21 +104,21 @@ export function DashboardPage() {
     if (tenant?.whatsapp) {
       window.open(`https://wa.me/55${tenant.whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
     } else {
-      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      toast({ title: t('recentActivity.whatsAppMissing'), variant: 'destructive' })
     }
   }
 
   const occupancyData = [
-    { name: 'Alugados', value: rented },
-    { name: 'Vagos', value: vacant },
-    { name: 'Manutenção', value: properties.filter((p) => p.status === 'manutencao').length },
+    { name: t('charts.rented'), value: rented },
+    { name: t('charts.vacant'), value: vacant },
+    { name: t('charts.maintenance'), value: properties.filter((p) => p.status === 'manutencao').length },
   ]
 
   const monthlyData = useMemo(() => {
     const now = new Date()
     const months = Array.from({ length: 6 }, (_, i) => {
       const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1)
-      const label = format(d, 'MMM', { locale: ptBR }).replace('.', '')
+      const label = format(d, 'MMM', { locale: getDateFnsLocale(i18n.language) }).replace('.', '')
       return {
         key: `${d.getFullYear()}-${d.getMonth()}`,
         mes: label.charAt(0).toUpperCase() + label.slice(1),
@@ -136,39 +139,39 @@ export function DashboardPage() {
       else if (c.status === 'pendente' || c.status === 'atrasado') bucket.pendente += c.amount
     }
     return months
-  }, [charges])
+  }, [charges, i18n.language])
 
   return (
     <div className="space-y-6">
       {/* KPIs */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
         <KpiCard
-          title="Total de Imóveis"
+          title={t('indicators.totalProperties')}
           value={properties.length}
           icon={Building2}
           color="bg-blue-500"
         />
         <KpiCard
-          title="Alugados"
+          title={t('indicators.rented')}
           value={rented}
           icon={Home}
           color="bg-emerald-500"
-          sub={`${vacant} vagos`}
+          sub={`${vacant} ${t('indicators.vacant')}`}
         />
         <KpiCard
-          title="Receita Prevista"
+          title={t('indicators.expectedRevenue')}
           value={formatCurrency(expectedRevenue)}
           icon={TrendingUp}
           color="bg-indigo-500"
         />
         <KpiCard
-          title="Receita Recebida"
+          title={t('indicators.receivedRevenue')}
           value={formatCurrency(receivedRevenue)}
           icon={DollarSign}
           color="bg-green-500"
         />
         <KpiCard
-          title="Inadimplentes"
+          title={t('indicators.overdue')}
           value={overdueCharges.length}
           icon={AlertTriangle}
           color="bg-red-500"
@@ -178,25 +181,25 @@ export function DashboardPage() {
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard
-          title="Cobranças Vencidas"
+          title={t('indicators.overdueCharges')}
           value={overdueCharges.length}
           icon={Clock}
           color="bg-orange-500"
         />
         <KpiCard
-          title="Pendente"
+          title={t('indicators.pending')}
           value={formatCurrency(pendingRevenue)}
           icon={TrendingDown}
           color="bg-yellow-500"
         />
         <KpiCard
-          title="Inquilinos Ativos"
+          title={t('indicators.activeTenants')}
           value={tenants.filter((t) => t.active).length}
           icon={Users}
           color="bg-purple-500"
         />
         <KpiCard
-          title="Chamados Abertos"
+          title={t('indicators.openTickets')}
           value={openRequests}
           icon={Wrench}
           color="bg-pink-500"
@@ -207,8 +210,8 @@ export function DashboardPage() {
       <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Receitas por Mês</CardTitle>
-            <CardDescription>Comparativo de receita prevista vs recebida</CardDescription>
+            <CardTitle>{t('charts.revenueByMonth')}</CardTitle>
+            <CardDescription>{t('charts.revenueByMonthDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -224,7 +227,7 @@ export function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="pago"
-                  name="Recebido"
+                  name={t('charts.received')}
                   stackId="1"
                   stroke="#10b981"
                   fill="#10b981"
@@ -233,7 +236,7 @@ export function DashboardPage() {
                 <Area
                   type="monotone"
                   dataKey="pendente"
-                  name="Pendente"
+                  name={t('charts.pending')}
                   stackId="1"
                   stroke="#f59e0b"
                   fill="#f59e0b"
@@ -246,8 +249,8 @@ export function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Ocupação</CardTitle>
-            <CardDescription>Status dos imóveis</CardDescription>
+            <CardTitle>{t('charts.occupancy')}</CardTitle>
+            <CardDescription>{t('charts.occupancyDescription')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -279,7 +282,7 @@ export function DashboardPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-destructive">
               <AlertTriangle className="h-5 w-5" />
-              Cobranças Vencidas
+              {t('recentActivity.overdueCharges')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -297,7 +300,7 @@ export function DashboardPage() {
                     <div className="text-right">
                       <p className="font-semibold text-destructive">{formatCurrency(charge.amount)}</p>
                       <Badge variant="destructive" className="text-xs">
-                        {charge.daysLate}d de atraso
+                        {t('recentActivity.daysLate', { days: charge.daysLate })}
                       </Badge>
                     </div>
                     <Button
@@ -307,7 +310,7 @@ export function DashboardPage() {
                       onClick={() => sendWhatsApp(charge)}
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
-                      Notificar
+                      {t('recentActivity.notify')}
                     </Button>
                   </div>
                 </div>

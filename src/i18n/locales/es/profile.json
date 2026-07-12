@@ -1,0 +1,69 @@
+{
+  "title": "Mi Perfil",
+  "personalInfo": "Datos de la cuenta",
+  "language": "Idioma",
+  "languageHint": "Elige el idioma de la interfaz. Los valores monetarios siguen en Real brasileño (BRL).",
+  "phone": "Celular",
+  "verifyPhone": "Verificar teléfono",
+  "savePhone": "Guardar teléfono",
+  "logout": "Salir de la cuenta",
+  "nameReadonly": "Nombre (solo lectura)",
+  "emailReadonly": "Correo electrónico (solo lectura)",
+  "localeSaved": "Preferencia de idioma guardada",
+  "back": "Volver",
+  "subscription": "Suscripción",
+  "fields": {
+    "name": "Nombre",
+    "email": "Correo electrónico",
+    "role": "Perfil"
+  },
+  "subStatus": {
+    "trialing": "Prueba activa",
+    "active": "Activo",
+    "past_due": "Pago pendiente",
+    "canceled": "Cancelado",
+    "expired": "Expirado",
+    "demo": "Admin"
+  },
+  "affiliate": {
+    "cardTitle": "Código de referido",
+    "linked": "Vinculado: {{code}}",
+    "linkedNote": "Esta vinculación es permanente y no se puede cambiar.",
+    "explain": "¿Te refirió alguien? Ingresa su código de referido. La vinculación es única y definitiva — no podrá cambiarse después.",
+    "placeholder": "Ej.: MARINA",
+    "link": "Vincular",
+    "disabledHint": "No es posible vincular un código de referido después de que la suscripción se activa. Esto solo vuelve a estar disponible en una próxima renovación.",
+    "toastEmptyCode": "Ingresa un código de referido.",
+    "confirmLink": "¿Vincular el código \"{{code}}\" a tu cuenta? Esta vinculación es permanente y no se puede deshacer ni cambiar después.",
+    "toastLinked": "¡Código de referido vinculado!",
+    "toastError": "No fue posible vincular este código.",
+    "toastErrorDesc": "Verifica que sea correcto e inténtalo de nuevo."
+  },
+  "sub": {
+    "trialDaysLeft_one": "{{count}} día restante de prueba",
+    "trialDaysLeft_other": "{{count}} días restantes de prueba",
+    "pendingActivation": "Cuenta pendiente de activación",
+    "paymentFailed": "El pago falló — acceso de escritura suspendido",
+    "subscribeToPlan": "Suscríbete a un plan para seguir usando",
+    "active": "Suscripción activa",
+    "activatePlan": "Activar plan",
+    "subscribeNow": "Suscribirse ahora",
+    "regularize": "Regularizar",
+    "manage": "Gestionar"
+  },
+  "phoneCard": {
+    "verified": "Verificado",
+    "notVerified": "No verificado",
+    "realAccountRequired": "La verificación por SMS requiere iniciar sesión en una cuenta real (Firebase). Las cuentas de demostración no pueden verificar el teléfono.",
+    "confirmedBySms": "Número confirmado por SMS",
+    "changeNumber": "Cambiar número",
+    "numberLabel": "Número de celular (con código de área)",
+    "sendCode": "Enviar código",
+    "smsHint": "Enviaremos un código de 6 dígitos por SMS para confirmar el número.",
+    "codeLabel": "Código recibido por SMS",
+    "confirm": "Confirmar",
+    "resendCode": "Reenviar código / corregir número",
+    "cancel": "Cancelar"
+  },
+  "toastPhoneVerified": "Teléfono verificado con éxito."
+}

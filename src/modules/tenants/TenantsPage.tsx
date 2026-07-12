@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { Plus, Search, Users, Phone, Mail, Edit, Trash2, Eye, Building2, Car, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getTenants, deleteTenant } from '@/services/tenants'
@@ -24,6 +25,7 @@ import { VehicleDetail } from '../vehicles/VehicleDetail'
 import { getInitials } from '@/lib/utils'
 
 export function TenantsPage() {
+  const { t } = useTranslation('tenants')
   const { user } = useAuth()
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
@@ -79,22 +81,22 @@ export function TenantsPage() {
     mutationFn: deleteTenant,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['tenants'] })
-      toast({ title: 'Inquilino removido.' })
+      toast({ title: t('toast.deleted') })
     },
-    onError: () => toast({ title: 'Erro ao remover.', variant: 'destructive' }),
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
   })
 
   const filtered = tenants.filter(
-    (t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      t.cpf?.includes(search) ||
-      t.email?.toLowerCase().includes(search.toLowerCase())
+    (tn) =>
+      tn.name.toLowerCase().includes(search.toLowerCase()) ||
+      tn.cpf?.includes(search) ||
+      tn.email?.toLowerCase().includes(search.toLowerCase())
   )
 
   const pag = usePagination(filtered, 12)
 
   const handleDelete = (id: string) => {
-    if (confirm('Remover inquilino?')) deleteMutation.mutate(id)
+    if (confirm(t('toast.deleteConfirm'))) deleteMutation.mutate(id)
   }
 
   return (
@@ -103,7 +105,7 @@ export function TenantsPage() {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Buscar por nome, CPF ou e-mail..."
+            placeholder={t('searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 sm:w-72"
@@ -114,23 +116,23 @@ export function TenantsPage() {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-2">
                 {viewMode === 'table' ? <Table2 className="h-4 w-4" /> : <LayoutGrid className="h-4 w-4" />}
-                {viewMode === 'table' ? 'Tabela' : 'Cards'}
+                {viewMode === 'table' ? t('common:viewMode.table') : t('common:viewMode.cards')}
                 <ChevronDown className="h-3.5 w-3.5 opacity-50" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => setViewMode('table')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> Tabela</span>
+                <span className="flex items-center gap-2"><Table2 className="h-4 w-4" /> {t('common:viewMode.table')}</span>
                 {viewMode === 'table' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setViewMode('grid')} className="justify-between gap-4">
-                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> Cards</span>
+                <span className="flex items-center gap-2"><LayoutGrid className="h-4 w-4" /> {t('common:viewMode.cards')}</span>
                 {viewMode === 'grid' && <Check className="h-3.5 w-3.5" />}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={() => { setEditingTenant(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Inquilino
+            <Plus className="mr-2 h-4 w-4" /> {t('new')}
           </Button>
         </div>
       </div>
@@ -139,15 +141,15 @@ export function TenantsPage() {
       <div className="grid grid-cols-3 gap-3">
         <Card><CardContent className="p-4 text-center">
           <p className="text-2xl font-bold">{tenants.length}</p>
-          <p className="text-xs text-muted-foreground">Total</p>
+          <p className="text-xs text-muted-foreground">{t('stats.total')}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{tenants.filter(t => t.active && t.activeContractId).length}</p>
-          <p className="text-xs text-muted-foreground">Ativos</p>
+          <p className="text-2xl font-bold text-green-600">{tenants.filter(tn => tn.active && tn.activeContractId).length}</p>
+          <p className="text-xs text-muted-foreground">{t('stats.active')}</p>
         </CardContent></Card>
         <Card><CardContent className="p-4 text-center">
-          <p className="text-2xl font-bold text-muted-foreground">{tenants.filter(t => !t.activeContractId).length}</p>
-          <p className="text-xs text-muted-foreground">Sem Contrato</p>
+          <p className="text-2xl font-bold text-muted-foreground">{tenants.filter(tn => !tn.activeContractId).length}</p>
+          <p className="text-xs text-muted-foreground">{t('stats.noContract')}</p>
         </CardContent></Card>
       </div>
 
@@ -160,9 +162,9 @@ export function TenantsPage() {
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Users className="h-12 w-12 text-muted-foreground/40" />
-          <p className="mt-4 text-lg font-medium text-muted-foreground">Nenhum inquilino encontrado</p>
+          <p className="mt-4 text-lg font-medium text-muted-foreground">{t('empty.noResults')}</p>
           <Button className="mt-4" onClick={() => { setEditingTenant(null); setShowForm(true) }}>
-            <Plus className="mr-2 h-4 w-4" /> Cadastrar Inquilino
+            <Plus className="mr-2 h-4 w-4" /> {t('add')}
           </Button>
         </div>
       ) : viewMode === 'table' ? (
@@ -170,12 +172,12 @@ export function TenantsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Inquilino</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Contato</TableHead>
-                <TableHead>Imóvel/Veículo</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>{t('title')}</TableHead>
+                <TableHead>{t('form.cpf')}</TableHead>
+                <TableHead>{t('detail.contact')}</TableHead>
+                <TableHead>{t('properties:title')}/{t('vehicles:title')}</TableHead>
+                <TableHead>{t('common:ui.status')}</TableHead>
+                <TableHead className="text-right">{t('common:ui.actions')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -218,7 +220,7 @@ export function TenantsPage() {
                           variant="ghost"
                           size="icon"
                           className="h-6 w-6 shrink-0 text-muted-foreground"
-                          title="Ver detalhes"
+                          title={t('common:ui.details')}
                           onClick={() => openAsset(assetByTenant[tenant.id])}
                         >
                           <Eye className="h-3.5 w-3.5" />
@@ -230,7 +232,7 @@ export function TenantsPage() {
                   </TableCell>
                   <TableCell>
                     <Badge variant={tenant.activeContractId ? 'success' : 'secondary'}>
-                      {tenant.activeContractId ? 'Com contrato' : 'Sem contrato'}
+                      {tenant.activeContractId ? t('withContract') : t('noContract')}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -274,7 +276,7 @@ export function TenantsPage() {
                     <p className="text-xs text-muted-foreground">{tenant.cpf ? formatCPF(tenant.cpf) : '—'}</p>
                   </div>
                   <Badge variant={tenant.activeContractId ? 'success' : 'secondary'} className="shrink-0 text-xs">
-                    {tenant.activeContractId ? 'Ativo' : 'Sem contrato'}
+                    {tenant.activeContractId ? t('common:ui.active') : t('noContract')}
                   </Badge>
                 </div>
                 <div className="mt-3 space-y-1 text-sm text-muted-foreground">
@@ -304,7 +306,7 @@ export function TenantsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 shrink-0 text-muted-foreground"
-                        title="Ver detalhes"
+                        title={t('common:ui.details')}
                         onClick={() => openAsset(assetByTenant[tenant.id])}
                       >
                         <Eye className="h-3.5 w-3.5" />
@@ -319,7 +321,7 @@ export function TenantsPage() {
                     className="flex-1"
                     onClick={() => { setEditingTenant(tenant); setShowForm(true) }}
                   >
-                    <Edit className="mr-1 h-3 w-3" /> Editar
+                    <Edit className="mr-1 h-3 w-3" /> {t('common:actions.edit')}
                   </Button>
                   <Button
                     variant="outline"
@@ -344,14 +346,14 @@ export function TenantsPage() {
           rangeStart={pag.rangeStart}
           rangeEnd={pag.rangeEnd}
           onPageChange={pag.setPage}
-          itemLabel="inquilinos"
+          itemLabel={t('itemLabel')}
         />
       )}
 
       <Dialog open={showForm} onOpenChange={setShowForm}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingTenant ? 'Editar Inquilino' : 'Novo Inquilino'}</DialogTitle>
+            <DialogTitle>{editingTenant ? t('edit') : t('new')}</DialogTitle>
           </DialogHeader>
           <TenantForm
             tenant={editingTenant}
@@ -367,7 +369,7 @@ export function TenantsPage() {
       <Dialog open={!!viewProperty} onOpenChange={() => setViewProperty(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Imóvel</DialogTitle>
+            <DialogTitle>{t('properties:detail.title')}</DialogTitle>
           </DialogHeader>
           {viewProperty && <PropertyDetail property={viewProperty} />}
         </DialogContent>
@@ -376,7 +378,7 @@ export function TenantsPage() {
       <Dialog open={!!viewVehicle} onOpenChange={() => setViewVehicle(null)}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalhes do Veículo</DialogTitle>
+            <DialogTitle>{t('vehicles:detail.title')}</DialogTitle>
           </DialogHeader>
           {viewVehicle && <VehicleDetail vehicle={viewVehicle} />}
         </DialogContent>

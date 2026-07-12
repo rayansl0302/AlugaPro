@@ -1,0 +1,93 @@
+{
+  "panel": {
+    "title": "Panel de afiliado",
+    "subtitle": "Comparte tu enlace, sigue tus recomendaciones y recibe por cada cliente activo.",
+    "logout": "Salir"
+  },
+  "referral": {
+    "codeLabel": "Tu código de recomendación",
+    "linkLabel": "Tu enlace de recomendación",
+    "copyCode": "Copiar código",
+    "copyLink": "Copiar",
+    "codeCopied": "¡Código copiado!",
+    "linkCopied": "¡Enlace copiado!",
+    "copyFailed": "No se pudo copiar.",
+    "share": "Compartir",
+    "shareWhatsAppText": "Conoce AlugaPro, el sistema que uso para la gestión de alquileres: {{link}}"
+  },
+  "commission": {
+    "rate": "7%",
+    "rateLabel": "7% de comisión recurrente",
+    "description": "Tu comisión recurrente es del 7% sobre la mensualidad de cada cliente activo que indiques.",
+    "waitingDays": 15,
+    "waitingPeriodNote": "El pago solo empieza a contar después de que el cliente indicado complete 15 días activo.",
+    "howPaymentWorks": "Cómo funciona el pago",
+    "keepDataUpdated": "Mantén actualizados tus datos de cobro para no retrasar el pago.",
+    "eligible": "Elegible para comisión",
+    "commissionInDays": "Comisión en {{days}}d"
+  },
+  "indicate": {
+    "title": "Indica AlugaPro",
+    "description": "Presenta la plataforma a quien administra alquileres y sigue cada recomendación aquí."
+  },
+  "howItWorks": {
+    "title": "Cómo funciona",
+    "steps": {
+      "share": {
+        "title": "Comparte",
+        "description": "Envía tu código o enlace de recomendación."
+      },
+      "trial": {
+        "title": "Prueba gratuita",
+        "description": "Tu recomendado prueba AlugaPro durante 14 días."
+      },
+      "subscribe": {
+        "title": "Suscripción",
+        "description": "Cuando el recomendado se suscribe a un plan de pago, la recomendación se confirma."
+      },
+      "earn": {
+        "title": "Recibe",
+        "description": "Tras 15 días de cliente activo, empiezas a recibir el 7% de comisión recurrente."
+      }
+    }
+  },
+  "kyc": {
+    "title": "Datos para cobro",
+    "description": "Para recibir tus comisiones, necesitamos confirmar tu identidad. Usamos estos datos solo para validación y pago, conforme a nuestra Política de Privacidad.",
+    "privacyPolicy": "Política de Privacidad",
+    "statusSubmitted": "Verificación enviada",
+    "statusPending": "Pendiente",
+    "fields": {
+      "cpf": "CPF",
+      "cpfPlaceholder": "000.000.000-00",
+      "pixKey": "Clave PIX",
+      "pixKeyPlaceholder": "CPF, correo, teléfono o clave aleatoria",
+      "phone": "Teléfono (con código de área)",
+      "phonePlaceholder": "(00) 00000-0000",
+      "walletId": "Wallet ID de Asaas",
+      "walletIdPlaceholder": "Ej.: 720806d7-aa02-48c0-83fa-6e0357157ba7",
+      "walletIdHelp": "Es hacia donde se enviará tu comisión automáticamente. Crea una cuenta gratuita en asaas.com (si aún no tienes una) y copia el Wallet ID en Integraciones → Inicio, en el menú superior derecho del panel de Asaas.",
+      "documentPhoto": "Foto del documento (DNI, carné de conducir o similar)",
+      "documentSelfie": "Foto tuya sosteniendo el documento"
+    },
+    "save": "Guardar datos",
+    "saveSuccess": "¡Datos de cobro guardados!",
+    "saveError": "Error al guardar. Inténtalo de nuevo.",
+    "validationError": "Completa todos los campos — CPF, PIX, fotos, teléfono y Wallet ID — antes de guardar."
+  },
+  "earnings": {
+    "referrals": "Recomendaciones",
+    "activeClients": "Clientes activos",
+    "inTrial": "En prueba",
+    "yourReferrals": "Tus recomendaciones",
+    "emptyTitle": "Aún no hay recomendaciones",
+    "emptyDescription": "Comparte tu enlace para empezar a recomendar y seguirlas aquí."
+  },
+  "status": {
+    "trialing": "En prueba",
+    "active": "Activo",
+    "pastDue": "Pago atrasado",
+    "canceled": "Cancelado",
+    "expired": "Expirado"
+  }
+}

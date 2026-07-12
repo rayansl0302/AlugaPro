@@ -1,0 +1,93 @@
+{
+  "title": "Warnings",
+  "subtitle": "Record and track tenant warnings.",
+  "add": "New warning",
+  "new": "New warning",
+  "edit": "Edit warning",
+  "delete": "Delete warning",
+  "view": "View warning",
+  "searchPlaceholder": "Search by tenant or reason...",
+  "filters": {
+    "title": "Filters",
+    "all": "All",
+    "status": "Status",
+    "clear": "Clear filters"
+  },
+  "empty": {
+    "title": "No warnings recorded",
+    "description": "Record warnings when needed.",
+    "noResults": "No warnings match the current filters."
+  },
+  "form": {
+    "title": "Warning details",
+    "tenant": "Tenant",
+    "property": "Property",
+    "contract": "Contract",
+    "reason": "Reason",
+    "description": "Description",
+    "date": "Date",
+    "severity": "Severity",
+    "status": "Status"
+  },
+  "detail": {
+    "title": "Warning details",
+    "overview": "Overview",
+    "history": "History"
+  },
+  "severities": {
+    "leve": "Mild",
+    "media": "Medium",
+    "grave": "Severe"
+  },
+  "statuses": {
+    "aberta": "Open",
+    "enviada": "Sent",
+    "resolvida": "Resolved",
+    "cancelada": "Cancelled"
+  },
+  "toast": {
+    "created": "Warning recorded successfully.",
+    "updated": "Warning updated successfully.",
+    "deleted": "Warning removed.",
+    "loadError": "Failed to load warnings.",
+    "createError": "Failed to record warning.",
+    "updateError": "Failed to update warning.",
+    "deleteError": "Failed to remove warning.",
+    "deleteConfirm": "Remove this warning? This cannot be undone."
+  },
+  "searchPlaceholderPage": "Search tenant or property...",
+  "newWarning": "New warning",
+  "warn": "Warn",
+  "totalWarnings": "Total warnings",
+  "warnedTenants": "Warned tenants",
+  "atRisk": "At risk of termination (≥4)",
+  "emptyDescription": "Good sign — no tenants have been warned yet.",
+  "warningCount": "{{count}} warning",
+  "warningCount_plural": "{{count}} warnings",
+  "rescissionNotice": "4-warning limit reached — the owner may terminate the contract immediately without refunding paid amounts, per the contractual clause.",
+  "issuedBy": "{{date}} — by {{name}}",
+  "remove": "Remove",
+  "audioCount": "{{count}} audio(s)",
+  "itemLabel": "tenants",
+  "tenantFallback": "Tenant",
+  "warningForm": {
+    "tenantContract": "Tenant / Contract *",
+    "selectActiveContract": "Select the active contract",
+    "searchTenant": "Search tenant...",
+    "noActiveContracts": "No active contract found.",
+    "clauseReference": "Referenced contract clause",
+    "clausePlaceholder": "E.g.: Clause 11.2 — Quiet enjoyment",
+    "reason": "Warning reason *",
+    "reasonPlaceholder": "Describe what happened in detail...",
+    "photos": "Photos (evidence)",
+    "audios": "Audio (evidence, if any)",
+    "rescissionInfo": "The warning is recorded permanently and visible to the tenant. Upon reaching 4 warnings, the contract allows immediate termination by the owner, per the contractual clause.",
+    "submit": "Record warning",
+    "toast": {
+      "selectContract": "Select the contract/tenant.",
+      "describeReason": "Describe the reason for the warning.",
+      "attachEvidence": "Attach at least one piece of evidence (photo or audio).",
+      "created": "Warning recorded."
+    }
+  }
+}

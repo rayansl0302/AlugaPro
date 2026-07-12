@@ -3,6 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Contract, ContractAssetType, ReadjustmentIndex } from '@/types'
 import {
@@ -21,18 +22,20 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useReadjustmentIndices } from '@/hooks/useReadjustmentIndices'
+import { requiredString } from '@/lib/validation'
+import { fieldErrorClass } from '@/lib/formErrors'
 import { toast } from '@/hooks/useToast'
 
 const schema = z
   .object({
     assetType: z.enum(['imovel', 'veiculo', 'equipamento']).default('imovel'),
-    propertyId: z.string().min(1, 'Selecione o imóvel ou veículo'),
+    propertyId: requiredString('Selecione o imóvel ou veículo'),
     propertyName: z.string().optional(),
-    tenantId: z.string().min(1, 'Selecione o inquilino'),
+    tenantId: requiredString('Selecione o inquilino'),
     tenantName: z.string().optional(),
-    ownerId: z.string().min(1, 'O bem selecionado não possui proprietário'),
+    ownerId: requiredString('O bem selecionado não possui proprietário'),
     ownerName: z.string().optional(),
-    startDate: z.string().min(1, 'Data de início obrigatória'),
+    startDate: requiredString('Data de início obrigatória'),
     endDate: z.string().optional(),
     noEndDate: z.boolean().default(false),
     rentValue: z.coerce.number().min(1, 'Valor obrigatório'),
@@ -56,10 +59,13 @@ interface Props {
 }
 
 export function ContractForm({ contract, companyId, onSuccess }: Props) {
+  const { t } = useTranslation('contracts')
+  const { t: tCommon } = useTranslation('common')
   const [loading, setLoading] = useState(false)
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
+    mode: 'onTouched',
     defaultValues: contract
       ? {
           assetType: contract.assetType ?? 'imovel',
@@ -200,13 +206,13 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
         }
         await updateContract(contract.id, payload)
         contractId = contract.id
-        toast({ title: 'Contrato atualizado.' })
+        toast({ title: t('toast.updatedShort') })
       } else {
         contractId = await createContract(payload)
         // Generate rent charges from startDate to today automatically
         const fullContract = { ...payload, id: contractId, status: 'ativo' as const }
         const count = await generateChargesForContract(fullContract)
-        toast({ title: `Contrato criado com ${count} cobranças geradas.` })
+        toast({ title: t('toast.createdWithCharges', { count }) })
       }
 
       await linkContractToAsset(
@@ -216,7 +222,7 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
 
       onSuccess()
     } catch {
-      toast({ title: 'Erro ao salvar contrato.', variant: 'destructive' })
+      toast({ title: t('toast.saveError'), variant: 'destructive' })
     } finally {
       setLoading(false)
     }
@@ -226,27 +232,27 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
-          <Label>Tipo de Bem *</Label>
+          <Label>{t('form.assetType')}</Label>
           <Select value={assetType} onValueChange={(v) => handleAssetTypeChange(v as ContractAssetType)}>
             <SelectTrigger><SelectValue /></SelectTrigger>
             <SelectContent>
-              <SelectItem value="imovel">Imóvel</SelectItem>
-              <SelectItem value="veiculo">Veículo</SelectItem>
-              <SelectItem value="equipamento">Equipamento</SelectItem>
+              <SelectItem value="imovel">{t('form.property')}</SelectItem>
+              <SelectItem value="veiculo">{t('form.vehicle')}</SelectItem>
+              <SelectItem value="equipamento">{t('form.equipment')}</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
         <div className="space-y-2">
           <Label>
-            {assetType === 'veiculo' ? 'Veículo *' : assetType === 'equipamento' ? 'Equipamento *' : 'Imóvel *'}
+            {assetType === 'veiculo' ? t('form.vehicleRequired') : assetType === 'equipamento' ? t('form.equipmentRequired') : t('form.propertyRequired')}
           </Label>
           <Select value={watch('propertyId') || ''} onValueChange={handleAssetSelect}>
             <SelectTrigger>
               <SelectValue placeholder={
-                assetType === 'veiculo' ? 'Selecione o veículo'
-                  : assetType === 'equipamento' ? 'Selecione o equipamento'
-                  : 'Selecione o imóvel'
+                assetType === 'veiculo' ? t('form.selectVehicle')
+                  : assetType === 'equipamento' ? t('form.selectEquipment')
+                  : t('form.selectProperty')
               } />
             </SelectTrigger>
             <SelectContent className="max-h-60">
@@ -264,14 +270,14 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
             </SelectContent>
           </Select>
           {errors.propertyId && <p className="text-xs text-destructive">{errors.propertyId.message}</p>}
-          {ownerName && <p className="text-xs text-muted-foreground">Proprietário: {ownerName}</p>}
+          {ownerName && <p className="text-xs text-muted-foreground">{t('form.ownerPrefix', { name: ownerName })}</p>}
         </div>
 
         <div className="space-y-2 sm:col-span-2">
-          <Label>Inquilino *</Label>
+          <Label>{t('form.tenantRequired')}</Label>
           <Select value={watch('tenantId') || ''} onValueChange={handleTenantSelect}>
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o inquilino" />
+              <SelectValue placeholder={t('form.selectTenant')} />
             </SelectTrigger>
             <SelectContent className="max-h-60">
               {tenants.map((t) => (
@@ -283,13 +289,13 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label>Data de Início *</Label>
-          <Input type="date" {...register('startDate')} />
+          <Label>{t('form.startDateRequired')}</Label>
+          <Input type="date" className={fieldErrorClass(errors.startDate)} {...register('startDate')} />
           {errors.startDate && <p className="text-xs text-destructive">{errors.startDate.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label>Data de Término {!noEndDate && '*'}</Label>
-          <Input type="date" disabled={noEndDate} {...register('endDate')} />
+          <Label>{t('form.endDateLabel')} {!noEndDate && '*'}</Label>
+          <Input type="date" disabled={noEndDate} className={fieldErrorClass(errors.endDate)} {...register('endDate')} />
           <label className="flex items-center gap-2 text-xs text-muted-foreground">
             <input
               type="checkbox"
@@ -300,33 +306,33 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
                 if (e.target.checked) setValue('endDate', '')
               }}
             />
-            Prazo indeterminado (sem data de término)
+            {t('form.noEndDate')}
           </label>
           {errors.endDate && <p className="text-xs text-destructive">{errors.endDate.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label>Valor do Aluguel *</Label>
-          <Input type="number" step="0.01" {...register('rentValue')} />
+          <Label>{t('form.rentValueRequired')}</Label>
+          <Input type="number" step="0.01" className={fieldErrorClass(errors.rentValue)} {...register('rentValue')} />
           {errors.rentValue && <p className="text-xs text-destructive">{errors.rentValue.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label>Dia do Vencimento *</Label>
+          <Label>{t('form.dueDayRequired')}</Label>
           <Input type="number" min={1} max={28} {...register('dueDay')} />
         </div>
         <div className="space-y-2">
-          <Label>Caução (R$)</Label>
+          <Label>{t('form.deposit')}</Label>
           <Input type="number" step="0.01" {...register('cautionValue')} />
         </div>
         <div className="space-y-2">
-          <Label>Multa por Atraso (%)</Label>
+          <Label>{t('form.lateFee')}</Label>
           <Input type="number" step="0.01" min={0} max={10} {...register('lateFee')} />
         </div>
         <div className="space-y-2">
-          <Label>Juros Mensais (%)</Label>
+          <Label>{t('form.monthlyInterest')}</Label>
           <Input type="number" step="0.01" min={0} max={5} {...register('monthlyInterest')} />
         </div>
         <div className="space-y-2">
-          <Label>Índice de Reajuste</Label>
+          <Label>{t('form.readjustmentIndex')}</Label>
           <Select
             value={watch('readjustmentIndex')}
             onValueChange={(v) => setValue('readjustmentIndex', v as ReadjustmentIndex)}
@@ -337,12 +343,12 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
               <SelectItem value="IPCA">IPCA</SelectItem>
               <SelectItem value="INPC">INPC</SelectItem>
               <SelectItem value="Fixo">Fixo</SelectItem>
-              <SelectItem value="Nenhum">Nenhum</SelectItem>
+              <SelectItem value="Nenhum">{tCommon('ui.none')}</SelectItem>
             </SelectContent>
           </Select>
           {currentIndex?.value != null && (
             <p className="text-xs text-muted-foreground">
-              {currentIndex.name} atual: {currentIndex.value.toFixed(2)}% — ref. {currentIndex.referenceDate} (Banco Central)
+              {t('form.indexRef', { name: currentIndex.name, value: currentIndex.value.toFixed(2), date: currentIndex.referenceDate })}
             </p>
           )}
         </div>
@@ -351,7 +357,7 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={loading}>
           {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-          {contract ? 'Salvar Alterações' : 'Criar Contrato'}
+          {contract ? t('form.saveChanges') : t('form.create')}
         </Button>
       </div>
     </form>

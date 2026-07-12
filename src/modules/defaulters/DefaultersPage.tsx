@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { AlertTriangle, Clock, TrendingDown, MessageSquare } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges } from '@/services/charges'
 import { formatCurrency, formatDateOptional, getDaysLate } from '@/lib/utils'
@@ -13,6 +14,7 @@ import { format } from 'date-fns'
 import { toast } from '@/hooks/useToast'
 
 export function DefaultersPage() {
+  const { t } = useTranslation('charges')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
 
@@ -47,12 +49,12 @@ export function DefaultersPage() {
 
   const sendWhatsApp = (tenantName: string, whatsapp?: string) => {
     const msg = encodeURIComponent(
-      `Olá ${tenantName}, identificamos cobranças em atraso na sua conta. Por favor, entre em contato para regularizar. AlugaPro.`
+      t('defaulters.whatsappMessage', { name: tenantName })
     )
     if (whatsapp) {
       window.open(`https://wa.me/55${whatsapp.replace(/\D/g, '')}?text=${msg}`, '_blank')
     } else {
-      toast({ title: 'WhatsApp não cadastrado para este inquilino.', variant: 'destructive' })
+      toast({ title: t('defaulters.toast.noWhatsapp'), variant: 'destructive' })
     }
   }
 
@@ -64,7 +66,7 @@ export function DefaultersPage() {
           <CardContent className="p-6 flex items-center gap-4">
             <AlertTriangle className="h-10 w-10 text-destructive" />
             <div>
-              <p className="text-sm text-muted-foreground">Total em Aberto</p>
+              <p className="text-sm text-muted-foreground">{t('defaulters.totalOpen')}</p>
               <p className="text-2xl font-bold text-destructive">{formatCurrency(totalAmount)}</p>
             </div>
           </CardContent>
@@ -73,7 +75,7 @@ export function DefaultersPage() {
           <CardContent className="p-6 flex items-center gap-4">
             <TrendingDown className="h-10 w-10 text-orange-500" />
             <div>
-              <p className="text-sm text-muted-foreground">Inadimplentes</p>
+              <p className="text-sm text-muted-foreground">{t('defaulters.defaultersCount')}</p>
               <p className="text-2xl font-bold">{Object.keys(byTenant).length}</p>
             </div>
           </CardContent>
@@ -82,8 +84,8 @@ export function DefaultersPage() {
           <CardContent className="p-6 flex items-center gap-4">
             <Clock className="h-10 w-10 text-yellow-500" />
             <div>
-              <p className="text-sm text-muted-foreground">Tempo Médio de Atraso</p>
-              <p className="text-2xl font-bold">{avgDaysLate} dias</p>
+              <p className="text-sm text-muted-foreground">{t('defaulters.avgLate')}</p>
+              <p className="text-2xl font-bold">{t('defaulters.days', { count: avgDaysLate })}</p>
             </div>
           </CardContent>
         </Card>
@@ -94,16 +96,16 @@ export function DefaultersPage() {
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <AlertTriangle className="h-12 w-12 text-muted-foreground/40" />
           <p className="mt-4 text-lg font-medium text-muted-foreground">
-            Nenhuma inadimplência registrada
+            {t('defaulters.emptyTitle')}
           </p>
-          <p className="text-sm text-muted-foreground">Todos os pagamentos estão em dia.</p>
+          <p className="text-sm text-muted-foreground">{t('defaulters.emptyDescription')}</p>
         </div>
       ) : (
         <div className="space-y-4">
           {pag.pageItems.map(([tenantId, tenantCharges]) => {
             const total = tenantCharges.reduce((s, c) => s + c.amount, 0)
             const maxDelay = Math.max(...tenantCharges.map((c) => c.daysLate))
-            const tenantName = tenantCharges[0].tenantName || 'Inquilino'
+            const tenantName = tenantCharges[0].tenantName || t('defaulters.tenantFallback')
 
             return (
               <Card key={tenantId} className="overflow-hidden border-l-4 border-l-destructive">
@@ -115,7 +117,7 @@ export function DefaultersPage() {
                   <div className="flex items-center gap-3">
                     <div className="text-right">
                       <p className="font-bold text-destructive">{formatCurrency(total)}</p>
-                      <Badge variant="destructive">{maxDelay}d de atraso</Badge>
+                      <Badge variant="destructive">{t('defaulters.daysLate', { count: maxDelay })}</Badge>
                     </div>
                     <Button
                       variant="outline"
@@ -124,7 +126,7 @@ export function DefaultersPage() {
                       className="gap-1"
                     >
                       <MessageSquare className="h-3 w-3" />
-                      WhatsApp
+                      {t('defaulters.whatsapp')}
                     </Button>
                   </div>
                 </CardHeader>
@@ -132,19 +134,19 @@ export function DefaultersPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Vencimento</TableHead>
-                        <TableHead>Atraso</TableHead>
-                        <TableHead>Valor</TableHead>
+                        <TableHead>{t('defaulters.columns.description')}</TableHead>
+                        <TableHead>{t('defaulters.columns.due')}</TableHead>
+                        <TableHead>{t('defaulters.columns.late')}</TableHead>
+                        <TableHead>{t('defaulters.columns.value')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {tenantCharges.map((charge) => (
                         <TableRow key={charge.id}>
                           <TableCell>{charge.description}</TableCell>
-                          <TableCell>{formatDateOptional(charge.dueDate, 'Sem vencimento')}</TableCell>
+                          <TableCell>{formatDateOptional(charge.dueDate, t('defaulters.noDueDate'))}</TableCell>
                           <TableCell>
-                            <Badge variant="destructive">{charge.daysLate} dias</Badge>
+                            <Badge variant="destructive">{t('defaulters.daysBadge', { count: charge.daysLate })}</Badge>
                           </TableCell>
                           <TableCell className="font-semibold">
                             {formatCurrency(charge.amount)}
@@ -164,7 +166,7 @@ export function DefaultersPage() {
             rangeStart={pag.rangeStart}
             rangeEnd={pag.rangeEnd}
             onPageChange={pag.setPage}
-            itemLabel="inadimplentes"
+            itemLabel={t('defaulters.itemLabel')}
           />
         </div>
       )}

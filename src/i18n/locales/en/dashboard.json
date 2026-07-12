@@ -1,0 +1,62 @@
+{
+  "welcome": {
+    "greeting": "Hello, {{name}}",
+    "title": "Dashboard",
+    "subtitle": "Overview of your rental operation."
+  },
+  "indicators": {
+    "title": "Indicators",
+    "totalProperties": "Total properties",
+    "rented": "Rented",
+    "vacant": "vacant",
+    "vacantProperties": "Vacant properties",
+    "expectedRevenue": "Expected revenue",
+    "receivedRevenue": "Received revenue",
+    "overdue": "Delinquent",
+    "overdueCharges": "Overdue charges",
+    "pending": "Pending",
+    "activeTenants": "Active tenants",
+    "activeContracts": "Active contracts",
+    "openTickets": "Open tickets"
+  },
+  "charts": {
+    "revenueByMonth": "Revenue by month",
+    "revenueByMonthDescription": "Expected vs received revenue comparison",
+    "occupancy": "Occupancy",
+    "occupancyDescription": "Property status",
+    "received": "Received",
+    "pending": "Pending",
+    "rented": "Rented",
+    "vacant": "Vacant",
+    "maintenance": "Maintenance",
+    "months": {
+      "jan": "Jan",
+      "feb": "Feb",
+      "mar": "Mar",
+      "apr": "Apr",
+      "may": "May",
+      "jun": "Jun",
+      "jul": "Jul",
+      "aug": "Aug",
+      "sep": "Sep",
+      "oct": "Oct",
+      "nov": "Nov",
+      "dec": "Dec"
+    }
+  },
+  "recentActivity": {
+    "title": "Recent activity",
+    "overdueCharges": "Overdue charges",
+    "daysLate": "{{days}}d overdue",
+    "notify": "Notify",
+    "whatsAppMissing": "WhatsApp is not registered for this tenant.",
+    "empty": "No recent activity.",
+    "noOverdue": "No overdue charges at the moment."
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Failed to load data.",
+    "retry": "Try again",
+    "viewAll": "View all"
+  }
+}
