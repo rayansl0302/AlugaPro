@@ -33,6 +33,10 @@ export type NotificationTrigger =
 
 // ─── User ─────────────────────────────────────────────────────────────────────
 
+// Tipo da chave PIX do afiliado — necessário pra transferência via API da
+// Asaas (que exige pixAddressKeyType). 'evp' é a chave aleatória.
+export type PixKeyType = 'cpf' | 'cnpj' | 'email' | 'phone' | 'evp'
+
 export interface User {
   id: string
   name: string
@@ -42,6 +46,7 @@ export interface User {
   referralCode?: string
   cpf?: string
   pixKey?: string
+  pixKeyType?: PixKeyType
   documentPhotoUrl?: string
   documentSelfieUrl?: string
   kycSubmittedAt?: Timestamp
@@ -382,6 +387,32 @@ export interface AffiliateReferral {
   companyId: string
   companyName: string
   createdAt: Timestamp
+}
+
+// ─── AffiliateCommission (Extrato de comissões do afiliado) ──────────────────
+// Um lançamento por pagamento confirmado de empresa indicada (id do doc =
+// paymentId da Asaas, garantindo idempotência nos webhooks duplicados).
+// Criado exclusivamente pelo Admin SDK (webhook) e pago pelo cron via
+// transferência PIX — o cliente só lê.
+
+export type AffiliateCommissionStatus = 'pendente' | 'processando' | 'pago' | 'cancelado'
+
+export interface AffiliateCommission {
+  id: string
+  affiliateUserId: string
+  referralCode: string
+  companyId: string
+  companyName: string
+  paymentId: string
+  paymentValue: number
+  commissionRate: number
+  commissionValue: number
+  status: AffiliateCommissionStatus
+  transferId?: string
+  paidAt?: Timestamp
+  error?: string
+  createdAt: Timestamp
+  updatedAt: Timestamp
 }
 
 // ─── ContractTemplate (Modelo de Contrato) ───────────────────────────────────

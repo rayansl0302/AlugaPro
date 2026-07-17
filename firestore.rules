@@ -108,6 +108,15 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Extrato de comissões do afiliado — escrito exclusivamente pelo Admin
+    // SDK (webhook lança, cron paga). O afiliado só lê os próprios
+    // lançamentos; nenhuma escrita via cliente.
+    match /affiliateCommissions/{commissionId} {
+      allow read: if isAdmin()
+        || (isRole('afiliado') && resource.data.affiliateUserId == request.auth.uid);
+      allow write: if false;
+    }
+
     // Companies
     match /companies/{companyId} {
       allow read: if companyId == 'alugapro-demo'
@@ -143,7 +152,7 @@ service cloud.firestore {
         && resource != null
         && request.resource.data.diff(resource.data).affectedKeys()
             .hasOnly(['phone', 'whatsapp', 'phoneVerified', 'phoneVerifiedAt',
-                      'cpf', 'pixKey', 'documentPhotoUrl', 'documentSelfieUrl', 'kycSubmittedAt',
+                      'cpf', 'pixKey', 'pixKeyType', 'documentPhotoUrl', 'documentSelfieUrl', 'kycSubmittedAt',
                       'address', 'monthlyIncome', 'asaasWalletId', 'updatedAt'])
         && request.resource.data.role == resource.data.role
         && request.resource.data.companyId == resource.data.companyId;

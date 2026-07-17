@@ -78,12 +78,36 @@ export async function createSubscription(input: {
   return asaasFetch<AsaasSubscription>('/subscriptions', { method: 'POST', body: input })
 }
 
-// Ativa o split numa assinatura já existente — só vale pras cobranças
-// futuras geradas a partir de agora, nunca retroage nas já emitidas.
-// Usado pelo cron pra aplicar a comissão de afiliado só depois do período
-// de carência (não na assinatura inteira desde o primeiro pagamento).
+// LEGADO: ativava o split nativo numa assinatura existente (exigia que o
+// afiliado tivesse conta Asaas própria com walletId). O modelo atual paga
+// comissões por transferência PIX (ledger em affiliateCommissions + cron).
+// Mantido apenas pra eventual gestão de splits antigos ainda ativos.
 export async function updateSubscriptionSplit(id: string, split: AsaasSplit[]): Promise<AsaasSubscription> {
   return asaasFetch<AsaasSubscription>(`/subscriptions/${id}`, { method: 'PUT', body: { split } })
+}
+
+// ─── Transferências PIX (payout de comissão de afiliado) ─────────────────────
+
+export type AsaasPixKeyType = 'CPF' | 'CNPJ' | 'EMAIL' | 'PHONE' | 'EVP'
+
+export interface AsaasTransfer {
+  id: string
+  status: string
+  value: number
+}
+
+// Transfere do saldo da conta AlugaPro direto pra chave PIX do afiliado —
+// sem exigir que ele tenha conta/wallet na Asaas.
+export async function createPixTransfer(input: {
+  value: number
+  pixAddressKey: string
+  pixAddressKeyType: AsaasPixKeyType
+  description?: string
+}): Promise<AsaasTransfer> {
+  return asaasFetch<AsaasTransfer>('/transfers', {
+    method: 'POST',
+    body: { operationType: 'PIX', ...input },
+  })
 }
 
 export async function getSubscription(id: string): Promise<AsaasSubscription> {

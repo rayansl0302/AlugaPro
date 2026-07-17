@@ -64,16 +64,23 @@
       "pixKeyPlaceholder": "CPF, email, phone, or random key",
       "phone": "Phone (with area code)",
       "phonePlaceholder": "(00) 00000-0000",
-      "walletId": "Asaas Wallet ID",
-      "walletIdPlaceholder": "E.g.: 720806d7-aa02-48c0-83fa-6e0357157ba7",
-      "walletIdHelp": "This is where your commission will be sent automatically. Create a free account at asaas.com (if you do not already have one) and copy the Wallet ID from Integrations → Home, in the top-right menu of the Asaas panel.",
       "documentPhoto": "Photo of ID document (ID card, driver's license, or similar)",
-      "documentSelfie": "Photo of you holding the document"
+      "documentSelfie": "Photo of you holding the document",
+      "pixKeyType": "PIX key type",
+      "pixKeyTypePlaceholder": "Select the type",
+      "pixKeyTypes": {
+        "cpf": "CPF",
+        "cnpj": "CNPJ",
+        "email": "Email",
+        "phone": "Mobile phone",
+        "evp": "Random (EVP)"
+      }
     },
     "save": "Save details",
     "saveSuccess": "Payout details saved!",
     "saveError": "Failed to save. Please try again.",
-    "validationError": "Fill in all fields — CPF, PIX, photos, phone, and Wallet ID — before saving."
+    "validationError": "Fill in all fields — CPF, PIX key (and its type), photos and phone — before saving.",
+    "pixPayoutNote": "Your commissions are paid via PIX straight to this key — no need to create an account anywhere else."
   },
   "earnings": {
     "referrals": "Referrals",
@@ -89,5 +96,19 @@
     "pastDue": "Past due",
     "canceled": "Canceled",
     "expired": "Expired"
+  },
+  "commissions": {
+    "title": "Commission statement",
+    "pendingTotal": "To receive",
+    "paidTotal": "Received",
+    "empty": "No commissions yet — they show up here for every subscription payment made by your referrals.",
+    "status": {
+      "pendente": "Pending",
+      "processando": "Processing",
+      "pago": "Paid",
+      "cancelado": "Canceled"
+    },
+    "payoutNote": "PIX payouts on the 5th of each month, for balances of R$ 20 or more. Smaller balances roll over.",
+    "paidOn": "paid on {{date}}"
   }
 }

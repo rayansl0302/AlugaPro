@@ -83,6 +83,15 @@ function baseProfile(
     companyId,
     tenantId: docData?.tenantId,
     referralCode: docData?.referralCode,
+    // Campos de KYC/recebimento do afiliado — sem eles aqui, o painel volta
+    // a exibir "Pendente" após recarregar a página, mesmo com tudo salvo.
+    cpf: docData?.cpf,
+    pixKey: docData?.pixKey,
+    pixKeyType: docData?.pixKeyType,
+    documentPhotoUrl: docData?.documentPhotoUrl,
+    documentSelfieUrl: docData?.documentSelfieUrl,
+    kycSubmittedAt: docData?.kycSubmittedAt,
+    asaasWalletId: docData?.asaasWalletId,
     phone: docData?.phone,
     whatsapp: docData?.whatsapp,
     phoneVerified: docData?.phoneVerified ?? false,

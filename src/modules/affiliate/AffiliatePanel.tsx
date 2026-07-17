@@ -4,20 +4,22 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { doc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore'
 import {
-  Copy, Check, Share2, Gift, Users, UserCheck, Clock, LogOut, Loader2, ShieldCheck, ShieldAlert,
+  Copy, Check, Share2, Gift, Users, UserCheck, Clock, LogOut, Loader2, ShieldCheck, ShieldAlert, Banknote,
 } from 'lucide-react'
 import { auth, db } from '@/lib/firebase'
 import { useAuth } from '@/contexts/AuthContext'
 import { getReferralsByCode } from '@/services/affiliateReferrals'
+import { getCommissionsByAffiliate } from '@/services/affiliateCommissions'
 import { getSubscription } from '@/services/subscription'
 import { uploadAffiliateDocument } from '@/services/storage'
-import { AffiliateReferral, SubscriptionStatus } from '@/types'
-import { formatDate, maskCPF } from '@/lib/utils'
+import { AffiliateCommission, AffiliateReferral, PixKeyType, SubscriptionStatus } from '@/types'
+import { formatCurrency, formatDate, maskCPF } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { toast } from '@/hooks/useToast'
@@ -37,6 +39,21 @@ const DEMO_REFERRALS: ReferralWithStatus[] = [
   { id: 'demo-ref-3', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-almeida', companyName: 'João Pedro Almeida', createdAt: daysAgo(6), status: 'trialing' },
   { id: 'demo-ref-4', code: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-vistaverde', companyName: 'Residencial Vista Verde', createdAt: daysAgo(90), status: 'canceled' },
 ]
+
+const DEMO_COMMISSIONS: AffiliateCommission[] = [
+  { id: 'demo-com-1', affiliateUserId: 'demo-afiliado', referralCode: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-costa', companyName: 'Imobiliária Costa & Cia', paymentId: 'demo-pay-1', paymentValue: 79, commissionRate: 7, commissionValue: 5.53, status: 'pago', paidAt: daysAgo(12), createdAt: daysAgo(18), updatedAt: daysAgo(12) },
+  { id: 'demo-com-2', affiliateUserId: 'demo-afiliado', referralCode: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-boavista', companyName: 'Administradora Boa Vista', paymentId: 'demo-pay-2', paymentValue: 129, commissionRate: 7, commissionValue: 9.03, status: 'pendente', createdAt: daysAgo(4), updatedAt: daysAgo(4) },
+  { id: 'demo-com-3', affiliateUserId: 'demo-afiliado', referralCode: DEMO_REFERRAL_CODE, companyId: 'demo-empresa-costa', companyName: 'Imobiliária Costa & Cia', paymentId: 'demo-pay-3', paymentValue: 79, commissionRate: 7, commissionValue: 5.53, status: 'pendente', createdAt: daysAgo(2), updatedAt: daysAgo(2) },
+]
+
+const PIX_KEY_TYPES: PixKeyType[] = ['cpf', 'cnpj', 'email', 'phone', 'evp']
+
+const COMMISSION_STATUS_VARIANT: Record<AffiliateCommission['status'], 'success' | 'warning' | 'secondary' | 'destructive'> = {
+  pago: 'success',
+  pendente: 'warning',
+  processando: 'secondary',
+  cancelado: 'destructive',
+}
 
 // Taxa fixa de comissão do programa de afiliados (mesmo valor em
 // api/checkout.ts e AfiliadosPage.tsx)
@@ -82,10 +99,10 @@ export function AffiliatePanel() {
 
   const [cpf, setCpf] = useState(user?.cpf ?? '')
   const [pixKey, setPixKey] = useState(user?.pixKey ?? '')
+  const [pixKeyType, setPixKeyType] = useState<PixKeyType | ''>(user?.pixKeyType ?? '')
   const [documentPhotoUrl, setDocumentPhotoUrl] = useState(user?.documentPhotoUrl ?? '')
   const [documentSelfieUrl, setDocumentSelfieUrl] = useState(user?.documentSelfieUrl ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
-  const [walletId, setWalletId] = useState(user?.asaasWalletId ?? '')
   const [savingKyc, setSavingKyc] = useState(false)
 
   const { data: referrals = [], isLoading } = useQuery({
@@ -93,6 +110,20 @@ export function AffiliatePanel() {
     queryFn: () => fetchReferralsWithStatus(code),
     enabled: !!code,
   })
+
+  const { data: commissions = [] } = useQuery({
+    queryKey: ['affiliateCommissions', user?.id],
+    queryFn: () =>
+      code === DEMO_REFERRAL_CODE ? Promise.resolve(DEMO_COMMISSIONS) : getCommissionsByAffiliate(user!.id),
+    enabled: !!user?.id,
+  })
+
+  const pendingTotal = commissions
+    .filter((c) => c.status === 'pendente' || c.status === 'processando')
+    .reduce((sum, c) => sum + c.commissionValue, 0)
+  const paidTotal = commissions
+    .filter((c) => c.status === 'pago')
+    .reduce((sum, c) => sum + c.commissionValue, 0)
 
   const activeCount = referrals.filter((r) => r.status === 'active').length
   const trialCount = referrals.filter((r) => r.status === 'trialing').length
@@ -114,15 +145,14 @@ export function AffiliatePanel() {
   }
 
   const kycComplete = !!(
-    user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl && user?.asaasWalletId
+    user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl
   )
 
   const handleSaveKyc = async () => {
     const cpfDigits = cpf.replace(/\D/g, '')
-    const walletIdClean = walletId.trim().replace(/^wal_/i, '')
     if (
-      cpfDigits.length !== 11 || !pixKey.trim() || !documentPhotoUrl || !documentSelfieUrl ||
-      !phone.trim() || !walletIdClean
+      cpfDigits.length !== 11 || !pixKey.trim() || !pixKeyType || !documentPhotoUrl ||
+      !documentSelfieUrl || !phone.trim()
     ) {
       toast({ title: t('kyc.validationError'), variant: 'destructive' })
       return
@@ -131,10 +161,10 @@ export function AffiliatePanel() {
     const patch = {
       cpf: cpfDigits,
       pixKey: pixKey.trim(),
+      pixKeyType,
       documentPhotoUrl,
       documentSelfieUrl,
       phone: phone.replace(/\D/g, ''),
-      asaasWalletId: walletIdClean,
     }
     try {
       const uid = auth.currentUser?.uid
@@ -151,7 +181,7 @@ export function AffiliatePanel() {
   }
 
   return (
-    <div className="pb-safe min-h-screen bg-slate-50">
+    <div className="light pb-safe min-h-screen bg-slate-50">
       <header className="pt-safe sticky top-0 z-10 border-b border-[#032B61]/10 bg-white shadow-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link to="/painel-afiliado" className="flex items-center">
@@ -241,6 +271,19 @@ export function AffiliatePanel() {
                 />
               </div>
               <div className="space-y-1.5">
+                <Label htmlFor="kyc-pix-type">{t('kyc.fields.pixKeyType')}</Label>
+                <Select value={pixKeyType} onValueChange={(v) => setPixKeyType(v as PixKeyType)}>
+                  <SelectTrigger id="kyc-pix-type">
+                    <SelectValue placeholder={t('kyc.fields.pixKeyTypePlaceholder')} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PIX_KEY_TYPES.map((type) => (
+                      <SelectItem key={type} value={type}>{t(`kyc.fields.pixKeyTypes.${type}`)}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
                 <Label htmlFor="kyc-phone">{t('kyc.fields.phone')}</Label>
                 <Input
                   id="kyc-phone"
@@ -249,19 +292,8 @@ export function AffiliatePanel() {
                   placeholder={t('kyc.fields.phonePlaceholder')}
                 />
               </div>
-              <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="kyc-wallet">{t('kyc.fields.walletId')}</Label>
-                <Input
-                  id="kyc-wallet"
-                  value={walletId}
-                  onChange={(e) => setWalletId(e.target.value)}
-                  placeholder={t('kyc.fields.walletIdPlaceholder')}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  {t('kyc.fields.walletIdHelp')}
-                </p>
-              </div>
             </div>
+            <p className="text-[11px] text-muted-foreground">{t('kyc.pixPayoutNote')}</p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <MultiPhotoUpload
@@ -322,6 +354,55 @@ export function AffiliatePanel() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardContent className="p-0">
+            <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
+              <h2 className="flex items-center gap-1.5 text-sm font-semibold">
+                <Banknote className="h-4 w-4 text-emerald-600" />
+                {t('commissions.title')}
+              </h2>
+              <div className="flex items-center gap-4 text-xs">
+                <span className="text-muted-foreground">
+                  {t('commissions.pendingTotal')}: <strong className="text-amber-600">{formatCurrency(pendingTotal)}</strong>
+                </span>
+                <span className="text-muted-foreground">
+                  {t('commissions.paidTotal')}: <strong className="text-emerald-600">{formatCurrency(paidTotal)}</strong>
+                </span>
+              </div>
+            </div>
+            {commissions.length === 0 ? (
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                {t('commissions.empty')}
+              </div>
+            ) : (
+              <ul className="divide-y">
+                {commissions.map((c) => (
+                  <li key={c.id} className="flex items-center justify-between gap-3 px-4 py-3">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{c.companyName || c.companyId}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {c.createdAt?.toDate ? formatDate(c.createdAt.toDate()) : '—'}
+                        {c.status === 'pago' && c.paidAt?.toDate
+                          ? ` · ${t('commissions.paidOn', { date: formatDate(c.paidAt.toDate()) })}`
+                          : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <span className="text-sm font-semibold">{formatCurrency(c.commissionValue)}</span>
+                      <Badge variant={COMMISSION_STATUS_VARIANT[c.status]} className="text-[10px]">
+                        {t(`commissions.status.${c.status}`)}
+                      </Badge>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="border-t bg-slate-50/60 px-4 py-2.5 text-[11px] text-muted-foreground">
+              {t('commissions.payoutNote')}
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardContent className="p-0">

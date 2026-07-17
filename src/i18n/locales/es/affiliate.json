@@ -64,16 +64,23 @@
       "pixKeyPlaceholder": "CPF, correo, teléfono o clave aleatoria",
       "phone": "Teléfono (con código de área)",
       "phonePlaceholder": "(00) 00000-0000",
-      "walletId": "Wallet ID de Asaas",
-      "walletIdPlaceholder": "Ej.: 720806d7-aa02-48c0-83fa-6e0357157ba7",
-      "walletIdHelp": "Es hacia donde se enviará tu comisión automáticamente. Crea una cuenta gratuita en asaas.com (si aún no tienes una) y copia el Wallet ID en Integraciones → Inicio, en el menú superior derecho del panel de Asaas.",
       "documentPhoto": "Foto del documento (DNI, carné de conducir o similar)",
-      "documentSelfie": "Foto tuya sosteniendo el documento"
+      "documentSelfie": "Foto tuya sosteniendo el documento",
+      "pixKeyType": "Tipo de clave PIX",
+      "pixKeyTypePlaceholder": "Selecciona el tipo",
+      "pixKeyTypes": {
+        "cpf": "CPF",
+        "cnpj": "CNPJ",
+        "email": "Correo",
+        "phone": "Celular",
+        "evp": "Aleatoria (EVP)"
+      }
     },
     "save": "Guardar datos",
     "saveSuccess": "¡Datos de cobro guardados!",
     "saveError": "Error al guardar. Inténtalo de nuevo.",
-    "validationError": "Completa todos los campos — CPF, PIX, fotos, teléfono y Wallet ID — antes de guardar."
+    "validationError": "Completa todos los campos — CPF, clave PIX (y su tipo), fotos y teléfono — antes de guardar.",
+    "pixPayoutNote": "Tus comisiones se pagan por PIX directamente a esta clave — sin necesidad de crear cuenta en otra plataforma."
   },
   "earnings": {
     "referrals": "Recomendaciones",
@@ -89,5 +96,19 @@
     "pastDue": "Pago atrasado",
     "canceled": "Cancelado",
     "expired": "Expirado"
+  },
+  "commissions": {
+    "title": "Extracto de comisiones",
+    "pendingTotal": "Por recibir",
+    "paidTotal": "Recibido",
+    "empty": "Aún no hay comisiones — aparecen aquí con cada mensualidad pagada por tus referidos.",
+    "status": {
+      "pendente": "Pendiente",
+      "processando": "En proceso",
+      "pago": "Pagado",
+      "cancelado": "Cancelado"
+    },
+    "payoutNote": "Pagos por PIX el día 5 de cada mes, para saldos desde R$ 20. Saldos menores se acumulan.",
+    "paidOn": "pagado el {{date}}"
   }
 }
