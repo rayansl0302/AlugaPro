@@ -187,12 +187,14 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       <Separator />
 
       <div className={cn('p-3', collapsed && 'flex flex-col items-center gap-2')}>
+        {/* Idioma — só no mobile: no desktop o Topbar já tem o seletor.
+            Botão rotulado (bandeira + idioma + seta) pra ficar claro que é
+            um controle, em vez de uma bandeira solta. */}
         {!collapsed && (
-          <div className="mb-2 flex justify-end">
-            <LanguageSelector />
+          <div className="mb-2 sm:hidden">
+            <LanguageSelector showLabel variant="outline" size="sm" className="w-full justify-start" />
           </div>
         )}
-        {collapsed && <LanguageSelector size="icon" className="mb-1" />}
         {!collapsed ? (
           <div className="flex items-center gap-2 rounded-md p-1">
             <Link

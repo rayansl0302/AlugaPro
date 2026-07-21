@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { ChevronDown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -44,6 +45,7 @@ export function LanguageSelector({
             <FlagIcon locale={current} className="h-full w-full object-cover" />
           </span>
           {showLabel && <span className="text-sm">{LOCALE_LABELS[current]}</span>}
+          {showLabel && <ChevronDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={align} className="min-w-[10rem]">
