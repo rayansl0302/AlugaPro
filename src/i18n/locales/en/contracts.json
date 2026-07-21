@@ -120,6 +120,7 @@
   },
   "searchPlaceholderShort": "Search contracts...",
   "newContract": "New Contract",
+  "importContract": "Import contract",
   "editContract": "Edit Contract",
   "close": "Close",
   "itemLabel": "contracts",

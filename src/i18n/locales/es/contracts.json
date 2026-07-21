@@ -120,6 +120,7 @@
   },
   "searchPlaceholderShort": "Buscar contratos...",
   "newContract": "Nuevo contrato",
+  "importContract": "Importar contrato",
   "editContract": "Editar contrato",
   "close": "Cerrar",
   "itemLabel": "contratos",

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning } from 'lucide-react'
+import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning, Upload } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContracts, updateContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
 import { getTenants } from '@/services/tenants'
@@ -54,6 +54,8 @@ export function ContractsPage() {
   const [statusFilter, setStatusFilter] = useState<ContractStatus | 'todos'>('todos')
   const [showForm, setShowForm] = useState(false)
   const [editingContract, setEditingContract] = useState<Contract | null>(null)
+  // Abre o form já com foco/destaque na seção de anexar PDF (contrato importado).
+  const [importIntent, setImportIntent] = useState(false)
   const [signingContract, setSigningContract] = useState<Contract | null>(null)
   const [signFlowEdit, setSignFlowEdit] = useState(false)
   const [viewTenant, setViewTenant] = useState<Tenant | null>(null)
@@ -309,9 +311,14 @@ export function ContractsPage() {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <Button onClick={() => { setEditingContract(null); setShowForm(true) }}>
-          <Plus className="mr-2 h-4 w-4" /> {t('newContract')}
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => { setEditingContract(null); setImportIntent(true); setShowForm(true) }}>
+            <Upload className="mr-2 h-4 w-4" /> {t('importContract')}
+          </Button>
+          <Button onClick={() => { setEditingContract(null); setImportIntent(false); setShowForm(true) }}>
+            <Plus className="mr-2 h-4 w-4" /> {t('newContract')}
+          </Button>
+        </div>
       </div>
 
       {/* Stats */}
@@ -553,16 +560,20 @@ export function ContractsPage() {
         />
       )}
 
-      <Dialog open={showForm} onOpenChange={setShowForm}>
+      <Dialog open={showForm} onOpenChange={(open) => { setShowForm(open); if (!open) setImportIntent(false) }}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingContract ? t('editContract') : t('newContract')}</DialogTitle>
+            <DialogTitle>
+              {editingContract ? t('editContract') : importIntent ? t('importContract') : t('newContract')}
+            </DialogTitle>
           </DialogHeader>
           <ContractForm
             contract={editingContract}
             companyId={companyId}
+            startInImport={importIntent && !editingContract}
             onSuccess={() => {
               setShowForm(false)
+              setImportIntent(false)
               qc.invalidateQueries({ queryKey: ['contracts'] })
             }}
           />

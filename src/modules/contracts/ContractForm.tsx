@@ -2,7 +2,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Loader2, Upload, FileText, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Contract, ContractAssetType, ReadjustmentIndex } from '@/types'
@@ -56,10 +56,12 @@ type FormData = z.infer<typeof schema>
 interface Props {
   contract?: Contract | null
   companyId: string
+  /** Abre o form com a seção de anexar PDF em destaque (fluxo "Importar contrato"). */
+  startInImport?: boolean
   onSuccess: () => void
 }
 
-export function ContractForm({ contract, companyId, onSuccess }: Props) {
+export function ContractForm({ contract, companyId, startInImport, onSuccess }: Props) {
   const { t } = useTranslation('contracts')
   const { t: tCommon } = useTranslation('common')
   const [loading, setLoading] = useState(false)
@@ -70,6 +72,17 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
   // URL do PDF já salvo (quando editando um contrato importado). Fica null se
   // o usuário remover o anexo existente pra substituí-lo.
   const [existingPdfUrl, setExistingPdfUrl] = useState(contract?.externalPdfUrl ?? '')
+
+  // Fluxo "Importar contrato": a seção de anexo é renderizada no topo do form
+  // (mais confiável que scrollIntoView dentro do Radix Dialog) e destacada
+  // com um ring por alguns segundos pra chamar atenção.
+  const [importHighlight, setImportHighlight] = useState(false)
+  useEffect(() => {
+    if (!startInImport) return
+    setImportHighlight(true)
+    const timer = setTimeout(() => setImportHighlight(false), 2800)
+    return () => clearTimeout(timer)
+  }, [startInImport])
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -248,8 +261,70 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
     }
   }
 
+  // Seção de anexo do contrato importado. Renderizada no topo (fluxo "Importar")
+  // ou no rodapé (fluxo "Novo contrato" comum).
+  const importSection = (
+    <div
+      className={`rounded-lg border border-dashed bg-muted/30 p-4 transition-all ${importHighlight ? 'border-primary ring-2 ring-primary/40' : ''}`}
+    >
+      <div className="flex items-start gap-3">
+        <FileText className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">{t('import.title')}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{t('import.description')}</p>
+
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/pdf"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (file) { setImportFile(file); setExistingPdfUrl('') }
+            }}
+          />
+
+          {importFile || existingPdfUrl ? (
+            <div className="mt-3 flex items-center gap-2 rounded-md border bg-background px-3 py-2">
+              <FileText className="h-4 w-4 shrink-0 text-red-500" />
+              <span className="min-w-0 flex-1 truncate text-xs">
+                {importFile ? importFile.name : t('import.currentFile')}
+              </span>
+              {existingPdfUrl && !importFile && (
+                <a href={existingPdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                  {t('import.view')}
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => { setImportFile(null); setExistingPdfUrl(''); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                className="text-muted-foreground hover:text-destructive"
+                title={t('import.remove')}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          ) : (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-3"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              {t('import.selectPdf')}
+            </Button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+      {startInImport && importSection}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label>{t('form.assetType')}</Label>
@@ -374,60 +449,7 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
         </div>
       </div>
 
-      {/* Contrato existente (importado) — anexar PDF pra só gerenciar */}
-      <div className="rounded-lg border border-dashed bg-muted/30 p-4">
-        <div className="flex items-start gap-3">
-          <FileText className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium">{t('import.title')}</p>
-            <p className="mt-0.5 text-xs text-muted-foreground">{t('import.description')}</p>
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0]
-                if (file) { setImportFile(file); setExistingPdfUrl('') }
-              }}
-            />
-
-            {importFile || existingPdfUrl ? (
-              <div className="mt-3 flex items-center gap-2 rounded-md border bg-background px-3 py-2">
-                <FileText className="h-4 w-4 shrink-0 text-red-500" />
-                <span className="min-w-0 flex-1 truncate text-xs">
-                  {importFile ? importFile.name : t('import.currentFile')}
-                </span>
-                {existingPdfUrl && !importFile && (
-                  <a href={existingPdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
-                    {t('import.view')}
-                  </a>
-                )}
-                <button
-                  type="button"
-                  onClick={() => { setImportFile(null); setExistingPdfUrl(''); if (fileInputRef.current) fileInputRef.current.value = '' }}
-                  className="text-muted-foreground hover:text-destructive"
-                  title={t('import.remove')}
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                className="mt-3"
-                onClick={() => fileInputRef.current?.click()}
-              >
-                <Upload className="mr-2 h-4 w-4" />
-                {t('import.selectPdf')}
-              </Button>
-            )}
-          </div>
-        </div>
-      </div>
+      {!startInImport && importSection}
 
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={loading}>
