@@ -423,7 +423,9 @@
     "selectPdf": "Anexar PDF do contrato",
     "currentFile": "Contrato anexado (PDF)",
     "view": "Ver",
-    "remove": "Remover anexo"
+    "remove": "Remover anexo",
+    "advancedTitle": "Configurações de cobrança (opcional)",
+    "advancedDescription": "Multa, juros e reajuste já constam no seu contrato — ajuste aqui só se quiser que o sistema calcule encargos por atraso. Caso contrário, usamos os padrões."
   },
   "imported": {
     "badge": "Importado",

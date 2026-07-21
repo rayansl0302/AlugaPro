@@ -423,7 +423,9 @@
     "selectPdf": "Adjuntar PDF del contrato",
     "currentFile": "Contrato adjunto (PDF)",
     "view": "Ver",
-    "remove": "Quitar adjunto"
+    "remove": "Quitar adjunto",
+    "advancedTitle": "Configuración de cobro (opcional)",
+    "advancedDescription": "Multa, intereses y reajuste ya constan en tu contrato — ajusta aquí solo si quieres que el sistema calcule cargos por atraso. Si no, usamos los valores por defecto."
   },
   "imported": {
     "badge": "Importado",

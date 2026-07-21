@@ -423,7 +423,9 @@
     "selectPdf": "Attach contract PDF",
     "currentFile": "Attached contract (PDF)",
     "view": "View",
-    "remove": "Remove attachment"
+    "remove": "Remove attachment",
+    "advancedTitle": "Billing settings (optional)",
+    "advancedDescription": "Late fee, interest and readjustment are already in your contract — adjust here only if you want the system to calculate late charges. Otherwise we use defaults."
   },
   "imported": {
     "badge": "Imported",

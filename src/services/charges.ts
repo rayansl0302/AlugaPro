@@ -115,7 +115,14 @@ export function generateMonthlyCharges(contract: Contract, monthOffset = 0): Omi
 
 // Generates monthly rent charges for a contract from startDate to today (or endDate).
 // Skips months that already have a charge. Returns count of charges created.
-export async function generateChargesForContract(contract: ChargeGenerationContract): Promise<number> {
+//
+// options.fromDate: piso pra geração — usado em contratos IMPORTADOS pra não
+// criar cobranças retroativas (o histórico já foi pago fora da plataforma).
+// Passando a data de hoje, só o mês corrente em diante é gerado.
+export async function generateChargesForContract(
+  contract: ChargeGenerationContract,
+  options?: { fromDate?: string },
+): Promise<number> {
   if (contract.status === 'encerrado' || contract.status === 'cancelado') return 0
 
   const q = query(collection(db, COL), where('contractId', '==', contract.id), where('type', '==', 'aluguel'))
@@ -127,7 +134,11 @@ export async function generateChargesForContract(contract: ChargeGenerationContr
   const contractEnd = contract.endDate ? parseISO(contract.endDate) : null
   const limit = contractEnd && isBefore(contractEnd, today) ? contractEnd : today
 
-  let cursor = startOfMonth(start)
+  // Se fromDate for depois do início do contrato, geração começa nele (importado).
+  const floor = options?.fromDate ? parseISO(options.fromDate) : start
+  const genStart = isAfter(floor, start) ? floor : start
+
+  let cursor = startOfMonth(genStart)
   let created = 0
 
   while (!isAfter(cursor, endOfMonth(limit))) {

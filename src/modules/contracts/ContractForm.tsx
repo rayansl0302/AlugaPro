@@ -234,9 +234,13 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         contractId = contract.id
       } else {
         contractId = await createContract(payload)
-        // Generate rent charges from startDate to today automatically
+        // Gera as cobranças de aluguel automaticamente. Importado não gera
+        // retroativas (histórico já pago fora da plataforma) — só do mês atual.
         const fullContract = { ...payload, id: contractId, status: 'ativo' as const }
-        const count = await generateChargesForContract(fullContract as Contract)
+        const count = await generateChargesForContract(
+          fullContract as Contract,
+          willBeImported ? { fromDate: new Date().toISOString().slice(0, 10) } : undefined,
+        )
         toast({ title: t('toast.createdWithCharges', { count }) })
       }
 
@@ -260,6 +264,47 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
       setLoading(false)
     }
   }
+
+  // Campos de "termo" do contrato (caução, multa, juros, reajuste). No fluxo
+  // normal ficam inline no grid; no fluxo importar vão pro "avançado" opcional,
+  // pois já constam no PDF anexado.
+  const termFields = (
+    <>
+      <div className="space-y-2">
+        <Label>{t('form.deposit')}</Label>
+        <Input type="number" step="0.01" {...register('cautionValue')} />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('form.lateFee')}</Label>
+        <Input type="number" step="0.01" min={0} max={10} {...register('lateFee')} />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('form.monthlyInterest')}</Label>
+        <Input type="number" step="0.01" min={0} max={5} {...register('monthlyInterest')} />
+      </div>
+      <div className="space-y-2">
+        <Label>{t('form.readjustmentIndex')}</Label>
+        <Select
+          value={watch('readjustmentIndex')}
+          onValueChange={(v) => setValue('readjustmentIndex', v as ReadjustmentIndex)}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="IGPM">IGPM</SelectItem>
+            <SelectItem value="IPCA">IPCA</SelectItem>
+            <SelectItem value="INPC">INPC</SelectItem>
+            <SelectItem value="Fixo">Fixo</SelectItem>
+            <SelectItem value="Nenhum">{tCommon('ui.none')}</SelectItem>
+          </SelectContent>
+        </Select>
+        {currentIndex?.value != null && (
+          <p className="text-xs text-muted-foreground">
+            {t('form.indexRef', { name: currentIndex.name, value: currentIndex.value.toFixed(2), date: currentIndex.referenceDate })}
+          </p>
+        )}
+      </div>
+    </>
+  )
 
   // Seção de anexo do contrato importado. Renderizada no topo (fluxo "Importar")
   // ou no rodapé (fluxo "Novo contrato" comum).
@@ -414,40 +459,22 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
           <Label>{t('form.dueDayRequired')}</Label>
           <Input type="number" min={1} max={28} {...register('dueDay')} />
         </div>
-        <div className="space-y-2">
-          <Label>{t('form.deposit')}</Label>
-          <Input type="number" step="0.01" {...register('cautionValue')} />
-        </div>
-        <div className="space-y-2">
-          <Label>{t('form.lateFee')}</Label>
-          <Input type="number" step="0.01" min={0} max={10} {...register('lateFee')} />
-        </div>
-        <div className="space-y-2">
-          <Label>{t('form.monthlyInterest')}</Label>
-          <Input type="number" step="0.01" min={0} max={5} {...register('monthlyInterest')} />
-        </div>
-        <div className="space-y-2">
-          <Label>{t('form.readjustmentIndex')}</Label>
-          <Select
-            value={watch('readjustmentIndex')}
-            onValueChange={(v) => setValue('readjustmentIndex', v as ReadjustmentIndex)}
-          >
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="IGPM">IGPM</SelectItem>
-              <SelectItem value="IPCA">IPCA</SelectItem>
-              <SelectItem value="INPC">INPC</SelectItem>
-              <SelectItem value="Fixo">Fixo</SelectItem>
-              <SelectItem value="Nenhum">{tCommon('ui.none')}</SelectItem>
-            </SelectContent>
-          </Select>
-          {currentIndex?.value != null && (
-            <p className="text-xs text-muted-foreground">
-              {t('form.indexRef', { name: currentIndex.name, value: currentIndex.value.toFixed(2), date: currentIndex.referenceDate })}
-            </p>
-          )}
-        </div>
+        {/* Modo normal: termos inline no grid. Modo importar: escondidos aqui
+            e movidos pro "avançado" opcional abaixo (já estão no PDF). */}
+        {!startInImport && termFields}
       </div>
+
+      {startInImport && (
+        <details className="rounded-lg border bg-muted/20 px-4 py-3">
+          <summary className="cursor-pointer text-sm font-medium text-muted-foreground">
+            {t('import.advancedTitle')}
+          </summary>
+          <p className="mt-1 text-xs text-muted-foreground">{t('import.advancedDescription')}</p>
+          <div className="mt-3 grid gap-4 sm:grid-cols-2">
+            {termFields}
+          </div>
+        </details>
+      )}
 
       {!startInImport && importSection}
 
