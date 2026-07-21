@@ -149,7 +149,10 @@
     "empty": "No contracts found.",
     "emptyActive": "You have no active contracts at the moment.",
     "filterAll": "All",
-    "filterActive": "Active"
+    "filterActive": "Active",
+    "importedLabel": "Imported contract",
+    "importedBadge": "Imported",
+    "importedNote": "Document attached by the manager. Tap \"View PDF\" to open the contract."
   },
   "profile": {
     "title": "My profile",

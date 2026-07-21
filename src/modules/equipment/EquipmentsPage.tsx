@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { CardGridSkeleton } from '@/components/ui/skeleton'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -172,13 +173,7 @@ export function EquipmentsPage() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Card key={i} className="animate-pulse">
-              <CardContent className="h-48 p-6" />
-            </Card>
-          ))}
-        </div>
+        <CardGridSkeleton count={6} />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <HardHat className="h-12 w-12 text-muted-foreground/40" />

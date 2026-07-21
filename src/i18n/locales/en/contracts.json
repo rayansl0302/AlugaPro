@@ -415,5 +415,18 @@
       "pdfUpdated": "PDF updated with the witness signatures!",
       "pdfFinalError": "Failed to generate the final PDF. Please try again."
     }
+  },
+  "import": {
+    "title": "Already have a signed contract?",
+    "description": "Attach the existing contract PDF to manage charges and due dates on the platform, without redoing the digital signature.",
+    "selectPdf": "Attach contract PDF",
+    "currentFile": "Attached contract (PDF)",
+    "view": "View",
+    "remove": "Remove attachment"
+  },
+  "imported": {
+    "badge": "Imported",
+    "viewDocument": "View attached contract",
+    "noFile": "No PDF attached to this contract."
   }
 }

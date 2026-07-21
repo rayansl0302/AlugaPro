@@ -415,5 +415,18 @@
       "pdfUpdated": "PDF atualizado com as assinaturas das testemunhas!",
       "pdfFinalError": "Erro ao gerar o PDF final. Tente novamente."
     }
+  },
+  "import": {
+    "title": "Já tem o contrato assinado?",
+    "description": "Anexe o PDF do contrato existente para gerenciar cobranças e vencimentos na plataforma, sem precisar refazer a assinatura digital.",
+    "selectPdf": "Anexar PDF do contrato",
+    "currentFile": "Contrato anexado (PDF)",
+    "view": "Ver",
+    "remove": "Remover anexo"
+  },
+  "imported": {
+    "badge": "Importado",
+    "viewDocument": "Ver contrato anexado",
+    "noFile": "Nenhum PDF anexado a este contrato."
   }
 }

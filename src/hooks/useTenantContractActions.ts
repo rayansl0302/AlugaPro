@@ -10,6 +10,11 @@ export function useTenantContractActions() {
   const [loadingAction, setLoadingAction] = useState<'view' | 'download' | null>(null)
 
   const viewContract = async (contract: Contract) => {
+    // Contrato importado: abre o PDF original anexado, sem gerar nada.
+    if (contract.isImported && contract.externalPdfUrl) {
+      window.open(contract.externalPdfUrl, '_blank')
+      return
+    }
     if (contract.signingData) {
       setLoadingContractId(contract.id)
       setLoadingAction('view')
@@ -32,6 +37,11 @@ export function useTenantContractActions() {
   }
 
   const downloadContract = async (contract: Contract) => {
+    // Contrato importado: o "download" abre o PDF original anexado.
+    if (contract.isImported && contract.externalPdfUrl) {
+      window.open(contract.externalPdfUrl, '_blank')
+      return
+    }
     if (contract.signingData) {
       setLoadingContractId(contract.id)
       setLoadingAction('download')

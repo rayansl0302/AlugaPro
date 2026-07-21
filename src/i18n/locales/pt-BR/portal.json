@@ -149,7 +149,10 @@
     "empty": "Nenhum contrato encontrado.",
     "emptyActive": "Você não possui contratos ativos no momento.",
     "filterAll": "Todos",
-    "filterActive": "Ativos"
+    "filterActive": "Ativos",
+    "importedLabel": "Contrato importado",
+    "importedBadge": "Importado",
+    "importedNote": "Documento anexado pela administradora. Toque em \"Ver PDF\" para abrir o contrato."
   },
   "profile": {
     "title": "Meu perfil",

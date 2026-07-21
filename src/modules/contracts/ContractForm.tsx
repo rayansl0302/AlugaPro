@@ -1,8 +1,8 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2 } from 'lucide-react'
-import { useState } from 'react'
+import { Loader2, Upload, FileText, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import { Contract, ContractAssetType, ReadjustmentIndex } from '@/types'
@@ -12,6 +12,7 @@ import {
   linkContractToAsset,
   releaseContractAsset,
 } from '@/services/contracts'
+import { uploadContractDocument } from '@/services/storage'
 import { generateChargesForContract } from '@/services/charges'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
@@ -62,6 +63,13 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
   const { t } = useTranslation('contracts')
   const { t: tCommon } = useTranslation('common')
   const [loading, setLoading] = useState(false)
+
+  // Contrato importado: PDF já existente que o cliente anexa só pra gerenciar.
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [importFile, setImportFile] = useState<File | null>(null)
+  // URL do PDF já salvo (quando editando um contrato importado). Fica null se
+  // o usuário remover o anexo existente pra substituí-lo.
+  const [existingPdfUrl, setExistingPdfUrl] = useState(contract?.externalPdfUrl ?? '')
 
   const { register, handleSubmit, setValue, watch, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -175,6 +183,9 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
     try {
       const status = contract?.status ?? 'ativo'
       const isActive = status === 'ativo' || status === 'renovado'
+      const willBeImported = !!(importFile || existingPdfUrl)
+      // Anexo removido na edição (era importado e não há mais arquivo): limpa a URL.
+      const clearingExternalPdf = !!contract?.externalPdfUrl && !existingPdfUrl && !importFile
       const payload = {
         companyId,
         status,
@@ -193,6 +204,8 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
         lateFee: data.lateFee,
         monthlyInterest: data.monthlyInterest,
         readjustmentIndex: data.readjustmentIndex as ReadjustmentIndex,
+        isImported: willBeImported,
+        ...(clearingExternalPdf ? { externalPdfUrl: '' } : {}),
       }
 
       let contractId: string
@@ -206,14 +219,21 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
         }
         await updateContract(contract.id, payload)
         contractId = contract.id
-        toast({ title: t('toast.updatedShort') })
       } else {
         contractId = await createContract(payload)
         // Generate rent charges from startDate to today automatically
         const fullContract = { ...payload, id: contractId, status: 'ativo' as const }
-        const count = await generateChargesForContract(fullContract)
+        const count = await generateChargesForContract(fullContract as Contract)
         toast({ title: t('toast.createdWithCharges', { count }) })
       }
+
+      // Upload do PDF importado só depois de ter o contractId (path do arquivo).
+      if (importFile) {
+        const url = await uploadContractDocument(companyId, contractId, importFile, 'importado')
+        await updateContract(contractId, { externalPdfUrl: url, isImported: true })
+      }
+
+      if (contract) toast({ title: t('toast.updatedShort') })
 
       await linkContractToAsset(
         { assetType: data.assetType, assetId: data.propertyId },
@@ -351,6 +371,61 @@ export function ContractForm({ contract, companyId, onSuccess }: Props) {
               {t('form.indexRef', { name: currentIndex.name, value: currentIndex.value.toFixed(2), date: currentIndex.referenceDate })}
             </p>
           )}
+        </div>
+      </div>
+
+      {/* Contrato existente (importado) — anexar PDF pra só gerenciar */}
+      <div className="rounded-lg border border-dashed bg-muted/30 p-4">
+        <div className="flex items-start gap-3">
+          <FileText className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium">{t('import.title')}</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">{t('import.description')}</p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/pdf"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (file) { setImportFile(file); setExistingPdfUrl('') }
+              }}
+            />
+
+            {importFile || existingPdfUrl ? (
+              <div className="mt-3 flex items-center gap-2 rounded-md border bg-background px-3 py-2">
+                <FileText className="h-4 w-4 shrink-0 text-red-500" />
+                <span className="min-w-0 flex-1 truncate text-xs">
+                  {importFile ? importFile.name : t('import.currentFile')}
+                </span>
+                {existingPdfUrl && !importFile && (
+                  <a href={existingPdfUrl} target="_blank" rel="noopener noreferrer" className="text-xs text-primary underline">
+                    {t('import.view')}
+                  </a>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setImportFile(null); setExistingPdfUrl(''); if (fileInputRef.current) fileInputRef.current.value = '' }}
+                  className="text-muted-foreground hover:text-destructive"
+                  title={t('import.remove')}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="mt-3"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="mr-2 h-4 w-4" />
+                {t('import.selectPdf')}
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 

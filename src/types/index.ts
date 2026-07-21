@@ -335,6 +335,11 @@ export interface Contract {
   status: ContractStatus
   files?: string[]
   notes?: string
+  // Importado: contrato pré-existente (PDF de fora da plataforma) que o cliente
+  // subiu só pra gerenciar cobranças/vencimentos. Não passa pelo fluxo de
+  // assinatura digital — externalPdfUrl guarda o documento original.
+  isImported?: boolean
+  externalPdfUrl?: string
   // Signing
   signingData?: ContractSigningData
   signatureLocador?: string

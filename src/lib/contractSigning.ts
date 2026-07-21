@@ -1,6 +1,8 @@
 import { Contract } from '@/types'
 
-export type ContractSigningState = 'unsigned' | 'pending' | 'complete'
+// 'external' = contrato importado (PDF de fora), não passa pelo fluxo de
+// assinatura digital — trata-se de um documento já assinado no papel/PDF.
+export type ContractSigningState = 'unsigned' | 'pending' | 'complete' | 'external'
 
 export interface ContractSigningStatus {
   state: ContractSigningState
@@ -12,6 +14,17 @@ export interface ContractSigningStatus {
 }
 
 export function getContractSigningStatus(contract: Contract): ContractSigningStatus {
+  if (contract.isImported) {
+    return {
+      state: 'external',
+      locadorSigned: true,
+      locatarioSigned: true,
+      witnessesTotal: 0,
+      witnessesSigned: 0,
+      pendingCount: 0,
+    }
+  }
+
   const locadorSigned = Boolean(contract.signatureLocador)
   const locatarioSigned = Boolean(contract.signatureLocatario)
   const witnesses = contract.witnesses ?? []

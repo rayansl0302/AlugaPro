@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -745,11 +746,7 @@ export function ChargesPage() {
       )}
 
       {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
-          ))}
-        </div>
+        <TableSkeleton rows={4} />
       ) : viewMode === 'timeline' ? (
 
         /* ─── Timeline / Calendar View ───────────────────────────────────── */

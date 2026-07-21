@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Pagination } from '@/components/ui/pagination'
+import { TableSkeleton } from '@/components/ui/skeleton'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { TenantForm } from './TenantForm'
@@ -154,11 +155,7 @@ export function TenantsPage() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
-          ))}
-        </div>
+        <TableSkeleton rows={5} />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <Users className="h-12 w-12 text-muted-foreground/40" />

@@ -113,11 +113,13 @@ function ContractCard({
   const AssetIcon = contract.assetType === 'veiculo' ? Car : Building2
 
   const signingLabel =
-    signing.state === 'complete'
-      ? t('contracts.signaturesComplete')
-      : signing.state === 'pending'
-        ? t('contractsExtra.pendingSignaturesCount', { count: signing.pendingCount })
-        : t('contracts.awaitingSignatures')
+    signing.state === 'external'
+      ? t('contracts.importedLabel')
+      : signing.state === 'complete'
+        ? t('contracts.signaturesComplete')
+        : signing.state === 'pending'
+          ? t('contractsExtra.pendingSignaturesCount', { count: signing.pendingCount })
+          : t('contracts.awaitingSignatures')
 
   return (
     <AccordionItem value={contract.id} className="border border-[#032B61]/15 rounded-xl bg-white text-card-foreground shadow-sm overflow-hidden">
@@ -135,6 +137,12 @@ function ContractCard({
                   <Badge variant="success" className="gap-1">
                     <CheckCircle className="h-3 w-3" />
                     {t('contracts.signed')}
+                  </Badge>
+                )}
+                {signing.state === 'external' && (
+                  <Badge variant="outline" className="gap-1 text-blue-600">
+                    <FileText className="h-3 w-3" />
+                    {t('contracts.importedBadge')}
                   </Badge>
                 )}
                 {warnings.length > 0 && (
@@ -278,16 +286,22 @@ function ContractCard({
               <PenLine className="h-3.5 w-3.5" />
               {signingLabel}
             </span>
-            <span className="flex items-center gap-1">
-              {t('contracts.landlord')}: {signing.locadorSigned ? t('contracts.signed') : t('contracts.pending')}
-            </span>
-            <span className="flex items-center gap-1">
-              {t('contracts.tenant')}: {signing.locatarioSigned ? t('contracts.signed') : t('contracts.pending')}
-            </span>
-            {signing.witnessesTotal > 0 && (
-              <span>
-                {t('contractsExtra.witnesses')}: {signing.witnessesSigned}/{signing.witnessesTotal}
-              </span>
+            {signing.state === 'external' ? (
+              <span>{t('contracts.importedNote')}</span>
+            ) : (
+              <>
+                <span className="flex items-center gap-1">
+                  {t('contracts.landlord')}: {signing.locadorSigned ? t('contracts.signed') : t('contracts.pending')}
+                </span>
+                <span className="flex items-center gap-1">
+                  {t('contracts.tenant')}: {signing.locatarioSigned ? t('contracts.signed') : t('contracts.pending')}
+                </span>
+                {signing.witnessesTotal > 0 && (
+                  <span>
+                    {t('contractsExtra.witnesses')}: {signing.witnessesSigned}/{signing.witnessesTotal}
+                  </span>
+                )}
+              </>
             )}
           </div>
           {contract.notes && (

@@ -415,5 +415,18 @@
       "pdfUpdated": "¡PDF actualizado con las firmas de los testigos!",
       "pdfFinalError": "Error al generar el PDF final. Inténtelo de nuevo."
     }
+  },
+  "import": {
+    "title": "¿Ya tienes el contrato firmado?",
+    "description": "Adjunta el PDF del contrato existente para gestionar cobros y vencimientos en la plataforma, sin rehacer la firma digital.",
+    "selectPdf": "Adjuntar PDF del contrato",
+    "currentFile": "Contrato adjunto (PDF)",
+    "view": "Ver",
+    "remove": "Quitar adjunto"
+  },
+  "imported": {
+    "badge": "Importado",
+    "viewDocument": "Ver contrato adjunto",
+    "noFile": "Ningún PDF adjunto a este contrato."
   }
 }

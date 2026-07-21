@@ -21,6 +21,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { Pagination } from '@/components/ui/pagination'
+import { TableSkeleton, StatCardsSkeleton } from '@/components/ui/skeleton'
 import { usePagination } from '@/hooks/usePagination'
 import { toast } from '@/hooks/useToast'
 import { ContractForm } from './ContractForm'
@@ -197,15 +198,17 @@ export function ContractsPage() {
       >
         <Edit className="h-3 w-3" />
       </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        disabled={contract.locked}
-        title={contract.locked ? t('actions.locked') : t('actions.completeData')}
-        onClick={() => { setSignFlowEdit(true); setSigningContract(contract) }}
-      >
-        <Users className="h-3.5 w-3.5" />
-      </Button>
+      {!contract.isImported && (
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={contract.locked}
+          title={contract.locked ? t('actions.locked') : t('actions.completeData')}
+          onClick={() => { setSignFlowEdit(true); setSigningContract(contract) }}
+        >
+          <Users className="h-3.5 w-3.5" />
+        </Button>
+      )}
       {contract.locked ? (
         <Button variant="ghost" size="sm" className="text-green-600" disabled title={t('actions.lockedDone')}>
           <LockKeyhole className="h-3.5 w-3.5" />
@@ -221,32 +224,45 @@ export function ContractsPage() {
           <Lock className="h-3.5 w-3.5" />
         </Button>
       )}
-      <Button
-        variant="ghost"
-        size="sm"
-        title={
-          signing.state === 'complete'
-            ? t('actions.signedView')
+      {signing.state === 'external' ? (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-blue-600"
+          title={t('imported.viewDocument')}
+          disabled={!contract.externalPdfUrl}
+          onClick={() => contract.externalPdfUrl && window.open(contract.externalPdfUrl, '_blank')}
+        >
+          <FileText className="h-3.5 w-3.5" />
+        </Button>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          title={
+            signing.state === 'complete'
+              ? t('actions.signedView')
+              : signing.state === 'pending'
+                ? t('actions.pendingSignatures', { count: signing.pendingCount })
+                : t('actions.sign')
+          }
+          className={
+            signing.state === 'complete'
+              ? 'text-green-600'
+              : signing.state === 'pending'
+                ? 'text-amber-500'
+                : 'text-primary'
+          }
+          onClick={() => { setSignFlowEdit(false); setSigningContract(contract) }}
+        >
+          {signing.state === 'complete'
+            ? <CheckCircle className="h-3.5 w-3.5" />
             : signing.state === 'pending'
-              ? t('actions.pendingSignatures', { count: signing.pendingCount })
-              : t('actions.sign')
-        }
-        className={
-          signing.state === 'complete'
-            ? 'text-green-600'
-            : signing.state === 'pending'
-              ? 'text-amber-500'
-              : 'text-primary'
-        }
-        onClick={() => { setSignFlowEdit(false); setSigningContract(contract) }}
-      >
-        {signing.state === 'complete'
-          ? <CheckCircle className="h-3.5 w-3.5" />
-          : signing.state === 'pending'
-            ? <Clock className="h-3.5 w-3.5" />
-            : <PenLine className="h-3.5 w-3.5" />
-        }
-      </Button>
+              ? <Clock className="h-3.5 w-3.5" />
+              : <PenLine className="h-3.5 w-3.5" />
+          }
+        </Button>
+      )}
       {contract.status === 'ativo' && (
         <Button
           variant="ghost"
@@ -299,23 +315,23 @@ export function ContractsPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {(['ativo', 'renovado', 'encerrado', 'cancelado'] as ContractStatus[]).map((s) => (
-          <Card key={s} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setStatusFilter(s)}>
-            <CardContent className="p-4 text-center">
-              <p className="text-2xl font-bold">{contracts.filter((c) => c.status === s).length}</p>
-              <p className="text-xs text-muted-foreground">{statusConfig[s].label}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
       {isLoading ? (
-        <div className="space-y-2">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="h-16 animate-pulse rounded-lg bg-muted" />
+        <StatCardsSkeleton />
+      ) : (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {(['ativo', 'renovado', 'encerrado', 'cancelado'] as ContractStatus[]).map((s) => (
+            <Card key={s} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setStatusFilter(s)}>
+              <CardContent className="p-4 text-center">
+                <p className="text-2xl font-bold">{contracts.filter((c) => c.status === s).length}</p>
+                <p className="text-xs text-muted-foreground">{statusConfig[s].label}</p>
+              </CardContent>
+            </Card>
           ))}
         </div>
+      )}
+
+      {isLoading ? (
+        <TableSkeleton rows={5} />
       ) : filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-20 text-center">
           <FileText className="h-12 w-12 text-muted-foreground/40" />
@@ -344,6 +360,12 @@ export function ContractsPage() {
                               {warningCountByContract[contract.id]}
                             </Badge>
                           </Link>
+                        )}
+                        {contract.isImported && (
+                          <Badge variant="outline" className="gap-1 text-blue-600">
+                            <FileText className="h-3 w-3" />
+                            {t('imported.badge')}
+                          </Badge>
                         )}
                         <Badge variant={sc.variant}>{sc.label}</Badge>
                       </div>
@@ -489,6 +511,12 @@ export function ContractsPage() {
                     <TableCell>
                       <div className="flex items-center gap-1.5">
                         <Badge variant={sc.variant}>{sc.label}</Badge>
+                        {contract.isImported && (
+                          <Badge variant="outline" className="gap-1 text-blue-600">
+                            <FileText className="h-3 w-3" />
+                            {t('imported.badge')}
+                          </Badge>
+                        )}
                         {warningCountByContract[contract.id] > 0 && (
                           <Link to="/advertencias" title={t('actions.viewWarnings')}>
                             <Badge variant={warningCountByContract[contract.id] >= 4 ? 'destructive' : 'warning'} className="gap-1">
