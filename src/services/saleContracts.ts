@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, query, orderBy, serverTimestamp,
+  collection, doc, getDoc, getDocs, setDoc, updateDoc, deleteDoc, addDoc, query, orderBy, where, onSnapshot, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { SaleContract, SaleSignatureRequest } from '@/types'
@@ -51,6 +51,25 @@ export async function createSaleSignatureRequest(
     status: 'pending',
     createdAt: new Date().toISOString(),
   })
+}
+
+// Observa em tempo real as solicitações de assinatura de um contrato de venda
+// e informa o conjunto de tokens já assinados. Usado pra atualizar o status
+// no painel do admin sem precisar clicar em "Atualizar status".
+export function subscribeSaleSignatures(
+  saleContractId: string,
+  cb: (signedTokens: Set<string>) => void,
+): () => void {
+  const q = query(collection(db, SALE_SIGNATURES_COL), where('saleContractId', '==', saleContractId))
+  return onSnapshot(
+    q,
+    (snap) => {
+      const signed = new Set<string>()
+      snap.forEach((d) => { if (d.data().status === 'signed') signed.add(d.id) })
+      cb(signed)
+    },
+    () => { /* sem permissão / offline — silencioso, o botão manual continua disponível */ },
+  )
 }
 
 export async function getSaleSignatureRequest(token: string): Promise<SaleSignatureRequest | null> {

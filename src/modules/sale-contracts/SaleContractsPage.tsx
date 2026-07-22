@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Capacitor } from '@capacitor/core'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,7 +8,7 @@ import {
 import {
   getSaleContracts, createSaleContract, updateSaleContract,
   generateSaleSignToken, createSaleSignatureRequest, getSaleSignatureRequest,
-  updateSaleSignatureSnapshot, deleteSaleSignatureRequest,
+  updateSaleSignatureSnapshot, deleteSaleSignatureRequest, subscribeSaleSignatures,
 } from '@/services/saleContracts'
 import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
@@ -198,13 +198,27 @@ function SaleContractCard({
     }
   }
 
-  const handleRefresh = async () => {
-    setRefreshing(true)
+  // Referência sempre atualizada do contrato (pro listener não usar estado velho)
+  const contractRef = useRef(contract)
+  contractRef.current = contract
+  const syncingRef = useRef(false)
+
+  // Sincroniza os status de assinatura a partir dos docs em saleSignatures.
+  // silent=true: usado pela atualização automática (sem spinner/toast e sem
+  // escrever se nada mudou); silent=false: o botão "Atualizar status".
+  const syncSignatures = async (opts?: { silent?: boolean }) => {
+    const silent = opts?.silent ?? false
+    if (syncingRef.current) return
+    syncingRef.current = true
+    if (!silent) setRefreshing(true)
     try {
-      const updated = await Promise.all(contract.signers.map(async (s) => {
+      const current = contractRef.current
+      let changed = false
+      const updated = await Promise.all(current.signers.map(async (s) => {
         if (s.status === 'signed') return s
         const req = await getSaleSignatureRequest(s.token)
         if (req?.status === 'signed') {
+          changed = true
           return {
             ...s,
             signature: req.signature, cpf: req.cpf, rg: req.rg,
@@ -214,15 +228,35 @@ function SaleContractCard({
         }
         return s
       }))
-      await updateSaleContract(contract.id, { signers: updated })
-      onRefresh()
-      toast({ title: t('toast.statusUpdated') })
+      if (changed) {
+        await updateSaleContract(current.id, { signers: updated })
+        onRefresh()
+      }
+      if (!silent) toast({ title: t('toast.statusUpdated') })
     } catch {
-      toast({ title: t('toast.statusError'), variant: 'destructive' })
+      if (!silent) toast({ title: t('toast.statusError'), variant: 'destructive' })
     } finally {
-      setRefreshing(false)
+      syncingRef.current = false
+      if (!silent) setRefreshing(false)
     }
   }
+
+  const handleRefresh = () => syncSignatures()
+
+  // Atualização automática em tempo real: quando um assinante conclui pelo
+  // link, o doc em saleSignatures vira 'signed' e sincronizamos o contrato
+  // sozinho — sem o admin precisar clicar em "Atualizar status". A subscription
+  // já dispara com o estado atual ao montar, cobrindo assinaturas feitas
+  // enquanto a página estava fechada.
+  useEffect(() => {
+    if (contract.status === 'assinado') return
+    return subscribeSaleSignatures(contract.id, (signedTokens) => {
+      const cur = contractRef.current
+      const hasNewSignature = cur.signers.some((s) => s.status !== 'signed' && s.token && signedTokens.has(s.token))
+      if (hasNewSignature) void syncSignatures({ silent: true })
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [contract.id, contract.status])
 
   const requiredSigners = contract.signers.filter((s) => s.role === 'vendedor' || s.role === 'comprador' || s.token)
   const allSigned = requiredSigners.length > 0 && requiredSigners.every((s) => s.status === 'signed')
