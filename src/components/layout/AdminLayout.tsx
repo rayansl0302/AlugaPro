@@ -41,8 +41,13 @@ export function AdminLayout() {
 
   useReceiptSoundAlert(companyId, canHearReceiptAlerts)
 
+  // Casa o prefixo MAIS específico (mais longo): sem isso, "/contratos-terreno"
+  // casaria "/contratos" primeiro e mostraria o título de aluguel. Também
+  // mantém subrotas como "/configuracoes/assinatura" → "Configurações".
   const titleKey =
-    Object.entries(pageTitleKeys).find(([path]) => location.pathname.startsWith(path))?.[1]
+    Object.entries(pageTitleKeys)
+      .filter(([path]) => location.pathname.startsWith(path))
+      .sort((a, b) => b[0].length - a[0].length)[0]?.[1]
   const currentTitle = titleKey ? t(titleKey) : 'AlugaPro'
 
   return (
