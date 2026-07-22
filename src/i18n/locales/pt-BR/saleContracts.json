@@ -168,5 +168,9 @@
   "toastExtra": {
     "previewValidation": "Preencha ao menos o nome do vendedor e do comprador para pré-visualizar.",
     "createdDescription": "Copie os links de assinatura abaixo e envie às partes."
-  }
+  },
+  "tabPending": "Pendentes",
+  "tabSigned": "Assinados",
+  "emptyPending": "Nenhum contrato pendente.",
+  "emptySigned": "Nenhum contrato assinado ainda."
 }

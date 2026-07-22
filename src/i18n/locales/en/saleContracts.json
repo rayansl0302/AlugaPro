@@ -168,5 +168,9 @@
   "toastExtra": {
     "previewValidation": "Fill in at least the seller and buyer names to preview.",
     "createdDescription": "Copy the signing links below and send them to the parties."
-  }
+  },
+  "tabPending": "Pending",
+  "tabSigned": "Signed",
+  "emptyPending": "No pending contracts.",
+  "emptySigned": "No signed contracts yet."
 }

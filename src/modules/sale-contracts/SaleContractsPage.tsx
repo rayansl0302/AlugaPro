@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { toast } from '@/hooks/useToast'
 
 const emptyParty: SaleContractParty = { name: '', nationality: '', maritalStatus: '', cpf: '', rg: '', address: '' }
@@ -744,6 +745,9 @@ export function SaleContractsPage() {
     }
   }
 
+  const pendentes = contracts.filter((c) => c.status !== 'assinado')
+  const assinados = contracts.filter((c) => c.status === 'assinado')
+
   return (
     <div className="space-y-6">
       <div>
@@ -751,8 +755,22 @@ export function SaleContractsPage() {
         <p className="text-sm text-muted-foreground">{t('landSubtitle')}</p>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-base">{t('newContract')}</CardTitle></CardHeader>
+      <Tabs defaultValue="pendentes" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="novo">{t('newContract')}</TabsTrigger>
+          <TabsTrigger value="pendentes" className="gap-1.5">
+            {t('tabPending')}
+            {pendentes.length > 0 && <Badge variant="secondary" className="px-1.5">{pendentes.length}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="assinados" className="gap-1.5">
+            {t('tabSigned')}
+            {assinados.length > 0 && <Badge variant="secondary" className="px-1.5">{assinados.length}</Badge>}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="novo">
+          <Card>
+            <CardHeader><CardTitle className="text-base">{t('newContract')}</CardTitle></CardHeader>
         <CardContent className="space-y-5">
           <PartyFields idPrefix="vendedor" title={t('roles.vendedor')} value={vendedor} onChange={setVendedor} />
           <PartyFields idPrefix="comprador" title={t('roles.comprador')} value={comprador} onChange={setComprador} />
@@ -859,21 +877,34 @@ export function SaleContractsPage() {
               {t('generateContract')}
             </Button>
           </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+          </Card>
+        </TabsContent>
 
-      <div className="space-y-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">{t('generatedContracts')}</h2>
-        {isLoading ? (
-          <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-        ) : contracts.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{t('emptyGenerated')}</p>
-        ) : (
-          contracts.map((c) => (
-            <SaleContractCard key={c.id} contract={c} onRefresh={() => qc.invalidateQueries({ queryKey: ['saleContracts'] })} />
-          ))
-        )}
-      </div>
+        <TabsContent value="pendentes" className="space-y-3">
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : pendentes.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('emptyPending')}</p>
+          ) : (
+            pendentes.map((c) => (
+              <SaleContractCard key={c.id} contract={c} onRefresh={() => qc.invalidateQueries({ queryKey: ['saleContracts'] })} />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="assinados" className="space-y-3">
+          {isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          ) : assinados.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t('emptySigned')}</p>
+          ) : (
+            assinados.map((c) => (
+              <SaleContractCard key={c.id} contract={c} onRefresh={() => qc.invalidateQueries({ queryKey: ['saleContracts'] })} />
+            ))
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
