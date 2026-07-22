@@ -99,6 +99,8 @@
     "updateError": "Error al actualizar inmueble.",
     "deleteError": "Error al eliminar inmueble.",
     "deleteConfirm": "¿Está seguro de que desea eliminar este inmueble?",
-    "saveError": "Error al guardar el inmueble."
+    "saveError": "Error al guardar el inmueble.",
+    "deleteBlockedActive": "Este inmueble tiene un contrato vigente. Finaliza el contrato antes de eliminarlo.",
+    "deleteWithRelations": "Eliminar este inmueble también quitará {{count}} contrato(s) finalizado(s) y sus cobros pendientes (los pagados se conservan). ¿Continuar?"
   }
 }

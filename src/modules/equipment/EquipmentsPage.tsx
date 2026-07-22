@@ -4,8 +4,9 @@ import { useTranslation } from 'react-i18next'
 import { Plus, Search, HardHat, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getEquipments, deleteEquipment } from '@/services/equipments'
+import { getContractsByAsset, hasActiveContract, deleteAssetRelations } from '@/services/assetDeletion'
 import { getTenants } from '@/services/tenants'
-import { Tenant, Equipment, EquipmentStatus } from '@/types'
+import { Contract, Tenant, Equipment, EquipmentStatus } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,9 +65,14 @@ export function EquipmentsPage() {
   }, [tenants])
 
   const deleteMutation = useMutation({
-    mutationFn: deleteEquipment,
+    mutationFn: async ({ id, contracts }: { id: string; contracts: Contract[] }) => {
+      await deleteAssetRelations(contracts)
+      await deleteEquipment(id)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['equipments'] })
+      qc.invalidateQueries({ queryKey: ['contracts'] })
+      qc.invalidateQueries({ queryKey: ['charges'] })
       toast({ title: t('toast.deleted') })
     },
     onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
@@ -86,9 +92,23 @@ export function EquipmentsPage() {
 
   const pag = usePagination(filtered, 12)
 
-  const handleDelete = (id: string) => {
-    if (confirm(t('toast.deleteConfirm'))) {
-      deleteMutation.mutate(id)
+  const handleDelete = async (id: string) => {
+    let contracts: Contract[]
+    try {
+      contracts = await getContractsByAsset(companyId, id)
+    } catch {
+      toast({ title: t('toast.deleteError'), variant: 'destructive' })
+      return
+    }
+    if (hasActiveContract(contracts)) {
+      toast({ title: t('toast.deleteBlockedActive'), variant: 'destructive' })
+      return
+    }
+    const msg = contracts.length > 0
+      ? t('toast.deleteWithRelations', { count: contracts.length })
+      : t('toast.deleteConfirm')
+    if (confirm(msg)) {
+      deleteMutation.mutate({ id, contracts })
     }
   }
 

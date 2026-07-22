@@ -127,6 +127,8 @@
     "deleteError": "Failed to delete vehicle.",
     "deleteConfirm": "Are you sure you want to delete this vehicle?",
     "fipeError": "Failed to fetch FIPE value.",
-    "saveError": "Failed to save vehicle."
+    "saveError": "Failed to save vehicle.",
+    "deleteBlockedActive": "This vehicle has an active contract. End the contract before deleting it.",
+    "deleteWithRelations": "Deleting this vehicle will also remove {{count}} ended contract(s) and their open charges (paid ones are kept). Continue?"
   }
 }

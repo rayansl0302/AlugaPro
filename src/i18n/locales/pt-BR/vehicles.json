@@ -127,6 +127,8 @@
     "deleteError": "Erro ao excluir veículo.",
     "deleteConfirm": "Tem certeza que deseja excluir este veículo?",
     "fipeError": "Erro ao consultar valor FIPE.",
-    "saveError": "Erro ao salvar veículo."
+    "saveError": "Erro ao salvar veículo.",
+    "deleteBlockedActive": "Este veículo tem um contrato vigente. Encerre o contrato antes de excluí-lo.",
+    "deleteWithRelations": "Excluir este veículo também vai remover {{count}} contrato(s) encerrado(s) e as cobranças em aberto vinculadas (as pagas são mantidas). Continuar?"
   }
 }

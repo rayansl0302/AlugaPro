@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, getDocs,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDocs,
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -78,6 +78,16 @@ export async function updateCharge(id: string, data: Partial<Charge>): Promise<v
   // Firestore rejects undefined values — strip them before writing
   const clean = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined))
   await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
+}
+
+// Remove as cobranças EM ABERTO (não pagas) de um contrato — usado ao excluir
+// um ativo/contrato. Cobranças pagas são preservadas como histórico de receita.
+// Retorna quantas foram removidas.
+export async function deleteOpenChargesForContract(contractId: string): Promise<number> {
+  const snap = await getDocs(query(collection(db, COL), where('contractId', '==', contractId)))
+  const open = snap.docs.filter((d) => d.data().status !== 'pago')
+  await Promise.all(open.map((d) => deleteDoc(d.ref)))
+  return open.length
 }
 
 export async function markChargePaid(

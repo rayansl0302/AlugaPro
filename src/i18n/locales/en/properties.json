@@ -99,6 +99,8 @@
     "updateError": "Failed to update property.",
     "deleteError": "Failed to delete property.",
     "deleteConfirm": "Are you sure you want to delete this property?",
-    "saveError": "Failed to save property."
+    "saveError": "Failed to save property.",
+    "deleteBlockedActive": "This property has an active contract. End the contract before deleting it.",
+    "deleteWithRelations": "Deleting this property will also remove {{count}} ended contract(s) and their open charges (paid ones are kept). Continue?"
   }
 }

@@ -95,6 +95,8 @@
     "updateError": "Erro ao atualizar equipamento.",
     "deleteError": "Erro ao excluir equipamento.",
     "deleteConfirm": "Tem certeza que deseja excluir este equipamento?",
-    "saveError": "Erro ao salvar equipamento."
+    "saveError": "Erro ao salvar equipamento.",
+    "deleteBlockedActive": "Este equipamento tem um contrato vigente. Encerre o contrato antes de excluí-lo.",
+    "deleteWithRelations": "Excluir este equipamento também vai remover {{count}} contrato(s) encerrado(s) e as cobranças em aberto vinculadas (as pagas são mantidas). Continuar?"
   }
 }
