@@ -116,7 +116,10 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
           {filteredNav.map((item) => {
             const Icon = item.icon
             const label = t(item.key)
-            const active = location.pathname.startsWith(item.href)
+            // Match exato ou subrota real (item.href + '/') — sem isso,
+            // "/contratos-terreno" ativaria também "/contratos" (prefixo).
+            const active =
+              location.pathname === item.href || location.pathname.startsWith(item.href + '/')
             const showAlertBadge = (sidebarBadgeByHref[item.href] ?? 0) > 0
             const badgeCount = sidebarBadgeByHref[item.href] ?? 0
             return (
