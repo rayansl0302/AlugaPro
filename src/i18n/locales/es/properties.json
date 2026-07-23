@@ -101,6 +101,6 @@
     "deleteConfirm": "¿Está seguro de que desea eliminar este inmueble?",
     "saveError": "Error al guardar el inmueble.",
     "deleteBlockedActive": "Este inmueble tiene un contrato vigente. Finaliza el contrato antes de eliminarlo.",
-    "deleteWithRelations": "Eliminar este inmueble también quitará {{count}} contrato(s) finalizado(s) y sus cobros pendientes (los pagados se conservan). ¿Continuar?"
+    "deleteWithRelations": "Eliminar este inmueble también quitará {{count}} contrato(s) y sus registros PENDIENTES (cobros, solicitudes y gastos). Lo que ya está pagado/finalizado se conserva como historial. ¿Continuar?"
   }
 }

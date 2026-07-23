@@ -97,6 +97,6 @@
     "deleteConfirm": "¿Está seguro de que desea eliminar este equipo?",
     "saveError": "Error al guardar el equipo.",
     "deleteBlockedActive": "Este equipo tiene un contrato vigente. Finaliza el contrato antes de eliminarlo.",
-    "deleteWithRelations": "Eliminar este equipo también quitará {{count}} contrato(s) finalizado(s) y sus cobros pendientes (los pagados se conservan). ¿Continuar?"
+    "deleteWithRelations": "Eliminar este equipo también quitará {{count}} contrato(s) y sus registros PENDIENTES (cobros, solicitudes y gastos). Lo que ya está pagado/finalizado se conserva como historial. ¿Continuar?"
   }
 }

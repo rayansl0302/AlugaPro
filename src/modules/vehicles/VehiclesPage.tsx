@@ -65,13 +65,14 @@ export function VehiclesPage() {
 
   const deleteMutation = useMutation({
     mutationFn: async ({ id, contracts }: { id: string; contracts: Contract[] }) => {
-      await deleteAssetRelations(contracts)
+      await deleteAssetRelations(companyId, id, contracts)
       await deleteVehicle(id)
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['vehicles'] })
-      qc.invalidateQueries({ queryKey: ['contracts'] })
-      qc.invalidateQueries({ queryKey: ['charges'] })
+      // Invalida tudo que o dashboard/páginas derivam do ativo excluído.
+      for (const k of ['vehicles', 'contracts', 'charges', 'maintenance', 'sharedExpenses', 'warnings', 'tenants']) {
+        qc.invalidateQueries({ queryKey: [k] })
+      }
       toast({ title: t('toast.deleted') })
     },
     onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),

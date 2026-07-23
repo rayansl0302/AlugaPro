@@ -101,6 +101,6 @@
     "deleteConfirm": "Tem certeza que deseja excluir este imóvel?",
     "saveError": "Erro ao salvar imóvel.",
     "deleteBlockedActive": "Este imóvel tem um contrato vigente. Encerre o contrato antes de excluí-lo.",
-    "deleteWithRelations": "Excluir este imóvel também vai remover {{count}} contrato(s) encerrado(s) e as cobranças em aberto vinculadas (as pagas são mantidas). Continuar?"
+    "deleteWithRelations": "Excluir este imóvel também vai remover {{count}} contrato(s) e os registros EM ABERTO vinculados (cobranças, chamados e despesas). O que já foi pago/finalizado é mantido como histórico. Continuar?"
   }
 }

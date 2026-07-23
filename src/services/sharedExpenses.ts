@@ -1,11 +1,21 @@
 import {
-  collection, addDoc, updateDoc, doc, getDoc, getDocs,
+  collection, addDoc, updateDoc, deleteDoc, doc, getDoc, getDocs,
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { SharedExpense, SharedExpenseParticipant, ExpenseStatus, PaymentMethod } from '@/types'
 
 const COL = 'sharedExpenses'
+
+// Remove as despesas compartilhadas NÃO totalmente pagas de um ativo — usado
+// ao excluir o imóvel. Despesas quitadas ficam como histórico. Retorna
+// quantas foram removidas.
+export async function deleteOpenSharedExpensesForAsset(companyId: string, assetId: string): Promise<number> {
+  const all = await getSharedExpenses(companyId)
+  const open = all.filter((e) => e.propertyId === assetId && e.status !== 'pago')
+  await Promise.all(open.map((e) => deleteDoc(doc(db, COL, e.id))))
+  return open.length
+}
 
 export async function getSharedExpenses(companyId: string): Promise<SharedExpense[]> {
   const q = query(
