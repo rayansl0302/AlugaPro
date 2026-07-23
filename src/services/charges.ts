@@ -80,14 +80,20 @@ export async function updateCharge(id: string, data: Partial<Charge>): Promise<v
   await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
 }
 
-// Remove as cobranças EM ABERTO (não pagas) de um contrato — usado ao excluir
-// um ativo/contrato. Cobranças pagas são preservadas como histórico de receita.
-// Retorna quantas foram removidas.
-export async function deleteOpenChargesForContract(contractId: string): Promise<number> {
+// Remove só as cobranças FUTURAS (vencimento depois de hoje) e ainda não pagas
+// de um contrato — usado ao excluir um ativo. TODO o passado é preservado como
+// histórico pra relatórios: cobranças pagas E vencidas não pagas (inadimplência
+// é fato passado). Retorna quantas foram removidas.
+export async function deleteFutureChargesForContract(contractId: string): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10)
   const snap = await getDocs(query(collection(db, COL), where('contractId', '==', contractId)))
-  const open = snap.docs.filter((d) => d.data().status !== 'pago')
-  await Promise.all(open.map((d) => deleteDoc(d.ref)))
-  return open.length
+  const future = snap.docs.filter((d) => {
+    const data = d.data()
+    const due = data.dueDate as string | undefined
+    return data.status !== 'pago' && !!due && due > today
+  })
+  await Promise.all(future.map((d) => deleteDoc(d.ref)))
+  return future.length
 }
 
 export async function markChargePaid(

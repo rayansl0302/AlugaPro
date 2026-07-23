@@ -70,8 +70,8 @@ export function EquipmentsPage() {
       await deleteEquipment(id)
     },
     onSuccess: () => {
-      // Invalida tudo que o dashboard/páginas derivam do ativo excluído.
-      for (const k of ['equipments', 'contracts', 'charges', 'maintenance', 'sharedExpenses', 'warnings', 'tenants']) {
+      // Ativo, cobranças e despesas mudaram — reflete no dashboard/páginas.
+      for (const k of ['equipments', 'charges', 'sharedExpenses']) {
         qc.invalidateQueries({ queryKey: [k] })
       }
       toast({ title: t('toast.deleted') })

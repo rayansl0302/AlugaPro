@@ -129,6 +129,6 @@
     "fipeError": "Erro ao consultar valor FIPE.",
     "saveError": "Erro ao salvar veículo.",
     "deleteBlockedActive": "Este veículo tem um contrato vigente. Encerre o contrato antes de excluí-lo.",
-    "deleteWithRelations": "Excluir este veículo também vai remover {{count}} contrato(s) e os registros EM ABERTO vinculados (cobranças, chamados e despesas). O que já foi pago/finalizado é mantido como histórico. Continuar?"
+    "deleteWithRelations": "Excluir este veículo remove o veículo e as cobranças/despesas FUTURAS (ainda não vencidas). O histórico — contratos, cobranças passadas (pagas e vencidas), chamados e advertências — é mantido para relatórios. Continuar?"
   }
 }

@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc,
+  collection, doc, addDoc, updateDoc, getDocs, getDoc,
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -111,10 +111,6 @@ export async function createContract(
 
 export async function updateContract(id: string, data: Partial<Contract>): Promise<void> {
   await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
-}
-
-export async function deleteContract(id: string): Promise<void> {
-  await deleteDoc(doc(db, COL, id))
 }
 
 // Contratos vinculados a um ativo (imóvel/veículo/equipamento). O id do ativo

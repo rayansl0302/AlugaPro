@@ -129,6 +129,6 @@
     "fipeError": "Failed to fetch FIPE value.",
     "saveError": "Failed to save vehicle.",
     "deleteBlockedActive": "This vehicle has an active contract. End the contract before deleting it.",
-    "deleteWithRelations": "Deleting this vehicle will also remove {{count}} contract(s) and their OPEN records (charges, maintenance and expenses). Anything already paid/finished is kept as history. Continue?"
+    "deleteWithRelations": "Deleting this vehicle removes the vehicle and any FUTURE charges/expenses (not yet due). History — contracts, past charges (paid and overdue), maintenance and warnings — is kept for reports. Continue?"
   }
 }

@@ -1,21 +1,11 @@
 import {
-  collection, addDoc, updateDoc, deleteDoc, doc, getDocs,
+  collection, addDoc, updateDoc, doc, getDocs,
   query, where, serverTimestamp, Timestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { MaintenanceComment, MaintenanceRequest, MaintenanceStatus, MaintenanceStatusHistory, UserRole } from '@/types'
 
 const COL = 'maintenanceRequests'
-
-// Remove os chamados EM ABERTO (não finalizados) de um ativo — usado ao
-// excluir o imóvel/veículo/equipamento. Chamados finalizados ficam como
-// histórico. Retorna quantos foram removidos.
-export async function deleteOpenMaintenanceForAsset(companyId: string, assetId: string): Promise<number> {
-  const all = await getMaintenanceRequests(companyId)
-  const open = all.filter((r) => r.propertyId === assetId && r.status !== 'finalizado')
-  await Promise.all(open.map((r) => deleteDoc(doc(db, COL, r.id))))
-  return open.length
-}
 
 export async function getMaintenanceRequests(companyId: string): Promise<MaintenanceRequest[]> {
   const q = query(

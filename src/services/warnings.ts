@@ -47,11 +47,3 @@ export async function createWarning(
 export async function deleteWarning(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id))
 }
-
-// Remove todas as advertências de um contrato — usado ao excluir o contrato
-// junto com o ativo (advertência é um registro atrelado ao contrato).
-export async function deleteWarningsByContract(contractId: string): Promise<number> {
-  const list = await getWarningsByContract(contractId)
-  await Promise.all(list.map((w) => deleteWarning(w.id)))
-  return list.length
-}

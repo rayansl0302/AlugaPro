@@ -7,14 +7,15 @@ import { SharedExpense, SharedExpenseParticipant, ExpenseStatus, PaymentMethod }
 
 const COL = 'sharedExpenses'
 
-// Remove as despesas compartilhadas NÃO totalmente pagas de um ativo — usado
-// ao excluir o imóvel. Despesas quitadas ficam como histórico. Retorna
-// quantas foram removidas.
-export async function deleteOpenSharedExpensesForAsset(companyId: string, assetId: string): Promise<number> {
+// Remove só as despesas compartilhadas FUTURAS (vencimento depois de hoje) e
+// não quitadas de um ativo — usado ao excluir o imóvel. Passado é preservado
+// pra relatórios. Retorna quantas foram removidas.
+export async function deleteFutureSharedExpensesForAsset(companyId: string, assetId: string): Promise<number> {
+  const today = new Date().toISOString().slice(0, 10)
   const all = await getSharedExpenses(companyId)
-  const open = all.filter((e) => e.propertyId === assetId && e.status !== 'pago')
-  await Promise.all(open.map((e) => deleteDoc(doc(db, COL, e.id))))
-  return open.length
+  const future = all.filter((e) => e.propertyId === assetId && e.status !== 'pago' && !!e.dueDate && e.dueDate > today)
+  await Promise.all(future.map((e) => deleteDoc(doc(db, COL, e.id))))
+  return future.length
 }
 
 export async function getSharedExpenses(companyId: string): Promise<SharedExpense[]> {
