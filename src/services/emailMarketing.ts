@@ -69,12 +69,26 @@ export async function getRecipientsForAudience(audience: Audience): Promise<Reci
   }
 }
 
-/** Junta várias audiências e remove e-mails duplicados. */
-export async function collectRecipients(audiences: Audience[]): Promise<Recipient[]> {
+/** Junta várias audiências (+ uma lista avulsa opcional) e remove duplicados. */
+export async function collectRecipients(
+  audiences: Audience[],
+  extra: Recipient[] = [],
+): Promise<Recipient[]> {
   const lists = await Promise.all(audiences.map(getRecipientsForAudience))
   const byEmail = new Map<string, Recipient>()
-  for (const r of lists.flat()) {
-    if (!byEmail.has(r.email)) byEmail.set(r.email, r)
+  for (const r of [...lists.flat(), ...extra]) {
+    if (r.email.includes('@') && !byEmail.has(r.email)) byEmail.set(r.email, r)
+  }
+  return [...byEmail.values()]
+}
+
+/** Transforma um texto colado (e-mails separados por vírgula, ponto-e-vírgula,
+ *  espaço ou quebra de linha) numa lista de destinatários, sem duplicados. */
+export function parseEmailList(raw: string): Recipient[] {
+  const byEmail = new Map<string, Recipient>()
+  for (const token of raw.split(/[\s,;]+/)) {
+    const email = normalizeEmail(token)
+    if (email.includes('@') && !byEmail.has(email)) byEmail.set(email, { email })
   }
   return [...byEmail.values()]
 }
@@ -103,6 +117,14 @@ export async function addLead(lead: Omit<MarketingLead, 'id' | 'createdAt'>): Pr
 
 export async function deleteLead(id: string): Promise<void> {
   await deleteDoc(doc(db, LEADS_COL, id))
+}
+
+/** Adiciona vários leads de uma vez a partir de um texto colado. Retorna
+ *  quantos e-mails válidos foram adicionados. */
+export async function addLeadsBulk(raw: string, source = 'lista colada'): Promise<number> {
+  const recipients = parseEmailList(raw)
+  for (const r of recipients) await addLead({ email: r.email, source })
+  return recipients.length
 }
 
 /** Importa leads de um CSV simples (colunas: email, nome, empresa). Ignora
