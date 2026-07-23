@@ -67,11 +67,14 @@ export function DashboardPage() {
     enabled: !!companyId,
   })
 
-  const { data: charges = [] } = useQuery({
+  const { data: allCharges = [] } = useQuery({
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
     enabled: !!companyId,
   })
+  // Operacional: só cobranças de ativos existentes (arquivadas = de ativos
+  // excluídos, ficam só no Relatórios).
+  const charges = allCharges.filter((c) => !c.archived)
 
   const { data: tenants = [] } = useQuery({
     queryKey: ['tenants', companyId],

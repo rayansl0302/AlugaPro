@@ -286,11 +286,13 @@ export function TenantPortal() {
     priority: 'media' as MaintenanceRequest['priority'],
   })
 
-  const { data: charges = [] } = useQuery({
+  const { data: allCharges = [] } = useQuery({
     queryKey: ['charges', companyId, tenantId],
     queryFn: () => getChargesByTenant(companyId, tenantId),
     enabled: !!companyId && !!tenantId,
   })
+  // Não mostra ao inquilino cobranças arquivadas (de ativo excluído).
+  const charges = allCharges.filter((c) => !c.archived)
 
   const { data: contracts = [] } = useQuery({
     queryKey: ['contracts', companyId, tenantId],

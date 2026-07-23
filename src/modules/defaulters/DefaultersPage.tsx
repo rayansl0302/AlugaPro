@@ -26,7 +26,8 @@ export function DefaultersPage() {
 
   const today = format(new Date(), 'yyyy-MM-dd')
   const overdueCharges = charges
-    .filter((c) => c.status !== 'pago' && c.status !== 'cancelado' && !!c.dueDate && c.dueDate < today)
+    // Operacional: ignora cobranças arquivadas (de ativos excluídos).
+    .filter((c) => !c.archived && c.status !== 'pago' && c.status !== 'cancelado' && !!c.dueDate && c.dueDate < today)
     .map((c) => ({ ...c, daysLate: getDaysLate(c.dueDate ?? '') }))
     .sort((a, b) => b.daysLate - a.daysLate)
 

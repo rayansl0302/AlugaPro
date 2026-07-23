@@ -129,6 +129,6 @@
     "fipeError": "Error al consultar el valor FIPE.",
     "saveError": "Error al guardar el vehículo.",
     "deleteBlockedActive": "Este vehículo tiene un contrato vigente. Finaliza el contrato antes de eliminarlo.",
-    "deleteWithRelations": "Eliminar este vehículo quita el vehículo y los cobros/gastos FUTUROS (aún no vencidos). El historial —contratos, cobros pasados (pagados y vencidos), solicitudes y advertencias— se conserva para informes. ¿Continuar?"
+    "deleteWithRelations": "Eliminar este vehículo quita el vehículo y borra los cobros/gastos FUTUROS no pagados. El historial (contratos, cobros pagados y vencidos) se archiva: desaparece de las listas operativas pero permanece en los Informes. ¿Continuar?"
   }
 }

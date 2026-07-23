@@ -80,20 +80,30 @@ export async function updateCharge(id: string, data: Partial<Charge>): Promise<v
   await updateDoc(doc(db, COL, id), { ...clean, updatedAt: serverTimestamp() })
 }
 
-// Remove só as cobranças FUTURAS (vencimento depois de hoje) e ainda não pagas
-// de um contrato — usado ao excluir um ativo. TODO o passado é preservado como
-// histórico pra relatórios: cobranças pagas E vencidas não pagas (inadimplência
-// é fato passado). Retorna quantas foram removidas.
-export async function deleteFutureChargesForContract(contractId: string): Promise<number> {
+// Ao excluir um ativo: as cobranças FUTURAS não pagas (vencimento > hoje) são
+// removidas (projeção que deixa de existir); TODO o resto (passado — pago e
+// vencido não pago) é ARQUIVADO: continua no banco pra relatórios, mas some das
+// telas operacionais (que filtram archived). Retorna as contagens.
+export async function archivePastDeleteFutureChargesForContract(
+  contractId: string,
+): Promise<{ archived: number; deleted: number }> {
   const today = new Date().toISOString().slice(0, 10)
   const snap = await getDocs(query(collection(db, COL), where('contractId', '==', contractId)))
-  const future = snap.docs.filter((d) => {
+  let archived = 0
+  let deleted = 0
+  await Promise.all(snap.docs.map(async (d) => {
     const data = d.data()
     const due = data.dueDate as string | undefined
-    return data.status !== 'pago' && !!due && due > today
-  })
-  await Promise.all(future.map((d) => deleteDoc(d.ref)))
-  return future.length
+    const isFutureUnpaid = data.status !== 'pago' && !!due && due > today
+    if (isFutureUnpaid) {
+      await deleteDoc(d.ref)
+      deleted++
+    } else if (!data.archived) {
+      await updateDoc(d.ref, { archived: true, updatedAt: serverTimestamp() })
+      archived++
+    }
+  }))
+  return { archived, deleted }
 }
 
 export async function markChargePaid(

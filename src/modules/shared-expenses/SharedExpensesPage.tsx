@@ -218,11 +218,13 @@ export function SharedExpensesPage() {
     recurring: false, dueDay: '', participantsRaw: '',
   })
 
-  const { data: expenses = [], isLoading } = useQuery({
+  const { data: allExpenses = [], isLoading } = useQuery({
     queryKey: ['sharedExpenses', companyId],
     queryFn: () => getSharedExpenses(companyId),
     enabled: !!companyId,
   })
+  // Operacional: despesas arquivadas (de ativos excluídos) ficam só no histórico.
+  const expenses = allExpenses.filter((e) => !e.archived)
   const { data: properties = [] } = useQuery({
     queryKey: ['properties', companyId],
     queryFn: () => getProperties(companyId),

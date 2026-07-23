@@ -43,11 +43,13 @@ export function FinancialPage() {
     boleto: t('methods.boleto'),
   }
 
-  const { data: charges = [], isLoading } = useQuery({
+  const { data: allCharges = [], isLoading } = useQuery({
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
     enabled: !!companyId,
   })
+  // Operacional: ignora cobranças arquivadas (de ativos excluídos).
+  const charges = allCharges.filter((c) => !c.archived)
 
   const filtered = charges.filter((p) => p.dueDate?.startsWith(monthFilter))
 

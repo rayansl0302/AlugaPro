@@ -373,12 +373,15 @@ export function ChargesPage() {
   const [generating, setGenerating] = useState(false)
 
   // Data
-  const { data: charges = [], isLoading: chargesLoading } = useQuery({
+  const { data: allCharges = [], isLoading: chargesLoading } = useQuery({
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
     enabled: !!companyId,
     refetchInterval: 30_000,
   })
+  // Operacional: cobranças arquivadas (de ativos excluídos) só aparecem no
+  // Relatórios, não aqui.
+  const charges = allCharges.filter((c) => !c.archived)
 
   const { data: contracts = [], isLoading: contractsLoading } = useQuery({
     queryKey: ['contracts', companyId],

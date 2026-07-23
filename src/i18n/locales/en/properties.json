@@ -101,6 +101,6 @@
     "deleteConfirm": "Are you sure you want to delete this property?",
     "saveError": "Failed to save property.",
     "deleteBlockedActive": "This property has an active contract. End the contract before deleting it.",
-    "deleteWithRelations": "Deleting this property removes the property and any FUTURE charges/expenses (not yet due). History — contracts, past charges (paid and overdue), maintenance and warnings — is kept for reports. Continue?"
+    "deleteWithRelations": "Deleting this property removes the property and deletes FUTURE unpaid charges/expenses. History (contracts, paid and overdue charges) is archived: it disappears from operational lists but stays in Reports. Continue?"
   }
 }

@@ -97,6 +97,6 @@
     "deleteConfirm": "Tem certeza que deseja excluir este equipamento?",
     "saveError": "Erro ao salvar equipamento.",
     "deleteBlockedActive": "Este equipamento tem um contrato vigente. Encerre o contrato antes de excluí-lo.",
-    "deleteWithRelations": "Excluir este equipamento remove o equipamento e as cobranças/despesas FUTURAS (ainda não vencidas). O histórico — contratos, cobranças passadas (pagas e vencidas), chamados e advertências — é mantido para relatórios. Continuar?"
+    "deleteWithRelations": "Excluir este equipamento remove o equipamento e apaga as cobranças/despesas FUTURAS não pagas. O histórico (contratos, cobranças pagas e vencidas) é arquivado: some das listas operacionais mas continua nos Relatórios. Continuar?"
   }
 }

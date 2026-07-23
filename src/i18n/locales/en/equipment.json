@@ -97,6 +97,6 @@
     "deleteConfirm": "Are you sure you want to delete this equipment?",
     "saveError": "Failed to save equipment.",
     "deleteBlockedActive": "This equipment has an active contract. End the contract before deleting it.",
-    "deleteWithRelations": "Deleting this equipment removes the equipment and any FUTURE charges/expenses (not yet due). History — contracts, past charges (paid and overdue), maintenance and warnings — is kept for reports. Continue?"
+    "deleteWithRelations": "Deleting this equipment removes the equipment and deletes FUTURE unpaid charges/expenses. History (contracts, paid and overdue charges) is archived: it disappears from operational lists but stays in Reports. Continue?"
   }
 }

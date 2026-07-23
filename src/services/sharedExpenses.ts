@@ -7,15 +7,29 @@ import { SharedExpense, SharedExpenseParticipant, ExpenseStatus, PaymentMethod }
 
 const COL = 'sharedExpenses'
 
-// Remove só as despesas compartilhadas FUTURAS (vencimento depois de hoje) e
-// não quitadas de um ativo — usado ao excluir o imóvel. Passado é preservado
-// pra relatórios. Retorna quantas foram removidas.
-export async function deleteFutureSharedExpensesForAsset(companyId: string, assetId: string): Promise<number> {
+// Ao excluir um ativo: despesas FUTURAS não quitadas são removidas; o passado
+// é ARQUIVADO (fica pra relatórios, some das telas operacionais). Retorna as
+// contagens.
+export async function archivePastDeleteFutureSharedExpensesForAsset(
+  companyId: string,
+  assetId: string,
+): Promise<{ archived: number; deleted: number }> {
   const today = new Date().toISOString().slice(0, 10)
   const all = await getSharedExpenses(companyId)
-  const future = all.filter((e) => e.propertyId === assetId && e.status !== 'pago' && !!e.dueDate && e.dueDate > today)
-  await Promise.all(future.map((e) => deleteDoc(doc(db, COL, e.id))))
-  return future.length
+  const mine = all.filter((e) => e.propertyId === assetId)
+  let archived = 0
+  let deleted = 0
+  await Promise.all(mine.map(async (e) => {
+    const isFutureUnpaid = e.status !== 'pago' && !!e.dueDate && e.dueDate > today
+    if (isFutureUnpaid) {
+      await deleteDoc(doc(db, COL, e.id))
+      deleted++
+    } else if (!e.archived) {
+      await updateDoc(doc(db, COL, e.id), { archived: true, updatedAt: serverTimestamp() })
+      archived++
+    }
+  }))
+  return { archived, deleted }
 }
 
 export async function getSharedExpenses(companyId: string): Promise<SharedExpense[]> {

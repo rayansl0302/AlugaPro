@@ -620,6 +620,10 @@ export interface Charge {
   paidBy?: 'tenant' | 'admin'
   notes?: string
   notificationsSent?: NotificationTrigger[]
+  // Arquivada: pertence a um ativo excluído. Fica no banco pra histórico/
+  // relatórios, mas some das telas operacionais (dashboard, cobranças,
+  // inadimplência), que mostram só o que é de ativos existentes.
+  archived?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -642,6 +646,8 @@ export interface SharedExpense {
   participantTenantIds?: string[]
   status: ExpenseStatus
   notes?: string
+  // Ver Charge.archived — mesma lógica pra despesas de ativos excluídos.
+  archived?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }
