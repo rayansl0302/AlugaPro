@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning, Landmark, Mail,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning, Landmark,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -41,7 +41,6 @@ const navItems: NavItem[] = [
   { key: 'reports', href: '/relatorios', icon: BarChart3 },
   { key: 'profile', href: '/perfil', icon: UserCircle },
   { key: 'saleContracts', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
-  { key: 'emailMarketing', href: '/email-marketing', icon: Mail, roles: ['admin'] },
   { key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] },
 ]
 

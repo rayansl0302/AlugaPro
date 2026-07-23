@@ -1,4 +1,4 @@
-import { Building2, Users, Shield, Palette } from 'lucide-react'
+import { Building2, Users, Shield, Palette, Mail } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
+import { EmailMarketingPanel } from '@/modules/email-marketing/EmailMarketingPage'
 
 export function SettingsPage() {
   const { t } = useTranslation('settings')
@@ -31,6 +32,9 @@ export function SettingsPage() {
           <TabsTrigger value="usuarios">{t('tabs.users')}</TabsTrigger>
           <TabsTrigger value="aparencia">{t('tabs.appearance')}</TabsTrigger>
           <TabsTrigger value="seguranca">{t('tabs.security')}</TabsTrigger>
+          <TabsTrigger value="email" className="gap-1.5">
+            <Mail className="h-4 w-4" /> E-mail Marketing
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="empresa">
@@ -134,6 +138,10 @@ export function SettingsPage() {
               <Button>{t('changePassword')}</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="email">
+          <EmailMarketingPanel />
         </TabsContent>
       </Tabs>
     </div>

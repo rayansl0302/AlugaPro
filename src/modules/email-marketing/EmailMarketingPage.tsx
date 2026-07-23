@@ -28,20 +28,25 @@ const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
   { id: 'leads', label: 'Leads / prospecção', hint: 'Base externa importada' },
 ]
 
-export function EmailMarketingPage() {
+/**
+ * Painel de e-mail marketing (admin). Fica embutido dentro de Configurações
+ * como uma aba, então não repete o cabeçalho grande da página — só uma linha
+ * de contexto + as sub-abas Compor / Leads / Histórico.
+ */
+export function EmailMarketingPanel() {
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6">
-      <header className="mb-6 flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-          <Mail className="h-6 w-6" />
+    <div>
+      <div className="mb-5 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Mail className="h-5 w-5" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">E-mail Marketing</h1>
+          <h2 className="text-lg font-semibold tracking-tight">E-mail Marketing</h2>
           <p className="text-sm text-muted-foreground">
             Disparos padronizados para clientes, inquilinos, afiliados e leads.
           </p>
         </div>
-      </header>
+      </div>
 
       <Tabs defaultValue="compor">
         <TabsList className="mb-6">
