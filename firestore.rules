@@ -406,5 +406,29 @@ service cloud.firestore {
             && request.resource.data.compradorName   == resource.data.compradorName);
       allow delete: if isAdmin();
     }
+
+    // ─── E-mail marketing — ferramenta interna do admin ───────────────────────
+    // Base de leads (prospecção externa) e histórico de campanhas: só o admin
+    // lê/escreve. Não é multi-tenant.
+    match /marketingLeads/{leadId} {
+      allow read, create, update, delete: if isAdminEmail();
+    }
+    match /emailCampaigns/{campaignId} {
+      allow read, create: if isAdminEmail();
+      allow update, delete: if false; // histórico é imutável
+    }
+
+    // Contatos de e-mail = registro de descadastro (opt-out). O ID é opaco
+    // (sha256 do e-mail), então a URL de descadastro não expõe o e-mail. A
+    // página pública /descadastrar precisa gravar optedOut=true sem login —
+    // por isso a escrita é aberta, mas SÓ pode marcar opt-out (nunca reverter
+    // nem gravar outros campos), e o ID tem que ser um hash sha256 válido.
+    match /emailContacts/{contactId} {
+      allow read: if isAdminEmail();
+      allow create, update: if contactId.matches('^[a-f0-9]{64}$')
+        && request.resource.data.optedOut == true
+        && request.resource.data.keys().hasOnly(['optedOut', 'updatedAt']);
+      allow delete: if false;
+    }
   }
 }

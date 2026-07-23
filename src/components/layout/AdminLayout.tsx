@@ -27,6 +27,7 @@ const pageTitleKeys: Record<string, string> = {
   '/perfil': 'profile',
   '/modelos-contrato': 'contractTemplates',
   '/contratos-terreno': 'saleContracts',
+  '/email-marketing': 'emailMarketing',
 }
 
 export function AdminLayout() {
