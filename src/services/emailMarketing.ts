@@ -158,9 +158,12 @@ export async function deleteLead(id: string): Promise<void> {
 
 // ─── CRM: classificação, notas e linha do tempo ───────────────────────────────
 
-/** Atualiza campos avulsos de um lead (ex.: nome, empresa). */
+/** Atualiza campos avulsos de um lead (ex.: nome, empresa). Remove valores
+ *  undefined — o Firestore rejeita undefined e quebraria o salvamento. */
 export async function updateLead(id: string, patch: Partial<MarketingLead>): Promise<void> {
-  await updateDoc(doc(db, LEADS_COL, id), { ...patch })
+  const clean = Object.fromEntries(Object.entries(patch).filter(([, v]) => v !== undefined))
+  if (Object.keys(clean).length === 0) return
+  await updateDoc(doc(db, LEADS_COL, id), clean)
 }
 
 /** Define a temperatura do lead e registra o evento na timeline. */
