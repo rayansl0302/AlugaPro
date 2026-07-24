@@ -755,93 +755,131 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
     onSuccess: () => { toast({ title: 'Lead atualizado.' }); onInvalidate() },
   })
 
+  // Conversa em ordem cronológica (mais antigo em cima, como no WhatsApp).
+  const ordered = useMemo(() => [...activity].reverse(), [activity])
+
   return (
-    <div className="mt-3 rounded-lg border bg-muted/30 p-3">
-      {/* Nome editável */}
-      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end">
-        <div className="flex-1 space-y-1">
-          <Label className="text-xs">Nome</Label>
-          <Input
-            defaultValue={lead.name ?? ''}
-            placeholder="Nome do contato"
-            className="h-8 text-sm"
-            onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== (lead.name ?? '')) saveName.mutate(v) }}
-          />
-        </div>
-      </div>
-
-      {/* Adicionar nota */}
-      <div className="mb-3 flex gap-2">
+    <div className="mt-3 overflow-hidden rounded-lg border">
+      {/* Cabeçalho compacto: nome editável + e-mail */}
+      <div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
         <Input
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder="Adicionar uma nota (ligação, contexto, próximo passo…)"
-          className="h-8 text-sm"
-          onKeyDown={(e) => { if (e.key === 'Enter' && note.trim()) saveNote.mutate() }}
+          defaultValue={lead.name ?? ''}
+          placeholder="Nome do contato"
+          className="h-7 max-w-[220px] border-0 bg-transparent px-1 text-sm font-medium focus-visible:ring-1"
+          onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== (lead.name ?? '')) saveName.mutate(v) }}
         />
-        <Button size="sm" variant="outline" onClick={() => saveNote.mutate()} disabled={saveNote.isPending || !note.trim()}>
-          <StickyNote className="mr-1.5 h-3.5 w-3.5" /> Nota
-        </Button>
+        <span className="ml-auto truncate text-xs text-muted-foreground">{lead.email}</span>
       </div>
 
-      {/* Responder pelo sistema */}
-      <div className="mb-3 rounded-lg border bg-background/60 p-3">
-        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-          <Reply className="h-3.5 w-3.5" /> Responder este lead
-        </p>
+      {/* Conversa (chat) */}
+      <div className="max-h-[440px] space-y-2 overflow-y-auto bg-muted/20 p-3">
+        {isLoading ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">Carregando…</p>
+        ) : ordered.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            Nenhuma mensagem ainda. Envie um e-mail ou responda abaixo — as respostas do lead aparecem aqui.
+          </p>
+        ) : (
+          ordered.map((ev) => <ConversationItem key={ev.id} ev={ev} />)
+        )}
+      </div>
+
+      {/* Composer estilo chat */}
+      <div className="border-t bg-background p-2">
         <Input
           value={replySubject}
           onChange={(e) => setReplySubject(e.target.value)}
           placeholder="Assunto"
           className="mb-2 h-8 text-sm"
         />
-        <textarea
-          value={replyMsg}
-          onChange={(e) => setReplyMsg(e.target.value)}
-          rows={3}
-          placeholder={`Escreva sua resposta para ${lead.email}…`}
-          className={textareaClass}
-        />
-        <div className="mt-2 flex items-center justify-between">
-          <span className="text-[11px] text-muted-foreground">Enviado como AlugaPro · respostas voltam para {REPLY_TO_ADDRESS}</span>
-          <Button size="sm" onClick={() => sendReply.mutate()} disabled={sendReply.isPending || !replyMsg.trim()}>
-            {sendReply.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
-            Enviar resposta
+        <div className="flex items-end gap-2">
+          <textarea
+            value={replyMsg}
+            onChange={(e) => setReplyMsg(e.target.value)}
+            rows={2}
+            placeholder={`Escreva para ${lead.email}… (Ctrl+Enter envia)`}
+            className={textareaClass}
+            onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey) && replyMsg.trim()) sendReply.mutate() }}
+          />
+          <Button size="icon" className="h-9 w-9 shrink-0" onClick={() => sendReply.mutate()} disabled={sendReply.isPending || !replyMsg.trim()} title="Enviar e-mail (Ctrl+Enter)">
+            {sendReply.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
-      </div>
 
-      {/* Timeline */}
-      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Linha do tempo</p>
-      {isLoading ? (
-        <p className="py-3 text-center text-xs text-muted-foreground">Carregando…</p>
-      ) : activity.length === 0 ? (
-        <p className="py-3 text-center text-xs text-muted-foreground">Sem atividade ainda. Ela aparece conforme você envia e o lead interage.</p>
-      ) : (
-        <ul className="space-y-2.5">
-          {activity.map((ev) => {
-            const am = ACTIVITY_META[ev.type]
-            const Icon = am.icon
-            return (
-              <li key={ev.id} className="flex items-start gap-2.5 text-sm">
-                <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${am.tone}`} />
-                <div className="min-w-0 flex-1">
-                  <p className="text-foreground">
-                    {am.label}
-                    {ev.type === 'status' && ev.text ? `: ${STATUS_META[ev.text as LeadStatus]?.label ?? ev.text}` : ''}
-                    {ev.subject ? <span className="text-muted-foreground"> — "{ev.subject}"</span> : ''}
-                  </p>
-                  {ev.type === 'note' && ev.text && <p className="text-muted-foreground">{ev.text}</p>}
-                  {(ev.type === 'replied' || ev.type === 'sent') && ev.text && (
-                    <p className="whitespace-pre-wrap rounded bg-background/60 p-2 text-xs text-muted-foreground">{ev.text}</p>
-                  )}
-                  <p className="text-[11px] text-muted-foreground/70">{fmtDateTime(ev.at)}</p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      )}
+        {/* Nota interna (não envia e-mail) */}
+        <div className="mt-2 flex gap-2">
+          <Input
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Nota interna (não envia e-mail)"
+            className="h-7 text-xs"
+            onKeyDown={(e) => { if (e.key === 'Enter' && note.trim()) saveNote.mutate() }}
+          />
+          <Button size="sm" variant="ghost" onClick={() => saveNote.mutate()} disabled={saveNote.isPending || !note.trim()}>
+            <StickyNote className="mr-1.5 h-3.5 w-3.5" /> Nota
+          </Button>
+        </div>
+        <p className="mt-1.5 text-[10px] text-muted-foreground">Enviado como AlugaPro · respostas do lead voltam para {REPLY_TO_ADDRESS}</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Itens da conversa (balões + linhas de sistema) ───────────────────────────
+
+function ConversationItem({ ev }: { ev: LeadActivity }) {
+  if (ev.type === 'sent') {
+    return <ChatBubble side="right" subject={ev.subject} text={ev.text} at={ev.at} fallback="E-mail enviado" />
+  }
+  if (ev.type === 'replied') {
+    return <ChatBubble side="left" subject={ev.subject} text={ev.text} at={ev.at} fallback="Respondeu" />
+  }
+  const am = ACTIVITY_META[ev.type]
+  const label =
+    ev.type === 'status' && ev.text ? `Classificado como ${STATUS_META[ev.text as LeadStatus]?.label ?? ev.text}`
+    : ev.type === 'note' && ev.text ? `Nota: ${ev.text}`
+    : am.label
+  return <SystemLine icon={am.icon} tone={am.tone} label={label} at={ev.at} />
+}
+
+function ChatBubble({ side, subject, text, at, fallback }: {
+  side: 'left' | 'right'
+  subject?: string
+  text?: string
+  at?: LeadActivity['at']
+  fallback: string
+}) {
+  const right = side === 'right'
+  return (
+    <div className={`flex ${right ? 'justify-end' : 'justify-start'}`}>
+      <div className={`max-w-[82%] rounded-2xl px-3 py-2 text-sm shadow-sm ${
+        right ? 'rounded-br-sm bg-primary text-primary-foreground' : 'rounded-bl-sm border bg-background'
+      }`}>
+        {subject && <p className={`mb-0.5 text-xs font-semibold ${right ? 'text-primary-foreground/85' : 'text-foreground'}`}>{subject}</p>}
+        {text ? (
+          <p className="whitespace-pre-wrap break-words">{text}</p>
+        ) : (
+          <p className={`italic ${right ? 'text-primary-foreground/75' : 'text-muted-foreground'}`}>📧 {fallback}</p>
+        )}
+        <p className={`mt-1 text-right text-[10px] ${right ? 'text-primary-foreground/60' : 'text-muted-foreground'}`}>{fmtDateTime(at)}</p>
+      </div>
+    </div>
+  )
+}
+
+function SystemLine({ icon: Icon, tone, label, at }: {
+  icon: React.ElementType
+  tone: string
+  label: string
+  at?: LeadActivity['at']
+}) {
+  return (
+    <div className="flex justify-center">
+      <span className="inline-flex max-w-[92%] items-center gap-1.5 rounded-full bg-muted px-2.5 py-0.5 text-[11px] text-muted-foreground">
+        <Icon className={`h-3 w-3 shrink-0 ${tone}`} />
+        <span className="truncate">{label}</span>
+        <span className="shrink-0 opacity-60">· {fmtDateTime(at)}</span>
+      </span>
     </div>
   )
 }
