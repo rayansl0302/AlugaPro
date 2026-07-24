@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Mail, Send, Users, Upload, Trash2, Loader2, Eye, RefreshCw, AlertTriangle,
@@ -25,7 +25,7 @@ import {
 import {
   type Audience, type Recipient, type MarketingLead, type LeadStatus, type LeadActivity,
   LEAD_STATUSES, REPLY_TO_ADDRESS, collectRecipients, parseEmailList,
-  getLeads, addLead, deleteLead, updateLead, setLeadStatus, addLeadNote, getLeadActivity,
+  getLeads, addLead, deleteLead, updateLead, setLeadStatus, addLeadNote, subscribeLeadActivity,
   addLeadsBulk, importLeadsFromCsv, importLeadsFromExcel,
   sendCampaign, logCampaign, recordCampaignSentToLeads, replyToLead, getCampaigns,
 } from '@/services/emailMarketing'
@@ -462,7 +462,11 @@ export function LeadsPanel() {
 
   const openChat = (id: string) => { setSelectedLeadId(id); setSubTab('conversas') }
 
-  const { data: leads = [], isLoading } = useQuery({ queryKey: ['marketingLeads'], queryFn: getLeads })
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['marketingLeads'],
+    queryFn: getLeads,
+    refetchInterval: 20000, // atualiza contadores (respostas etc.) periodicamente
+  })
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['marketingLeads'] })
 
   const counts = useMemo(() => {
@@ -822,20 +826,24 @@ function LeadRow({
 // ─── Detalhe do lead: notas + linha do tempo ──────────────────────────────────
 
 function LeadDetail({ lead, onInvalidate, pane = false }: { lead: MarketingLead; onInvalidate: () => void; pane?: boolean }) {
-  const queryClient = useQueryClient()
   const { user } = useAuth()
   const [note, setNote] = useState('')
   const [replySubject, setReplySubject] = useState('Re: contato AlugaPro')
   const [replyMsg, setReplyMsg] = useState('')
-  const { data: activity = [], isLoading } = useQuery({
-    queryKey: ['leadActivity', lead.id],
-    queryFn: () => getLeadActivity(lead.id),
-  })
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['leadActivity', lead.id] })
+
+  // Tempo real: escuta a timeline via onSnapshot (novas respostas/eventos
+  // aparecem na hora, sem precisar recarregar).
+  const [activity, setActivity] = useState<LeadActivity[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  useEffect(() => {
+    setIsLoading(true)
+    const unsub = subscribeLeadActivity(lead.id, (items) => { setActivity(items); setIsLoading(false) })
+    return unsub
+  }, [lead.id])
 
   const saveNote = useMutation({
     mutationFn: () => addLeadNote(lead.id, note),
-    onSuccess: () => { setNote(''); toast({ title: 'Nota adicionada.' }); refresh() },
+    onSuccess: () => { setNote(''); toast({ title: 'Nota adicionada.' }) },
     onError: () => toast({ title: 'Falha ao salvar nota.', variant: 'destructive' }),
   })
 
@@ -844,7 +852,7 @@ function LeadDetail({ lead, onInvalidate, pane = false }: { lead: MarketingLead;
     onSuccess: (r) => {
       setReplyMsg('')
       toast({ title: r.sent > 0 ? `Resposta enviada para ${lead.email}.` : 'Não enviado (destinatário pulado/descadastrado).' })
-      refresh(); onInvalidate()
+      onInvalidate()
     },
     onError: (e) => toast({ title: e instanceof Error ? e.message : 'Falha ao enviar resposta.', variant: 'destructive' }),
   })

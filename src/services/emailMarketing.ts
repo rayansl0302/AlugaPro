@@ -1,6 +1,6 @@
 import {
   collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy,
-  serverTimestamp, addDoc, writeBatch, increment, Timestamp,
+  serverTimestamp, addDoc, writeBatch, increment, onSnapshot, Timestamp,
 } from 'firebase/firestore'
 import * as XLSX from 'xlsx'
 import { db, auth } from '@/lib/firebase'
@@ -193,6 +193,16 @@ export async function getLeadActivity(leadId: string): Promise<LeadActivity[]> {
     query(collection(db, LEADS_COL, leadId, 'activity'), orderBy('at', 'desc')),
   )
   return snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeadActivity))
+}
+
+/** Escuta a timeline de um lead em tempo real (onSnapshot). Retorna o
+ *  unsubscribe. Usado no chat pra novas respostas/eventos aparecerem na hora. */
+export function subscribeLeadActivity(
+  leadId: string,
+  cb: (items: LeadActivity[]) => void,
+): () => void {
+  const q = query(collection(db, LEADS_COL, leadId, 'activity'), orderBy('at', 'desc'))
+  return onSnapshot(q, (snap) => cb(snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeadActivity))))
 }
 
 /** Depois de um disparo, registra o envio nos leads que estavam na lista de
