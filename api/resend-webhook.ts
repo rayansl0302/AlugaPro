@@ -34,9 +34,10 @@ async function readRawBody(req: VercelRequest): Promise<string> {
 
 /** Verificação de assinatura no padrão Svix (headers svix-id/timestamp/signature). */
 function verifySignature(secret: string, headers: VercelRequest['headers'], body: string): boolean {
-  const id = headers['svix-id'] as string | undefined
-  const timestamp = headers['svix-timestamp'] as string | undefined
-  const signature = headers['svix-signature'] as string | undefined
+  const h = (k: string) => (headers[`svix-${k}`] ?? headers[`webhook-${k}`]) as string | undefined
+  const id = h('id')
+  const timestamp = h('timestamp')
+  const signature = h('signature')
   if (!id || !timestamp || !signature) return false
 
   const secretBytes = Buffer.from(secret.replace(/^whsec_/, ''), 'base64')
@@ -122,20 +123,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const raw = await readRawBody(req)
-  if (!verifySignature(secret, req.headers, raw)) {
-    // DIAGNÓSTICO TEMPORÁRIO — remover depois.
-    const anyReq = req as unknown as { body?: unknown }
-    return res.status(401).json({
-      error: 'Assinatura inválida',
-      _debug: {
-        rawLen: raw.length,
-        rawHead: raw.slice(0, 40),
-        hasParsedBody: anyReq.body !== undefined,
-        parsedType: anyReq.body === undefined ? null : typeof anyReq.body,
-        sawSvixId: !!req.headers['svix-id'],
-        sawWebhookId: !!req.headers['webhook-id'],
-      },
-    })
+  // Aceita tanto o prefixo svix-* quanto webhook-* (padrão Standard Webhooks).
+  if (!verifySignature(secret.trim(), req.headers, raw)) {
+    return res.status(401).json({ error: 'Assinatura inválida' })
   }
 
   let payload: { type?: string; data?: Record<string, unknown> }
