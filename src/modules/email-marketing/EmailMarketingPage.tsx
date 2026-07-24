@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Mail, Send, Users, Upload, Trash2, Loader2, Eye, RefreshCw, AlertTriangle,
   ListPlus, FlaskConical, ClipboardList, CheckCircle2, ChevronDown,
-  MousePointerClick, MessageSquare, StickyNote, Tag, Reply,
+  MousePointerClick, MessageSquare, StickyNote, Tag, Reply, Pencil, Plus,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,9 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription,
+} from '@/components/ui/dialog'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import {
@@ -459,6 +462,8 @@ export function LeadsPanel() {
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'todos'>('todos')
   const [subTab, setSubTab] = useState<'base' | 'conversas'>('base')
   const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
+  const [modal, setModal] = useState<null | 'add' | 'bulk'>(null)
+  const [editing, setEditing] = useState<MarketingLead | null>(null)
 
   const openChat = (id: string) => { setSelectedLeadId(id); setSubTab('conversas') }
 
@@ -482,13 +487,13 @@ export function LeadsPanel() {
 
   const add = useMutation({
     mutationFn: () => addLead({ email, name: name || undefined, source: 'manual' }),
-    onSuccess: () => { setEmail(''); setName(''); toast({ title: 'Lead adicionado.' }); invalidate() },
+    onSuccess: () => { setEmail(''); setName(''); setModal(null); toast({ title: 'Lead adicionado.' }); invalidate() },
     onError: (e) => toast({ title: e instanceof Error ? e.message : 'Erro ao adicionar.', variant: 'destructive' }),
   })
 
   const addBulk = useMutation({
     mutationFn: () => addLeadsBulk(bulkRaw),
-    onSuccess: (n) => { setBulkRaw(''); toast({ title: `${n} lead(s) adicionado(s) da lista.` }); invalidate() },
+    onSuccess: (n) => { setBulkRaw(''); setModal(null); toast({ title: `${n} lead(s) adicionado(s) da lista.` }); invalidate() },
     onError: () => toast({ title: 'Falha ao adicionar a lista.', variant: 'destructive' }),
   })
 
@@ -511,7 +516,7 @@ export function LeadsPanel() {
       if (/\.xlsx?$/i.test(file.name)) return importLeadsFromExcel(await file.arrayBuffer())
       return importLeadsFromCsv(await file.text())
     },
-    onSuccess: (n) => { toast({ title: `${n} lead(s) importado(s).` }); invalidate() },
+    onSuccess: (n) => { setModal(null); toast({ title: `${n} lead(s) importado(s).` }); invalidate() },
     onError: () => toast({ title: 'Falha ao importar o arquivo.', variant: 'destructive' }),
   })
 
@@ -543,111 +548,64 @@ export function LeadsPanel() {
           <TabsTrigger value="conversas" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Conversas</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="base" className="space-y-6">
-      {/* Adicionar 1 */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base"><ListPlus className="h-4 w-4" /> Adicionar lead</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex-1 space-y-1.5">
-              <Label>E-mail</Label>
-              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contato@empresa.com" />
-            </div>
-            <div className="flex-1 space-y-1.5">
-              <Label>Nome (opcional)</Label>
-              <Input value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-            <Button onClick={() => add.mutate()} disabled={add.isPending || !email.includes('@')}>
-              {add.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Adicionar'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        <TabsContent value="base">
+          <Card>
+            <CardContent className="pt-4">
+              {/* Barra de ações */}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">{leads.length}</strong> lead(s) na base
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <Button size="sm" onClick={() => setModal('add')}>
+                    <Plus className="mr-1.5 h-4 w-4" /> Adicionar lead
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => setModal('bulk')}>
+                    <Upload className="mr-1.5 h-4 w-4" /> Importar / colar lista
+                  </Button>
+                </div>
+              </div>
 
-      {/* Adicionar em massa: colar lista OU CSV */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base"><ClipboardList className="h-4 w-4" /> Adicionar vários de uma vez</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-1.5">
-            <Label>Colar lista de e-mails</Label>
-            <textarea
-              value={bulkRaw}
-              onChange={(e) => setBulkRaw(e.target.value)}
-              rows={4}
-              placeholder={'joao@empresa.com, maria@empresa.com\npedro@empresa.com'}
-              className={textareaClass}
-            />
-            <div className="flex items-center justify-between">
-              <p className="text-xs text-muted-foreground"><strong className="text-foreground">{bulkCount}</strong> e-mail(s) válido(s) detectado(s).</p>
-              <Button size="sm" onClick={() => addBulk.mutate()} disabled={addBulk.isPending || bulkCount === 0}>
-                {addBulk.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ListPlus className="mr-1.5 h-3.5 w-3.5" />}
-                Adicionar {bulkCount > 0 ? bulkCount : ''} à base
-              </Button>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 border-t pt-4">
-            <input
-              ref={fileRef}
-              type="file"
-              accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
-              className="hidden"
-              onChange={onFile}
-            />
-            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importFile.isPending}>
-              {importFile.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
-              Importar CSV / Excel
-            </Button>
-            <span className="text-xs text-muted-foreground">Aceita .csv, .xlsx e .xls · colunas: e-mail, nome. Cabeçalho é ignorado.</span>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Filtros por temperatura */}
+              {leads.length > 0 && (
+                <div className="mt-4 flex flex-wrap gap-1.5">
+                  <FilterChip active={statusFilter === 'todos'} onClick={() => setStatusFilter('todos')}>
+                    Todos <span className="opacity-60">{leads.length}</span>
+                  </FilterChip>
+                  {LEAD_STATUSES.map((s) => (
+                    <FilterChip key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+                      <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
+                      {STATUS_META[s].label} <span className="opacity-60">{counts[s]}</span>
+                    </FilterChip>
+                  ))}
+                </div>
+              )}
 
-      {/* Lista + filtro por temperatura */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">Leads salvos <Badge variant="secondary">{leads.length}</Badge></CardTitle>
-        </CardHeader>
-        <CardContent>
-          {/* Filtros por status */}
-          {leads.length > 0 && (
-            <div className="mb-4 flex flex-wrap gap-1.5">
-              <FilterChip active={statusFilter === 'todos'} onClick={() => setStatusFilter('todos')}>
-                Todos <span className="opacity-60">{leads.length}</span>
-              </FilterChip>
-              {LEAD_STATUSES.map((s) => (
-                <FilterChip key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
-                  <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
-                  {STATUS_META[s].label} <span className="opacity-60">{counts[s]}</span>
-                </FilterChip>
-              ))}
-            </div>
-          )}
-
-          {isLoading ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>
-          ) : leads.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead ainda. Adicione, cole uma lista ou importe um CSV/Excel.</p>
-          ) : filtered.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead com esse status.</p>
-          ) : (
-            <ul className="divide-y">
-              {filtered.map((l) => (
-                <LeadRow
-                  key={l.id}
-                  lead={l}
-                  onChangeStatus={(status) => setStatus.mutate({ id: l.id, status })}
-                  onDelete={() => remove.mutate(l.id)}
-                  onOpenChat={() => openChat(l.id)}
-                />
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+              {/* Lista */}
+              <div className="mt-3">
+                {isLoading ? (
+                  <p className="py-10 text-center text-sm text-muted-foreground">Carregando…</p>
+                ) : leads.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-muted-foreground">Nenhum lead ainda. Use “Adicionar lead” ou “Importar / colar lista”.</p>
+                ) : filtered.length === 0 ? (
+                  <p className="py-10 text-center text-sm text-muted-foreground">Nenhum lead com esse status.</p>
+                ) : (
+                  <ul className="divide-y">
+                    {filtered.map((l) => (
+                      <LeadRow
+                        key={l.id}
+                        lead={l}
+                        onChangeStatus={(status) => setStatus.mutate({ id: l.id, status })}
+                        onEdit={() => setEditing(l)}
+                        onDelete={() => remove.mutate(l.id)}
+                        onOpenChat={() => openChat(l.id)}
+                      />
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="conversas">
@@ -660,7 +618,125 @@ export function LeadsPanel() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Modal: adicionar 1 lead */}
+      <Dialog open={modal === 'add'} onOpenChange={(o) => !o && setModal(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar lead</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label>E-mail</Label>
+              <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="contato@empresa.com" autoFocus />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Nome (opcional)</Label>
+              <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do contato" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setModal(null)}>Cancelar</Button>
+            <Button onClick={() => add.mutate()} disabled={add.isPending || !email.includes('@')}>
+              {add.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Plus className="mr-1.5 h-4 w-4" />}
+              Adicionar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: importar / colar lista */}
+      <Dialog open={modal === 'bulk'} onOpenChange={(o) => !o && setModal(null)}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Importar / colar lista</DialogTitle>
+            <DialogDescription>Cole vários e-mails ou importe um arquivo CSV/Excel.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Colar lista de e-mails</Label>
+              <textarea
+                value={bulkRaw}
+                onChange={(e) => setBulkRaw(e.target.value)}
+                rows={5}
+                placeholder={'joao@empresa.com, maria@empresa.com\npedro@empresa.com'}
+                className={textareaClass}
+              />
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-muted-foreground"><strong className="text-foreground">{bulkCount}</strong> e-mail(s) válido(s).</p>
+                <Button size="sm" onClick={() => addBulk.mutate()} disabled={addBulk.isPending || bulkCount === 0}>
+                  {addBulk.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <ListPlus className="mr-1.5 h-3.5 w-3.5" />}
+                  Adicionar {bulkCount > 0 ? bulkCount : ''}
+                </Button>
+              </div>
+            </div>
+            <div className="flex items-center gap-3 border-t pt-4">
+              <input
+                ref={fileRef}
+                type="file"
+                accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+                className="hidden"
+                onChange={onFile}
+              />
+              <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importFile.isPending}>
+                {importFile.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
+                Importar CSV / Excel
+              </Button>
+              <span className="text-xs text-muted-foreground">Colunas: e-mail, nome. Cabeçalho ignorado.</span>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal: editar lead */}
+      <EditLeadDialog lead={editing} onClose={() => setEditing(null)} onSaved={invalidate} />
     </div>
+  )
+}
+
+// ─── Modal de editar lead (nome/empresa) ──────────────────────────────────────
+
+function EditLeadDialog({ lead, onClose, onSaved }: { lead: MarketingLead | null; onClose: () => void; onSaved: () => void }) {
+  const [name, setName] = useState('')
+  const [company, setCompany] = useState('')
+  useEffect(() => {
+    setName(lead?.name ?? '')
+    setCompany(lead?.company ?? '')
+  }, [lead])
+
+  const save = useMutation({
+    mutationFn: () => updateLead(lead!.id, { name: name.trim() || undefined, company: company.trim() || undefined }),
+    onSuccess: () => { toast({ title: 'Lead atualizado.' }); onSaved(); onClose() },
+    onError: () => toast({ title: 'Falha ao salvar.', variant: 'destructive' }),
+  })
+
+  return (
+    <Dialog open={!!lead} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Editar lead</DialogTitle>
+          <DialogDescription>{lead?.email}</DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Nome do contato" autoFocus />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Empresa (opcional)</Label>
+            <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Empresa" />
+          </div>
+          <p className="text-xs text-muted-foreground">O e-mail é o identificador do lead e não pode ser alterado.</p>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={onClose}>Cancelar</Button>
+          <Button onClick={() => save.mutate()} disabled={save.isPending}>
+            {save.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Pencil className="mr-1.5 h-4 w-4" />}
+            Salvar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -767,10 +843,11 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
 // ─── Linha de um lead (na Base) ───────────────────────────────────────────────
 
 function LeadRow({
-  lead, onChangeStatus, onDelete, onOpenChat,
+  lead, onChangeStatus, onEdit, onDelete, onOpenChat,
 }: {
   lead: MarketingLead
   onChangeStatus: (s: LeadStatus) => void
+  onEdit: () => void
   onDelete: () => void
   onOpenChat: () => void
 }) {
@@ -813,6 +890,9 @@ function LeadRow({
         </p>
       </button>
 
+      <Button variant="ghost" size="sm" onClick={onEdit} title="Editar nome/empresa">
+        <Pencil className="h-4 w-4" />
+      </Button>
       <Button variant="ghost" size="sm" onClick={onOpenChat} title="Abrir conversa">
         <MessageSquare className="h-4 w-4" />
       </Button>
