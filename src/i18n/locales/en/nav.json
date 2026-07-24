@@ -1,4 +1,13 @@
 {
+  "section": {
+    "assets": "Assets",
+    "people": "People",
+    "contracts": "Contracts",
+    "finance": "Finance",
+    "operations": "Operations",
+    "analysis": "Analytics",
+    "admin": "Administration"
+  },
   "dashboard": "Dashboard",
   "properties": "Properties",
   "vehicles": "Vehicles",

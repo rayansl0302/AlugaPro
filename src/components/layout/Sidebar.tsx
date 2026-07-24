@@ -22,26 +22,66 @@ interface NavItem {
   roles?: string[]
 }
 
-const navItems: NavItem[] = [
-  { key: 'dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { key: 'properties', href: '/imoveis', icon: Building2 },
-  { key: 'vehicles', href: '/veiculos', icon: Car },
-  { key: 'equipment', href: '/equipamentos', icon: HardHat },
-  { key: 'owners', href: '/proprietarios', icon: Home },
-  { key: 'tenants', href: '/inquilinos', icon: Users },
-  { key: 'contracts', href: '/contratos', icon: FileText },
-  { key: 'contractTemplates', href: '/modelos-contrato', icon: FileText },
-  { key: 'financial', href: '/financeiro', icon: CreditCard },
-  { key: 'charges', href: '/cobrancas', icon: DollarSign },
-  { key: 'defaulters', href: '/inadimplencia', icon: AlertTriangle },
-  { key: 'warnings', href: '/advertencias', icon: FileWarning },
-  { key: 'sharedExpenses', href: '/despesas', icon: DollarSign },
-  { key: 'maintenance', href: '/chamados', icon: Wrench },
-  { key: 'notifications', href: '/notificacoes', icon: Bell },
-  { key: 'reports', href: '/relatorios', icon: BarChart3 },
-  { key: 'profile', href: '/perfil', icon: UserCircle },
-  { key: 'saleContracts', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
-  { key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] },
+interface NavSection {
+  /** Chave i18n do título da seção (nav:section.*). Sem título = grupo solto no topo. */
+  titleKey?: string
+  items: NavItem[]
+}
+
+// Agrupado por área pra o menu não virar uma lista gigante. "Perfil" saiu daqui
+// (já tem o atalho na área do usuário, no rodapé do sidebar).
+const navSections: NavSection[] = [
+  {
+    items: [{ key: 'dashboard', href: '/dashboard', icon: LayoutDashboard }],
+  },
+  {
+    titleKey: 'section.assets',
+    items: [
+      { key: 'properties', href: '/imoveis', icon: Building2 },
+      { key: 'vehicles', href: '/veiculos', icon: Car },
+      { key: 'equipment', href: '/equipamentos', icon: HardHat },
+    ],
+  },
+  {
+    titleKey: 'section.people',
+    items: [
+      { key: 'owners', href: '/proprietarios', icon: Home },
+      { key: 'tenants', href: '/inquilinos', icon: Users },
+    ],
+  },
+  {
+    titleKey: 'section.contracts',
+    items: [
+      { key: 'contracts', href: '/contratos', icon: FileText },
+      { key: 'contractTemplates', href: '/modelos-contrato', icon: FileText },
+      { key: 'saleContracts', href: '/contratos-terreno', icon: Landmark, roles: ['admin'] },
+    ],
+  },
+  {
+    titleKey: 'section.finance',
+    items: [
+      { key: 'financial', href: '/financeiro', icon: CreditCard },
+      { key: 'charges', href: '/cobrancas', icon: DollarSign },
+      { key: 'defaulters', href: '/inadimplencia', icon: AlertTriangle },
+      { key: 'sharedExpenses', href: '/despesas', icon: DollarSign },
+    ],
+  },
+  {
+    titleKey: 'section.operations',
+    items: [
+      { key: 'maintenance', href: '/chamados', icon: Wrench },
+      { key: 'warnings', href: '/advertencias', icon: FileWarning },
+      { key: 'notifications', href: '/notificacoes', icon: Bell },
+    ],
+  },
+  {
+    titleKey: 'section.analysis',
+    items: [{ key: 'reports', href: '/relatorios', icon: BarChart3 }],
+  },
+  {
+    titleKey: 'section.admin',
+    items: [{ key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] }],
+  },
 ]
 
 interface SidebarProps {
@@ -64,9 +104,14 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
     '/despesas': pendingExpenseReceipts,
   }
 
-  const filteredNav = navItems.filter(
-    (item) => !item.roles || (user && item.roles.includes(user.role))
-  )
+  // Aplica o filtro de papel por item e descarta seções que ficarem vazias
+  // (ex.: um gestor não vê a seção "Administração", que só tem Configurações).
+  const visibleSections = navSections
+    .map((section) => ({
+      ...section,
+      items: section.items.filter((item) => !item.roles || (user && item.roles.includes(user.role))),
+    }))
+    .filter((section) => section.items.length > 0)
 
   return (
     <>
@@ -113,49 +158,62 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
 
       <ScrollArea className="flex-1 py-2">
         <nav className="grid gap-0.5 px-2">
-          {filteredNav.map((item) => {
-            const Icon = item.icon
-            const label = t(item.key)
-            // Match exato ou subrota real (item.href + '/') — sem isso,
-            // "/contratos-terreno" ativaria também "/contratos" (prefixo).
-            const active =
-              location.pathname === item.href || location.pathname.startsWith(item.href + '/')
-            const showAlertBadge = (sidebarBadgeByHref[item.href] ?? 0) > 0
-            const badgeCount = sidebarBadgeByHref[item.href] ?? 0
-            return (
-              <NavLink
-                key={item.href}
-                to={item.href}
-                onClick={onMobileClose}
-                title={collapsed ? label : undefined}
-                className={cn(
-                  'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
-                  active
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-                  collapsed && 'justify-center px-2'
-                )}
-              >
-                <span className="relative shrink-0">
-                  <Icon className="h-4 w-4" />
-                  {showAlertBadge && collapsed && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
-                      {badgeCount > 9 ? '9+' : badgeCount}
-                    </span>
-                  )}
-                </span>
-                {!collapsed && <span className="flex-1">{label}</span>}
-                {showAlertBadge && !collapsed && (
-                  <Badge
-                    variant="destructive"
-                    className="h-5 min-w-5 justify-center px-1.5 text-[10px]"
+          {visibleSections.map((section, si) => (
+            <div key={section.titleKey ?? `sec-${si}`} className={cn(si > 0 && 'mt-3')}>
+              {section.titleKey && (
+                collapsed ? (
+                  <Separator className="mx-auto my-2 w-6" />
+                ) : (
+                  <p className="px-3 pb-1 pt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+                    {t(section.titleKey)}
+                  </p>
+                )
+              )}
+              {section.items.map((item) => {
+                const Icon = item.icon
+                const label = t(item.key)
+                // Match exato ou subrota real (item.href + '/') — sem isso,
+                // "/contratos-terreno" ativaria também "/contratos" (prefixo).
+                const active =
+                  location.pathname === item.href || location.pathname.startsWith(item.href + '/')
+                const showAlertBadge = (sidebarBadgeByHref[item.href] ?? 0) > 0
+                const badgeCount = sidebarBadgeByHref[item.href] ?? 0
+                return (
+                  <NavLink
+                    key={item.href}
+                    to={item.href}
+                    onClick={onMobileClose}
+                    title={collapsed ? label : undefined}
+                    className={cn(
+                      'relative flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-primary text-primary-foreground'
+                        : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
+                      collapsed && 'justify-center px-2'
+                    )}
                   >
-                    {badgeCount > 9 ? '9+' : badgeCount}
-                  </Badge>
-                )}
-              </NavLink>
-            )
-          })}
+                    <span className="relative shrink-0">
+                      <Icon className="h-4 w-4" />
+                      {showAlertBadge && collapsed && (
+                        <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold text-destructive-foreground">
+                          {badgeCount > 9 ? '9+' : badgeCount}
+                        </span>
+                      )}
+                    </span>
+                    {!collapsed && <span className="flex-1">{label}</span>}
+                    {showAlertBadge && !collapsed && (
+                      <Badge
+                        variant="destructive"
+                        className="h-5 min-w-5 justify-center px-1.5 text-[10px]"
+                      >
+                        {badgeCount > 9 ? '9+' : badgeCount}
+                      </Badge>
+                    )}
+                  </NavLink>
+                )
+              })}
+            </div>
+          ))}
         </nav>
       </ScrollArea>
 

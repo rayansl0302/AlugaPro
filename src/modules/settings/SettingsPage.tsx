@@ -1,4 +1,4 @@
-import { Building2, Users, Shield, Palette, Mail } from 'lucide-react'
+import { Building2, Users, Shield, Palette, Mail, Contact } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useAuth } from '@/contexts/AuthContext'
-import { EmailMarketingPanel } from '@/modules/email-marketing/EmailMarketingPage'
+import { EmailMarketingPanel, LeadsPanel } from '@/modules/email-marketing/EmailMarketingPage'
 
 export function SettingsPage() {
   const { t } = useTranslation('settings')
@@ -34,6 +34,9 @@ export function SettingsPage() {
           <TabsTrigger value="seguranca">{t('tabs.security')}</TabsTrigger>
           <TabsTrigger value="email" className="gap-1.5">
             <Mail className="h-4 w-4" /> E-mail Marketing
+          </TabsTrigger>
+          <TabsTrigger value="leads" className="gap-1.5">
+            <Contact className="h-4 w-4" /> Leads
           </TabsTrigger>
         </TabsList>
 
@@ -142,6 +145,10 @@ export function SettingsPage() {
 
         <TabsContent value="email">
           <EmailMarketingPanel />
+        </TabsContent>
+
+        <TabsContent value="leads">
+          <LeadsPanel />
         </TabsContent>
       </Tabs>
     </div>

@@ -73,12 +73,10 @@ export function EmailMarketingPanel() {
       <Tabs defaultValue="compor">
         <TabsList className="mb-6">
           <TabsTrigger value="compor">Compor &amp; enviar</TabsTrigger>
-          <TabsTrigger value="leads">Leads</TabsTrigger>
           <TabsTrigger value="historico">Histórico</TabsTrigger>
         </TabsList>
 
         <TabsContent value="compor"><ComposeTab /></TabsContent>
-        <TabsContent value="leads"><LeadsTab /></TabsContent>
         <TabsContent value="historico"><HistoryTab /></TabsContent>
       </Tabs>
     </div>
@@ -407,9 +405,9 @@ function ComposeTab() {
   )
 }
 
-// ─── Aba: Leads ───────────────────────────────────────────────────────────────
+// ─── Painel de Leads (aba própria em Configurações) ───────────────────────────
 
-function LeadsTab() {
+export function LeadsPanel() {
   const queryClient = useQueryClient()
   const fileRef = useRef<HTMLInputElement>(null)
   const [email, setEmail] = useState('')
@@ -455,6 +453,18 @@ function LeadsTab() {
 
   return (
     <div className="space-y-6">
+      <div className="mb-1 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <ClipboardList className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold tracking-tight">Leads</h2>
+          <p className="text-sm text-muted-foreground">
+            Base de prospecção usada nos disparos de e-mail marketing.
+          </p>
+        </div>
+      </div>
+
       {/* Adicionar 1 */}
       <Card>
         <CardHeader className="pb-3">

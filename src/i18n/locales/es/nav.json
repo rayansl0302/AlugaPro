@@ -1,4 +1,13 @@
 {
+  "section": {
+    "assets": "Patrimonio",
+    "people": "Personas",
+    "contracts": "Contratos",
+    "finance": "Finanzas",
+    "operations": "Operación",
+    "analysis": "Análisis",
+    "admin": "Administración"
+  },
   "dashboard": "Panel",
   "properties": "Inmuebles",
   "vehicles": "Vehículos",
