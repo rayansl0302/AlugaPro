@@ -123,7 +123,19 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const raw = await readRawBody(req)
   if (!verifySignature(secret, req.headers, raw)) {
-    return res.status(401).json({ error: 'Assinatura inválida' })
+    // DIAGNÓSTICO TEMPORÁRIO — remover depois.
+    const anyReq = req as unknown as { body?: unknown }
+    return res.status(401).json({
+      error: 'Assinatura inválida',
+      _debug: {
+        rawLen: raw.length,
+        rawHead: raw.slice(0, 40),
+        hasParsedBody: anyReq.body !== undefined,
+        parsedType: anyReq.body === undefined ? null : typeof anyReq.body,
+        sawSvixId: !!req.headers['svix-id'],
+        sawWebhookId: !!req.headers['webhook-id'],
+      },
+    })
   }
 
   let payload: { type?: string; data?: Record<string, unknown> }
