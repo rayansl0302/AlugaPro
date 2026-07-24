@@ -20,7 +20,7 @@ import {
 } from '@/lib/emailMarketing'
 import {
   type Audience, type Recipient, collectRecipients, parseEmailList,
-  getLeads, addLead, deleteLead, addLeadsBulk, importLeadsFromCsv,
+  getLeads, addLead, deleteLead, addLeadsBulk, importLeadsFromCsv, importLeadsFromExcel,
   sendCampaign, logCampaign, getCampaigns,
 } from '@/services/emailMarketing'
 
@@ -434,20 +434,20 @@ export function LeadsPanel() {
     onSuccess: invalidate,
   })
 
-  const importCsv = useMutation({
-    mutationFn: (csv: string) => importLeadsFromCsv(csv),
+  const importFile = useMutation({
+    mutationFn: async (file: File): Promise<number> => {
+      if (/\.xlsx?$/i.test(file.name)) return importLeadsFromExcel(await file.arrayBuffer())
+      return importLeadsFromCsv(await file.text())
+    },
     onSuccess: (n) => { toast({ title: `${n} lead(s) importado(s).` }); invalidate() },
-    onError: () => toast({ title: 'Falha ao importar CSV.', variant: 'destructive' }),
+    onError: () => toast({ title: 'Falha ao importar o arquivo.', variant: 'destructive' }),
   })
 
   const bulkCount = useMemo(() => parseEmailList(bulkRaw).length, [bulkRaw])
 
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
-    const reader = new FileReader()
-    reader.onload = () => importCsv.mutate(String(reader.result ?? ''))
-    reader.readAsText(file)
+    if (file) importFile.mutate(file)
     e.target.value = ''
   }
 
@@ -511,12 +511,18 @@ export function LeadsPanel() {
             </div>
           </div>
           <div className="flex items-center gap-3 border-t pt-4">
-            <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={onFile} />
-            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importCsv.isPending}>
-              {importCsv.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
-              Importar CSV
+            <input
+              ref={fileRef}
+              type="file"
+              accept=".csv,text/csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
+              className="hidden"
+              onChange={onFile}
+            />
+            <Button variant="outline" size="sm" onClick={() => fileRef.current?.click()} disabled={importFile.isPending}>
+              {importFile.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Upload className="mr-1.5 h-3.5 w-3.5" />}
+              Importar CSV / Excel
             </Button>
-            <span className="text-xs text-muted-foreground">Colunas: e-mail, nome. Cabeçalho é ignorado.</span>
+            <span className="text-xs text-muted-foreground">Aceita .csv, .xlsx e .xls · colunas: e-mail, nome. Cabeçalho é ignorado.</span>
           </div>
         </CardContent>
       </Card>

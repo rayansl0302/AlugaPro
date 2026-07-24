@@ -1,6 +1,7 @@
 import {
   collection, doc, getDocs, setDoc, deleteDoc, query, where, orderBy, serverTimestamp, addDoc, Timestamp,
 } from 'firebase/firestore'
+import * as XLSX from 'xlsx'
 import { db, auth } from '@/lib/firebase'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
@@ -125,6 +126,15 @@ export async function addLeadsBulk(raw: string, source = 'lista colada'): Promis
   const recipients = parseEmailList(raw)
   for (const r of recipients) await addLead({ email: r.email, source })
   return recipients.length
+}
+
+/** Importa leads de uma planilha Excel (.xlsx/.xls). Converte a primeira aba
+ *  em CSV e reaproveita o parser de CSV. Retorna quantos foram importados. */
+export async function importLeadsFromExcel(buffer: ArrayBuffer): Promise<number> {
+  const wb = XLSX.read(buffer, { type: 'array' })
+  const sheet = wb.Sheets[wb.SheetNames[0]]
+  if (!sheet) return 0
+  return importLeadsFromCsv(XLSX.utils.sheet_to_csv(sheet), 'importação Excel')
 }
 
 /** Importa leads de um CSV simples (colunas: email, nome, empresa). Ignora
