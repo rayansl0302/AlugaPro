@@ -108,6 +108,39 @@ async function applyToLead(
   })
 }
 
+/** Remove o histórico citado (Gmail/Outlook) de uma resposta, deixando só o
+ *  texto novo. Corta na primeira linha citada (">") ou no "Em ... escreveu:". */
+function stripQuoted(text: string): string {
+  const out: string[] = []
+  for (const line of text.split(/\r?\n/)) {
+    if (/^\s*>/.test(line)) break
+    if (/^\s*(Em |On |El |De )\b.*(escreveu|wrote|escribió):?\s*$/i.test(line)) break
+    if (/^\s*Em .+<[^>]+>\s*$/.test(line)) break // "Em <data>, Nome <email>" (Gmail quebra em 2 linhas)
+    out.push(line)
+  }
+  return out.join('\n').trim()
+}
+
+/** Busca o conteúdo de um e-mail recebido na API do Resend e devolve o texto
+ *  da resposta (sem o histórico citado). Precisa de RESEND_API_KEY full access. */
+async function fetchReplyText(emailId: string): Promise<string | undefined> {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) return undefined
+  try {
+    const res = await fetch(`https://api.resend.com/emails/receiving/${emailId}`, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+    })
+    if (!res.ok) return undefined
+    const data = (await res.json()) as { text?: string; html?: string }
+    const base = data.text?.trim()
+      || (data.html ? data.html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').trim() : '')
+    const clean = stripQuoted(base)
+    return clean ? clean.slice(0, 800) : undefined
+  } catch {
+    return undefined
+  }
+}
+
 // Só "esquenta" (nunca esfria um lead já quente por causa de uma abertura).
 const warmIfCold = (c: LeadStatus): LeadStatus | null => (c === 'novo' || c === 'frio' ? 'morno' : null)
 const alwaysHot = (): LeadStatus => 'quente'
@@ -144,10 +177,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (type.includes('received') || type.includes('inbound')) {
       const from = extractEmail(typeof data.from === 'string' ? data.from : undefined)
       if (from) {
+        // O payload de inbound não traz o corpo — busca o conteúdo na API do
+        // Resend (precisa de RESEND_API_KEY com full access) e limpa o histórico
+        // citado. Best-effort: se falhar (key só de envio), fica sem o texto.
+        const emailId = typeof data.email_id === 'string' ? data.email_id : undefined
+        const text = emailId ? await fetchReplyText(emailId) : undefined
         await applyToLead(from, {
           activityType: 'replied',
           subject,
-          text: typeof data.text === 'string' ? String(data.text).slice(0, 500) : undefined,
+          text,
           counter: 'replyCount',
           lastField: 'lastRepliedAt',
           newStatusIf: alwaysHot,
