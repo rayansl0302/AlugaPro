@@ -457,7 +457,10 @@ export function LeadsPanel() {
   const [name, setName] = useState('')
   const [bulkRaw, setBulkRaw] = useState('')
   const [statusFilter, setStatusFilter] = useState<LeadStatus | 'todos'>('todos')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [subTab, setSubTab] = useState<'base' | 'conversas'>('base')
+  const [selectedLeadId, setSelectedLeadId] = useState<string | null>(null)
+
+  const openChat = (id: string) => { setSelectedLeadId(id); setSubTab('conversas') }
 
   const { data: leads = [], isLoading } = useQuery({ queryKey: ['marketingLeads'], queryFn: getLeads })
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['marketingLeads'] })
@@ -530,6 +533,13 @@ export function LeadsPanel() {
         </div>
       </div>
 
+      <Tabs value={subTab} onValueChange={(v) => setSubTab(v as 'base' | 'conversas')}>
+        <TabsList className="mb-4">
+          <TabsTrigger value="base" className="gap-1.5"><ClipboardList className="h-4 w-4" /> Base</TabsTrigger>
+          <TabsTrigger value="conversas" className="gap-1.5"><MessageSquare className="h-4 w-4" /> Conversas</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="base" className="space-y-6">
       {/* Adicionar 1 */}
       <Card>
         <CardHeader className="pb-3">
@@ -625,17 +635,111 @@ export function LeadsPanel() {
                 <LeadRow
                   key={l.id}
                   lead={l}
-                  expanded={expandedId === l.id}
-                  onToggle={() => setExpandedId((cur) => (cur === l.id ? null : l.id))}
                   onChangeStatus={(status) => setStatus.mutate({ id: l.id, status })}
                   onDelete={() => remove.mutate(l.id)}
-                  onInvalidate={invalidate}
+                  onOpenChat={() => openChat(l.id)}
                 />
               ))}
             </ul>
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="conversas">
+          <ConversationsView
+            leads={leads}
+            isLoading={isLoading}
+            selectedId={selectedLeadId}
+            onSelect={setSelectedLeadId}
+            onInvalidate={invalidate}
+          />
+        </TabsContent>
+      </Tabs>
+    </div>
+  )
+}
+
+// ─── Aba "Conversas": lista de leads + chat (estilo WhatsApp Web) ──────────────
+
+function ConversationsView({
+  leads, isLoading, selectedId, onSelect, onInvalidate,
+}: {
+  leads: MarketingLead[]
+  isLoading: boolean
+  selectedId: string | null
+  onSelect: (id: string | null) => void
+  onInvalidate: () => void
+}) {
+  const [search, setSearch] = useState('')
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase()
+    if (!q) return leads
+    return leads.filter((l) => l.email.includes(q) || (l.name ?? '').toLowerCase().includes(q))
+  }, [leads, search])
+  const selected = leads.find((l) => l.id === selectedId) ?? null
+
+  return (
+    <div className="grid h-[560px] grid-cols-1 overflow-hidden rounded-lg border md:grid-cols-[280px_1fr]">
+      {/* Lista de contatos */}
+      <div className={`flex min-h-0 flex-col border-r bg-card ${selected ? 'hidden md:flex' : 'flex'}`}>
+        <div className="border-b p-2">
+          <Input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Buscar lead…"
+            className="h-8 text-sm"
+          />
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          {isLoading ? (
+            <p className="p-4 text-center text-xs text-muted-foreground">Carregando…</p>
+          ) : filtered.length === 0 ? (
+            <p className="p-4 text-center text-xs text-muted-foreground">Nenhum lead. Adicione na aba “Base”.</p>
+          ) : (
+            <ul>
+              {filtered.map((l) => {
+                const meta = STATUS_META[leadStatus(l)]
+                const active = l.id === selectedId
+                return (
+                  <li key={l.id}>
+                    <button
+                      onClick={() => onSelect(l.id)}
+                      className={`flex w-full items-center gap-2.5 border-b px-3 py-2.5 text-left transition-colors ${active ? 'bg-primary/10' : 'hover:bg-muted/50'}`}
+                    >
+                      <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${meta.dot}`} title={meta.label} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-medium">{l.name || l.email}</span>
+                        {l.name && <span className="block truncate text-xs text-muted-foreground">{l.email}</span>}
+                      </span>
+                      {(l.replyCount ?? 0) > 0 && <span className="shrink-0 rounded-full bg-green-600 px-1.5 text-[10px] font-bold text-white">{l.replyCount}</span>}
+                    </button>
+                  </li>
+                )
+              })}
+            </ul>
+          )}
+        </div>
+      </div>
+
+      {/* Conversa */}
+      <div className={`min-h-0 ${selected ? 'flex flex-col' : 'hidden md:flex md:items-center md:justify-center'}`}>
+        {selected ? (
+          <>
+            <button onClick={() => onSelect(null)} className="flex items-center gap-1 border-b p-2 text-xs text-muted-foreground md:hidden">
+              <ChevronDown className="h-4 w-4 rotate-90" /> voltar
+            </button>
+            <div className="min-h-0 flex-1">
+              <LeadDetail key={selected.id} lead={selected} onInvalidate={onInvalidate} pane />
+            </div>
+          </>
+        ) : (
+          <p className="p-8 text-center text-sm text-muted-foreground">
+            <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-30" />
+            Selecione um lead à esquerda para ver a conversa.
+          </p>
+        )}
+      </div>
     </div>
   )
 }
@@ -656,17 +760,15 @@ function FilterChip({ active, onClick, children }: { active: boolean; onClick: (
   )
 }
 
-// ─── Linha de um lead (com timeline expansível) ───────────────────────────────
+// ─── Linha de um lead (na Base) ───────────────────────────────────────────────
 
 function LeadRow({
-  lead, expanded, onToggle, onChangeStatus, onDelete, onInvalidate,
+  lead, onChangeStatus, onDelete, onOpenChat,
 }: {
   lead: MarketingLead
-  expanded: boolean
-  onToggle: () => void
   onChangeStatus: (s: LeadStatus) => void
   onDelete: () => void
-  onInvalidate: () => void
+  onOpenChat: () => void
 }) {
   const status = leadStatus(lead)
   const meta = STATUS_META[status]
@@ -678,52 +780,48 @@ function LeadRow({
   ].filter((s) => s.n > 0)
 
   return (
-    <li className="py-2.5">
-      <div className="flex items-center gap-3">
-        {/* Status (dropdown) */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <button className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.badge}`}>
-              <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
-              {meta.label}
-              <ChevronDown className="h-3 w-3 opacity-60" />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            {LEAD_STATUSES.map((s) => (
-              <DropdownMenuItem key={s} onClick={() => onChangeStatus(s)} className="gap-2">
-                <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
-                {STATUS_META[s].label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
+    <li className="flex items-center gap-3 py-2.5">
+      {/* Status (dropdown) */}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.badge}`}>
+            <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+            {meta.label}
+            <ChevronDown className="h-3 w-3 opacity-60" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {LEAD_STATUSES.map((s) => (
+            <DropdownMenuItem key={s} onClick={() => onChangeStatus(s)} className="gap-2">
+              <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
+              {STATUS_META[s].label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-        {/* Identificação */}
-        <button onClick={onToggle} className="min-w-0 flex-1 text-left">
-          <p className="truncate text-sm font-medium">{lead.email}</p>
-          <p className="truncate text-xs text-muted-foreground">
-            {[lead.name, lead.source].filter(Boolean).join(' · ') || '—'}
-            {stats.length > 0 && ' · ' + stats.map((s) => `${s.n} ${s.label}`).join(' · ')}
-          </p>
-        </button>
+      {/* Identificação — clique abre a conversa */}
+      <button onClick={onOpenChat} className="min-w-0 flex-1 text-left">
+        <p className="truncate text-sm font-medium">{lead.email}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {[lead.name, lead.source].filter(Boolean).join(' · ') || '—'}
+          {stats.length > 0 && ' · ' + stats.map((s) => `${s.n} ${s.label}`).join(' · ')}
+        </p>
+      </button>
 
-        <Button variant="ghost" size="sm" onClick={onToggle} title="Ver histórico">
-          <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-        </Button>
-        <Button variant="ghost" size="sm" onClick={onDelete} className="text-muted-foreground hover:text-destructive">
-          <Trash2 className="h-4 w-4" />
-        </Button>
-      </div>
-
-      {expanded && <LeadDetail lead={lead} onInvalidate={onInvalidate} />}
+      <Button variant="ghost" size="sm" onClick={onOpenChat} title="Abrir conversa">
+        <MessageSquare className="h-4 w-4" />
+      </Button>
+      <Button variant="ghost" size="sm" onClick={onDelete} className="text-muted-foreground hover:text-destructive">
+        <Trash2 className="h-4 w-4" />
+      </Button>
     </li>
   )
 }
 
 // ─── Detalhe do lead: notas + linha do tempo ──────────────────────────────────
 
-function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate: () => void }) {
+function LeadDetail({ lead, onInvalidate, pane = false }: { lead: MarketingLead; onInvalidate: () => void; pane?: boolean }) {
   const queryClient = useQueryClient()
   const [note, setNote] = useState('')
   const [replySubject, setReplySubject] = useState('Re: contato AlugaPro')
@@ -759,7 +857,7 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
   const ordered = useMemo(() => [...activity].reverse(), [activity])
 
   return (
-    <div className="mt-3 overflow-hidden rounded-lg border">
+    <div className={pane ? 'flex h-full min-h-0 flex-col overflow-hidden' : 'mt-3 overflow-hidden rounded-lg border'}>
       {/* Cabeçalho compacto: nome editável + e-mail */}
       <div className="flex items-center gap-2 border-b bg-muted/40 px-3 py-2">
         <Input
@@ -772,7 +870,7 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
       </div>
 
       {/* Conversa (chat) */}
-      <div className="max-h-[440px] space-y-2 overflow-y-auto bg-muted/20 p-3">
+      <div className={`${pane ? 'min-h-0 flex-1' : 'max-h-[440px]'} space-y-2 overflow-y-auto bg-muted/20 p-3`}>
         {isLoading ? (
           <p className="py-6 text-center text-xs text-muted-foreground">Carregando…</p>
         ) : ordered.length === 0 ? (
