@@ -1,5 +1,6 @@
 import {
-  collection, doc, getDocs, setDoc, deleteDoc, query, where, orderBy, serverTimestamp, addDoc, Timestamp,
+  collection, doc, getDocs, getDoc, setDoc, updateDoc, deleteDoc, query, where, orderBy,
+  serverTimestamp, addDoc, writeBatch, increment, Timestamp,
 } from 'firebase/firestore'
 import * as XLSX from 'xlsx'
 import { db, auth } from '@/lib/firebase'
@@ -13,13 +14,42 @@ export interface Recipient {
   name?: string
 }
 
+/** Classificação (temperatura) do lead. */
+export type LeadStatus = 'novo' | 'quente' | 'morno' | 'frio' | 'invalido'
+
+export const LEAD_STATUSES: LeadStatus[] = ['novo', 'quente', 'morno', 'frio', 'invalido']
+
 export interface MarketingLead {
   id: string
   email: string
   name?: string
   company?: string
   source?: string
+  status?: LeadStatus
+  notes?: string
+  contactCount?: number
+  openCount?: number
+  clickCount?: number
+  replyCount?: number
+  lastContactedAt?: Timestamp
+  lastOpenedAt?: Timestamp
+  lastClickedAt?: Timestamp
+  lastRepliedAt?: Timestamp
   createdAt?: Timestamp
+}
+
+/** Um evento na linha do tempo de um lead. */
+export type LeadActivityType =
+  | 'sent' | 'opened' | 'clicked' | 'bounced' | 'complained' | 'replied' | 'note' | 'status'
+
+export interface LeadActivity {
+  id: string
+  type: LeadActivityType
+  subject?: string
+  campaignId?: string
+  /** Texto livre: conteúdo da nota, trecho da resposta, novo status, etc. */
+  text?: string
+  at?: Timestamp
 }
 
 export interface EmailCampaign {
@@ -120,6 +150,78 @@ export async function deleteLead(id: string): Promise<void> {
   await deleteDoc(doc(db, LEADS_COL, id))
 }
 
+// ─── CRM: classificação, notas e linha do tempo ───────────────────────────────
+
+/** Atualiza campos avulsos de um lead (ex.: nome, empresa). */
+export async function updateLead(id: string, patch: Partial<MarketingLead>): Promise<void> {
+  await updateDoc(doc(db, LEADS_COL, id), { ...patch })
+}
+
+/** Define a temperatura do lead e registra o evento na timeline. */
+export async function setLeadStatus(id: string, status: LeadStatus): Promise<void> {
+  await updateDoc(doc(db, LEADS_COL, id), { status })
+  await addLeadActivity(id, { type: 'status', text: status })
+}
+
+/** Adiciona uma nota manual à timeline do lead. */
+export async function addLeadNote(id: string, text: string): Promise<void> {
+  const clean = text.trim()
+  if (!clean) return
+  await addLeadActivity(id, { type: 'note', text: clean })
+}
+
+/** Grava um evento na subcoleção de atividades do lead. */
+async function addLeadActivity(
+  leadId: string,
+  entry: Omit<LeadActivity, 'id' | 'at'>,
+): Promise<void> {
+  await addDoc(collection(db, LEADS_COL, leadId, 'activity'), {
+    ...entry,
+    at: serverTimestamp(),
+  })
+}
+
+/** Linha do tempo de um lead (mais recente primeiro). */
+export async function getLeadActivity(leadId: string): Promise<LeadActivity[]> {
+  const snap = await getDocs(
+    query(collection(db, LEADS_COL, leadId, 'activity'), orderBy('at', 'desc')),
+  )
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as LeadActivity))
+}
+
+/** Depois de um disparo, registra o envio nos leads que estavam na lista de
+ *  destinatários: marca "enviado" na timeline e incrementa o contador de
+ *  contatos. Só toca em quem já é lead (id = e-mail). Em lotes, respeitando o
+ *  limite de 500 operações por batch do Firestore. */
+export async function recordCampaignSentToLeads(
+  recipientEmails: string[],
+  subject: string,
+  campaignId?: string,
+): Promise<number> {
+  const leads = await getLeads()
+  const leadIds = new Set(leads.map((l) => l.id))
+  const targets = [...new Set(recipientEmails.map(normalizeEmail))].filter((e) => leadIds.has(e))
+  if (targets.length === 0) return 0
+
+  // 2 operações por lead (update do lead + doc de atividade) → 250 leads/lote.
+  const CHUNK = 200
+  for (let i = 0; i < targets.length; i += CHUNK) {
+    const batch = writeBatch(db)
+    for (const email of targets.slice(i, i + CHUNK)) {
+      const leadRef = doc(db, LEADS_COL, email)
+      batch.update(leadRef, { lastContactedAt: serverTimestamp(), contactCount: increment(1) })
+      batch.set(doc(collection(db, LEADS_COL, email, 'activity')), {
+        type: 'sent',
+        subject,
+        ...(campaignId ? { campaignId } : {}),
+        at: serverTimestamp(),
+      })
+    }
+    await batch.commit()
+  }
+  return targets.length
+}
+
 /** Adiciona vários leads de uma vez a partir de um texto colado. Retorna
  *  quantos e-mails válidos foram adicionados. */
 export async function addLeadsBulk(raw: string, source = 'lista colada'): Promise<number> {
@@ -179,8 +281,10 @@ export async function sendCampaign(input: {
   return data as SendResult
 }
 
-export async function logCampaign(entry: Omit<EmailCampaign, 'id' | 'createdAt'>): Promise<void> {
-  await addDoc(collection(db, CAMPAIGNS_COL), { ...entry, createdAt: serverTimestamp() })
+/** Registra a campanha no histórico e devolve o id do documento criado. */
+export async function logCampaign(entry: Omit<EmailCampaign, 'id' | 'createdAt'>): Promise<string> {
+  const ref = await addDoc(collection(db, CAMPAIGNS_COL), { ...entry, createdAt: serverTimestamp() })
+  return ref.id
 }
 
 export async function getCampaigns(): Promise<EmailCampaign[]> {

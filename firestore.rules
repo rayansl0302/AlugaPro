@@ -412,6 +412,12 @@ service cloud.firestore {
     // lê/escreve. Não é multi-tenant.
     match /marketingLeads/{leadId} {
       allow read, create, update, delete: if isAdminEmail();
+      // Linha do tempo do lead (envios, aberturas, cliques, respostas, notas).
+      // O webhook do Resend escreve via Admin SDK (ignora estas regras); aqui é
+      // só o acesso do painel admin.
+      match /activity/{activityId} {
+        allow read, create, update, delete: if isAdminEmail();
+      }
     }
     match /emailCampaigns/{campaignId} {
       allow read, create: if isAdminEmail();

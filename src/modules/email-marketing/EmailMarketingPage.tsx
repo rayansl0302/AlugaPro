@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   Mail, Send, Users, Upload, Trash2, Loader2, Eye, RefreshCw, AlertTriangle,
-  ListPlus, FlaskConical, ClipboardList, CheckCircle2,
+  ListPlus, FlaskConical, ClipboardList, CheckCircle2, ChevronDown,
+  MousePointerClick, MessageSquare, StickyNote, Tag, Reply,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,15 +14,20 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { toast } from '@/hooks/useToast'
 import { useAuth } from '@/contexts/AuthContext'
 import {
   EMAIL_TEMPLATES, templateDefaults, renderMarketingEmail, type EmailTemplateId,
 } from '@/lib/emailMarketing'
 import {
-  type Audience, type Recipient, collectRecipients, parseEmailList,
-  getLeads, addLead, deleteLead, addLeadsBulk, importLeadsFromCsv, importLeadsFromExcel,
-  sendCampaign, logCampaign, getCampaigns,
+  type Audience, type Recipient, type MarketingLead, type LeadStatus, type LeadActivity,
+  LEAD_STATUSES, collectRecipients, parseEmailList,
+  getLeads, addLead, deleteLead, updateLead, setLeadStatus, addLeadNote, getLeadActivity,
+  addLeadsBulk, importLeadsFromCsv, importLeadsFromExcel,
+  sendCampaign, logCampaign, recordCampaignSentToLeads, getCampaigns,
 } from '@/services/emailMarketing'
 
 const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
@@ -33,6 +39,35 @@ const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
 
 const textareaClass =
   'flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2'
+
+// Cores/rótulos de cada temperatura de lead (claro + escuro).
+const STATUS_META: Record<LeadStatus, { label: string; dot: string; badge: string }> = {
+  novo: { label: 'Novo', dot: 'bg-slate-400', badge: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300' },
+  quente: { label: 'Quente', dot: 'bg-red-500', badge: 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' },
+  morno: { label: 'Morno', dot: 'bg-amber-500', badge: 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' },
+  frio: { label: 'Frio', dot: 'bg-sky-500', badge: 'bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300' },
+  invalido: { label: 'Inválido', dot: 'bg-neutral-400', badge: 'bg-neutral-100 text-neutral-500 line-through dark:bg-neutral-800 dark:text-neutral-400' },
+}
+
+function leadStatus(l: MarketingLead): LeadStatus {
+  return l.status ?? 'novo'
+}
+
+// Ícone + texto de cada tipo de evento na timeline do lead.
+const ACTIVITY_META: Record<LeadActivity['type'], { icon: React.ElementType; label: string; tone: string }> = {
+  sent: { icon: Send, label: 'E-mail enviado', tone: 'text-slate-500' },
+  opened: { icon: Eye, label: 'Abriu o e-mail', tone: 'text-amber-600' },
+  clicked: { icon: MousePointerClick, label: 'Clicou no e-mail', tone: 'text-red-600' },
+  replied: { icon: Reply, label: 'Respondeu', tone: 'text-green-600' },
+  bounced: { icon: AlertTriangle, label: 'Bounce (e-mail inválido)', tone: 'text-neutral-500' },
+  complained: { icon: AlertTriangle, label: 'Marcou como spam', tone: 'text-neutral-500' },
+  note: { icon: StickyNote, label: 'Nota', tone: 'text-primary' },
+  status: { icon: Tag, label: 'Classificação alterada', tone: 'text-primary' },
+}
+
+function fmtDateTime(ts?: { toDate: () => Date }): string {
+  try { return ts ? ts.toDate().toLocaleString('pt-BR') : '' } catch { return '' }
+}
 
 /** Cabeçalho de etapa numerada, pra dar sensação de fluxo (1 → 2 → 3). */
 function StepTitle({ n, icon: Icon, title, hint }: { n: number; icon: React.ElementType; title: string; hint?: string }) {
@@ -199,7 +234,7 @@ function ComposeTab() {
         replyTo: replyTo.trim() || undefined,
       })
       const templateName = EMAIL_TEMPLATES.find((t) => t.id === templateId)?.name ?? templateId
-      await logCampaign({
+      const campaignId = await logCampaign({
         subject: subj,
         templateName,
         audiences: [...audiences],
@@ -208,11 +243,18 @@ function ComposeTab() {
         failed: result.failed,
         skipped: result.skipped,
       })
+      // Registra o envio na timeline dos leads atingidos (não impede o resultado).
+      try {
+        await recordCampaignSentToLeads(recipients.map((r) => r.email), subj, campaignId)
+      } catch (err) {
+        console.error('[email-marketing] falha ao registrar envio nos leads:', err)
+      }
       return result
     },
     onSuccess: (r) => {
       toast({ title: `Campanha enviada — ${r.sent} enviados, ${r.skipped} pulados, ${r.failed} falhas.` })
       queryClient.invalidateQueries({ queryKey: ['emailCampaigns'] })
+      queryClient.invalidateQueries({ queryKey: ['marketingLeads'] })
     },
     onError: (e) => toast({ title: e instanceof Error ? e.message : 'Falha ao enviar.', variant: 'destructive' }),
   })
@@ -413,9 +455,22 @@ export function LeadsPanel() {
   const [email, setEmail] = useState('')
   const [name, setName] = useState('')
   const [bulkRaw, setBulkRaw] = useState('')
+  const [statusFilter, setStatusFilter] = useState<LeadStatus | 'todos'>('todos')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const { data: leads = [], isLoading } = useQuery({ queryKey: ['marketingLeads'], queryFn: getLeads })
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ['marketingLeads'] })
+
+  const counts = useMemo(() => {
+    const c: Record<LeadStatus, number> = { novo: 0, quente: 0, morno: 0, frio: 0, invalido: 0 }
+    for (const l of leads) c[leadStatus(l)]++
+    return c
+  }, [leads])
+
+  const filtered = useMemo(
+    () => (statusFilter === 'todos' ? leads : leads.filter((l) => leadStatus(l) === statusFilter)),
+    [leads, statusFilter],
+  )
 
   const add = useMutation({
     mutationFn: () => addLead({ email, name: name || undefined, source: 'manual' }),
@@ -432,6 +487,15 @@ export function LeadsPanel() {
   const remove = useMutation({
     mutationFn: (id: string) => deleteLead(id),
     onSuccess: invalidate,
+  })
+
+  const setStatus = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: LeadStatus }) => setLeadStatus(id, status),
+    onSuccess: (_d, v) => {
+      invalidate()
+      queryClient.invalidateQueries({ queryKey: ['leadActivity', v.id] })
+    },
+    onError: () => toast({ title: 'Falha ao alterar status.', variant: 'destructive' }),
   })
 
   const importFile = useMutation({
@@ -527,37 +591,215 @@ export function LeadsPanel() {
         </CardContent>
       </Card>
 
-      {/* Lista */}
+      {/* Lista + filtro por temperatura */}
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">Leads salvos <Badge variant="secondary">{leads.length}</Badge></CardTitle>
         </CardHeader>
         <CardContent>
+          {/* Filtros por status */}
+          {leads.length > 0 && (
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              <FilterChip active={statusFilter === 'todos'} onClick={() => setStatusFilter('todos')}>
+                Todos <span className="opacity-60">{leads.length}</span>
+              </FilterChip>
+              {LEAD_STATUSES.map((s) => (
+                <FilterChip key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
+                  <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
+                  {STATUS_META[s].label} <span className="opacity-60">{counts[s]}</span>
+                </FilterChip>
+              ))}
+            </div>
+          )}
+
           {isLoading ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Carregando…</p>
           ) : leads.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead ainda. Adicione, cole uma lista ou importe um CSV.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead ainda. Adicione, cole uma lista ou importe um CSV/Excel.</p>
+          ) : filtered.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Nenhum lead com esse status.</p>
           ) : (
             <ul className="divide-y">
-              {leads.map((l) => (
-                <li key={l.id} className="flex items-center justify-between py-2.5">
-                  <div>
-                    <p className="text-sm font-medium">{l.email}</p>
-                    {(l.name || l.source) && (
-                      <p className="text-xs text-muted-foreground">
-                        {l.name}{l.name && l.source ? ' · ' : ''}{l.source}
-                      </p>
-                    )}
-                  </div>
-                  <Button variant="ghost" size="sm" onClick={() => remove.mutate(l.id)} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </li>
+              {filtered.map((l) => (
+                <LeadRow
+                  key={l.id}
+                  lead={l}
+                  expanded={expandedId === l.id}
+                  onToggle={() => setExpandedId((cur) => (cur === l.id ? null : l.id))}
+                  onChangeStatus={(status) => setStatus.mutate({ id: l.id, status })}
+                  onDelete={() => remove.mutate(l.id)}
+                  onInvalidate={invalidate}
+                />
               ))}
             </ul>
           )}
         </CardContent>
       </Card>
+    </div>
+  )
+}
+
+// ─── Chip de filtro ───────────────────────────────────────────────────────────
+
+function FilterChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+        active ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:bg-muted/50'
+      }`}
+    >
+      {children}
+    </button>
+  )
+}
+
+// ─── Linha de um lead (com timeline expansível) ───────────────────────────────
+
+function LeadRow({
+  lead, expanded, onToggle, onChangeStatus, onDelete, onInvalidate,
+}: {
+  lead: MarketingLead
+  expanded: boolean
+  onToggle: () => void
+  onChangeStatus: (s: LeadStatus) => void
+  onDelete: () => void
+  onInvalidate: () => void
+}) {
+  const status = leadStatus(lead)
+  const meta = STATUS_META[status]
+  const stats = [
+    { n: lead.contactCount ?? 0, label: 'envios' },
+    { n: lead.openCount ?? 0, label: 'aberturas' },
+    { n: lead.clickCount ?? 0, label: 'cliques' },
+    { n: lead.replyCount ?? 0, label: 'respostas' },
+  ].filter((s) => s.n > 0)
+
+  return (
+    <li className="py-2.5">
+      <div className="flex items-center gap-3">
+        {/* Status (dropdown) */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${meta.badge}`}>
+              <span className={`h-2 w-2 rounded-full ${meta.dot}`} />
+              {meta.label}
+              <ChevronDown className="h-3 w-3 opacity-60" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {LEAD_STATUSES.map((s) => (
+              <DropdownMenuItem key={s} onClick={() => onChangeStatus(s)} className="gap-2">
+                <span className={`h-2 w-2 rounded-full ${STATUS_META[s].dot}`} />
+                {STATUS_META[s].label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        {/* Identificação */}
+        <button onClick={onToggle} className="min-w-0 flex-1 text-left">
+          <p className="truncate text-sm font-medium">{lead.email}</p>
+          <p className="truncate text-xs text-muted-foreground">
+            {[lead.name, lead.source].filter(Boolean).join(' · ') || '—'}
+            {stats.length > 0 && ' · ' + stats.map((s) => `${s.n} ${s.label}`).join(' · ')}
+          </p>
+        </button>
+
+        <Button variant="ghost" size="sm" onClick={onToggle} title="Ver histórico">
+          <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+        </Button>
+        <Button variant="ghost" size="sm" onClick={onDelete} className="text-muted-foreground hover:text-destructive">
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {expanded && <LeadDetail lead={lead} onInvalidate={onInvalidate} />}
+    </li>
+  )
+}
+
+// ─── Detalhe do lead: notas + linha do tempo ──────────────────────────────────
+
+function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate: () => void }) {
+  const queryClient = useQueryClient()
+  const [note, setNote] = useState('')
+  const { data: activity = [], isLoading } = useQuery({
+    queryKey: ['leadActivity', lead.id],
+    queryFn: () => getLeadActivity(lead.id),
+  })
+  const refresh = () => queryClient.invalidateQueries({ queryKey: ['leadActivity', lead.id] })
+
+  const saveNote = useMutation({
+    mutationFn: () => addLeadNote(lead.id, note),
+    onSuccess: () => { setNote(''); toast({ title: 'Nota adicionada.' }); refresh() },
+    onError: () => toast({ title: 'Falha ao salvar nota.', variant: 'destructive' }),
+  })
+
+  const saveName = useMutation({
+    mutationFn: (name: string) => updateLead(lead.id, { name }),
+    onSuccess: () => { toast({ title: 'Lead atualizado.' }); onInvalidate() },
+  })
+
+  return (
+    <div className="mt-3 rounded-lg border bg-muted/30 p-3">
+      {/* Nome editável */}
+      <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+        <div className="flex-1 space-y-1">
+          <Label className="text-xs">Nome</Label>
+          <Input
+            defaultValue={lead.name ?? ''}
+            placeholder="Nome do contato"
+            className="h-8 text-sm"
+            onBlur={(e) => { const v = e.target.value.trim(); if (v && v !== (lead.name ?? '')) saveName.mutate(v) }}
+          />
+        </div>
+      </div>
+
+      {/* Adicionar nota */}
+      <div className="mb-3 flex gap-2">
+        <Input
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Adicionar uma nota (ligação, contexto, próximo passo…)"
+          className="h-8 text-sm"
+          onKeyDown={(e) => { if (e.key === 'Enter' && note.trim()) saveNote.mutate() }}
+        />
+        <Button size="sm" variant="outline" onClick={() => saveNote.mutate()} disabled={saveNote.isPending || !note.trim()}>
+          <StickyNote className="mr-1.5 h-3.5 w-3.5" /> Nota
+        </Button>
+      </div>
+
+      {/* Timeline */}
+      <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Linha do tempo</p>
+      {isLoading ? (
+        <p className="py-3 text-center text-xs text-muted-foreground">Carregando…</p>
+      ) : activity.length === 0 ? (
+        <p className="py-3 text-center text-xs text-muted-foreground">Sem atividade ainda. Ela aparece conforme você envia e o lead interage.</p>
+      ) : (
+        <ul className="space-y-2.5">
+          {activity.map((ev) => {
+            const am = ACTIVITY_META[ev.type]
+            const Icon = am.icon
+            return (
+              <li key={ev.id} className="flex items-start gap-2.5 text-sm">
+                <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${am.tone}`} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-foreground">
+                    {am.label}
+                    {ev.type === 'status' && ev.text ? `: ${STATUS_META[ev.text as LeadStatus]?.label ?? ev.text}` : ''}
+                    {ev.subject ? <span className="text-muted-foreground"> — "{ev.subject}"</span> : ''}
+                  </p>
+                  {ev.type === 'note' && ev.text && <p className="text-muted-foreground">{ev.text}</p>}
+                  {ev.type === 'replied' && ev.text && <p className="rounded bg-background/60 p-2 text-xs text-muted-foreground">{ev.text}</p>}
+                  <p className="text-[11px] text-muted-foreground/70">{fmtDateTime(ev.at)}</p>
+                </div>
+              </li>
+            )
+          })}
+        </ul>
+      )}
     </div>
   )
 }
