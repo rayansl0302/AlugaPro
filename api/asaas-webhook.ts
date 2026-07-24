@@ -116,8 +116,15 @@ async function cancelPendingCommission(paymentId: string) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end()
 
-  const token = req.headers['asaas-access-token']
-  if (process.env.ASAAS_WEBHOOK_TOKEN && token !== process.env.ASAAS_WEBHOOK_TOKEN) {
+  // SEGURANÇA (fail-closed): sem o token configurado, NENHUM webhook é aceito —
+  // senão qualquer um poderia forjar "pagamento confirmado" e ativar assinatura
+  // grátis (e gerar comissão de afiliado falsa).
+  const expected = process.env.ASAAS_WEBHOOK_TOKEN
+  if (!expected) {
+    console.error('[asaas-webhook] ASAAS_WEBHOOK_TOKEN ausente — evento recusado')
+    return res.status(503).json({ error: 'Webhook não configurado' })
+  }
+  if (req.headers['asaas-access-token'] !== expected) {
     console.warn('[asaas-webhook] invalid token')
     return res.status(401).json({ error: 'Invalid token' })
   }

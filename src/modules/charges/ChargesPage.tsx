@@ -287,11 +287,12 @@ function NotifyDropdown({
     }
     setSending(true)
     try {
+      const idToken = await (await import('@/lib/firebase')).auth.currentUser?.getIdToken()
       const res = await fetch('/api/whatsapp-notify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-internal-key': import.meta.env.VITE_INTERNAL_API_KEY ?? '',
+          Authorization: `Bearer ${idToken ?? ''}`,
         },
         body: JSON.stringify({
           phone: tenantWhatsApp,

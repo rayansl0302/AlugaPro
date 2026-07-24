@@ -4,6 +4,7 @@ import {
   findCustomerByExternalReference, createCustomer, createSubscription,
   getFirstPaymentForSubscription,
 } from './_asaas.js'
+import { requireUser, errorResponse } from './_auth.js'
 
 const APP_URL = process.env.VITE_APP_URL ?? 'https://alugapro.com.br'
 
@@ -34,6 +35,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' })
   }
 
+  // SEGURANÇA: só um usuário autenticado da PRÓPRIA empresa (ou admin) pode
+  // abrir checkout — senão qualquer um cria cobranças/altera CNPJ de terceiros.
+  let caller
+  try {
+    caller = await requireUser(req)
+  } catch (err) {
+    const { status, message } = errorResponse(err)
+    return res.status(status).json({ error: message })
+  }
+
   const { planId, companyId, email, cpfCnpj } = req.body as {
     planId: string
     companyId: string
@@ -43,6 +54,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!planId || !companyId || !email) {
     return res.status(400).json({ error: 'planId, companyId e email são obrigatórios' })
+  }
+  if (!caller.isAdmin && caller.companyId !== companyId) {
+    return res.status(403).json({ error: 'Empresa não pertence ao usuário autenticado' })
   }
   if (!PLANS[planId]) {
     return res.status(400).json({ error: 'planId inválido' })

@@ -64,11 +64,13 @@ function buildMaintenanceMsg(event: 'criado' | string, title: string, tenantName
 async function notifyMaintenanceWhatsApp(phone: string | undefined, message: string) {
   if (!phone) return
   try {
+    const { auth } = await import('@/lib/firebase')
+    const idToken = await auth.currentUser?.getIdToken()
     await fetch('/api/whatsapp-notify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'x-internal-key': (import.meta.env.VITE_INTERNAL_API_KEY as string) ?? '',
+        Authorization: `Bearer ${idToken ?? ''}`,
       },
       body: JSON.stringify({ phone, message }),
     })

@@ -229,9 +229,12 @@ service cloud.firestore {
       // Gestor/Admin: atualização completa.
       // Inquilino: pode apenas assinar o PRÓPRIO contrato — anexa sua assinatura,
       //   fotos e o PDF final, sem alterar termos, valores, status ou a parte do locador.
+      // G8: usa isLinkedTenant (tenantId do doc users, definido pelo convite e
+      // imutável pelo próprio usuário) em vez de auth.uid == tenantId — o id do
+      // doc tenants nem sempre coincide com o uid do Firebase Auth.
       allow update: if isGestor()
         || (isRole('inquilino')
-            && request.auth.uid == resource.data.tenantId
+            && isLinkedTenant(resource.data.tenantId)
             && request.resource.data.companyId  == resource.data.companyId
             && request.resource.data.tenantId    == resource.data.tenantId
             && request.resource.data.ownerId     == resource.data.ownerId

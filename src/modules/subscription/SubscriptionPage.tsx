@@ -52,11 +52,13 @@ export function SubscriptionPage() {
     if (!searchParams.get('asaas_redirect') || !user?.companyId || verifying) return
 
     setVerifying(true)
-    fetch('/api/verify-asaas-subscription', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ companyId: user.companyId }),
-    })
+    import('@/lib/firebase')
+      .then(({ auth }) => auth.currentUser?.getIdToken())
+      .then((idToken) => fetch('/api/verify-asaas-subscription', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
+        body: JSON.stringify({ companyId: user.companyId }),
+      }))
       .then(r => r.json())
       .then(data => {
         if (data.status === 'active') {
@@ -76,9 +78,11 @@ export function SubscriptionPage() {
     if (!user?.companyId || !user?.email) return
     setCheckoutLoading(plan)
     try {
+      const { auth } = await import('@/lib/firebase')
+      const idToken = await auth.currentUser?.getIdToken()
       const res = await fetch('/api/checkout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
         body: JSON.stringify({
           planId: plan,
           companyId: user.companyId,

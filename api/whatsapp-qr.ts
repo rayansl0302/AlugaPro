@@ -1,7 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
+import { requireGestor, errorResponse } from './_auth.js'
 
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store')
+
+  // SEGURANÇA: o QR conecta o WhatsApp da empresa — sem auth, qualquer pessoa
+  // poderia sequestrar a sessão ou ler o número do gestor.
+  try {
+    await requireGestor(req)
+  } catch (err) {
+    const { status, message } = errorResponse(err)
+    return res.status(status).json({ error: message })
+  }
 
   const BASE_URL = (process.env.EVOLUTION_API_URL ?? '').replace(/\/$/, '')
   const API_KEY  = process.env.EVOLUTION_API_KEY  ?? ''

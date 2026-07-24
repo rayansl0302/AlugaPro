@@ -5,10 +5,14 @@ import { WitnessSignatureRequest } from '@/types'
 const COL = 'witnessSignatures'
 
 export function generateWitnessToken(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID().replace(/-/g, '')
-  }
-  return `${Date.now().toString(36)}${Math.random().toString(36).slice(2, 12)}`
+  // Token é o segredo do link público — precisa ser criptograficamente forte.
+  // Fail-closed: sem Web Crypto, é melhor falhar do que gerar token adivinhável.
+  const c: Crypto | undefined = globalThis.crypto
+  if (!c) throw new Error('Web Crypto indisponível — não é possível gerar token seguro.')
+  if (typeof c.randomUUID === 'function') return c.randomUUID().replace(/-/g, '')
+  const bytes = new Uint8Array(16)
+  c.getRandomValues(bytes)
+  return Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('')
 }
 
 export async function createWitnessRequest(

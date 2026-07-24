@@ -262,13 +262,16 @@ async function sendDailyChargeNotifications() {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Vercel injeta Authorization: Bearer <CRON_SECRET> — validar
+  // SEGURANÇA (fail-closed): Vercel injeta Authorization: Bearer <CRON_SECRET>.
+  // Sem o segredo configurado, o endpoint não roda — senão qualquer pessoa
+  // poderia disparar a rotina (e o spam de WhatsApp/e-mail que ela gera).
   const cronSecret = process.env.CRON_SECRET
-  if (cronSecret) {
-    const auth = req.headers.authorization
-    if (auth !== `Bearer ${cronSecret}`) {
-      return res.status(401).json({ error: 'Unauthorized' })
-    }
+  if (!cronSecret) {
+    console.error('[cron] CRON_SECRET ausente — execução recusada')
+    return res.status(503).json({ error: 'Cron não configurado' })
+  }
+  if (req.headers.authorization !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: 'Unauthorized' })
   }
 
   let notifications: unknown = { skipped: 'evolution_not_configured' }

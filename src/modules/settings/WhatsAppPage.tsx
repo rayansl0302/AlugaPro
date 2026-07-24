@@ -19,7 +19,11 @@ export function WhatsAppPage() {
   const fetchStatus = useCallback(async () => {
     setLoading(true)
     try {
-      const res = await fetch('/api/whatsapp-qr')
+      const { auth } = await import('@/lib/firebase')
+      const idToken = await auth.currentUser?.getIdToken()
+      const res = await fetch('/api/whatsapp-qr', {
+        headers: { Authorization: `Bearer ${idToken ?? ''}` },
+      })
       const text = await res.text()
       try {
         const data: WaStatus = JSON.parse(text)

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { adminDb, Timestamp } from './_firebase.js'
 import { getFirstPaymentForSubscription } from './_asaas.js'
+import { requireUser, errorResponse } from './_auth.js'
 
 const PAYMENT_STATUS_MAP: Record<string, string> = {
   CONFIRMED: 'active',
@@ -17,9 +18,21 @@ const PAYMENT_STATUS_MAP: Record<string, string> = {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') return res.status(405).end()
 
+  // SEGURANÇA: só usuário autenticado da própria empresa (ou admin).
+  let caller
+  try {
+    caller = await requireUser(req)
+  } catch (err) {
+    const { status, message } = errorResponse(err)
+    return res.status(status).json({ error: message })
+  }
+
   const { companyId } = req.body as { companyId: string }
   if (!companyId) {
     return res.status(400).json({ error: 'companyId é obrigatório' })
+  }
+  if (!caller.isAdmin && caller.companyId !== companyId) {
+    return res.status(403).json({ error: 'Empresa não pertence ao usuário autenticado' })
   }
 
   try {
