@@ -52,20 +52,35 @@
 - **Rotas protegidas** no React (`ProtectedRoute`, `TenantRoute`) por papel.
 - **CORS** do bucket restrito a origens conhecidas (`cors.json`).
 
-### 3.2 Gaps identificados (ação necessária)
+### 3.2 Gaps identificados (status revisado em 24/jul/2026)
 
-| ID | Risco | Evidência / local | Severidade |
-|----|-------|-------------------|------------|
-| G1 | Senha salva em `localStorage` no "Lembrar-me" | `LoginPage.tsx` | 🔴 Crítico |
-| G2 | Storage: qualquer autenticado lê/escreve/deleta paths de **qualquer empresa** | `storage.rules` — `allow read/write/delete: if isAuth()` | 🔴 Crítico |
-| G3 | Inquilino lê **todos** `owners` e `sharedExpenses` da empresa (filtro só no client) | `firestore.rules` | 🟡 Médio |
-| G4 | `auditLogs`: qualquer autenticado pode **criar** logs | `firestore.rules` linha ~268 | 🟡 Médio |
-| G5 | E-mails de admin **hardcoded** no client e nas rules | `AuthContext.tsx`, `firestore.rules` | 🟡 Médio |
-| G6 | Usuários demo e senha fixa no código | `AuthContext.tsx` | 🟡 Médio (só dev) |
-| G7 | `witnessSignatures`: `allow get: if true` — link público; risco de enumeração se token fraco | `firestore.rules` | 🟡 Médio |
-| G8 | Contratos: leitura usa `auth.uid == tenantId`, mas inquilino real usa `user.tenantId` (pode divergir do uid) | `firestore.rules` vs portal | 🟡 Médio |
-| G9 | Sem **Firebase App Check**, sem **CSP** documentada, sem rate limit próprio além do Firebase Auth | Infra / hosting | 🟢 Melhoria |
-| G10 | Sem lockout/CAPTCHA customizado pós-falhas de login | `LoginPage.tsx` | 🟢 Melhoria |
+| ID | Risco | Status |
+|----|-------|--------|
+| G1 | Senha salva em `localStorage` no "Lembrar-me" | ✅ **Corrigido** — só o e-mail é persistido |
+| G2 | Storage permissivo entre empresas | ✅ **Corrigido** — `storage.rules` com `isGestorOf`/vínculo por empresa |
+| G3 | Inquilino lê todos `owners`/`sharedExpenses` da empresa (filtro no client) | ⚠️ **Risco residual aceito** — portal usa a lista; dados limitados à própria empresa. Fase 1 |
+| G4 | `auditLogs` create aberto | ✅ **Corrigido** — `create: if isGestor()` |
+| G5 | E-mails de admin hardcoded | ⚠️ Aberto (baixo impacto) — migrar p/ custom claims na Fase 1 |
+| G6 | Usuários demo com senha fixa | ⚠️ **Decisão de produto** — demo comercial; rules dão só LEITURA da empresa `alugapro-demo`; sem token real não há escrita |
+| G7 | Link público de testemunha | ✅ **Mitigado** — token 128 bits Web Crypto **fail-closed** (fallback `Math.random` removido em 24/jul) |
+| G8 | Assinatura de contrato usava `auth.uid == tenantId` | ✅ **Corrigido 24/jul** — `isLinkedTenant()` (mesmo padrão de `charges`) |
+| G9 | Sem CSP/headers | ✅ **Parcial 24/jul** — HSTS, XFO, nosniff, Referrer-Policy, Permissions-Policy e CSP base no `vercel.json`. App Check segue na Fase 2 |
+| G10 | Sem lockout customizado | 🟢 Melhoria futura (Firebase Auth já aplica throttling) |
+
+### 3.3 Vulnerabilidades do backend Vercel (encontradas e corrigidas em 24/jul/2026)
+
+| ID | Vulnerabilidade | Correção |
+|----|-----------------|----------|
+| V1 🔴 | `/api/whatsapp-qr` **sem auth** — QR/número expostos (sequestro da sessão WhatsApp) | Exige ID token de gestor/admin (`api/_auth.ts`) |
+| V2 🔴 | `INTERNAL_API_KEY` exposta no bundle via `VITE_` + endpoint fail-open — envio de WhatsApp em nome da empresa por qualquer um | `VITE_INTERNAL_API_KEY` removida; fail-closed com ID token; charge update escopado à empresa |
+| V3 🔴 | `asaas-webhook` fail-open sem env — pagamento forjável (assinatura grátis + comissão falsa) | Fail-closed: sem token configurado, recusa tudo |
+| V4 🟠 | `checkout`/`verify-asaas-subscription` sem auth — checkout/re-sync de qualquer empresa | ID token + empresa do próprio usuário |
+| V5 🟠 | Sem security headers | Headers no `vercel.json` |
+| V6 🟡 | Cron fail-open sem `CRON_SECRET` | Fail-closed |
+| V8 🟡 | Token de testemunha/venda com fallback `Math.random` | Web Crypto fail-closed |
+| V9 🟡 | 36 vulns npm (2 críticas) | `xlsx` 0.20.3 oficial + audit fix + `@vercel/node`→devDeps → 23 restantes (transitivas do `firebase@10`; upgrade major planejado) |
+
+**Regra operacional:** todo endpoint novo em `api/` DEVE usar `requireUser`/`requireGestor` de `api/_auth.ts`, ou justificar por escrito por que é público. Webhooks SEMPRE fail-closed.
 
 ---
 
