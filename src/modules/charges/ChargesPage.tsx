@@ -380,9 +380,6 @@ export function ChargesPage() {
     enabled: !!companyId,
     refetchInterval: 30_000,
   })
-  // Operacional: cobranças arquivadas (de ativos excluídos) só aparecem no
-  // Relatórios, não aqui.
-  const charges = allCharges.filter((c) => !c.archived)
 
   const { data: contracts = [], isLoading: contractsLoading } = useQuery({
     queryKey: ['contracts', companyId],
@@ -390,7 +387,7 @@ export function ChargesPage() {
     enabled: !!companyId,
   })
 
-  const { data: properties = [] } = useQuery({
+  const { data: properties = [], isLoading: propertiesLoading } = useQuery({
     queryKey: ['properties', companyId],
     queryFn: () => getProperties(companyId),
     enabled: !!companyId,
@@ -402,17 +399,35 @@ export function ChargesPage() {
     enabled: !!companyId,
   })
 
-  const { data: vehicles = [] } = useQuery({
+  const { data: vehicles = [], isLoading: vehiclesLoading } = useQuery({
     queryKey: ['vehicles', companyId],
     queryFn: () => getVehicles(companyId),
     enabled: !!companyId,
   })
 
-  const { data: equipments = [] } = useQuery({
+  const { data: equipments = [], isLoading: equipmentsLoading } = useQuery({
     queryKey: ['equipments', companyId],
     queryFn: () => getEquipments(companyId),
     enabled: !!companyId,
   })
+
+  const existingAssetIds = useMemo(() => {
+    const ids = new Set<string>()
+    for (const p of properties) {
+      if (!p.archived) ids.add(p.id)
+    }
+    for (const v of vehicles) {
+      if (!v.archived) ids.add(v.id)
+    }
+    for (const e of equipments) {
+      if (!e.archived) ids.add(e.id)
+    }
+    return ids
+  }, [properties, vehicles, equipments])
+
+  // Operacional: cobranças arquivadas (de ativos excluídos) só aparecem no
+  // Relatórios, não aqui. Também esconde itens cujo bem não existe mais.
+  const charges = allCharges.filter((c) => !c.archived && existingAssetIds.has(c.propertyId))
 
   const photoLookups = useMemo(
     () => buildMaintenancePhotoLookups(properties, vehicles, tenants, equipments),
@@ -427,7 +442,7 @@ export function ChargesPage() {
   const matchesAssetFilter = (propertyId: string, contractAssetType?: ContractAssetType) =>
     assetFilter === 'todos' || inferAssetType(propertyId, photoLookups, contractAssetType) === assetFilter
 
-  const isLoading = chargesLoading || contractsLoading
+  const isLoading = chargesLoading || contractsLoading || propertiesLoading || vehiclesLoading || equipmentsLoading
 
   // Enrich charges with overdue
   const enriched = useMemo(() =>
@@ -453,8 +468,10 @@ export function ChargesPage() {
   }, [enriched])
 
   const activeContracts = useMemo(() =>
-    contracts.filter((c) => c.status === 'ativo' || c.status === 'renovado'),
-    [contracts],
+    contracts.filter((c) =>
+      (c.status === 'ativo' || c.status === 'renovado') && existingAssetIds.has(c.propertyId),
+    ),
+    [contracts, existingAssetIds],
   )
 
   const tenantOptions = useMemo(() => {
