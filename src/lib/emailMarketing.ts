@@ -122,6 +122,54 @@ export function renderMarketingEmail(content: EmailContent): string {
 </html>`
 }
 
+// ─── E-mail de resposta 1:1 (do chat do lead) ────────────────────────────────
+// Layout limpo e pessoal (não é marketing): a mensagem digitada + uma assinatura
+// profissional com logo, quem responde e contato. Sem rodapé de descadastro.
+export function renderReplyEmail(message: string, opts: { signerName?: string } = {}): string {
+  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const body = esc(message).replace(/\r?\n/g, '<br>')
+  const signer = (opts.signerName ?? '').trim() || 'Equipe AlugaPro'
+  return `<!doctype html>
+<html lang="pt-BR">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:${BRAND.slate50};">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:${BRAND.slate50};">
+    <tr>
+      <td align="center" style="padding:24px 12px;">
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0"
+               style="width:600px;max-width:100%;background-color:#ffffff;border:1px solid ${BRAND.slate200};border-radius:12px;overflow:hidden;">
+          <tr>
+            <td style="padding:28px 32px 8px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:${BRAND.slate700};">
+              ${body}
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:12px 32px 28px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid ${BRAND.slate200};">
+                <tr>
+                  <td style="padding-top:16px;">
+                    <img src="${BRAND.logoUrl}" alt="AlugaPro" width="150"
+                         style="display:block;width:150px;max-width:60%;height:auto;border:0;margin-bottom:10px;">
+                    <p style="margin:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:bold;color:${BRAND.navy};">${esc(signer)}</p>
+                    <p style="margin:2px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BRAND.slate500};">${BRAND.companyLine}</p>
+                    <p style="margin:6px 0 0;font-family:Arial,Helvetica,sans-serif;font-size:12px;color:${BRAND.slate500};">
+                      <a href="mailto:contato@alugapro.tech" style="color:${BRAND.green};text-decoration:none;">contato@alugapro.tech</a>
+                      &nbsp;·&nbsp;
+                      <a href="${BRAND.siteUrl}" target="_blank" style="color:${BRAND.green};text-decoration:none;">alugapro.tech</a>
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`
+}
+
 // ─── Presets padronizados ─────────────────────────────────────────────────────
 // Cada template é uma função que recebe campos editáveis e devolve o assunto
 // sugerido + o conteúdo. A saudação usa {{name}} (o backend personaliza).

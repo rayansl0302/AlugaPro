@@ -823,6 +823,7 @@ function LeadRow({
 
 function LeadDetail({ lead, onInvalidate, pane = false }: { lead: MarketingLead; onInvalidate: () => void; pane?: boolean }) {
   const queryClient = useQueryClient()
+  const { user } = useAuth()
   const [note, setNote] = useState('')
   const [replySubject, setReplySubject] = useState('Re: contato AlugaPro')
   const [replyMsg, setReplyMsg] = useState('')
@@ -839,7 +840,7 @@ function LeadDetail({ lead, onInvalidate, pane = false }: { lead: MarketingLead;
   })
 
   const sendReply = useMutation({
-    mutationFn: () => replyToLead(lead, replySubject, replyMsg),
+    mutationFn: () => replyToLead(lead, replySubject, replyMsg, user?.name),
     onSuccess: (r) => {
       setReplyMsg('')
       toast({ title: r.sent > 0 ? `Resposta enviada para ${lead.email}.` : 'Não enviado (destinatário pulado/descadastrado).' })

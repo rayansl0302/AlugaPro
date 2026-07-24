@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore'
 import * as XLSX from 'xlsx'
 import { db, auth } from '@/lib/firebase'
+import { renderReplyEmail } from '@/lib/emailMarketing'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -292,23 +293,25 @@ export async function logCampaign(entry: Omit<EmailCampaign, 'id' | 'createdAt'>
   return ref.id
 }
 
-function escapeHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-}
-
-/** Responde um lead 1:1 (do painel): envia um e-mail simples pelo mesmo backend,
- *  com reply-to no endereço de inbox, e registra na timeline do lead. */
-export async function replyToLead(lead: MarketingLead, subject: string, message: string): Promise<SendResult> {
+/** Responde um lead 1:1 (do painel): envia um e-mail profissional (corpo +
+ *  assinatura) pelo mesmo backend, com reply-to no inbox, e registra na timeline. */
+export async function replyToLead(
+  lead: MarketingLead,
+  subject: string,
+  message: string,
+  signerName?: string,
+): Promise<SendResult> {
   const clean = message.trim()
   if (!clean) throw new Error('Escreva uma mensagem.')
-  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#334155;white-space:pre-wrap">${escapeHtml(clean)}</div>`
+  const subj = subject.trim() || 'Re: contato AlugaPro'
+  const html = renderReplyEmail(clean, { signerName })
   const result = await sendCampaign({
-    subject: subject.trim() || 'Re: contato AlugaPro',
+    subject: subj,
     html,
     recipients: [{ email: lead.email, name: lead.name }],
     replyTo: REPLY_TO_ADDRESS,
   })
-  await addLeadActivity(lead.id, { type: 'sent', subject: subject.trim() || 'Re: contato AlugaPro', text: clean })
+  await addLeadActivity(lead.id, { type: 'sent', subject: subj, text: clean })
   return result
 }
 
