@@ -125,7 +125,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   const raw = await readRawBody(req)
   // Aceita tanto o prefixo svix-* quanto webhook-* (padrão Standard Webhooks).
   if (!verifySignature(secret.trim(), req.headers, raw)) {
-    return res.status(401).json({ error: 'Assinatura inválida' })
+    const { createHash } = await import('crypto')
+    const h = (s: string) => createHash('sha256').update(s).digest('hex').slice(0, 8)
+    return res.status(401).json({
+      error: 'Assinatura inválida',
+      _env: {
+        len: secret.length,
+        lenTrim: secret.trim().length,
+        hashRaw: h(secret),
+        hashTrim: h(secret.trim()),
+        startsWhsec: secret.trim().startsWith('whsec_'),
+      },
+    })
   }
 
   let payload: { type?: string; data?: Record<string, unknown> }
