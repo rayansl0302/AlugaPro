@@ -89,7 +89,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!apiKey) {
     return res.status(503).json({ error: 'Resend não configurado (defina RESEND_API_KEY no ambiente).' })
   }
-  const from = `${(req.body?.fromName as string)?.trim() || 'AlugaPro'} <${process.env.RESEND_FROM || 'nao-responder@alugapro.tech'}>`
+  const from = `${(req.body?.fromName as string)?.trim() || 'AlugaPro'} <${process.env.RESEND_FROM || 'contato@alugapro.tech'}>`
 
   const { subject, html, replyTo, recipients } = (req.body ?? {}) as {
     subject?: string

@@ -14,6 +14,11 @@ export interface Recipient {
   name?: string
 }
 
+// Endereço humanizado que envia E recebe (domínio com receiving ativo). Usado
+// como reply-to padrão nas campanhas e como remetente das respostas 1:1, pra
+// que as respostas dos leads caiam no inbound do Resend → webhook → timeline.
+export const REPLY_TO_ADDRESS = 'contato@alugapro.tech'
+
 /** Classificação (temperatura) do lead. */
 export type LeadStatus = 'novo' | 'quente' | 'morno' | 'frio' | 'invalido'
 
@@ -285,6 +290,26 @@ export async function sendCampaign(input: {
 export async function logCampaign(entry: Omit<EmailCampaign, 'id' | 'createdAt'>): Promise<string> {
   const ref = await addDoc(collection(db, CAMPAIGNS_COL), { ...entry, createdAt: serverTimestamp() })
   return ref.id
+}
+
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+/** Responde um lead 1:1 (do painel): envia um e-mail simples pelo mesmo backend,
+ *  com reply-to no endereço de inbox, e registra na timeline do lead. */
+export async function replyToLead(lead: MarketingLead, subject: string, message: string): Promise<SendResult> {
+  const clean = message.trim()
+  if (!clean) throw new Error('Escreva uma mensagem.')
+  const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#334155;white-space:pre-wrap">${escapeHtml(clean)}</div>`
+  const result = await sendCampaign({
+    subject: subject.trim() || 'Re: contato AlugaPro',
+    html,
+    recipients: [{ email: lead.email, name: lead.name }],
+    replyTo: REPLY_TO_ADDRESS,
+  })
+  await addLeadActivity(lead.id, { type: 'sent', subject: subject.trim() || 'Re: contato AlugaPro', text: clean })
+  return result
 }
 
 export async function getCampaigns(): Promise<EmailCampaign[]> {

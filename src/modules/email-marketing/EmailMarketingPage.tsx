@@ -24,10 +24,10 @@ import {
 } from '@/lib/emailMarketing'
 import {
   type Audience, type Recipient, type MarketingLead, type LeadStatus, type LeadActivity,
-  LEAD_STATUSES, collectRecipients, parseEmailList,
+  LEAD_STATUSES, REPLY_TO_ADDRESS, collectRecipients, parseEmailList,
   getLeads, addLead, deleteLead, updateLead, setLeadStatus, addLeadNote, getLeadActivity,
   addLeadsBulk, importLeadsFromCsv, importLeadsFromExcel,
-  sendCampaign, logCampaign, recordCampaignSentToLeads, getCampaigns,
+  sendCampaign, logCampaign, recordCampaignSentToLeads, replyToLead, getCampaigns,
 } from '@/services/emailMarketing'
 
 const AUDIENCES: { id: Audience; label: string; hint: string }[] = [
@@ -133,7 +133,8 @@ function ComposeTab() {
   // Passo 2 — conteúdo
   const [templateId, setTemplateId] = useState<EmailTemplateId>('boasVindas')
   const [subject, setSubject] = useState('')
-  const [replyTo, setReplyTo] = useState('')
+  // Padrão: reply-to no endereço de inbox, pra as respostas caírem no CRM.
+  const [replyTo, setReplyTo] = useState(REPLY_TO_ADDRESS)
   const seed = useMemo(() => templateDefaults(templateId), [templateId])
   const [headline, setHeadline] = useState(seed.headline)
   const [preheader, setPreheader] = useState(seed.preheader)
@@ -725,6 +726,8 @@ function LeadRow({
 function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate: () => void }) {
   const queryClient = useQueryClient()
   const [note, setNote] = useState('')
+  const [replySubject, setReplySubject] = useState('Re: contato AlugaPro')
+  const [replyMsg, setReplyMsg] = useState('')
   const { data: activity = [], isLoading } = useQuery({
     queryKey: ['leadActivity', lead.id],
     queryFn: () => getLeadActivity(lead.id),
@@ -735,6 +738,16 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
     mutationFn: () => addLeadNote(lead.id, note),
     onSuccess: () => { setNote(''); toast({ title: 'Nota adicionada.' }); refresh() },
     onError: () => toast({ title: 'Falha ao salvar nota.', variant: 'destructive' }),
+  })
+
+  const sendReply = useMutation({
+    mutationFn: () => replyToLead(lead, replySubject, replyMsg),
+    onSuccess: (r) => {
+      setReplyMsg('')
+      toast({ title: r.sent > 0 ? `Resposta enviada para ${lead.email}.` : 'Não enviado (destinatário pulado/descadastrado).' })
+      refresh(); onInvalidate()
+    },
+    onError: (e) => toast({ title: e instanceof Error ? e.message : 'Falha ao enviar resposta.', variant: 'destructive' }),
   })
 
   const saveName = useMutation({
@@ -771,6 +784,33 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
         </Button>
       </div>
 
+      {/* Responder pelo sistema */}
+      <div className="mb-3 rounded-lg border bg-background/60 p-3">
+        <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
+          <Reply className="h-3.5 w-3.5" /> Responder este lead
+        </p>
+        <Input
+          value={replySubject}
+          onChange={(e) => setReplySubject(e.target.value)}
+          placeholder="Assunto"
+          className="mb-2 h-8 text-sm"
+        />
+        <textarea
+          value={replyMsg}
+          onChange={(e) => setReplyMsg(e.target.value)}
+          rows={3}
+          placeholder={`Escreva sua resposta para ${lead.email}…`}
+          className={textareaClass}
+        />
+        <div className="mt-2 flex items-center justify-between">
+          <span className="text-[11px] text-muted-foreground">Enviado como AlugaPro · respostas voltam para {REPLY_TO_ADDRESS}</span>
+          <Button size="sm" onClick={() => sendReply.mutate()} disabled={sendReply.isPending || !replyMsg.trim()}>
+            {sendReply.isPending ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <Send className="mr-1.5 h-3.5 w-3.5" />}
+            Enviar resposta
+          </Button>
+        </div>
+      </div>
+
       {/* Timeline */}
       <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60">Linha do tempo</p>
       {isLoading ? (
@@ -792,7 +832,9 @@ function LeadDetail({ lead, onInvalidate }: { lead: MarketingLead; onInvalidate:
                     {ev.subject ? <span className="text-muted-foreground"> — "{ev.subject}"</span> : ''}
                   </p>
                   {ev.type === 'note' && ev.text && <p className="text-muted-foreground">{ev.text}</p>}
-                  {ev.type === 'replied' && ev.text && <p className="rounded bg-background/60 p-2 text-xs text-muted-foreground">{ev.text}</p>}
+                  {(ev.type === 'replied' || ev.type === 'sent') && ev.text && (
+                    <p className="whitespace-pre-wrap rounded bg-background/60 p-2 text-xs text-muted-foreground">{ev.text}</p>
+                  )}
                   <p className="text-[11px] text-muted-foreground/70">{fmtDateTime(ev.at)}</p>
                 </div>
               </li>
