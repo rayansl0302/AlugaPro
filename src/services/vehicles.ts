@@ -45,6 +45,11 @@ export async function deleteVehicle(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id))
 }
 
+/** Soft-delete: marca o veículo como removido (arquivado). */
+export async function archiveVehicle(id: string): Promise<void> {
+  await updateDoc(doc(db, COL, id), { archived: true, updatedAt: serverTimestamp() })
+}
+
 export async function getVehiclesByOwner(
   companyId: string,
   ownerId: string

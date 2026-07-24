@@ -61,11 +61,13 @@ export function DashboardPage() {
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
 
-  const { data: properties = [] } = useQuery({
+  const { data: allProperties = [] } = useQuery({
     queryKey: ['properties', companyId],
     queryFn: () => getProperties(companyId),
     enabled: !!companyId,
   })
+  // Operacional: bens removidos (archived) não contam no dashboard.
+  const properties = allProperties.filter((p) => !p.archived)
 
   const { data: allCharges = [] } = useQuery({
     queryKey: ['charges', companyId],

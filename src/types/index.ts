@@ -180,6 +180,8 @@ export interface Property {
   activeContractId?: string
   activeTenantId?: string
   activeTenantName?: string
+  /** Soft-delete: bem removido — some do operacional, fica no histórico. */
+  archived?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -233,6 +235,8 @@ export interface Vehicle {
   activeContractId?: string
   activeTenantId?: string
   activeTenantName?: string
+  /** Soft-delete: bem removido — some do operacional, fica no histórico. */
+  archived?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -264,6 +268,8 @@ export interface Equipment {
   activeContractId?: string
   activeTenantId?: string
   activeTenantName?: string
+  /** Soft-delete: bem removido — some do operacional, fica no histórico. */
+  archived?: boolean
   createdAt: Timestamp
   updatedAt: Timestamp
 }

@@ -45,6 +45,12 @@ export async function deleteProperty(id: string): Promise<void> {
   await deleteDoc(doc(db, COL, id))
 }
 
+/** Soft-delete: marca o imóvel como removido (arquivado). Ele some das telas
+ *  operacionais mas continua no banco (relatórios/histórico). */
+export async function archiveProperty(id: string): Promise<void> {
+  await updateDoc(doc(db, COL, id), { archived: true, updatedAt: serverTimestamp() })
+}
+
 export async function getPropertiesByOwner(
   companyId: string,
   ownerId: string

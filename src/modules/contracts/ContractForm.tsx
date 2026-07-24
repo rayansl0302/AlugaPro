@@ -396,15 +396,16 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
               } />
             </SelectTrigger>
             <SelectContent className="max-h-60">
+              {/* Bens removidos (archived) não podem receber novo contrato/cobrança. */}
               {assetType === 'veiculo'
-                ? vehicles.map((v) => (
+                ? vehicles.filter((v) => !v.archived).map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} — {v.plate}</SelectItem>
                   ))
                 : assetType === 'equipamento'
-                ? equipments.map((eq) => (
+                ? equipments.filter((eq) => !eq.archived).map((eq) => (
                     <SelectItem key={eq.id} value={eq.id}>{eq.name} — {eq.model}</SelectItem>
                   ))
-                : properties.map((p) => (
+                : properties.filter((p) => !p.archived).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name} — {p.code}</SelectItem>
                   ))}
             </SelectContent>

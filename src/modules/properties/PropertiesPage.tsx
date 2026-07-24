@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search, Building2, MapPin, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getProperties, deleteProperty } from '@/services/properties'
+import { getProperties, archiveProperty } from '@/services/properties'
 import { getContractsByAsset, hasActiveContract, deleteAssetRelations } from '@/services/assetDeletion'
 import { getTenants } from '@/services/tenants'
 import { Contract, Property, PropertyStatus, PropertyType, Tenant } from '@/types'
@@ -39,6 +39,7 @@ export function PropertiesPage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<PropertyStatus | 'todos'>('todos')
+  const [hideArchived, setHideArchived] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [showForm, setShowForm] = useState(false)
   const [editingProperty, setEditingProperty] = useState<Property | null>(null)
@@ -63,13 +64,14 @@ export function PropertiesPage() {
     return map
   }, [tenants])
 
-  const deleteMutation = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: async ({ id, contracts }: { id: string; contracts: Contract[] }) => {
+      // Soft-delete: arquiva o passado (cobranças/despesas) + marca o bem como
+      // removido (mantém no histórico), em vez de apagar de vez.
       await deleteAssetRelations(companyId, id, contracts)
-      await deleteProperty(id)
+      await archiveProperty(id)
     },
     onSuccess: () => {
-      // Ativo, cobranças e despesas mudaram — reflete no dashboard/páginas.
       for (const k of ['properties', 'charges', 'sharedExpenses']) {
         qc.invalidateQueries({ queryKey: [k] })
       }
@@ -79,6 +81,7 @@ export function PropertiesPage() {
   })
 
   const filtered = properties.filter((p) => {
+    if (hideArchived && p.archived) return false
     const matchSearch =
       p.name.toLowerCase().includes(search.toLowerCase()) ||
       p.address.street.toLowerCase().includes(search.toLowerCase()) ||
@@ -86,6 +89,8 @@ export function PropertiesPage() {
     const matchStatus = statusFilter === 'todos' || p.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const archivedCount = properties.filter((p) => p.archived).length
 
   const pag = usePagination(filtered, 12)
 
@@ -106,7 +111,7 @@ export function PropertiesPage() {
       ? t('toast.deleteWithRelations', { count: contracts.length })
       : t('toast.deleteConfirm')
     if (confirm(msg)) {
-      deleteMutation.mutate({ id, contracts })
+      archiveMutation.mutate({ id, contracts })
     }
   }
 
@@ -146,6 +151,17 @@ export function PropertiesPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {archivedCount > 0 && (
+            <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={hideArchived}
+                onChange={(e) => setHideArchived(e.target.checked)}
+                className="h-4 w-4 rounded border-muted-foreground/40 accent-[hsl(var(--primary))]"
+              />
+              Esconder removidos ({archivedCount})
+            </label>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <DropdownMenu>
@@ -176,7 +192,8 @@ export function PropertiesPage() {
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-5">
         {(['todos', 'disponivel', 'alugado', 'reservado', 'manutencao'] as const).map((s) => {
-          const count = s === 'todos' ? properties.length : properties.filter((p) => p.status === s).length
+          const activeProps = properties.filter((p) => !p.archived)
+          const count = s === 'todos' ? activeProps.length : activeProps.filter((p) => p.status === s).length
           return (
             <Card key={s} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setStatusFilter(s)}>
               <CardContent className="p-4 text-center">
@@ -218,8 +235,9 @@ export function PropertiesPage() {
             <TableBody>
               {pag.pageItems.map((property) => {
                 const variant = statusVariants[property.status]
+                const isArchived = !!property.archived
                 return (
-                  <TableRow key={property.id}>
+                  <TableRow key={property.id} className={isArchived ? 'opacity-60' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-muted">
@@ -264,13 +282,17 @@ export function PropertiesPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell><Badge variant={variant}>{statusLabel(property.status)}</Badge></TableCell>
+                    <TableCell>
+                      {isArchived
+                        ? <Badge variant="secondary">Removido</Badge>
+                        : <Badge variant={variant}>{statusLabel(property.status)}</Badge>}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" title={t('common:actions.view')} onClick={() => setViewProperty(property)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} onClick={() => { setEditingProperty(property); setShowForm(true) }}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} disabled={isArchived} onClick={() => { setEditingProperty(property); setShowForm(true) }}>
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
@@ -278,6 +300,7 @@ export function PropertiesPage() {
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           title={t('common:actions.delete')}
+                          disabled={isArchived}
                           onClick={() => handleDelete(property.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -294,8 +317,9 @@ export function PropertiesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pag.pageItems.map((property) => {
             const variant = statusVariants[property.status]
+            const isArchived = !!property.archived
             return (
-              <Card key={property.id} className="overflow-hidden transition-shadow hover:shadow-md">
+              <Card key={property.id} className={`overflow-hidden transition-shadow hover:shadow-md ${isArchived ? 'opacity-60' : ''}`}>
                 <div className="relative h-36 bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-900 dark:to-indigo-900">
                   {property.photos?.[0] ? (
                     <img
@@ -309,7 +333,9 @@ export function PropertiesPage() {
                     </div>
                   )}
                   <div className="absolute right-2 top-2">
-                    <Badge variant={variant}>{statusLabel(property.status)}</Badge>
+                    {isArchived
+                      ? <Badge variant="secondary">Removido</Badge>
+                      : <Badge variant={variant}>{statusLabel(property.status)}</Badge>}
                   </div>
                   <div className="absolute left-2 top-2">
                     <Badge variant="secondary" className="text-xs">{property.code}</Badge>
@@ -363,6 +389,7 @@ export function PropertiesPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={isArchived}
                       onClick={() => { setEditingProperty(property); setShowForm(true) }}
                     >
                       <Edit className="h-3 w-3" />
@@ -371,6 +398,7 @@ export function PropertiesPage() {
                       variant="outline"
                       size="sm"
                       className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                      disabled={isArchived}
                       onClick={() => handleDelete(property.id)}
                     >
                       <Trash2 className="h-3 w-3" />

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { Plus, Search, Car, Edit, Trash2, Eye, ListFilter, LayoutGrid, Table2, ChevronDown, Check } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getVehicles, deleteVehicle } from '@/services/vehicles'
+import { getVehicles, archiveVehicle } from '@/services/vehicles'
 import { getContractsByAsset, hasActiveContract, deleteAssetRelations } from '@/services/assetDeletion'
 import { getTenants } from '@/services/tenants'
 import { Contract, Tenant, Vehicle, VehicleStatus, VehicleType } from '@/types'
@@ -39,6 +39,7 @@ export function VehiclesPage() {
 
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState<VehicleStatus | 'todos'>('todos')
+  const [hideArchived, setHideArchived] = useState(true)
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
   const [showForm, setShowForm] = useState(false)
   const [editingVehicle, setEditingVehicle] = useState<Vehicle | null>(null)
@@ -63,13 +64,12 @@ export function VehiclesPage() {
     return map
   }, [tenants])
 
-  const deleteMutation = useMutation({
+  const archiveMutation = useMutation({
     mutationFn: async ({ id, contracts }: { id: string; contracts: Contract[] }) => {
       await deleteAssetRelations(companyId, id, contracts)
-      await deleteVehicle(id)
+      await archiveVehicle(id)
     },
     onSuccess: () => {
-      // Ativo, cobranças e despesas mudaram — reflete no dashboard/páginas.
       for (const k of ['vehicles', 'charges', 'sharedExpenses']) {
         qc.invalidateQueries({ queryKey: [k] })
       }
@@ -79,6 +79,7 @@ export function VehiclesPage() {
   })
 
   const filtered = vehicles.filter((v) => {
+    if (hideArchived && v.archived) return false
     const matchSearch =
       v.brand.toLowerCase().includes(search.toLowerCase()) ||
       v.model.toLowerCase().includes(search.toLowerCase()) ||
@@ -87,6 +88,8 @@ export function VehiclesPage() {
     const matchStatus = statusFilter === 'todos' || v.status === statusFilter
     return matchSearch && matchStatus
   })
+
+  const archivedCount = vehicles.filter((v) => v.archived).length
 
   const pag = usePagination(filtered, 12)
 
@@ -106,7 +109,7 @@ export function VehiclesPage() {
       ? t('toast.deleteWithRelations', { count: contracts.length })
       : t('toast.deleteConfirm')
     if (confirm(msg)) {
-      deleteMutation.mutate({ id, contracts })
+      archiveMutation.mutate({ id, contracts })
     }
   }
 
@@ -146,6 +149,17 @@ export function VehiclesPage() {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {archivedCount > 0 && (
+            <label className="flex cursor-pointer select-none items-center gap-2 text-sm text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={hideArchived}
+                onChange={(e) => setHideArchived(e.target.checked)}
+                className="h-4 w-4 rounded border-muted-foreground/40 accent-[hsl(var(--primary))]"
+              />
+              Esconder removidos ({archivedCount})
+            </label>
+          )}
         </div>
         <div className="flex flex-wrap gap-2">
           <DropdownMenu>
@@ -176,7 +190,8 @@ export function VehiclesPage() {
       {/* Stats */}
       <div className="grid gap-3 grid-cols-2 sm:grid-cols-5">
         {(['todos', 'disponivel', 'alugado', 'reservado', 'manutencao'] as const).map((s) => {
-          const count = s === 'todos' ? vehicles.length : vehicles.filter((v) => v.status === s).length
+          const activeVehicles = vehicles.filter((v) => !v.archived)
+          const count = s === 'todos' ? activeVehicles.length : activeVehicles.filter((v) => v.status === s).length
           return (
             <Card key={s} className="cursor-pointer hover:border-primary/50 transition-colors" onClick={() => setStatusFilter(s)}>
               <CardContent className="p-4 text-center">
@@ -218,8 +233,9 @@ export function VehiclesPage() {
             <TableBody>
               {pag.pageItems.map((vehicle) => {
                 const variant = statusVariants[vehicle.status]
+                const isArchived = !!vehicle.archived
                 return (
-                  <TableRow key={vehicle.id}>
+                  <TableRow key={vehicle.id} className={isArchived ? 'opacity-60' : ''}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <div className="h-9 w-9 shrink-0 overflow-hidden rounded-md bg-muted">
@@ -260,13 +276,17 @@ export function VehiclesPage() {
                         <span className="text-xs text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell><Badge variant={variant}>{statusLabel(vehicle.status)}</Badge></TableCell>
+                    <TableCell>
+                      {isArchived
+                        ? <Badge variant="secondary">Removido</Badge>
+                        : <Badge variant={variant}>{statusLabel(vehicle.status)}</Badge>}
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
                         <Button variant="ghost" size="sm" title={t('common:actions.view')} onClick={() => setViewVehicle(vehicle)}>
                           <Eye className="h-3.5 w-3.5" />
                         </Button>
-                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} onClick={() => { setEditingVehicle(vehicle); setShowForm(true) }}>
+                        <Button variant="ghost" size="sm" title={t('common:actions.edit')} disabled={isArchived} onClick={() => { setEditingVehicle(vehicle); setShowForm(true) }}>
                           <Edit className="h-3.5 w-3.5" />
                         </Button>
                         <Button
@@ -274,6 +294,7 @@ export function VehiclesPage() {
                           size="sm"
                           className="text-destructive hover:text-destructive"
                           title={t('common:actions.delete')}
+                          disabled={isArchived}
                           onClick={() => handleDelete(vehicle.id)}
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -290,8 +311,9 @@ export function VehiclesPage() {
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pag.pageItems.map((vehicle) => {
             const variant = statusVariants[vehicle.status]
+            const isArchived = !!vehicle.archived
             return (
-              <Card key={vehicle.id} className="overflow-hidden transition-shadow hover:shadow-md">
+              <Card key={vehicle.id} className={`overflow-hidden transition-shadow hover:shadow-md ${isArchived ? 'opacity-60' : ''}`}>
                 <div className="relative h-36 bg-gradient-to-br from-slate-100 to-zinc-200 dark:from-slate-900 dark:to-zinc-900">
                   {vehicle.photos?.[0] ? (
                     <img
@@ -305,7 +327,9 @@ export function VehiclesPage() {
                     </div>
                   )}
                   <div className="absolute right-2 top-2">
-                    <Badge variant={variant}>{statusLabel(vehicle.status)}</Badge>
+                    {isArchived
+                      ? <Badge variant="secondary">Removido</Badge>
+                      : <Badge variant={variant}>{statusLabel(vehicle.status)}</Badge>}
                   </div>
                   <div className="absolute left-2 top-2">
                     <Badge variant="secondary" className="text-xs">{vehicle.code}</Badge>
@@ -357,6 +381,7 @@ export function VehiclesPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={isArchived}
                       onClick={() => { setEditingVehicle(vehicle); setShowForm(true) }}
                     >
                       <Edit className="h-3 w-3" />
@@ -364,6 +389,7 @@ export function VehiclesPage() {
                     <Button
                       variant="outline"
                       size="sm"
+                      disabled={isArchived}
                       className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
                       onClick={() => handleDelete(vehicle.id)}
                     >
