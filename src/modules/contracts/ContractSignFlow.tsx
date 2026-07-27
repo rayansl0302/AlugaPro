@@ -15,7 +15,7 @@ import { createWitnessRequest, getWitnessRequest, generateWitnessToken } from '@
 import { sendWitnessInvite, isEmailConfigured } from '@/services/email'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { getContractSigningStatus } from '@/lib/contractSigning'
-import { getSignatureAuditInfo, hashBlobSHA256 } from '@/lib/signatureAudit'
+import { getSignatureAuditInfo, hashBlobSHA256, formatSignedAtPtBR } from '@/lib/signatureAudit'
 import { createVerificationRecord } from '@/services/contractVerification'
 import { buildImovelBlocks } from '@/lib/contractTemplates/imovel'
 import { buildVeiculoBlocks } from '@/lib/contractTemplates/veiculo'
@@ -579,7 +579,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         })
 
       const toPdfWitness = (w?: ContractWitness) =>
-        w ? { name: w.name, cpf: w.cpf, rg: w.rg, signature: w.signature } : undefined
+        w ? { name: w.name, cpf: w.cpf, rg: w.rg, signature: w.signature, signedAt: formatSignedAtPtBR(w.signedAt) } : undefined
       const tess = toPdfWitness(witnesses[0])
       const tes2 = toPdfWitness(witnesses[1])
 
@@ -587,6 +587,11 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       // do PDF (handleRegenerate) — o QR Code impresso continua apontando pro
       // mesmo link mesmo quando o documento é atualizado.
       const verificationId = contract.verificationId || generateWitnessToken()
+
+      // Momento da assinatura — usado tanto no rodapé de cada assinatura do
+      // PDF quanto, mais abaixo, na trilha de auditoria gravada no Firestore.
+      const nowIso = new Date().toISOString()
+      const nowPtBR = formatSignedAtPtBR(nowIso)
 
       const doc = await generateContractPDF({
         blocks,
@@ -601,6 +606,8 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         testemunha2: tes2,
         dataAssinatura: format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
         verificationId,
+        locadorSignedAt: nowPtBR,
+        locatarioSignedAt: nowPtBR,
       })
 
       setPdfDoc(doc)
@@ -627,7 +634,6 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       // de assinatura (locador e locatário assinam juntos, no mesmo aparelho,
       // dentro do painel) — cada parte recebe seu próprio timestamp.
       const { ip: auditIp, userAgent: auditDevice } = await getSignatureAuditInfo()
-      const nowIso = new Date().toISOString()
 
       // Só fecha (hash + verificação pública + imutabilidade) quando não
       // sobrar nenhuma testemunha pendente — se houver, a finalização
@@ -1041,14 +1047,14 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                     label={t('sign.signedView.owner')}
                     name={contract.signingData?.locador.name ?? contract.ownerName ?? ''}
                     signature={contract.signatureLocador}
-                    auditAt={contract.signatureLocadorAt}
+                    auditAt={formatSignedAtPtBR(contract.signatureLocadorAt)}
                     auditIp={contract.signatureLocadorIp}
                   />
                   <SignatureStatusCard
                     label={t('sign.signedView.tenant')}
                     name={contract.signingData?.locatario.name ?? contract.tenantName ?? ''}
                     signature={contract.signatureLocatario}
-                    auditAt={contract.signatureLocatarioAt}
+                    auditAt={formatSignedAtPtBR(contract.signatureLocatarioAt)}
                     auditIp={contract.signatureLocatarioIp}
                   />
                 </div>
@@ -1075,7 +1081,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                           <p className="text-xs text-muted-foreground truncate">{w.email || t('sign.signedView.inPerson')}</p>
                           {w.status === 'signed' && (w.signedAt || w.signedIp) && (
                             <p className="text-[10px] text-muted-foreground truncate">
-                              {[w.signedAt, w.signedIp ? `IP ${w.signedIp}` : undefined].filter(Boolean).join(' · ')}
+                              {[formatSignedAtPtBR(w.signedAt), w.signedIp ? `IP ${w.signedIp}` : undefined].filter(Boolean).join(' · ')}
                             </p>
                           )}
                         </div>

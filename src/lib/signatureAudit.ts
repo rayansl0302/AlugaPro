@@ -1,3 +1,6 @@
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
+
 // Trilha de auditoria de assinatura: IP público + dispositivo de quem assina,
 // e hash SHA-256 do PDF final. Usado nos fluxos de assinatura de contratos de
 // locação (ContractSignFlow, WitnessSignPage) e de venda de terreno
@@ -30,4 +33,17 @@ export async function hashBlobSHA256(blob: Blob): Promise<string> {
   const buffer = await blob.arrayBuffer()
   const digest = await crypto.subtle.digest('SHA-256', buffer)
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
+}
+
+// Formata um timestamp ISO (como os gravados em signedAt/signatureLocadorAt
+// etc.) no padrão brasileiro "dd/MM/yyyy às HH:mm" — usado tanto no PDF
+// (sempre em português, independente do idioma do painel) quanto nas telas
+// administrativas que exibem a trilha de auditoria da assinatura.
+export function formatSignedAtPtBR(iso?: string): string | undefined {
+  if (!iso) return undefined
+  try {
+    return format(parseISO(iso), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+  } catch {
+    return undefined
+  }
 }

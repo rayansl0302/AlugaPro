@@ -14,7 +14,7 @@ import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
 import { generateSaleContractPDF, contractPDFToBlob, PDFWitness } from '@/lib/contractPDF'
 import { openOrShareBlob } from '@/lib/nativeFile'
-import { hashBlobSHA256 } from '@/lib/signatureAudit'
+import { hashBlobSHA256, formatSignedAtPtBR } from '@/lib/signatureAudit'
 import { createVerificationRecord } from '@/services/contractVerification'
 import { SaleContract, SaleContractParty, SaleContractSigner, SaleContractSignerRole } from '@/types'
 import { generateSaleContractNumber, formatCurrency, formatDate, maskCPF, maskRG } from '@/lib/utils'
@@ -102,6 +102,7 @@ async function buildSaleContractPdf(input: SaleContractPdfData) {
     documentFrontUrl: await urlToDataURL(s?.documentFrontUrl),
     documentBackUrl: await urlToDataURL(s?.documentBackUrl),
     documentSelfieUrl: await urlToDataURL(s?.documentSelfieUrl),
+    signedAt: formatSignedAtPtBR(s?.signedAt),
   })
 
   return generateSaleContractPDF({
@@ -589,7 +590,7 @@ function SaleContractCard({
                 <p className="text-xs text-muted-foreground truncate">{s.name}</p>
                 {s.status === 'signed' && (s.signedAt || s.signedIp) && (
                   <p className="text-[10px] text-muted-foreground truncate">
-                    {[s.signedAt, s.signedIp ? `IP ${s.signedIp}` : undefined].filter(Boolean).join(' · ')}
+                    {[formatSignedAtPtBR(s.signedAt), s.signedIp ? `IP ${s.signedIp}` : undefined].filter(Boolean).join(' · ')}
                   </p>
                 )}
               </div>

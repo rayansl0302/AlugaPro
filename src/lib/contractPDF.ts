@@ -199,6 +199,8 @@ function addSignaturePage(
   testemunha2?: PDFWitness,
   dataAssinatura?: string,
   verification?: { qrDataUrl: string; url: string },
+  locadorSignedAt?: string,
+  locatarioSignedAt?: string,
 ) {
   doc.addPage()
   s.y = s.margin
@@ -209,7 +211,7 @@ function addSignaturePage(
   const colW = (s.contentW - 10) / 2
   const sigH = 40
 
-  const drawSig = (x: number, name: string, label: string, sigData?: string) => {
+  const drawSig = (x: number, name: string, label: string, sigData?: string, signedAt?: string) => {
     if (sigData) {
       try {
         doc.addImage(sigData, 'PNG', x, s.y, colW, sigH)
@@ -227,11 +229,18 @@ function addSignaturePage(
     doc.text(name, x + colW / 2, s.y + sigH + 14, { align: 'center' })
     doc.setFont('helvetica', 'normal')
     doc.text(label, x + colW / 2, s.y + sigH + 19, { align: 'center' })
+    if (signedAt) {
+      doc.setFontSize(8)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Assinado em ${signedAt}`, x + colW / 2, s.y + sigH + 24, { align: 'center' })
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(9)
+    }
   }
 
-  drawSig(s.margin, locadorName, 'LOCADOR', locadorSig)
-  drawSig(s.margin + colW + 10, locatarioName, 'LOCATÁRIO', locatarioSig)
-  s.y += sigH + 26
+  drawSig(s.margin, locadorName, 'LOCADOR', locadorSig, locadorSignedAt)
+  drawSig(s.margin + colW + 10, locatarioName, 'LOCATÁRIO', locatarioSig, locatarioSignedAt)
+  s.y += sigH + 31
 
   if (testemunha1 || testemunha2) {
     s.y += 8
@@ -263,11 +272,18 @@ function addSignaturePage(
       doc.setFontSize(9)
       doc.text(`${w.name}`, x + colW / 2, s.y + sigH + 11, { align: 'center' })
       doc.text(`CPF: ${w.cpf ?? ''}  RG: ${w.rg ?? ''}`, x + colW / 2, s.y + sigH + 16, { align: 'center' })
+      if (w.signedAt) {
+        doc.setFontSize(8)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Assinado em ${w.signedAt}`, x + colW / 2, s.y + sigH + 21, { align: 'center' })
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(9)
+      }
     }
 
     drawWitness(s.margin, testemunha1)
     drawWitness(s.margin + colW + 10, testemunha2)
-    s.y += sigH + 24
+    s.y += sigH + 29
   }
 
   // Timestamp + authenticity note
@@ -333,6 +349,10 @@ export interface PDFWitness {
   documentFrontUrl?: string
   documentBackUrl?: string
   documentSelfieUrl?: string
+  // Data/hora da assinatura já formatada em pt-BR ("dd/MM/yyyy às HH:mm") —
+  // o PDF é sempre em português, então a formatação acontece em quem chama
+  // (ver formatSignedAtPtBR em lib/signatureAudit.ts), não aqui.
+  signedAt?: string
 }
 
 export interface ContractPDFInput {
@@ -348,6 +368,8 @@ export interface ContractPDFInput {
   testemunha2?: PDFWitness
   dataAssinatura?: string
   verificationId?: string
+  locadorSignedAt?: string
+  locatarioSignedAt?: string
 }
 
 export async function generateContractPDF(input: ContractPDFInput): Promise<jsPDF> {
@@ -381,6 +403,8 @@ export async function generateContractPDF(input: ContractPDFInput): Promise<jsPD
     input.testemunha2,
     input.dataAssinatura,
     verification,
+    input.locadorSignedAt,
+    input.locatarioSignedAt,
   )
 
   addPageNumbers(doc)
@@ -414,6 +438,8 @@ function addSaleSignaturePage(
   testemunha2?: PDFWitness,
   dataAssinatura?: string,
   verification?: { qrDataUrl: string; url: string },
+  vendedorSignedAt?: string,
+  compradorSignedAt?: string,
 ) {
   doc.addPage()
   s.y = s.margin
@@ -424,7 +450,7 @@ function addSaleSignaturePage(
   const colW = (s.contentW - 10) / 2
   const sigH = 40
 
-  const drawSig = (x: number, name: string, label: string, sigData?: string) => {
+  const drawSig = (x: number, name: string, label: string, sigData?: string, signedAt?: string) => {
     if (sigData) {
       try {
         doc.addImage(sigData, 'PNG', x, s.y, colW, sigH)
@@ -442,11 +468,18 @@ function addSaleSignaturePage(
     doc.text(name, x + colW / 2, s.y + sigH + 14, { align: 'center' })
     doc.setFont('helvetica', 'normal')
     doc.text(label, x + colW / 2, s.y + sigH + 19, { align: 'center' })
+    if (signedAt) {
+      doc.setFontSize(8)
+      doc.setTextColor(100, 100, 100)
+      doc.text(`Assinado em ${signedAt}`, x + colW / 2, s.y + sigH + 24, { align: 'center' })
+      doc.setTextColor(0, 0, 0)
+      doc.setFontSize(9)
+    }
   }
 
-  drawSig(s.margin, vendedorName, 'VENDEDOR', vendedorSig)
-  drawSig(s.margin + colW + 10, compradorName, 'COMPRADOR(A)', compradorSig)
-  s.y += sigH + 26
+  drawSig(s.margin, vendedorName, 'VENDEDOR', vendedorSig, vendedorSignedAt)
+  drawSig(s.margin + colW + 10, compradorName, 'COMPRADOR(A)', compradorSig, compradorSignedAt)
+  s.y += sigH + 31
 
   if (testemunha1 || testemunha2) {
     s.y += 8
@@ -478,11 +511,18 @@ function addSaleSignaturePage(
       doc.setFontSize(9)
       doc.text(`${w.name}`, x + colW / 2, s.y + sigH + 11, { align: 'center' })
       doc.text(`CPF: ${w.cpf ?? ''}  RG: ${w.rg ?? ''}`, x + colW / 2, s.y + sigH + 16, { align: 'center' })
+      if (w.signedAt) {
+        doc.setFontSize(8)
+        doc.setTextColor(100, 100, 100)
+        doc.text(`Assinado em ${w.signedAt}`, x + colW / 2, s.y + sigH + 21, { align: 'center' })
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(9)
+      }
     }
 
     drawWitness(s.margin, testemunha1)
     drawWitness(s.margin + colW + 10, testemunha2)
-    s.y += sigH + 24
+    s.y += sigH + 29
   }
 
   s.y += 10
@@ -604,6 +644,8 @@ export async function generateSaleContractPDF(input: SaleContractPDFInput): Prom
     input.testemunha2,
     input.dataAssinatura,
     verification,
+    input.vendedor.signedAt,
+    input.comprador.signedAt,
   )
 
   addPageNumbers(doc)

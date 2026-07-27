@@ -5,6 +5,7 @@ import { buildImovelBlocks } from './contractTemplates/imovel'
 import { buildVeiculoBlocks } from './contractTemplates/veiculo'
 import { renderCustomImovel, renderCustomVeiculo } from './contractTemplates/engine'
 import { generateContractPDF, PDFWitness } from './contractPDF'
+import { formatSignedAtPtBR } from './signatureAudit'
 
 async function urlToBase64(url: string): Promise<string> {
   const res = await fetch(url)
@@ -78,7 +79,7 @@ export async function generateSignedContractPDF(contract: Contract) {
   const toPDFWitness = (i: number): PDFWitness | undefined => {
     const w = witnesses[i]
     if (!w) return undefined
-    return { name: w.name, cpf: w.cpf, rg: w.rg, signature: w.signature }
+    return { name: w.name, cpf: w.cpf, rg: w.rg, signature: w.signature, signedAt: formatSignedAtPtBR(w.signedAt) }
   }
 
   return generateContractPDF({
@@ -94,5 +95,7 @@ export async function generateSignedContractPDF(contract: Contract) {
     testemunha2: toPDFWitness(1),
     dataAssinatura: format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
     verificationId: contract.verificationId,
+    locadorSignedAt: formatSignedAtPtBR(contract.signatureLocadorAt),
+    locatarioSignedAt: formatSignedAtPtBR(contract.signatureLocatarioAt),
   })
 }

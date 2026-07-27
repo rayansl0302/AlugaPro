@@ -15,7 +15,7 @@ type Status = 'loading' | 'found' | 'notfound'
 // contractVerifications (nunca os documentos principais contracts/saleContracts),
 // então nunca expõe dados sensíveis como IP ou dispositivo de quem assinou.
 export function VerifyDocumentPage() {
-  const { t } = useTranslation('verify')
+  const { t, i18n } = useTranslation('verify')
   const { verificationId } = useParams<{ verificationId: string }>()
   const [status, setStatus] = useState<Status>('loading')
   const [record, setRecord] = useState<ContractVerificationRecord | null>(null)
@@ -98,7 +98,7 @@ export function VerifyDocumentPage() {
                   <span className="text-muted-foreground">{t('contractNumber')}</span>
                   <span className="col-span-2 font-medium">{record.contractNumber}</span>
                   <span className="text-muted-foreground">{t('generatedAt')}</span>
-                  <span className="col-span-2 font-medium">{new Date(record.createdAt).toLocaleString()}</span>
+                  <span className="col-span-2 font-medium">{new Date(record.createdAt).toLocaleString(i18n.language)}</span>
                 </div>
               </div>
 
@@ -114,7 +114,8 @@ export function VerifyDocumentPage() {
                       <div className="text-right shrink-0">
                         {p.signedAt ? (
                           <span className="flex items-center gap-1 text-green-600 text-xs font-medium">
-                            <CheckCircle className="h-3.5 w-3.5" /> {t('signedAt')}
+                            <CheckCircle className="h-3.5 w-3.5" />
+                            {t('signedAt')} {new Date(p.signedAt).toLocaleString(i18n.language)}
                           </span>
                         ) : (
                           <span className="text-xs text-muted-foreground">{t('notSigned')}</span>
