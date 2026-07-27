@@ -15,6 +15,8 @@ import { createWitnessRequest, getWitnessRequest, generateWitnessToken } from '@
 import { sendWitnessInvite, isEmailConfigured } from '@/services/email'
 import { generateSignedContractPDF } from '@/lib/regenerateContractPDF'
 import { getContractSigningStatus } from '@/lib/contractSigning'
+import { getSignatureAuditInfo, hashBlobSHA256 } from '@/lib/signatureAudit'
+import { createVerificationRecord } from '@/services/contractVerification'
 import { buildImovelBlocks } from '@/lib/contractTemplates/imovel'
 import { buildVeiculoBlocks } from '@/lib/contractTemplates/veiculo'
 import { buildEquipamentoBlocks } from '@/lib/contractTemplates/equipamento'
@@ -217,7 +219,9 @@ function PhotoUploader({ label, value, onChange }: { label: string; value: strin
 
 // ─── Signature status card ─────────────────────────────────────────────────────
 
-function SignatureStatusCard({ label, name, signature }: { label: string; name: string; signature?: string }) {
+function SignatureStatusCard({ label, name, signature, auditAt, auditIp }: {
+  label: string; name: string; signature?: string; auditAt?: string; auditIp?: string
+}) {
   const { t } = useTranslation('contracts')
   return (
     <div className="rounded-lg border p-3">
@@ -231,6 +235,11 @@ function SignatureStatusCard({ label, name, signature }: { label: string; name: 
       </div>
       <p className="text-sm font-medium truncate">{name || '—'}</p>
       {signature && <img src={signature} alt={label} className="mt-2 h-12 w-full object-contain" />}
+      {signature && (auditAt || auditIp) && (
+        <p className="mt-1 text-[10px] text-muted-foreground truncate">
+          {[auditAt, auditIp ? `IP ${auditIp}` : undefined].filter(Boolean).join(' · ')}
+        </p>
+      )}
     </div>
   )
 }
@@ -574,7 +583,12 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       const tess = toPdfWitness(witnesses[0])
       const tes2 = toPdfWitness(witnesses[1])
 
-      const doc = generateContractPDF({
+      // Um único id de verificação por contrato, reaproveitado em toda regeração
+      // do PDF (handleRegenerate) — o QR Code impresso continua apontando pro
+      // mesmo link mesmo quando o documento é atualizado.
+      const verificationId = contract.verificationId || generateWitnessToken()
+
+      const doc = await generateContractPDF({
         blocks,
         contractNumber: contract.contractNumber,
         locadorName: form.locador.name,
@@ -586,6 +600,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         testemunha1: tess,
         testemunha2: tes2,
         dataAssinatura: format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
+        verificationId,
       })
 
       setPdfDoc(doc)
@@ -606,6 +621,32 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
 
       const pdfBlob = contractPDFToBlob(doc)
       const pdfUrl = await uploadContractPDF(contract.companyId, contract.id, pdfBlob, contract.contractNumber)
+      const pdfHash = await hashBlobSHA256(pdfBlob)
+
+      // Trilha de auditoria: IP + dispositivo capturados uma vez nesta sessão
+      // de assinatura (locador e locatário assinam juntos, no mesmo aparelho,
+      // dentro do painel) — cada parte recebe seu próprio timestamp.
+      const { ip: auditIp, userAgent: auditDevice } = await getSignatureAuditInfo()
+      const nowIso = new Date().toISOString()
+
+      // Só fecha (hash + verificação pública + imutabilidade) quando não
+      // sobrar nenhuma testemunha pendente — se houver, a finalização
+      // acontece depois, em handleRegenerate, quando todas já tiverem assinado.
+      const allWitnessesSigned = witnesses.every((w) => w.status === 'signed')
+      let documentFinalizedAt: string | undefined
+      if (allWitnessesSigned) {
+        documentFinalizedAt = nowIso
+        await createVerificationRecord(verificationId, {
+          type: 'locacao',
+          contractNumber: contract.contractNumber,
+          pdfHash,
+          parties: [
+            { role: 'Locador', name: form.locador.name, signedAt: nowIso },
+            { role: 'Locatário', name: form.locatario.name, signedAt: nowIso },
+            ...witnesses.map((w) => ({ role: 'Testemunha', name: w.name, signedAt: w.signedAt })),
+          ],
+        })
+      }
 
       await updateContract(contract.id, stripUndefined({
         signingData,
@@ -619,6 +660,15 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         templateId: chosenTemplate?.id,
         templateName: chosenTemplate?.name,
         templateClauses: chosenTemplate?.clauses,
+        signatureLocadorAt: nowIso,
+        signatureLocadorIp: auditIp,
+        signatureLocadorDevice: auditDevice,
+        signatureLocatarioAt: nowIso,
+        signatureLocatarioIp: auditIp,
+        signatureLocatarioDevice: auditDevice,
+        pdfHash,
+        verificationId,
+        documentFinalizedAt,
       }) as Partial<Contract>)
 
       // Testemunhas assinam remotamente: cria a solicitação por token e envia o link por e-mail
@@ -679,6 +729,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
 
   const enterEditMode = () => {
     if (!contract) return
+    if (contract.documentFinalizedAt) {
+      toast({ title: t('sign.toasts.alreadyFinalized'), variant: 'destructive' })
+      return
+    }
     const sd = contract.signingData
     if (sd) {
       const partyToForm = (p: SigningParty): PartyForm => ({
@@ -791,10 +845,12 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     if (!contract) return
     setLegacyBusy(true)
     try {
+      const { ip, userAgent } = await getSignatureAuditInfo()
       const w: ContractWitness = {
         token: generateWitnessToken(),
         name: lw.name, email: '', cpf: lw.cpf, rg: lw.rg,
         signature, status: 'signed', signedAt: new Date().toISOString(),
+        signedIp: ip, signedDevice: userAgent,
       }
       const list = [...localWitnesses, w]
       await updateContract(contract.id, stripUndefined({ witnesses: list }) as Partial<Contract>)
@@ -856,6 +912,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
 
   const handleRegenerate = async () => {
     if (!contract) return
+    if (contract.documentFinalizedAt) {
+      toast({ title: t('sign.toasts.alreadyFinalized'), variant: 'destructive' })
+      return
+    }
     setRegenerating(true)
     try {
       // Garante que as assinaturas remotas mais recentes entrem no PDF
@@ -875,9 +935,28 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       const doc = await generateSignedContractPDF({ ...contract, witnesses: pdfWitnesses })
       const blob = contractPDFToBlob(doc)
       const pdfUrl = await uploadContractPDF(contract.companyId, contract.id, blob, contract.contractNumber)
+      const pdfHash = await hashBlobSHA256(blob)
       // Persiste somente as testemunhas reais (não as legadas, que ainda podem virar manuais/e-mail)
       await persistWitnesses(fresh)
-      await updateContract(contract.id, stripUndefined({ signedPdfUrl: pdfUrl }) as Partial<Contract>)
+
+      const allSigned = !!contract.signatureLocador && !!contract.signatureLocatario
+        && pdfWitnesses.every((w) => w.status === 'signed')
+      let documentFinalizedAt: string | undefined
+      if (allSigned && contract.verificationId) {
+        documentFinalizedAt = new Date().toISOString()
+        await createVerificationRecord(contract.verificationId, {
+          type: 'locacao',
+          contractNumber: contract.contractNumber,
+          pdfHash,
+          parties: [
+            { role: 'Locador', name: contract.signingData?.locador.name ?? '', signedAt: contract.signatureLocadorAt },
+            { role: 'Locatário', name: contract.signingData?.locatario.name ?? '', signedAt: contract.signatureLocatarioAt },
+            ...pdfWitnesses.map((w) => ({ role: 'Testemunha', name: w.name, signedAt: w.signedAt })),
+          ],
+        })
+      }
+
+      await updateContract(contract.id, stripUndefined({ signedPdfUrl: pdfUrl, pdfHash, documentFinalizedAt }) as Partial<Contract>)
       setCurrentPdfUrl(pdfUrl)
       setPdfDoc(doc)
       setPdfGenerated(true)
@@ -958,8 +1037,20 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
               <div className="space-y-2">
                 <p className="text-sm font-semibold">{t('sign.signedView.partySignatures')}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  <SignatureStatusCard label={t('sign.signedView.owner')} name={contract.signingData?.locador.name ?? contract.ownerName ?? ''} signature={contract.signatureLocador} />
-                  <SignatureStatusCard label={t('sign.signedView.tenant')} name={contract.signingData?.locatario.name ?? contract.tenantName ?? ''} signature={contract.signatureLocatario} />
+                  <SignatureStatusCard
+                    label={t('sign.signedView.owner')}
+                    name={contract.signingData?.locador.name ?? contract.ownerName ?? ''}
+                    signature={contract.signatureLocador}
+                    auditAt={contract.signatureLocadorAt}
+                    auditIp={contract.signatureLocadorIp}
+                  />
+                  <SignatureStatusCard
+                    label={t('sign.signedView.tenant')}
+                    name={contract.signingData?.locatario.name ?? contract.tenantName ?? ''}
+                    signature={contract.signatureLocatario}
+                    auditAt={contract.signatureLocatarioAt}
+                    auditIp={contract.signatureLocatarioIp}
+                  />
                 </div>
               </div>
 
@@ -982,6 +1073,11 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                         <div className="min-w-0">
                           <p className="font-medium truncate">{w.name}</p>
                           <p className="text-xs text-muted-foreground truncate">{w.email || t('sign.signedView.inPerson')}</p>
+                          {w.status === 'signed' && (w.signedAt || w.signedIp) && (
+                            <p className="text-[10px] text-muted-foreground truncate">
+                              {[w.signedAt, w.signedIp ? `IP ${w.signedIp}` : undefined].filter(Boolean).join(' · ')}
+                            </p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {w.status === 'signed' ? (
@@ -1025,15 +1121,17 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
               </div>
 
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="outline" className="flex-1" onClick={enterEditMode}>
-                  <PenLine className="mr-2 h-4 w-4" /> {t('sign.signedView.edit')}
-                </Button>
+                {!contract?.documentFinalizedAt && (
+                  <Button variant="outline" className="flex-1" onClick={enterEditMode}>
+                    <PenLine className="mr-2 h-4 w-4" /> {t('sign.signedView.edit')}
+                  </Button>
+                )}
                 {currentPdfUrl && (
                   <Button variant="outline" className="flex-1" onClick={() => window.open(currentPdfUrl, '_blank')}>
                     <Download className="mr-2 h-4 w-4" /> {t('sign.signedView.downloadCurrentPdf')}
                   </Button>
                 )}
-                {localWitnesses.length > 0 && (
+                {localWitnesses.length > 0 && !contract?.documentFinalizedAt && (
                   <Button className="flex-1 whitespace-normal h-auto py-2 text-center leading-tight" onClick={handleRegenerate} disabled={regenerating}>
                     {regenerating ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('sign.signedView.generating')}</> : <><FileText className="mr-2 h-4 w-4 shrink-0" /> {t('sign.signedView.updatePdf')}</>}
                   </Button>

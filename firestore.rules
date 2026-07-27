@@ -43,6 +43,24 @@ service cloud.firestore {
       return isGestor() || isRole('proprietario');
     }
 
+    // Uma vez que um contrato de locação está finalizado (documentFinalizedAt
+    // gravado — todas as assinaturas obrigatórias concluídas), os campos de
+    // assinatura/documento ficam travados: qualquer update precisa manter
+    // esses valores idênticos aos já salvos. O resto do contrato (status do
+    // ciclo de vida, notas etc.) continua livre pra edição.
+    function signingFieldsUnchangedIfFinalized() {
+      return resource.data.get('documentFinalizedAt', null) == null
+        || (request.resource.data.get('signatureLocador', null)    == resource.data.get('signatureLocador', null)
+            && request.resource.data.get('signatureLocatario', null) == resource.data.get('signatureLocatario', null)
+            && request.resource.data.get('signingData', null)        == resource.data.get('signingData', null)
+            && request.resource.data.get('witnesses', null)          == resource.data.get('witnesses', null)
+            && request.resource.data.get('docsLocador', null)        == resource.data.get('docsLocador', null)
+            && request.resource.data.get('docsLocatario', null)      == resource.data.get('docsLocatario', null)
+            && request.resource.data.get('signedPdfUrl', null)       == resource.data.get('signedPdfUrl', null)
+            && request.resource.data.get('pdfHash', null)            == resource.data.get('pdfHash', null)
+            && request.resource.data.get('documentFinalizedAt', null) == resource.data.get('documentFinalizedAt', null));
+    }
+
     function isInquilinoOf(tenantId) {
       return isAuthenticated() && request.auth.uid == tenantId;
     }
@@ -232,7 +250,13 @@ service cloud.firestore {
       // G8: usa isLinkedTenant (tenantId do doc users, definido pelo convite e
       // imutável pelo próprio usuário) em vez de auth.uid == tenantId — o id do
       // doc tenants nem sempre coincide com o uid do Firebase Auth.
-      allow update: if isGestor()
+      // G-hash: uma vez que TODAS as assinaturas obrigatórias (locador,
+      // locatário e testemunhas) foram concluídas, documentFinalizedAt é
+      // gravado e o PDF+hash+QR ficam definitivos — a partir daí os campos
+      // de assinatura/documento ficam travados (imutáveis) pra qualquer
+      // papel, mesmo gestor/admin. O restante do contrato (status do ciclo
+      // de vida do aluguel, notas etc.) continua editável normalmente.
+      allow update: if (isGestor() && signingFieldsUnchangedIfFinalized())
         || (isRole('inquilino')
             && isLinkedTenant(resource.data.tenantId)
             && request.resource.data.companyId  == resource.data.companyId
@@ -245,7 +269,8 @@ service cloud.firestore {
             && request.resource.data.dueDay      == resource.data.dueDay
             && request.resource.data.status      == resource.data.status
             && request.resource.data.signatureLocador == resource.data.signatureLocador
-            && request.resource.data.docsLocador == resource.data.docsLocador);
+            && request.resource.data.docsLocador == resource.data.docsLocador
+            && signingFieldsUnchangedIfFinalized());
 
       allow delete: if isAdmin();
     }
@@ -386,8 +411,15 @@ service cloud.firestore {
 
     // ─── Sale Contracts (Compra e Venda de Terreno) — ferramenta interna do admin ──
     // Não é multi-tenant: sem companyId, só isAdmin() acessa o doc principal.
+    // Uma vez que documentFinalizedAt é gravado (todos os signers obrigatórios
+    // já assinaram e o PDF final com hash já foi gerado), o contrato de venda
+    // fica travado — nenhum update é aceito, nem pelo admin. É uma transação
+    // única, ao contrário do contrato de locação, que continua "vivo" depois
+    // de assinado (pode ser renovado, encerrado etc.) — por isso aqui a trava
+    // é total, e não só nos campos de assinatura.
     match /saleContracts/{saleContractId} {
-      allow read, create, update, delete: if isAdmin();
+      allow read, create, delete: if isAdmin();
+      allow update: if isAdmin() && resource.data.get('documentFinalizedAt', null) == null;
     }
 
     // O token aleatório é o ID do documento e funciona como segredo do link.
@@ -408,6 +440,18 @@ service cloud.firestore {
             && request.resource.data.vendedorName    == resource.data.vendedorName
             && request.resource.data.compradorName   == resource.data.compradorName);
       allow delete: if isAdmin();
+    }
+
+    // Registro público de verificação (QR Code impresso no PDF final de
+    // contratos de locação e de venda de terreno). Nunca contém IP nem
+    // dispositivo de quem assinou — só resumo não sensível (partes, datas,
+    // hash do PDF). Escrito uma única vez, no momento da finalização, e
+    // nunca mais alterado (nem por gestor/admin).
+    match /contractVerifications/{verificationId} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if isGestor();
+      allow update, delete: if false;
     }
 
     // ─── E-mail marketing — ferramenta interna do admin ───────────────────────

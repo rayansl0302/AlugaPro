@@ -14,6 +14,8 @@ import { uploadSaleContractPDF } from '@/services/storage'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
 import { generateSaleContractPDF, contractPDFToBlob, PDFWitness } from '@/lib/contractPDF'
 import { openOrShareBlob } from '@/lib/nativeFile'
+import { hashBlobSHA256 } from '@/lib/signatureAudit'
+import { createVerificationRecord } from '@/services/contractVerification'
 import { SaleContract, SaleContractParty, SaleContractSigner, SaleContractSignerRole } from '@/types'
 import { generateSaleContractNumber, formatCurrency, formatDate, maskCPF, maskRG } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -65,6 +67,7 @@ interface SaleContractPdfData {
   cidade: string
   dataContrato: string
   signers: SaleContractSigner[]
+  verificationId?: string
 }
 
 async function buildSaleContractPdf(input: SaleContractPdfData) {
@@ -108,6 +111,7 @@ async function buildSaleContractPdf(input: SaleContractPdfData) {
     comprador: await toPdfWitness(input.comprador.name, compradorSigner),
     testemunha1: t1 ? await toPdfWitness(t1.name, t1) : undefined,
     testemunha2: t2 ? await toPdfWitness(t2.name, t2) : undefined,
+    verificationId: input.verificationId,
   })
 }
 
@@ -228,6 +232,7 @@ function SaleContractCard({
             signature: req.signature, cpf: req.cpf, rg: req.rg,
             documentFrontUrl: req.documentFrontUrl, documentBackUrl: req.documentBackUrl, documentSelfieUrl: req.documentSelfieUrl,
             status: 'signed' as const, signedAt: req.signedAt,
+            signedIp: req.signedIp, signedDevice: req.signedDevice,
           }
         }
         return s
@@ -266,12 +271,30 @@ function SaleContractCard({
   const allSigned = requiredSigners.length > 0 && requiredSigners.every((s) => s.status === 'signed')
 
   const handleGeneratePdf = async () => {
+    if (contract.documentFinalizedAt) {
+      toast({ title: t('toastExtra.alreadyFinalized'), variant: 'destructive' })
+      return
+    }
     setGenerating(true)
     try {
-      const pdf = await buildSaleContractPdf(contract)
+      // Um único id de verificação por contrato — se o PDF já tinha sido
+      // gerado antes (ex: reenvio de link, retry), reaproveita o mesmo.
+      const verificationId = contract.verificationId || generateSaleSignToken()
+      const pdf = await buildSaleContractPdf({ ...contract, verificationId })
       const blob = contractPDFToBlob(pdf)
       const url = await uploadSaleContractPDF(contract.id, blob, contract.contractNumber)
-      await updateSaleContract(contract.id, { signedPdfUrl: url, status: 'assinado' })
+      const pdfHash = await hashBlobSHA256(blob)
+      const documentFinalizedAt = new Date().toISOString()
+
+      await createVerificationRecord(verificationId, {
+        type: 'terreno',
+        contractNumber: contract.contractNumber,
+        pdfHash,
+        parties: contract.signers.map((s) => ({ role: t(`roles.${s.role}`), name: s.name, signedAt: s.signedAt })),
+      })
+      await updateSaleContract(contract.id, {
+        signedPdfUrl: url, status: 'assinado', pdfHash, verificationId, documentFinalizedAt,
+      })
       onRefresh()
       toast({ title: t('toast.pdfGenerated') })
     } catch {
@@ -564,6 +587,11 @@ function SaleContractCard({
               <div className="min-w-0">
                 <p className="font-medium truncate">{t(`roles.${s.role}`)}</p>
                 <p className="text-xs text-muted-foreground truncate">{s.name}</p>
+                {s.status === 'signed' && (s.signedAt || s.signedIp) && (
+                  <p className="text-[10px] text-muted-foreground truncate">
+                    {[s.signedAt, s.signedIp ? `IP ${s.signedIp}` : undefined].filter(Boolean).join(' · ')}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {s.status === 'signed' ? (

@@ -1,6 +1,21 @@
 import jsPDF from 'jspdf'
+import QRCode from 'qrcode'
 import { ContractBlock } from './contractTemplates/imovel'
 import { saveOrShareFile } from './nativeFile'
+
+// Gera o QR Code (data URL PNG) apontando pra página pública de verificação.
+// Retorna undefined se a geração falhar (nunca deve travar a emissão do PDF)
+// ou se não houver verificationId (ex: prévia antes de todos assinarem).
+async function buildVerificationQR(verificationId?: string): Promise<{ qrDataUrl: string; url: string } | undefined> {
+  if (!verificationId) return undefined
+  const url = `${window.location.origin}/verificar/${verificationId}`
+  try {
+    const qrDataUrl = await QRCode.toDataURL(url, { width: 200, margin: 1 })
+    return { qrDataUrl, url }
+  } catch {
+    return undefined
+  }
+}
 
 interface PDFState {
   y: number
@@ -183,6 +198,7 @@ function addSignaturePage(
   testemunha1?: PDFWitness,
   testemunha2?: PDFWitness,
   dataAssinatura?: string,
+  verification?: { qrDataUrl: string; url: string },
 ) {
   doc.addPage()
   s.y = s.margin
@@ -265,6 +281,35 @@ function addSignaturePage(
   doc.text('A autenticidade deste documento pode ser verificada pelos registros de identidade e assinaturas eletrônicas anexados.', s.margin, s.y)
   doc.setTextColor(0, 0, 0)
   doc.setFont('helvetica', 'normal')
+
+  addVerificationQR(doc, s, verification)
+}
+
+// QR Code + link de validação — desenhado por último, na página de assinaturas.
+// Só aparece quando o PDF final já tem um verificationId (ou seja, quando
+// todas as assinaturas obrigatórias foram concluídas nesta geração).
+function addVerificationQR(doc: jsPDF, s: PDFState, verification?: { qrDataUrl: string; url: string }) {
+  if (!verification) return
+  const qrSize = 24
+  checkBreak(doc, s, qrSize + 6)
+  s.y += 6
+  try {
+    doc.addImage(verification.qrDataUrl, 'PNG', s.margin, s.y, qrSize, qrSize)
+  } catch {
+    doc.setDrawColor(180, 180, 180)
+    doc.rect(s.margin, s.y, qrSize, qrSize)
+  }
+  doc.setFontSize(8)
+  doc.setTextColor(100, 100, 100)
+  doc.setFont('helvetica', 'normal')
+  const textX = s.margin + qrSize + 4
+  const textLines = doc.splitTextToSize(
+    `Verifique a autenticidade deste documento em:\n${verification.url}`,
+    s.contentW - qrSize - 4,
+  )
+  doc.text(textLines, textX, s.y + qrSize / 2 - 3)
+  doc.setTextColor(0, 0, 0)
+  s.y += qrSize + 4
 }
 
 function addPageNumbers(doc: jsPDF) {
@@ -302,9 +347,10 @@ export interface ContractPDFInput {
   testemunha1?: PDFWitness
   testemunha2?: PDFWitness
   dataAssinatura?: string
+  verificationId?: string
 }
 
-export function generateContractPDF(input: ContractPDFInput): jsPDF {
+export async function generateContractPDF(input: ContractPDFInput): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
@@ -322,6 +368,8 @@ export function generateContractPDF(input: ContractPDFInput): jsPDF {
     input.locatarioName, input.docsLocatario,
   )
 
+  const verification = await buildVerificationQR(input.verificationId)
+
   // Signature page
   addSignaturePage(
     doc, s,
@@ -332,6 +380,7 @@ export function generateContractPDF(input: ContractPDFInput): jsPDF {
     input.testemunha1,
     input.testemunha2,
     input.dataAssinatura,
+    verification,
   )
 
   addPageNumbers(doc)
@@ -364,6 +413,7 @@ function addSaleSignaturePage(
   testemunha1?: PDFWitness,
   testemunha2?: PDFWitness,
   dataAssinatura?: string,
+  verification?: { qrDataUrl: string; url: string },
 ) {
   doc.addPage()
   s.y = s.margin
@@ -445,6 +495,8 @@ function addSaleSignaturePage(
   doc.text('A autenticidade deste documento pode ser verificada pelos registros de identidade e assinaturas eletrônicas anexados.', s.margin, s.y)
   doc.setTextColor(0, 0, 0)
   doc.setFont('helvetica', 'normal')
+
+  addVerificationQR(doc, s, verification)
 }
 
 // Mesmo layout de renderDocSection, mas pra 3 fotos (frente/verso/segurando)
@@ -525,9 +577,10 @@ export interface SaleContractPDFInput {
   testemunha1?: PDFWitness
   testemunha2?: PDFWitness
   dataAssinatura?: string
+  verificationId?: string
 }
 
-export function generateSaleContractPDF(input: SaleContractPDFInput): jsPDF {
+export async function generateSaleContractPDF(input: SaleContractPDFInput): Promise<jsPDF> {
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
   doc.setFont('helvetica', 'normal')
   doc.setFontSize(10)
@@ -539,6 +592,8 @@ export function generateSaleContractPDF(input: SaleContractPDFInput): jsPDF {
 
   addSaleDocumentsPage(doc, s, input.vendedor, input.comprador, input.testemunha1, input.testemunha2)
 
+  const verification = await buildVerificationQR(input.verificationId)
+
   addSaleSignaturePage(
     doc, s,
     input.vendedor.name,
@@ -548,6 +603,7 @@ export function generateSaleContractPDF(input: SaleContractPDFInput): jsPDF {
     input.testemunha1,
     input.testemunha2,
     input.dataAssinatura,
+    verification,
   )
 
   addPageNumbers(doc)

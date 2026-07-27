@@ -170,7 +170,8 @@
   },
   "toastExtra": {
     "previewValidation": "Fill in at least the seller and buyer names to preview.",
-    "createdDescription": "Copy the signing links below and send them to the parties."
+    "createdDescription": "Copy the signing links below and send them to the parties.",
+    "alreadyFinalized": "This contract has already been finalized and is locked — the PDF cannot be generated again."
   },
   "tabPending": "Pending",
   "tabSigned": "Signed",

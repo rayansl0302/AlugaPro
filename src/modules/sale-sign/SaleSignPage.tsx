@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { CheckCircle, FileText, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { SaleSignatureRequest, SaleContractSignerRole } from '@/types'
 import { getSaleSignatureRequest, submitSaleSignature } from '@/services/saleContracts'
+import { getSignatureAuditInfo } from '@/lib/signatureAudit'
 import { uploadSaleSignatureDocument } from '@/services/storage'
 import { SignatureCanvas } from '@/components/shared/SignatureCanvas'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
@@ -55,7 +56,11 @@ export function SaleSignPage() {
     }
     setSubmitting(true)
     try {
-      await submitSaleSignature(token, { signature, cpf, rg, documentFrontUrl, documentBackUrl, documentSelfieUrl })
+      const { ip, userAgent } = await getSignatureAuditInfo()
+      await submitSaleSignature(token, {
+        signature, cpf, rg, documentFrontUrl, documentBackUrl, documentSelfieUrl,
+        signedIp: ip, signedDevice: userAgent,
+      })
       setStatus('done')
       toast({ title: t('signPage.toast.success') })
     } catch {

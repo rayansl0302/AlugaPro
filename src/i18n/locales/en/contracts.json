@@ -414,7 +414,8 @@
       "witnessesUpdated": "Witness status updated.",
       "witnessesUpdateError": "Failed to update witness status.",
       "pdfUpdated": "PDF updated with the witness signatures!",
-      "pdfFinalError": "Failed to generate the final PDF. Please try again."
+      "pdfFinalError": "Failed to generate the final PDF. Please try again.",
+      "alreadyFinalized": "This contract has already been signed by all parties and is locked — it can no longer be edited or regenerated."
     }
   },
   "import": {

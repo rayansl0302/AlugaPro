@@ -28,6 +28,7 @@ import ptNotifications from './locales/pt-BR/notifications.json'
 import ptWarnings from './locales/pt-BR/warnings.json'
 import ptSaleContracts from './locales/pt-BR/saleContracts.json'
 import ptSharedExpenses from './locales/pt-BR/sharedExpenses.json'
+import ptVerify from './locales/pt-BR/verify.json'
 
 import enCommon from './locales/en/common.json'
 import enNav from './locales/en/nav.json'
@@ -54,6 +55,7 @@ import enNotifications from './locales/en/notifications.json'
 import enWarnings from './locales/en/warnings.json'
 import enSaleContracts from './locales/en/saleContracts.json'
 import enSharedExpenses from './locales/en/sharedExpenses.json'
+import enVerify from './locales/en/verify.json'
 
 import esCommon from './locales/es/common.json'
 import esNav from './locales/es/nav.json'
@@ -80,6 +82,7 @@ import esNotifications from './locales/es/notifications.json'
 import esWarnings from './locales/es/warnings.json'
 import esSaleContracts from './locales/es/saleContracts.json'
 import esSharedExpenses from './locales/es/sharedExpenses.json'
+import esVerify from './locales/es/verify.json'
 
 export const i18nNamespaces = [
   'common',
@@ -107,6 +110,7 @@ export const i18nNamespaces = [
   'warnings',
   'saleContracts',
   'sharedExpenses',
+  'verify',
 ] as const
 
 const resources = {
@@ -136,6 +140,7 @@ const resources = {
     warnings: ptWarnings,
     saleContracts: ptSaleContracts,
     sharedExpenses: ptSharedExpenses,
+    verify: ptVerify,
   },
   en: {
     common: enCommon,
@@ -163,6 +168,7 @@ const resources = {
     warnings: enWarnings,
     saleContracts: enSaleContracts,
     sharedExpenses: enSharedExpenses,
+    verify: enVerify,
   },
   es: {
     common: esCommon,
@@ -190,6 +196,7 @@ const resources = {
     warnings: esWarnings,
     saleContracts: esSaleContracts,
     sharedExpenses: esSharedExpenses,
+    verify: esVerify,
   },
 }
 

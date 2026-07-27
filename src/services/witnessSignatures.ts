@@ -34,7 +34,7 @@ export async function getWitnessRequest(token: string): Promise<WitnessSignature
 
 export async function submitWitnessSignature(
   token: string,
-  payload: { signature: string; cpf: string; rg: string }
+  payload: { signature: string; cpf: string; rg: string; signedIp?: string; signedDevice?: string }
 ): Promise<void> {
   await updateDoc(doc(db, COL, token), {
     signature: payload.signature,
@@ -42,5 +42,7 @@ export async function submitWitnessSignature(
     rg: payload.rg,
     status: 'signed',
     signedAt: new Date().toISOString(),
+    ...(payload.signedIp ? { signedIp: payload.signedIp } : {}),
+    ...(payload.signedDevice ? { signedDevice: payload.signedDevice } : {}),
   })
 }

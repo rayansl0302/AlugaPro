@@ -1,0 +1,23 @@
+{
+  "brandSubtitle": "AlugaPro — verificación de autenticidad de documento",
+  "title": "Verificación de Documento",
+  "loading": "Verificando documento...",
+  "notFoundTitle": "Documento no encontrado",
+  "notFoundDescription": "No encontramos ningún documento con este código de verificación. Puede ser inválido, o el contrato aún no ha sido firmado por completo.",
+  "verifiedTitle": "Documento verificado",
+  "verifiedDescription": "Este es un registro auténtico generado por AlugaPro.",
+  "typeLabel": "Tipo de documento",
+  "types": {
+    "locacao": "Contrato de Locación",
+    "terreno": "Contrato de Compraventa de Terreno"
+  },
+  "contractNumber": "Número de contrato",
+  "partiesTitle": "Partes y firmas",
+  "signedAt": "Firmado el",
+  "notSigned": "No firmado",
+  "hashTitle": "Hash SHA-256 del documento",
+  "hashHint": "Compare este código con el hash del archivo PDF que recibió para confirmar que el contenido no fue alterado.",
+  "copyHash": "Copiar hash",
+  "hashCopied": "Hash copiado.",
+  "generatedAt": "Registro generado el"
+}

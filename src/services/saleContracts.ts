@@ -105,6 +105,8 @@ export async function submitSaleSignature(
     documentFrontUrl: string
     documentBackUrl: string
     documentSelfieUrl: string
+    signedIp?: string
+    signedDevice?: string
   }
 ): Promise<void> {
   await updateDoc(doc(db, SALE_SIGNATURES_COL, token), {
@@ -116,5 +118,7 @@ export async function submitSaleSignature(
     documentSelfieUrl: payload.documentSelfieUrl,
     status: 'signed',
     signedAt: new Date().toISOString(),
+    ...(payload.signedIp ? { signedIp: payload.signedIp } : {}),
+    ...(payload.signedDevice ? { signedDevice: payload.signedDevice } : {}),
   })
 }

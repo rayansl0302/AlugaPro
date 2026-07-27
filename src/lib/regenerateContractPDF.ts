@@ -93,5 +93,6 @@ export async function generateSignedContractPDF(contract: Contract) {
     testemunha1: toPDFWitness(0),
     testemunha2: toPDFWitness(1),
     dataAssinatura: format(new Date(), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR }),
+    verificationId: contract.verificationId,
   })
 }

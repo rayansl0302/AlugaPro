@@ -60,6 +60,7 @@
     "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.8.2",
     "lucide-react": "^0.441.0",
+    "qrcode": "^1.5.4",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
@@ -75,10 +76,12 @@
   "devDependencies": {
     "@capacitor/assets": "^3.0.5",
     "@capacitor/cli": "^8.4.1",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.15.0",
     "@typescript-eslint/parser": "^7.15.0",
+    "@vercel/node": "^5.8.17",
     "@vitejs/plugin-react": "^4.3.1",
     "autoprefixer": "^10.4.20",
     "dotenv": "^17.4.2",
@@ -90,7 +93,6 @@
     "tsx": "^4.22.4",
     "typescript": "^5.5.3",
     "vite": "^5.4.1",
-    "vite-plugin-pwa": "^0.20.1",
-    "@vercel/node": "^5.8.17"
+    "vite-plugin-pwa": "^0.20.1"
   }
 }

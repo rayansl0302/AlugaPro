@@ -414,7 +414,8 @@
       "witnessesUpdated": "Status das testemunhas atualizado.",
       "witnessesUpdateError": "Erro ao atualizar status das testemunhas.",
       "pdfUpdated": "PDF atualizado com as assinaturas das testemunhas!",
-      "pdfFinalError": "Erro ao gerar o PDF final. Tente novamente."
+      "pdfFinalError": "Erro ao gerar o PDF final. Tente novamente.",
+      "alreadyFinalized": "Este contrato já foi assinado por todas as partes e está travado — não pode mais ser editado ou regenerado."
     }
   },
   "import": {

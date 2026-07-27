@@ -360,6 +360,22 @@ export interface Contract {
   templateId?: string
   templateName?: string
   templateClauses?: ContractTemplateClause[]
+  // Trilha de auditoria por parte (data/hora + IP + dispositivo de quem assinou)
+  signatureLocadorAt?: string
+  signatureLocadorIp?: string
+  signatureLocadorDevice?: string
+  signatureLocatarioAt?: string
+  signatureLocatarioIp?: string
+  signatureLocatarioDevice?: string
+  // Hash SHA-256 do PDF final + registro público de verificação (QR Code) —
+  // só preenchidos quando TODAS as assinaturas obrigatórias (locador,
+  // locatário e testemunhas com token) já foram concluídas. A partir daí o
+  // contrato fica imutável (ver firestore.rules) e documentFinalizedAt é
+  // o marcador dessa transição — distinto de locked/lockedAt, que é um
+  // recurso manual e não relacionado à assinatura.
+  pdfHash?: string
+  verificationId?: string
+  documentFinalizedAt?: string
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -454,6 +470,8 @@ export interface ContractWitness {
   signature?: string
   status: 'pending' | 'signed'
   signedAt?: string
+  signedIp?: string
+  signedDevice?: string
 }
 
 // Documento público (coleção witnessSignatures) acessado pelo token na URL.
@@ -475,6 +493,29 @@ export interface WitnessSignatureRequest {
   rg?: string
   createdAt?: string
   signedAt?: string
+  signedIp?: string
+  signedDevice?: string
+}
+
+// Documento público de verificação (coleção contractVerifications), acessado
+// via QR Code impresso no PDF final. Gerado uma única vez, quando o último
+// signatário obrigatório assina — nunca contém IP/dispositivo (isso fica só
+// no doc principal, visível apenas dentro do painel).
+export type ContractVerificationType = 'locacao' | 'terreno'
+
+export interface ContractVerificationParty {
+  role: string
+  name: string
+  signedAt?: string
+}
+
+export interface ContractVerificationRecord {
+  id: string
+  type: ContractVerificationType
+  contractNumber: string
+  parties: ContractVerificationParty[]
+  pdfHash: string
+  createdAt: string
 }
 
 // ─── SaleContract (Contrato de Compra e Venda de Terreno) ────────────────────
@@ -505,6 +546,8 @@ export interface SaleContractSigner {
   documentSelfieUrl?: string
   status: 'pending' | 'signed'
   signedAt?: string
+  signedIp?: string
+  signedDevice?: string
 }
 
 export interface SaleContract {
@@ -525,6 +568,13 @@ export interface SaleContract {
   signers: SaleContractSigner[]
   signedPdfUrl?: string
   status: 'rascunho' | 'pendente' | 'assinado'
+  // Hash SHA-256 do PDF final + registro público de verificação (QR Code) —
+  // gravados quando todos os signers obrigatórios (vendedor, comprador e
+  // testemunhas com token) já assinaram. A partir daí o contrato fica
+  // imutável (ver firestore.rules).
+  pdfHash?: string
+  verificationId?: string
+  documentFinalizedAt?: string
   createdAt: Timestamp
   updatedAt: Timestamp
 }
@@ -571,6 +621,8 @@ export interface SaleSignatureRequest {
   documentSelfieUrl?: string
   createdAt?: string
   signedAt?: string
+  signedIp?: string
+  signedDevice?: string
 }
 
 // ─── Payment (Pagamento) ──────────────────────────────────────────────────────

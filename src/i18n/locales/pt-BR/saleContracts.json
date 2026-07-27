@@ -170,7 +170,8 @@
   },
   "toastExtra": {
     "previewValidation": "Preencha ao menos o nome do vendedor e do comprador para pré-visualizar.",
-    "createdDescription": "Copie os links de assinatura abaixo e envie às partes."
+    "createdDescription": "Copie os links de assinatura abaixo e envie às partes.",
+    "alreadyFinalized": "Este contrato já foi finalizado e está travado — não é possível gerar o PDF novamente."
   },
   "tabPending": "Pendentes",
   "tabSigned": "Assinados",

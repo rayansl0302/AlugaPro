@@ -414,7 +414,8 @@
       "witnessesUpdated": "Estado de los testigos actualizado.",
       "witnessesUpdateError": "Error al actualizar el estado de los testigos.",
       "pdfUpdated": "¡PDF actualizado con las firmas de los testigos!",
-      "pdfFinalError": "Error al generar el PDF final. Inténtelo de nuevo."
+      "pdfFinalError": "Error al generar el PDF final. Inténtelo de nuevo.",
+      "alreadyFinalized": "Este contrato ya fue firmado por todas las partes y está bloqueado — ya no puede editarse ni regenerarse."
     }
   },
   "import": {

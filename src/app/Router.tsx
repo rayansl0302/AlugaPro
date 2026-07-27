@@ -25,6 +25,7 @@ import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
 import { TenantContractsPage } from '@/modules/tenant-portal/TenantContractsPage'
 import { AffiliatePanel } from '@/modules/affiliate/AffiliatePanel'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
+import { VerifyDocumentPage } from '@/modules/verify/VerifyDocumentPage'
 import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
 import { RecursosPage } from '@/modules/landing/RecursosPage'
@@ -95,6 +96,10 @@ const router = createBrowserRouter([
   {
     path: '/assinar-venda/:token',
     element: <SaleSignPage />,
+  },
+  {
+    path: '/verificar/:verificationId',
+    element: <VerifyDocumentPage />,
   },
   {
     path: '/portal',

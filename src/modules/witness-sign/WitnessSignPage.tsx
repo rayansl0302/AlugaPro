@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next'
 import { CheckCircle, FileText, Loader2, ShieldCheck, AlertTriangle } from 'lucide-react'
 import { WitnessSignatureRequest } from '@/types'
 import { getWitnessRequest, submitWitnessSignature } from '@/services/witnessSignatures'
+import { getSignatureAuditInfo } from '@/lib/signatureAudit'
 import { SignatureCanvas } from '@/components/shared/SignatureCanvas'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -48,7 +49,8 @@ export function WitnessSignPage() {
     }
     setSubmitting(true)
     try {
-      await submitWitnessSignature(token, { signature, cpf, rg })
+      const { ip, userAgent } = await getSignatureAuditInfo()
+      await submitWitnessSignature(token, { signature, cpf, rg, signedIp: ip, signedDevice: userAgent })
       setStatus('done')
       toast({ title: t('witnessSignPage.toast.success') })
     } catch {
