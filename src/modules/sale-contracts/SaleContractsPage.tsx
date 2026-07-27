@@ -57,6 +57,7 @@ interface SaleContractPdfData {
   terrenoDescricao: string
   terrenoEndereco: string
   terrenoCoordenadas?: string
+  origemPosse?: string
   precoValor: number
   precoExtenso: string
   formaPagamento: string
@@ -79,6 +80,7 @@ async function buildSaleContractPdf(input: SaleContractPdfData) {
     terrenoDescricao: input.terrenoDescricao,
     terrenoEndereco: input.terrenoEndereco,
     terrenoCoordenadas: input.terrenoCoordenadas,
+    origemPosse: input.origemPosse,
     precoValor: input.precoValor,
     precoExtenso: input.precoExtenso,
     formaPagamento: input.formaPagamento,
@@ -174,6 +176,7 @@ function SaleContractCard({
   const [editTerrenoDescricao, setEditTerrenoDescricao] = useState(contract.terrenoDescricao)
   const [editTerrenoEndereco, setEditTerrenoEndereco] = useState(contract.terrenoEndereco)
   const [editTerrenoCoordenadas, setEditTerrenoCoordenadas] = useState(contract.terrenoCoordenadas ?? '')
+  const [editOrigemPosse, setEditOrigemPosse] = useState(contract.origemPosse ?? '')
   const [editPrecoValor, setEditPrecoValor] = useState(formatCurrency(contract.precoValor))
   const [editPrecoExtenso, setEditPrecoExtenso] = useState(contract.precoExtenso)
   const [editFormaPagamento, setEditFormaPagamento] = useState(contract.formaPagamento)
@@ -305,6 +308,7 @@ function SaleContractCard({
     setEditTerrenoDescricao(contract.terrenoDescricao)
     setEditTerrenoEndereco(contract.terrenoEndereco)
     setEditTerrenoCoordenadas(contract.terrenoCoordenadas ?? '')
+    setEditOrigemPosse(contract.origemPosse ?? '')
     setEditPrecoValor(formatCurrency(contract.precoValor))
     setEditPrecoExtenso(contract.precoExtenso)
     setEditFormaPagamento(contract.formaPagamento)
@@ -372,6 +376,7 @@ function SaleContractCard({
         terrenoDescricao: editTerrenoDescricao,
         terrenoEndereco: editTerrenoEndereco,
         ...(editTerrenoCoordenadas ? { terrenoCoordenadas: editTerrenoCoordenadas } : {}),
+        ...(editOrigemPosse ? { origemPosse: editOrigemPosse } : {}),
         precoValor: precoNumber,
         precoExtenso: editPrecoExtenso,
         formaPagamento: editFormaPagamento,
@@ -441,6 +446,11 @@ function SaleContractCard({
               <div className="space-y-1 sm:col-span-2">
                 <Label className="text-xs">{t('formExtra.coordinatesOptional')}</Label>
                 <Input value={editTerrenoCoordenadas} onChange={(e) => setEditTerrenoCoordenadas(e.target.value)} />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label className="text-xs">{t('formExtra.originOfPossessionOptional')}</Label>
+                <Input value={editOrigemPosse} onChange={(e) => setEditOrigemPosse(e.target.value)} placeholder={t('formExtra.originOfPossessionPlaceholder')} />
+                <p className="text-xs text-muted-foreground">{t('formExtra.originOfPossessionHint')}</p>
               </div>
             </div>
           </div>
@@ -609,6 +619,7 @@ export function SaleContractsPage() {
   const [terrenoDescricao, setTerrenoDescricao] = useState('')
   const [terrenoEndereco, setTerrenoEndereco] = useState('')
   const [terrenoCoordenadas, setTerrenoCoordenadas] = useState('')
+  const [origemPosse, setOrigemPosse] = useState('')
   const [precoValor, setPrecoValor] = useState('')
   const [precoExtenso, setPrecoExtenso] = useState('')
   const [formaPagamento, setFormaPagamento] = useState('')
@@ -626,7 +637,7 @@ export function SaleContractsPage() {
   const resetForm = () => {
     setVendedor(emptyParty)
     setComprador(emptyParty)
-    setTerrenoDescricao(''); setTerrenoEndereco(''); setTerrenoCoordenadas('')
+    setTerrenoDescricao(''); setTerrenoEndereco(''); setTerrenoCoordenadas(''); setOrigemPosse('')
     setPrecoValor(''); setPrecoExtenso(''); setFormaPagamento('')
     setForo(''); setCidade('')
     setTestemunha1Nome(''); setTestemunha1Cpf(''); setTestemunha1Rg('')
@@ -657,6 +668,7 @@ export function SaleContractsPage() {
         vendedor, comprador,
         terrenoDescricao, terrenoEndereco,
         terrenoCoordenadas: terrenoCoordenadas || undefined,
+        origemPosse: origemPosse || undefined,
         precoValor: precoNumber, precoExtenso, formaPagamento,
         foro, cidade,
         dataContrato: formatDate(new Date().toISOString(), "dd 'de' MMMM 'de' yyyy"),
@@ -712,6 +724,7 @@ export function SaleContractsPage() {
         vendedor, comprador,
         terrenoDescricao, terrenoEndereco,
         ...(terrenoCoordenadas ? { terrenoCoordenadas } : {}),
+        ...(origemPosse ? { origemPosse } : {}),
         precoValor: precoNumber, precoExtenso, formaPagamento,
         foro, cidade, dataContrato,
         signers,
@@ -789,6 +802,11 @@ export function SaleContractsPage() {
               <div className="space-y-1 sm:col-span-2">
                 <Label htmlFor="terreno-coordenadas" className="text-xs">{t('formExtra.coordinatesOptional')}</Label>
                 <Input id="terreno-coordenadas" value={terrenoCoordenadas} onChange={(e) => setTerrenoCoordenadas(e.target.value)} placeholder="latitude -12.89, longitude -38.40" />
+              </div>
+              <div className="space-y-1 sm:col-span-2">
+                <Label htmlFor="origem-posse" className="text-xs">{t('formExtra.originOfPossessionOptional')}</Label>
+                <Input id="origem-posse" value={origemPosse} onChange={(e) => setOrigemPosse(e.target.value)} placeholder={t('formExtra.originOfPossessionPlaceholder')} />
+                <p className="text-xs text-muted-foreground">{t('formExtra.originOfPossessionHint')}</p>
               </div>
             </div>
           </div>

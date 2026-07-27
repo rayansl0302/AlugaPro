@@ -515,6 +515,7 @@ export interface SaleContract {
   terrenoDescricao: string
   terrenoEndereco: string
   terrenoCoordenadas?: string
+  origemPosse?: string
   precoValor: number
   precoExtenso: string
   formaPagamento: string
@@ -538,6 +539,7 @@ export interface TerrenoSigningData {
   terrenoDescricao: string
   terrenoEndereco: string
   terrenoCoordenadas?: string
+  origemPosse?: string
   precoValor: number
   precoExtenso: string
   formaPagamento: string
