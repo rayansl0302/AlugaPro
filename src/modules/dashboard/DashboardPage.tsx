@@ -149,7 +149,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <KpiCard
           title={t('indicators.totalProperties')}
           value={properties.length}
@@ -182,9 +182,6 @@ export function DashboardPage() {
           color="bg-red-500"
           sub={formatCurrency(overdueCharges.reduce((s, c) => s + c.amount, 0))}
         />
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           title={t('indicators.overdueCharges')}
           value={overdueCharges.length}
