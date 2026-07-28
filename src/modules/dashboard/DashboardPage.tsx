@@ -325,14 +325,14 @@ export function DashboardPage() {
               {overdueCharges.slice(0, 5).map((charge) => (
                 <div
                   key={charge.id}
-                  className="flex items-center justify-between rounded-lg border border-destructive/20 bg-destructive/5 p-3"
+                  className="flex flex-col gap-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 sm:flex-row sm:items-center sm:justify-between"
                 >
                   <div>
                     <p className="font-medium">{charge.tenantName}</p>
                     <p className="text-sm text-muted-foreground">{charge.propertyName}</p>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="text-right">
+                  <div className="flex items-center justify-between gap-3 sm:justify-end">
+                    <div>
                       <p className="font-semibold text-destructive">{formatCurrency(charge.amount)}</p>
                       <Badge variant="destructive" className="text-xs">
                         {t('recentActivity.daysLate', { days: charge.daysLate })}
@@ -341,7 +341,7 @@ export function DashboardPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      className="gap-1.5 border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
+                      className="shrink-0 gap-1.5 border-green-600 text-green-700 hover:bg-green-50 hover:text-green-800"
                       onClick={() => sendWhatsApp(charge)}
                     >
                       <MessageSquare className="h-3.5 w-3.5" />
