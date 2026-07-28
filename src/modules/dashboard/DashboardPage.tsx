@@ -41,13 +41,13 @@ function KpiCard({
   return (
     <Card>
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="mt-1 text-2xl font-bold">{value}</p>
-            {sub && <p className="mt-1 text-xs text-muted-foreground">{sub}</p>}
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium text-muted-foreground">{title}</p>
+            <p className="mt-1 truncate text-2xl font-bold">{value}</p>
+            {sub && <p className="mt-1 truncate text-xs text-muted-foreground">{sub}</p>}
           </div>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
+          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
             <Icon className="h-6 w-6 text-white" />
           </div>
         </div>
@@ -149,7 +149,7 @@ export function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
         <KpiCard
           title={t('indicators.totalProperties')}
           value={properties.length}
@@ -184,7 +184,7 @@ export function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <KpiCard
           title={t('indicators.overdueCharges')}
           value={overdueCharges.length}
