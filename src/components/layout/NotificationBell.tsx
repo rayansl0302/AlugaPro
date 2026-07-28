@@ -56,7 +56,7 @@ export function NotificationBell() {
           {t('notificationsTitle')}
           {count > 0 && (
             <span className="ml-2 text-xs font-normal text-muted-foreground">
-              {count} pendente{count !== 1 ? 's' : ''}
+              {t('pendingCount', { count })}
             </span>
           )}
         </DropdownMenuLabel>
@@ -71,7 +71,7 @@ export function NotificationBell() {
             <Bell className="mx-auto mb-2 h-8 w-8 text-muted-foreground/30" />
             <p className="text-sm font-medium">{t('allGood')}</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Nenhum alerta no momento.
+              {t('noAlertsNow')}
             </p>
           </div>
         ) : (

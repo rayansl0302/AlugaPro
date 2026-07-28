@@ -35,7 +35,10 @@
   "notificationsTitle": "Notificaciones",
   "loading": "Cargando...",
   "allGood": "Todo en orden",
+  "noAlertsNow": "Ninguna alerta por el momento.",
   "openPanel": "Ver todas las alertas",
   "moreNotifications_one": "+ {{count}} otra notificación",
-  "moreNotifications_other": "+ {{count}} otras notificaciones"
+  "moreNotifications_other": "+ {{count}} otras notificaciones",
+  "pendingCount_one": "{{count}} pendiente",
+  "pendingCount_other": "{{count}} pendientes"
 }

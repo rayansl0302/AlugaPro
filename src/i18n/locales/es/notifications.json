@@ -58,6 +58,30 @@
     "vencido_7dias": "7 días después del vencimiento",
     "vencido_15dias": "15 días después del vencimiento"
   },
+  "alerts": {
+    "defaultTenant": "Inquilino",
+    "defaultProperty": "Inmueble",
+    "receiptCharge": {
+      "title": "Comprobante de cobro para validar",
+      "description": "{{tenant}} — {{description}}"
+    },
+    "receiptExpense": {
+      "title": "Comprobante de gasto compartido",
+      "description": "{{tenant}} — {{description}}"
+    },
+    "overdue": {
+      "title": "Cobro atrasado",
+      "description": "{{tenant}} — {{days}}d de atraso"
+    },
+    "maintenanceOpen": {
+      "title": "Llamado abierto",
+      "description": "{{property}} — {{title}}"
+    },
+    "maintenanceReview": {
+      "title": "Llamado en análisis",
+      "description": "{{property}} — {{title}}"
+    }
+  },
   "templateTitle": "Plantilla de mensaje",
   "templateVars": "Variables disponibles: {{vars}}",
   "templates": {

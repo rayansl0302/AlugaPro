@@ -58,6 +58,30 @@
     "vencido_7dias": "7 days after due date",
     "vencido_15dias": "15 days after due date"
   },
+  "alerts": {
+    "defaultTenant": "Tenant",
+    "defaultProperty": "Property",
+    "receiptCharge": {
+      "title": "Charge receipt to validate",
+      "description": "{{tenant}} — {{description}}"
+    },
+    "receiptExpense": {
+      "title": "Shared expense receipt",
+      "description": "{{tenant}} — {{description}}"
+    },
+    "overdue": {
+      "title": "Overdue charge",
+      "description": "{{tenant}} — {{days}}d overdue"
+    },
+    "maintenanceOpen": {
+      "title": "Open ticket",
+      "description": "{{property}} — {{title}}"
+    },
+    "maintenanceReview": {
+      "title": "Ticket under review",
+      "description": "{{property}} — {{title}}"
+    }
+  },
   "templateTitle": "Message template",
   "templateVars": "Available variables: {{vars}}",
   "templates": {

@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
+import { useTranslation } from 'react-i18next'
 import { format } from 'date-fns'
 import { getCharges } from '@/services/charges'
 import { getSharedExpenses } from '@/services/sharedExpenses'
@@ -21,6 +22,7 @@ export interface NotificationAlert {
 const RECEIPT_REFETCH_MS = 15_000
 
 export function useNotificationAlerts(companyId: string) {
+  const { t } = useTranslation('notifications')
   const today = format(new Date(), 'yyyy-MM-dd')
 
   const { data: charges = [], isLoading: chargesLoading } = useQuery({
@@ -47,14 +49,17 @@ export function useNotificationAlerts(companyId: string) {
   const alerts = useMemo(() => {
     const items: NotificationAlert[] = []
 
+    const defaultTenant = t('alerts.defaultTenant')
+    const defaultProperty = t('alerts.defaultProperty')
+
     charges
       .filter((c) => c.receiptStatus === 'aguardando')
       .forEach((c) => {
         items.push({
           id: `receipt-charge-${c.id}`,
           type: 'comprovante',
-          title: 'Comprovante de cobrança para validar',
-          description: `${c.tenantName ?? 'Inquilino'} — ${c.description}`,
+          title: t('alerts.receiptCharge.title'),
+          description: t('alerts.receiptCharge.description', { tenant: c.tenantName ?? defaultTenant, description: c.description }),
           href: '/cobrancas',
           priority: 1,
         })
@@ -66,8 +71,8 @@ export function useNotificationAlerts(companyId: string) {
         items.push({
           id: `receipt-expense-${expense.id}-${index}`,
           type: 'comprovante',
-          title: 'Comprovante de despesa compartilhada',
-          description: `${participant.tenantName} — ${expense.description}`,
+          title: t('alerts.receiptExpense.title'),
+          description: t('alerts.receiptExpense.description', { tenant: participant.tenantName, description: expense.description }),
           href: '/despesas',
           priority: 1,
         })
@@ -87,8 +92,8 @@ export function useNotificationAlerts(companyId: string) {
         items.push({
           id: `overdue-${c.id}`,
           type: 'atrasado',
-          title: 'Cobrança em atraso',
-          description: `${c.tenantName ?? 'Inquilino'} — ${days}d de atraso`,
+          title: t('alerts.overdue.title'),
+          description: t('alerts.overdue.description', { tenant: c.tenantName ?? defaultTenant, days }),
           href: '/inadimplencia',
           priority: 2,
         })
@@ -97,18 +102,19 @@ export function useNotificationAlerts(companyId: string) {
     requests
       .filter((r) => r.status === 'aberto' || r.status === 'em_analise')
       .forEach((r) => {
+        const key = r.status === 'aberto' ? 'alerts.maintenanceOpen' : 'alerts.maintenanceReview'
         items.push({
           id: `maint-${r.id}`,
           type: 'chamado',
-          title: r.status === 'aberto' ? 'Chamado aberto' : 'Chamado em análise',
-          description: `${r.propertyName ?? 'Imóvel'} — ${r.title}`,
+          title: t(`${key}.title`),
+          description: t(`${key}.description`, { property: r.propertyName ?? defaultProperty, title: r.title }),
           href: '/chamados',
           priority: 3,
         })
       })
 
     return items.sort((a, b) => a.priority - b.priority)
-  }, [charges, expenses, requests, today])
+  }, [charges, expenses, requests, today, t])
 
   const pendingChargeReceipts = useMemo(
     () => countPendingChargeReceipts(charges),
