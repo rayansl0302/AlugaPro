@@ -11,6 +11,8 @@ import {
   BarChart, Bar, PieChart, Pie, Cell, Legend,
 } from 'recharts'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Tooltip as UiTooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
@@ -39,20 +41,51 @@ function KpiCard({
   sub?: string
 }) {
   return (
-    <Card>
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-medium text-muted-foreground">{title}</p>
-            <p className="mt-1 truncate text-2xl font-bold">{value}</p>
-            {sub && <p className="mt-1 truncate text-xs text-muted-foreground">{sub}</p>}
+    <Dialog>
+      <UiTooltip>
+        <TooltipTrigger asChild>
+          <DialogTrigger asChild>
+            <Card
+              role="button"
+              tabIndex={0}
+              className="cursor-pointer transition-colors hover:bg-accent/50"
+            >
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-muted-foreground">{title}</p>
+                    <p className="mt-1 truncate text-2xl font-bold">{value}</p>
+                    {sub && <p className="mt-1 truncate text-xs text-muted-foreground">{sub}</p>}
+                  </div>
+                  <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
+                    <Icon className="h-6 w-6 text-white" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </DialogTrigger>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p className="font-medium">{title}</p>
+          <p>{value}{sub ? ` — ${sub}` : ''}</p>
+        </TooltipContent>
+      </UiTooltip>
+
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+        </DialogHeader>
+        <div className="flex items-center gap-4">
+          <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl ${color}`}>
+            <Icon className="h-7 w-7 text-white" />
           </div>
-          <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
-            <Icon className="h-6 w-6 text-white" />
+          <div className="min-w-0">
+            <p className="break-words text-3xl font-bold">{value}</p>
+            {sub && <p className="mt-1 text-sm text-muted-foreground">{sub}</p>}
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </DialogContent>
+    </Dialog>
   )
 }
 
