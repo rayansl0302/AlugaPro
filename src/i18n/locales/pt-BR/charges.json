@@ -218,6 +218,10 @@
   "tenantAsset": "Inquilino / Bem",
   "rent": "Aluguel",
   "dayShort": "dia {{day}}",
+  "cycle": {
+    "diaria": "diária",
+    "semanal": "semanal"
+  },
   "awaitingCount": "{{count}} aguardando",
   "createContractHint": "Crie um contrato para ver as cobranças mensais aqui",
   "viewReceipt": "Visualizar comprovante",

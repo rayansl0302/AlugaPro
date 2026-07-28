@@ -423,7 +423,10 @@ export function ContractsPage() {
                     <div className="flex items-center justify-between border-t pt-2">
                       <span className="font-semibold text-primary">{formatCurrency(contract.rentValue)}</span>
                       <span className="flex items-center gap-1 text-sm text-muted-foreground">
-                        <Calendar className="h-3 w-3" /> {t('dueDayLabel', { day: contract.dueDay })}
+                        <Calendar className="h-3 w-3" />
+                        {(contract.billingCycle ?? 'mensal') === 'mensal'
+                          ? t('dueDayLabel', { day: contract.dueDay })
+                          : t(`cycleBadge.${contract.billingCycle}`)}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-1 border-t pt-2">
@@ -512,7 +515,9 @@ export function ContractsPage() {
                     <TableCell>
                       <div className="flex items-center gap-1 text-sm">
                         <Calendar className="h-3 w-3 text-muted-foreground" />
-                        {t('dueDayLabel', { day: contract.dueDay })}
+                        {(contract.billingCycle ?? 'mensal') === 'mensal'
+                          ? t('dueDayLabel', { day: contract.dueDay })
+                          : t(`cycleBadge.${contract.billingCycle}`)}
                       </div>
                     </TableCell>
                     <TableCell>

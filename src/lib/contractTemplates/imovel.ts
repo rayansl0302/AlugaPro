@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { ImovelSigningData } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 
@@ -11,6 +12,8 @@ export function buildImovelBlocks(d: ImovelSigningData, contract: {
   contractNumber: string
   rentValue: number
   dueDay: number
+  billingCycle?: 'mensal' | 'diaria' | 'semanal'
+  paymentTiming?: 'antecipado' | 'na_devolucao'
   cautionValue?: number
   lateFee: number
   monthlyInterest: number
@@ -26,6 +29,21 @@ export function buildImovelBlocks(d: ImovelSigningData, contract: {
   const juros = `${contract.monthlyInterest}% ao mês`
   const valor = formatCurrency(contract.rentValue)
   const caucao = contract.cautionValue ? formatCurrency(contract.cautionValue) : null
+
+  const isShortStay = contract.billingCycle === 'diaria' || contract.billingCycle === 'semanal'
+  let shortStayText = ''
+  if (isShortStay && contract.endDate) {
+    const days = Math.max(differenceInCalendarDays(parseISO(contract.endDate), parseISO(contract.startDate)), 1)
+    const isSemanal = contract.billingCycle === 'semanal'
+    const periods = isSemanal ? Math.max(Math.ceil(days / 7), 1) : days
+    const total = formatCurrency(contract.rentValue * periods)
+    const cicloLabel = isSemanal ? 'semanal' : 'diária'
+    const unidade = isSemanal ? (periods === 1 ? 'semana' : 'semanas') : (periods === 1 ? 'diária' : 'diárias')
+    const pagamento = contract.paymentTiming === 'na_devolucao'
+      ? 'a ser pago integralmente na devolução do imóvel, ao final da locação'
+      : 'a ser pago antecipadamente, no ato da entrada do imóvel'
+    shortStayText = `Tratando-se de locação por temporada, nos termos dos artigos 48 a 53 da Lei nº 8.245/1991, o valor da ${cicloLabel} é de ${valor} (${d.financeiro.valorExtenso}), totalizando ${periods} ${unidade} e o valor total de ${total} para toda a locação, ${pagamento}.`
+  }
 
   const blocks: ContractBlock[] = []
 
@@ -87,7 +105,9 @@ export function buildImovelBlocks(d: ImovelSigningData, contract: {
 
   // CLÁUSULA 3
   clause('CLÁUSULA 3ª', 'DO ALUGUEL E DA FORMA DE PAGAMENTO')
-  sub('3.1', `O aluguel mensal é de ${valor} (${d.financeiro.valorExtenso}), a ser pago até o dia ${contract.dueDay} de cada mês subsequente ao vencido.`)
+  sub('3.1', isShortStay
+    ? shortStayText
+    : `O aluguel mensal é de ${valor} (${d.financeiro.valorExtenso}), a ser pago até o dia ${contract.dueDay} de cada mês subsequente ao vencido.`)
   if (fin.pixKey) sub('3.2', `O pagamento deverá ser realizado mediante PIX à chave: ${fin.pixKey}${fin.banco ? `, Banco ${fin.banco}${fin.agencia ? `, Ag. ${fin.agencia}` : ''}${fin.conta ? `, CC ${fin.conta}` : ''}` : ''}.`)
   sub('3.3', `Ocorrendo atraso no pagamento, o débito ficará sujeito a: (a) multa moratória de ${multa} sobre o valor do aluguel; (b) juros de mora de ${juros}; (c) correção monetária pelo IPCA/IBGE, calculada pro rata die.`)
   sub('3.4', `Os honorários advocatícios decorrentes de cobrança judicial ou extrajudicial, fixados em vinte por cento (20%) sobre o valor do débito, serão igualmente suportados pelo LOCATÁRIO inadimplente.`)

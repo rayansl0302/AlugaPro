@@ -474,6 +474,16 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
       dataContrato: format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR }),
     }
 
+    // Ativa os placeholders de diária/semanal do template (valorDiario/
+    // valorSemanal) só pro ciclo de cobrança real do contrato, em vez de
+    // sempre popular valorMensal.
+    const cycle = contract.billingCycle ?? 'mensal'
+    const financeiroCiclo = cycle === 'diaria'
+      ? { valorDiario: formatCurrency(contract.rentValue) }
+      : cycle === 'semanal'
+      ? { valorSemanal: formatCurrency(contract.rentValue) }
+      : { valorMensal: formatCurrency(contract.rentValue) }
+
     if (isVeiculo) {
       return {
         ...base,
@@ -489,7 +499,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
           kmInicial: vehicle?.mileage ? String(vehicle.mileage) : '',
           estadoGeral: 'Bom estado geral, conforme registro fotográfico',
         },
-        financeiro: { ...base.financeiro, valorMensal: formatCurrency(contract.rentValue), caucaoValor: contract.cautionValue ? formatCurrency(contract.cautionValue) : undefined },
+        financeiro: { ...base.financeiro, ...financeiroCiclo, caucaoValor: contract.cautionValue ? formatCurrency(contract.cautionValue) : undefined },
         prazo: { dataRetiradaFormatada: formatDate(contract.startDate), dataDevolucaoFormatada: contract.endDate ? formatDate(contract.endDate) : 'Indefinido', horarioRetirada: '08:00', horarioDevolucao: '18:00' },
       } as VeiculoSigningData
     }
@@ -506,7 +516,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
           estadoGeral: form.equipamento.estadoGeral,
           acessorios: form.equipamento.acessorios,
         },
-        financeiro: { ...base.financeiro, valorMensal: formatCurrency(contract.rentValue), caucaoValor: contract.cautionValue ? formatCurrency(contract.cautionValue) : undefined },
+        financeiro: { ...base.financeiro, ...financeiroCiclo, caucaoValor: contract.cautionValue ? formatCurrency(contract.cautionValue) : undefined },
         prazo: { dataRetiradaFormatada: formatDate(contract.startDate), dataDevolucaoFormatada: contract.endDate ? formatDate(contract.endDate) : 'Indefinido' },
       } as EquipamentoSigningData
     }
@@ -531,6 +541,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         const veiculoCtx = {
           contractNumber: contract.contractNumber,
           rentValue: contract.rentValue,
+          billingCycle: contract.billingCycle,
+          paymentTiming: contract.paymentTiming,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
           cautionValue: contract.cautionValue,
           lateFee: contract.lateFee,
           monthlyInterest: contract.monthlyInterest,
@@ -542,6 +556,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         const equipamentoCtx = {
           contractNumber: contract.contractNumber,
           rentValue: contract.rentValue,
+          billingCycle: contract.billingCycle,
+          paymentTiming: contract.paymentTiming,
+          startDate: contract.startDate,
+          endDate: contract.endDate,
           cautionValue: contract.cautionValue,
           lateFee: contract.lateFee,
           monthlyInterest: contract.monthlyInterest,
@@ -554,6 +572,8 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
           contractNumber: contract.contractNumber,
           rentValue: contract.rentValue,
           dueDay: contract.dueDay,
+          billingCycle: contract.billingCycle,
+          paymentTiming: contract.paymentTiming,
           cautionValue: contract.cautionValue,
           lateFee: contract.lateFee,
           monthlyInterest: contract.monthlyInterest,

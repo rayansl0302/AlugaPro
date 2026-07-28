@@ -739,7 +739,9 @@ export function TenantPortal() {
                       { label: contractAssetLabel(selectedContract), value: selectedContract.propertyName },
                       { label: t('contracts.owner'), value: selectedContract.ownerName ?? selectedOwner?.name },
                       { label: t('contractsExtra.value'), value: formatCurrency(selectedContract.rentValue), bold: true },
-                      { label: t('contractsExtra.dueEveryDay'), value: String(selectedContract.dueDay) },
+                      (selectedContract.billingCycle ?? 'mensal') === 'mensal'
+                        ? { label: t('contractsExtra.dueEveryDay'), value: String(selectedContract.dueDay) }
+                        : { label: t('contractsExtra.paymentTimingLabel'), value: t(`contractsExtra.paymentTiming.${selectedContract.paymentTiming ?? 'antecipado'}`) },
                       {
                         label: t('contractsExtra.validity'),
                         value: `${formatDate(selectedContract.startDate)} — ${formatDateOptional(selectedContract.endDate, t('contracts.indefinite'))}`,

@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useReadjustmentIndices } from '@/hooks/useReadjustmentIndices'
 import { requiredString } from '@/lib/validation'
 import { fieldErrorClass } from '@/lib/formErrors'
+import { formatCurrency } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
 
 const schema = z
@@ -41,12 +42,14 @@ const schema = z
     noEndDate: z.boolean().default(false),
     rentValue: z.coerce.number().min(1, 'Valor obrigatório'),
     dueDay: z.coerce.number().min(1).max(28),
+    billingCycle: z.enum(['mensal', 'diaria', 'semanal']).default('mensal'),
+    paymentTiming: z.enum(['antecipado', 'na_devolucao']).default('antecipado'),
     cautionValue: z.coerce.number().optional(),
     lateFee: z.coerce.number().min(0).max(10).default(2),
     monthlyInterest: z.coerce.number().min(0).max(5).default(1),
     readjustmentIndex: z.enum(['IGPM', 'IPCA', 'INPC', 'Fixo', 'Nenhum']).default('IGPM'),
   })
-  .refine((d) => d.noEndDate || !!d.endDate, {
+  .refine((d) => (d.billingCycle !== 'mensal' ? !!d.endDate : d.noEndDate || !!d.endDate), {
     message: 'Data de término obrigatória',
     path: ['endDate'],
   })
@@ -101,16 +104,36 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
           noEndDate: !contract.endDate,
           rentValue: contract.rentValue,
           dueDay: contract.dueDay,
+          billingCycle: contract.billingCycle ?? 'mensal',
+          paymentTiming: contract.paymentTiming ?? 'antecipado',
           cautionValue: contract.cautionValue,
           lateFee: contract.lateFee,
           monthlyInterest: contract.monthlyInterest,
           readjustmentIndex: contract.readjustmentIndex,
         }
-      : { assetType: 'imovel', noEndDate: false, lateFee: 2, monthlyInterest: 1, dueDay: 5, readjustmentIndex: 'IGPM' },
+      : {
+          assetType: 'imovel', noEndDate: false, lateFee: 2, monthlyInterest: 1, dueDay: 5,
+          billingCycle: 'mensal', paymentTiming: 'antecipado', readjustmentIndex: 'IGPM',
+        },
   })
 
   const assetType = watch('assetType')
   const noEndDate = watch('noEndDate')
+  const billingCycle = watch('billingCycle')
+  const isShortStay = billingCycle !== 'mensal'
+  const startDateValue = watch('startDate')
+  const endDateValue = watch('endDate')
+  const rentValueValue = watch('rentValue')
+
+  const shortStayPreview = (() => {
+    if (!isShortStay || !startDateValue || !endDateValue || !rentValueValue) return null
+    const start = new Date(startDateValue)
+    const end = new Date(endDateValue)
+    const days = Math.max(Math.round((end.getTime() - start.getTime()) / 86_400_000), 1)
+    const periods = billingCycle === 'semanal' ? Math.max(Math.ceil(days / 7), 1) : days
+    const total = periods * Number(rentValueValue)
+    return { periods, total }
+  })()
 
   const { data: properties = [] } = useQuery({
     queryKey: ['properties', companyId],
@@ -213,6 +236,8 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         endDate: data.noEndDate ? '' : (data.endDate ?? ''),
         rentValue: data.rentValue,
         dueDay: data.dueDay,
+        billingCycle: data.billingCycle,
+        paymentTiming: data.paymentTiming,
         cautionValue: data.cautionValue,
         lateFee: data.lateFee,
         monthlyInterest: data.monthlyInterest,
@@ -430,36 +455,79 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         </div>
 
         <div className="space-y-2">
+          <Label>{t('form.billingCycle')}</Label>
+          <Select
+            value={billingCycle}
+            onValueChange={(v) => {
+              setValue('billingCycle', v as 'mensal' | 'diaria' | 'semanal')
+              if (v !== 'mensal') setValue('noEndDate', false)
+            }}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="mensal">{t('form.billingCycleMensal')}</SelectItem>
+              <SelectItem value="diaria">{t('form.billingCycleDiaria')}</SelectItem>
+              <SelectItem value="semanal">{t('form.billingCycleSemanal')}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {isShortStay && (
+          <div className="space-y-2">
+            <Label>{t('form.paymentTiming')}</Label>
+            <Select value={watch('paymentTiming')} onValueChange={(v) => setValue('paymentTiming', v as 'antecipado' | 'na_devolucao')}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="antecipado">{t('form.paymentTimingAntecipado')}</SelectItem>
+                <SelectItem value="na_devolucao">{t('form.paymentTimingNaDevolucao')}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        <div className="space-y-2">
           <Label>{t('form.startDateRequired')}</Label>
           <Input type="date" className={fieldErrorClass(errors.startDate)} {...register('startDate')} />
           {errors.startDate && <p className="text-xs text-destructive">{errors.startDate.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label>{t('form.endDateLabel')} {!noEndDate && '*'}</Label>
-          <Input type="date" disabled={noEndDate} className={fieldErrorClass(errors.endDate)} {...register('endDate')} />
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input
-              type="checkbox"
-              className="h-3.5 w-3.5 rounded border-input"
-              checked={noEndDate}
-              onChange={(e) => {
-                setValue('noEndDate', e.target.checked)
-                if (e.target.checked) setValue('endDate', '')
-              }}
-            />
-            {t('form.noEndDate')}
-          </label>
+          <Label>{t('form.endDateLabel')} {(isShortStay || !noEndDate) && '*'}</Label>
+          <Input type="date" disabled={!isShortStay && noEndDate} className={fieldErrorClass(errors.endDate)} {...register('endDate')} />
+          {!isShortStay && (
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                className="h-3.5 w-3.5 rounded border-input"
+                checked={noEndDate}
+                onChange={(e) => {
+                  setValue('noEndDate', e.target.checked)
+                  if (e.target.checked) setValue('endDate', '')
+                }}
+              />
+              {t('form.noEndDate')}
+            </label>
+          )}
           {errors.endDate && <p className="text-xs text-destructive">{errors.endDate.message}</p>}
         </div>
         <div className="space-y-2">
-          <Label>{t('form.rentValueRequired')}</Label>
+          <Label>
+            {isShortStay
+              ? t(billingCycle === 'semanal' ? 'form.weeklyRateRequired' : 'form.dailyRateRequired')
+              : t('form.rentValueRequired')}
+          </Label>
           <Input type="number" step="0.01" className={fieldErrorClass(errors.rentValue)} {...register('rentValue')} />
           {errors.rentValue && <p className="text-xs text-destructive">{errors.rentValue.message}</p>}
+          {shortStayPreview && (
+            <p className="text-xs text-muted-foreground">
+              {t('form.shortStayPreview', { count: shortStayPreview.periods, total: formatCurrency(shortStayPreview.total) })}
+            </p>
+          )}
         </div>
-        <div className="space-y-2">
-          <Label>{t('form.dueDayRequired')}</Label>
-          <Input type="number" min={1} max={28} {...register('dueDay')} />
-        </div>
+        {!isShortStay && (
+          <div className="space-y-2">
+            <Label>{t('form.dueDayRequired')}</Label>
+            <Input type="number" min={1} max={28} {...register('dueDay')} />
+          </div>
+        )}
         {/* Modo normal: termos inline no grid. Modo importar: escondidos aqui
             e movidos pro "avançado" opcional abaixo (já estão no PDF). */}
         {!startInImport && termFields}

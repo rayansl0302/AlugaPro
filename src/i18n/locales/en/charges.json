@@ -218,6 +218,10 @@
   "tenantAsset": "Tenant / Asset",
   "rent": "Rent",
   "dayShort": "day {{day}}",
+  "cycle": {
+    "diaria": "daily",
+    "semanal": "weekly"
+  },
   "awaitingCount": "{{count}} awaiting",
   "createContractHint": "Create a contract to see monthly charges here",
   "viewReceipt": "View receipt",

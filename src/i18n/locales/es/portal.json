@@ -259,6 +259,15 @@
     "type": "Tipo",
     "template": "Modelo",
     "valuesAndConditions": "Valores y condiciones",
+    "rateLabel": {
+      "diaria": "Valor de la diaria",
+      "semanal": "Valor de la semana"
+    },
+    "paymentTimingLabel": "Pago",
+    "paymentTiming": {
+      "antecipado": "Anticipado (al inicio)",
+      "na_devolucao": "Al devolver (al finalizar)"
+    },
     "deposit": "Depósito",
     "readjustment": "Reajuste",
     "witnesses": "Testigos",

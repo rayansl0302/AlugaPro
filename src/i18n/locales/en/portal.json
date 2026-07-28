@@ -259,6 +259,15 @@
     "type": "Type",
     "template": "Template",
     "valuesAndConditions": "Values and terms",
+    "rateLabel": {
+      "diaria": "Daily rate",
+      "semanal": "Weekly rate"
+    },
+    "paymentTimingLabel": "Payment",
+    "paymentTiming": {
+      "antecipado": "Upfront (at check-in)",
+      "na_devolucao": "On return (at check-out)"
+    },
     "deposit": "Deposit",
     "readjustment": "Adjustment",
     "witnesses": "Witnesses",

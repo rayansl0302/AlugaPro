@@ -1,3 +1,4 @@
+import { differenceInCalendarDays, parseISO } from 'date-fns'
 import { VeiculoSigningData } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { ContractBlock } from './imovel'
@@ -5,6 +6,10 @@ import { ContractBlock } from './imovel'
 export function buildVeiculoBlocks(d: VeiculoSigningData, contract: {
   contractNumber: string
   rentValue: number
+  billingCycle?: 'mensal' | 'diaria' | 'semanal'
+  paymentTiming?: 'antecipado' | 'na_devolucao'
+  startDate?: string
+  endDate?: string
   cautionValue?: number
   lateFee: number
   monthlyInterest: number
@@ -17,6 +22,21 @@ export function buildVeiculoBlocks(d: VeiculoSigningData, contract: {
   const juros = `${contract.monthlyInterest}% ao mês`
   const valorMensal = fin.valorMensal ?? formatCurrency(contract.rentValue)
   const caucao = fin.caucaoValor ?? (contract.cautionValue ? formatCurrency(contract.cautionValue) : null)
+
+  const isShortStay = contract.billingCycle === 'diaria' || contract.billingCycle === 'semanal'
+  let valorLocacaoText = `O valor ajustado para a presente locação é de: ${fin.valorDiario ? `R$ ${fin.valorDiario} (diário)` : ''}${fin.valorSemanal ? ` / R$ ${fin.valorSemanal} (semanal)` : ''} / ${valorMensal} (mensal).`
+  if (isShortStay && contract.startDate && contract.endDate) {
+    const days = Math.max(differenceInCalendarDays(parseISO(contract.endDate), parseISO(contract.startDate)), 1)
+    const isSemanal = contract.billingCycle === 'semanal'
+    const periods = isSemanal ? Math.max(Math.ceil(days / 7), 1) : days
+    const total = formatCurrency(contract.rentValue * periods)
+    const cicloLabel = isSemanal ? 'semanal' : 'diária'
+    const unidade = isSemanal ? (periods === 1 ? 'semana' : 'semanas') : (periods === 1 ? 'diária' : 'diárias')
+    const pagamento = contract.paymentTiming === 'na_devolucao'
+      ? 'a ser pago integralmente na devolução do veículo, ao final da locação'
+      : 'a ser pago antecipadamente, no ato da retirada do veículo'
+    valorLocacaoText = `O valor ajustado para a presente locação é de ${formatCurrency(contract.rentValue)} (${cicloLabel}), totalizando ${periods} ${unidade} e o valor total de ${total} para toda a locação, ${pagamento}.`
+  }
 
   const blocks: ContractBlock[] = []
   const add = (b: ContractBlock) => blocks.push(b)
@@ -77,7 +97,7 @@ export function buildVeiculoBlocks(d: VeiculoSigningData, contract: {
 
   // CLÁUSULA 3
   clause('CLÁUSULA 3ª', 'DO VALOR DA LOCAÇÃO E FORMA DE PAGAMENTO')
-  sub('3.1', `O valor ajustado para a presente locação é de: ${fin.valorDiario ? `R$ ${fin.valorDiario} (diário)` : ''}${fin.valorSemanal ? ` / R$ ${fin.valorSemanal} (semanal)` : ''} / ${valorMensal} (mensal).`)
+  sub('3.1', valorLocacaoText)
   if (caucao) sub('3.2', `O LOCATÁRIO depositará, a título de caução, a importância de ${caucao}, que lhe será restituída integralmente ao término da locação, deduzidos eventuais débitos, danos ou multas.`)
   if (fin.pixKey) sub('3.3', `O pagamento deverá ser realizado mediante PIX à chave: ${fin.pixKey}${fin.banco ? `, Banco ${fin.banco}` : ''}.`)
   sub('3.4', `O atraso no pagamento sujeitará o LOCATÁRIO a: (a) multa de ${multa}; (b) juros de mora de ${juros}; (c) correção monetária pelo IPCA.`)

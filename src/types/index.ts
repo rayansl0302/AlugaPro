@@ -333,6 +333,10 @@ export interface Contract {
   endDate?: string
   rentValue: number
   dueDay: number
+  // undefined ⇒ 'mensal' (contratos existentes continuam recorrentes por mês).
+  billingCycle?: 'mensal' | 'diaria' | 'semanal'
+  // Só relevante quando billingCycle !== 'mensal'. undefined ⇒ 'antecipado'.
+  paymentTiming?: 'antecipado' | 'na_devolucao'
   cautionValue?: number
   lateFee: number
   monthlyInterest: number

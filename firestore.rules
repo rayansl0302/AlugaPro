@@ -267,6 +267,8 @@ service cloud.firestore {
             && request.resource.data.rentValue   == resource.data.rentValue
             && request.resource.data.startDate   == resource.data.startDate
             && request.resource.data.dueDay      == resource.data.dueDay
+            && request.resource.data.get('billingCycle', null) == resource.data.get('billingCycle', null)
+            && request.resource.data.get('paymentTiming', null) == resource.data.get('paymentTiming', null)
             && request.resource.data.status      == resource.data.status
             && request.resource.data.signatureLocador == resource.data.signatureLocador
             && request.resource.data.docsLocador == resource.data.docsLocador

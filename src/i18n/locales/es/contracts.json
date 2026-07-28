@@ -8,6 +8,10 @@
   "view": "Ver contrato",
   "generatePdf": "Generar PDF",
   "searchPlaceholder": "Buscar por inmueble, inquilino o código...",
+  "cycleBadge": {
+    "diaria": "Diaria",
+    "semanal": "Semanal"
+  },
   "filters": {
     "title": "Filtros",
     "all": "Todos",
@@ -51,6 +55,16 @@
     "noEndDate": "Plazo indeterminado (sin fecha de término)",
     "rentValueRequired": "Valor del alquiler *",
     "dueDayRequired": "Día de vencimiento *",
+    "billingCycle": "Ciclo de cobro",
+    "billingCycleMensal": "Mensual",
+    "billingCycleDiaria": "Diaria",
+    "billingCycleSemanal": "Semanal",
+    "paymentTiming": "Pago",
+    "paymentTimingAntecipado": "Anticipado (al inicio)",
+    "paymentTimingNaDevolucao": "Al devolver (al finalizar)",
+    "dailyRateRequired": "Valor de la diaria *",
+    "weeklyRateRequired": "Valor de la semana *",
+    "shortStayPreview": "{{count}}x — total {{total}}",
     "lateFee": "Multa por atraso (%)",
     "monthlyInterest": "Intereses mensuales (%)",
     "ownerPrefix": "Propietario: {{name}}",

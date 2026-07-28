@@ -538,6 +538,9 @@ export function ChargesPage() {
   }
 
   const handleGenerateSingle = async (contract: Contract, monthDate: Date) => {
+    // Contratos diária/semanal geram uma única cobrança pro período todo na
+    // criação do contrato — não há "mês" pra preencher aqui.
+    if ((contract.billingCycle ?? 'mensal') !== 'mensal') return
     try {
       const lastDay = endOfMonth(monthDate).getDate()
       const day = Math.min(contract.dueDay, lastDay)
@@ -885,7 +888,11 @@ export function ChargesPage() {
                       {/* Rent value */}
                       <div className="w-[72px] shrink-0 text-right pr-2">
                         <p className="text-sm font-bold text-primary">{formatCurrency(contract.rentValue)}</p>
-                        <p className="text-[10px] text-muted-foreground">{t('dayShort', { day: contract.dueDay })}</p>
+                        <p className="text-[10px] text-muted-foreground">
+                          {(contract.billingCycle ?? 'mensal') === 'mensal'
+                            ? t('dayShort', { day: contract.dueDay })
+                            : t(`cycle.${contract.billingCycle}`)}
+                        </p>
                       </div>
 
                       <div className="w-[140px] shrink-0 flex flex-col items-center justify-center gap-1">
@@ -935,9 +942,31 @@ export function ChargesPage() {
                       {/* Navigation spacer left */}
                       <div className="w-6 shrink-0" />
 
-                      {/* Month chips */}
+                      {/* Month chips — diária/semanal tem uma única cobrança pro
+                          período todo, então mostra um chip só (reaproveitando
+                          o MonthCell existente) em vez da tira de 24 meses. */}
                       <div className="flex flex-1 justify-between">
-                        {visibleMonths.map((monthDate) => {
+                        {(contract.billingCycle ?? 'mensal') !== 'mensal' ? (() => {
+                          const charge = contractChargeMap ? Array.from(contractChargeMap.values())[0] : undefined
+                          const mStr = charge?.dueDate ? charge.dueDate.slice(0, 7) : currentMonthStr
+                          const monthDate = charge?.dueDate ? parseISO(charge.dueDate) : new Date()
+                          return (
+                            <div className="flex w-full items-center justify-center">
+                              <MonthCell
+                                contract={contract}
+                                monthDate={monthDate}
+                                monthStr={mStr}
+                                currentMonthStr={currentMonthStr}
+                                todayStr={todayStr}
+                                charge={charge}
+                                canManage={canManage}
+                                onMarkPaid={setPayingCharge}
+                                onViewDetails={setViewingCharge}
+                                onGenerate={handleGenerateSingle}
+                              />
+                            </div>
+                          )
+                        })() : visibleMonths.map((monthDate) => {
                           const mStr = format(monthDate, 'yyyy-MM')
                           const charge = contractChargeMap?.get(mStr)
                           return (

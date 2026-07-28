@@ -8,6 +8,10 @@
   "view": "View contract",
   "generatePdf": "Generate PDF",
   "searchPlaceholder": "Search by property, tenant, or code...",
+  "cycleBadge": {
+    "diaria": "Daily",
+    "semanal": "Weekly"
+  },
   "filters": {
     "title": "Filters",
     "all": "All",
@@ -51,6 +55,16 @@
     "noEndDate": "Indefinite term (no end date)",
     "rentValueRequired": "Rent amount *",
     "dueDayRequired": "Due day *",
+    "billingCycle": "Billing cycle",
+    "billingCycleMensal": "Monthly",
+    "billingCycleDiaria": "Daily",
+    "billingCycleSemanal": "Weekly",
+    "paymentTiming": "Payment",
+    "paymentTimingAntecipado": "Upfront (at check-in)",
+    "paymentTimingNaDevolucao": "On return (at check-out)",
+    "dailyRateRequired": "Daily rate *",
+    "weeklyRateRequired": "Weekly rate *",
+    "shortStayPreview": "{{count}}x — total {{total}}",
     "lateFee": "Late fee (%)",
     "monthlyInterest": "Monthly interest (%)",
     "ownerPrefix": "Owner: {{name}}",

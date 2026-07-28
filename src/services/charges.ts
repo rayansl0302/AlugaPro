@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Charge, Contract } from '@/types'
-import { addMonths, format, parseISO, setDate, startOfMonth, endOfMonth, isBefore, isAfter } from 'date-fns'
+import { addMonths, format, parseISO, setDate, startOfMonth, endOfMonth, isBefore, isAfter, differenceInCalendarDays } from 'date-fns'
 import { calculateLateFee, calculateInterest, getDaysLate, isOverdue } from '@/lib/utils'
 
 const COL = 'charges'
@@ -22,6 +22,8 @@ type ChargeGenerationContract = Pick<
   | 'endDate'
   | 'dueDay'
   | 'rentValue'
+  | 'billingCycle'
+  | 'paymentTiming'
 >
 
 export async function getCharges(companyId: string): Promise<Charge[]> {
@@ -151,6 +153,10 @@ export async function generateChargesForContract(
 ): Promise<number> {
   if (contract.status === 'encerrado' || contract.status === 'cancelado') return 0
 
+  if (contract.billingCycle === 'diaria' || contract.billingCycle === 'semanal') {
+    return generateShortStayCharge(contract)
+  }
+
   const q = query(collection(db, COL), where('contractId', '==', contract.id), where('type', '==', 'aluguel'))
   const snap = await getDocs(q)
   const existingDueDates = new Set(snap.docs.map((d) => d.data().dueDate as string))
@@ -196,6 +202,43 @@ export async function generateChargesForContract(
   }
 
   return created
+}
+
+// Contratos por diária/semanal geram uma única cobrança (não recorrente) pro
+// período todo — sem endDate não há como calcular a duração, então não gera.
+async function generateShortStayCharge(contract: ChargeGenerationContract): Promise<number> {
+  if (!contract.endDate) return 0
+
+  const q = query(collection(db, COL), where('contractId', '==', contract.id), where('type', '==', 'aluguel'))
+  const snap = await getDocs(q)
+  if (!snap.empty) return 0
+
+  const start = parseISO(contract.startDate)
+  const end = parseISO(contract.endDate)
+  const days = Math.max(differenceInCalendarDays(end, start), 1)
+  const periods = contract.billingCycle === 'semanal' ? Math.max(Math.ceil(days / 7), 1) : days
+  const amount = contract.rentValue * periods
+  const dueDate = contract.paymentTiming === 'na_devolucao' ? contract.endDate : contract.startDate
+  const label = contract.billingCycle === 'semanal' ? 'Semanal' : 'Diária'
+  const description = `${label} (${periods}x) — ${format(start, 'dd/MM')} a ${format(end, 'dd/MM')}`
+
+  await addDoc(collection(db, COL), {
+    companyId: contract.companyId,
+    contractId: contract.id,
+    propertyId: contract.propertyId,
+    propertyName: contract.propertyName ?? '',
+    tenantId: contract.tenantId,
+    tenantName: contract.tenantName ?? '',
+    type: 'aluguel',
+    description,
+    amount,
+    dueDate,
+    status: 'pendente',
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+
+  return 1
 }
 
 export function enrichChargeWithLateFees(

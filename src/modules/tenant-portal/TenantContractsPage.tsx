@@ -259,11 +259,22 @@ function ContractCard({
               <DollarSign className="h-3.5 w-3.5" />
               {t('contractsExtra.valuesAndConditions')}
             </p>
-            <DetailRow label={t('contracts.monthlyRent')} value={formatCurrency(contract.rentValue)} bold />
             <DetailRow
-              label={t('contracts.dueDay')}
-              value={t('contracts.dueDayValue', { day: contract.dueDay })}
+              label={(contract.billingCycle ?? 'mensal') === 'mensal' ? t('contracts.monthlyRent') : t(`contractsExtra.rateLabel.${contract.billingCycle}`)}
+              value={formatCurrency(contract.rentValue)}
+              bold
             />
+            {(contract.billingCycle ?? 'mensal') === 'mensal' ? (
+              <DetailRow
+                label={t('contracts.dueDay')}
+                value={t('contracts.dueDayValue', { day: contract.dueDay })}
+              />
+            ) : (
+              <DetailRow
+                label={t('contractsExtra.paymentTimingLabel')}
+                value={t(`contractsExtra.paymentTiming.${contract.paymentTiming ?? 'antecipado'}`)}
+              />
+            )}
             {contract.cautionValue != null && contract.cautionValue > 0 && (
               <DetailRow label={t('contractsExtra.deposit')} value={formatCurrency(contract.cautionValue)} />
             )}
