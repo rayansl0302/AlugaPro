@@ -235,6 +235,10 @@
     "ctaBannerBadge": "14 days free · No credit card",
     "ctaBannerTitle": "Ready to try it all?",
     "ctaBannerSubtitle": "Start your free trial and explore every feature with no commitment.",
+    "meta": {
+      "title": "Features — AlugaPro",
+      "description": "Explore every AlugaPro feature: digital contracts, automatic billing, tenant portal, notifications, and reports for properties, vehicles, and equipment."
+    },
     "blocks": {
       "propertiesVehicles": {
         "badge": "Portfolio",
@@ -312,6 +316,10 @@
     "ctaBecomeAffiliate": "I want to be an affiliate",
     "ctaGoToPanel": "Go to my panel",
     "ctaSeeHowItWorks": "See how it works",
+    "meta": {
+      "title": "Affiliate Program — AlugaPro",
+      "description": "Refer AlugaPro and earn a 7% recurring commission on the monthly plan of every active client you refer."
+    },
     "earnTitle": "How you earn",
     "earnSubtitle": "Recurring 7% commission on the monthly fee of every active client you refer.",
     "commissionTitle": "7% recurring commission",
@@ -393,5 +401,47 @@
     "contactTagline": "Smart rental management",
     "rightsReserved": "© {{year}} AlugaPro. All rights reserved.",
     "login": "Sign in"
+  },
+  "meta": {
+    "title": "AlugaPro — Rental management for properties, vehicles and equipment",
+    "description": "Complete platform to manage rentals: digital contracts with e-signature, automatic billing, tenant portal, and support for monthly, daily, or weekly rentals. 14-day free trial, no card required."
+  },
+  "faq": {
+    "title": "Frequently asked questions",
+    "subtitle": "Everything you need to know before getting started.",
+    "items": [
+      {
+        "question": "Is there a free trial?",
+        "answer": "Yes, you get 14 days free to try every feature, no credit card required."
+      },
+      {
+        "question": "Can I cancel anytime?",
+        "answer": "Yes, there's no lock-in contract — you can cancel your subscription anytime, right from the dashboard."
+      },
+      {
+        "question": "What types of assets can I manage?",
+        "answer": "Properties, vehicles, and equipment, all on the same platform, each with its own contracts, billing, and tenant/renter portal."
+      },
+      {
+        "question": "Are contracts signed digitally?",
+        "answer": "Yes. AlugaPro generates the contract, collects an e-signature from every party, and once everyone has signed, locks the document with a SHA-256 hash and a public verification QR code."
+      },
+      {
+        "question": "Does the system support daily or short-term rentals, not just monthly?",
+        "answer": "Yes. Besides recurring monthly rent, you can set up daily or weekly contracts, with payment upfront or on return of the asset."
+      },
+      {
+        "question": "Do tenants get their own access?",
+        "answer": "Yes, the tenant portal is always free and shows contracts, charges, and receipts, so tenants can track everything without contacting the manager."
+      },
+      {
+        "question": "Are charges generated automatically?",
+        "answer": "Yes, AlugaPro automatically generates charges from the contract and alerts on due dates and late payments."
+      },
+      {
+        "question": "How much does AlugaPro cost?",
+        "answer": "Plans start at R$39/month and scale with the size of your operation, always with a 14-day free trial before you decide."
+      }
+    ]
   }
 }

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import { useContext, useEffect, useState, ReactNode } from 'react'
 import {
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -23,6 +23,7 @@ import { createReferral } from '@/services/affiliateReferrals'
 import { queryClient } from '@/lib/queryClient'
 import i18n from '@/i18n'
 import { LOCALE_STORAGE_KEY, isAppLocale, normalizeLocale } from '@/i18n/locales'
+import { AuthContext, type AuthContextValue, type LoginRole } from './authContextCore'
 
 // ── Admins reais (somente estes e-mails recebem o papel de administrador) ──────
 const ADMIN_EMAILS = ['rayansl0302@gmail.com', 'rayansl.dev@gmail.com']
@@ -45,8 +46,6 @@ let googleSocialLoginInitialized = false
 // do que estiver salvo no doc do Firestore, para nunca misturar com dados
 // de clientes reais.
 const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
-
-type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
 
 function isAdminEmail(email?: string | null) {
   return !!email && ADMIN_EMAILS.includes(email.toLowerCase())
@@ -274,21 +273,7 @@ const DEMO_USERS: Record<string, User> = {
 const DEMO_PASSWORD = 'demo1234'
 const DEMO_SESSION_KEY = 'alugapro_demo_user'
 
-interface AuthContextValue {
-  firebaseUser: FirebaseUser | null
-  user: User | null
-  loading: boolean
-  signIn: (email: string, password: string, intendedRole?: LoginRole) => Promise<void>
-  signUp: (name: string, email: string, password: string, role?: LoginRole, refCode?: string) => Promise<void>
-  signInWithGoogle: (intendedRole?: LoginRole, refCode?: string) => Promise<void>
-  logout: () => Promise<void>
-  resetPassword: (email: string) => Promise<void>
-  updateLocalUser: (patch: Partial<User>) => void
-  refreshProfile: () => Promise<void>
-  setLocale: (locale: AppLocale) => Promise<void>
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null)
+export type { AuthContextValue }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null)

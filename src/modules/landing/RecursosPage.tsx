@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
+import { Seo } from '@/components/seo/Seo'
 import { fadeInUp, fadeInLeft, fadeInRight, staggerContainer, viewportOnce, easeTransition } from '@/lib/motion'
 
 const accentMap: Record<string, { bg: string; text: string; border: string; badge: string }> = {
@@ -128,6 +129,7 @@ export function RecursosPage() {
 
   return (
     <div className="light min-h-screen bg-white text-foreground">
+      <Seo title={t('recursos.meta.title')} description={t('recursos.meta.description')} path="/recursos" />
       <LandingHeader />
 
       <main>

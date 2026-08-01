@@ -10,9 +10,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion'
 import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
 import { LandingHeroPreview } from '@/components/landing/LandingHeroPreview'
+import { Seo, SITE_URL } from '@/components/seo/Seo'
 import {
   fadeInUp, fadeInLeft, fadeInRight, scaleIn,
   staggerContainer, viewportOnce, easeTransition,
@@ -23,10 +25,16 @@ import { formatCurrency } from '@/lib/utils'
 type CellValue = boolean | string
 interface CompRow { label: string; starter: CellValue; pro: CellValue; business: CellValue }
 interface CompGroup { group: string; rows: CompRow[] }
+interface FaqItem { question: string; answer: string }
 
 export function LandingPage() {
   const { t } = useTranslation('landing')
   const { user } = useAuth()
+
+  const FAQ_ITEMS = (() => {
+    const items = t('faq.items', { returnObjects: true })
+    return Array.isArray(items) ? (items as FaqItem[]) : []
+  })()
 
   const FEATURES = [
     {
@@ -165,8 +173,45 @@ export function LandingPage() {
     { id: 'business' as const, name: t('pricing.plans.business.name'), price: `${formatCurrency(PLANS.business.price)}${t('pricing.perMonth')}`, popular: false },
   ]
 
+  const jsonLd = [
+    {
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: t('site.name'),
+      url: SITE_URL,
+      logo: `${SITE_URL}/logo-completa-horizontal-alugapro.png`,
+      description: t('site.tagline'),
+      email: t('site.supportEmail'),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'SoftwareApplication',
+      name: t('site.name'),
+      applicationCategory: 'BusinessApplication',
+      operatingSystem: 'Web',
+      description: t('meta.description'),
+      offers: (Object.keys(PLANS) as PlanId[]).map((id) => ({
+        '@type': 'Offer',
+        name: PLANS[id].name,
+        price: PLANS[id].price,
+        priceCurrency: 'BRL',
+        description: PLANS[id].description,
+      })),
+    },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map((item) => ({
+        '@type': 'Question',
+        name: item.question,
+        acceptedAnswer: { '@type': 'Answer', text: item.answer },
+      })),
+    },
+  ]
+
   return (
     <div className="light min-h-screen bg-white text-foreground">
+      <Seo title={t('meta.title')} description={t('meta.description')} path="/" jsonLd={jsonLd} />
       <LandingHeader />
 
       <main>
@@ -631,6 +676,41 @@ export function LandingPage() {
                   </tr>
                 </tfoot>
               </table>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section id="faq" className="border-y border-slate-200 bg-slate-50/50 py-20">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6">
+            <motion.div
+              className="text-center"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={fadeInUp}
+            >
+              <h2 className="text-3xl font-bold text-[#032B61] sm:text-4xl">{t('faq.title')}</h2>
+              <p className="mt-4 text-lg text-muted-foreground">{t('faq.subtitle')}</p>
+            </motion.div>
+
+            <motion.div
+              className="mt-12"
+              initial="hidden"
+              whileInView="visible"
+              viewport={viewportOnce}
+              variants={staggerContainer(0.06)}
+            >
+              <Accordion type="single" collapsible className="w-full">
+                {FAQ_ITEMS.map((item, i) => (
+                  <motion.div key={i} variants={fadeInUp}>
+                    <AccordionItem value={`item-${i}`}>
+                      <AccordionTrigger className="text-left text-base">{item.question}</AccordionTrigger>
+                      <AccordionContent className="text-muted-foreground">{item.answer}</AccordionContent>
+                    </AccordionItem>
+                  </motion.div>
+                ))}
+              </Accordion>
             </motion.div>
           </div>
         </section>

@@ -12,6 +12,7 @@ import { Label } from '@/components/ui/label'
 import { maskCPF } from '@/lib/utils'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { toast } from '@/hooks/useToast'
+import { Seo } from '@/components/seo/Seo'
 
 type Status = 'loading' | 'ready' | 'already' | 'notfound' | 'done'
 
@@ -62,6 +63,7 @@ export function WitnessSignPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+      <Seo title="Assinatura de testemunha — AlugaPro" description="Assinatura eletrônica de testemunha de contrato." path={`/assinar-testemunha/${token ?? ''}`} noindex />
       <div className="w-full max-w-lg rounded-2xl border bg-background shadow-sm overflow-hidden">
         <div className="bg-primary px-6 py-5 text-primary-foreground">
           <div className="flex items-start justify-between gap-3">

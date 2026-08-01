@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "dev:api": "tsx server.dev.ts",
-    "build": "tsc && vite build",
+    "build": "tsc && vite build && tsx scripts/prerender.tsx",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "build:android": "npm run build && npx cap sync android",
@@ -64,6 +64,7 @@
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",
     "react-dom": "^18.3.1",
+    "react-helmet-async": "^3.0.0",
     "react-hook-form": "^7.53.0",
     "react-i18next": "^17.0.9",
     "react-router-dom": "^6.26.2",

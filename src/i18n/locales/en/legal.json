@@ -8,6 +8,7 @@
   },
   "terms": {
     "pageTitle": "Terms of Use",
+    "metaDescription": "AlugaPro Terms of Use: conditions for using the property, vehicle, and equipment rental management platform.",
     "updatedAt": "June 26, 2026",
     "sections": {
       "acceptance": {
@@ -115,6 +116,7 @@
   },
   "privacy": {
     "pageTitle": "Privacy Policy",
+    "metaDescription": "AlugaPro Privacy Policy: how we collect, use, and protect the data of everyone who uses the rental management platform.",
     "updatedAt": "June 25, 2026",
     "sections": {
       "introduction": {

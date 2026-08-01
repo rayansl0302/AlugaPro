@@ -1,0 +1,36 @@
+User-agent: *
+Allow: /
+Allow: /recursos
+Allow: /afiliados
+Allow: /termos
+Allow: /politica-de-privacidade
+
+Disallow: /login
+Disallow: /dashboard
+Disallow: /imoveis
+Disallow: /veiculos
+Disallow: /equipamentos
+Disallow: /proprietarios
+Disallow: /inquilinos
+Disallow: /contratos
+Disallow: /modelos-contrato
+Disallow: /contratos-terreno
+Disallow: /financeiro
+Disallow: /cobrancas
+Disallow: /inadimplencia
+Disallow: /advertencias
+Disallow: /despesas
+Disallow: /chamados
+Disallow: /notificacoes
+Disallow: /relatorios
+Disallow: /configuracoes
+Disallow: /perfil
+Disallow: /portal
+Disallow: /painel-afiliado
+Disallow: /exclusao-de-conta
+Disallow: /descadastrar
+Disallow: /assinar-testemunha/
+Disallow: /assinar-venda/
+Disallow: /verificar/
+
+Sitemap: https://alugapro.tech.br/sitemap.xml

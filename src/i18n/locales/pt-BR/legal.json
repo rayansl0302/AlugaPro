@@ -8,6 +8,7 @@
   },
   "terms": {
     "pageTitle": "Termos de Uso",
+    "metaDescription": "Termos de Uso do AlugaPro: condições de uso da plataforma de gestão de aluguéis de imóveis, veículos e equipamentos.",
     "updatedAt": "26 de junho de 2026",
     "sections": {
       "acceptance": {
@@ -115,6 +116,7 @@
   },
   "privacy": {
     "pageTitle": "Política de Privacidade",
+    "metaDescription": "Política de Privacidade do AlugaPro: como coletamos, usamos e protegemos os dados de quem usa a plataforma de gestão de aluguéis.",
     "updatedAt": "25 de junho de 2026",
     "sections": {
       "introduction": {

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { LandingHeader } from '@/components/landing/LandingHeader'
 import { LandingFooter } from '@/components/landing/LandingFooter'
+import { Seo } from '@/components/seo/Seo'
 import { fadeInUp, scaleIn, staggerContainer, viewportOnce } from '@/lib/motion'
 
 export function AfiliadosPage() {
@@ -75,6 +76,7 @@ export function AfiliadosPage() {
 
   return (
     <div className="light min-h-screen bg-white text-foreground">
+      <Seo title={t('affiliatesPage.meta.title')} description={t('affiliatesPage.meta.description')} path="/afiliados" />
       <LandingHeader />
 
       <main>

@@ -7,6 +7,7 @@ import { getVerificationRecord } from '@/services/contractVerification'
 import { Button } from '@/components/ui/button'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { toast } from '@/hooks/useToast'
+import { Seo } from '@/components/seo/Seo'
 
 type Status = 'loading' | 'found' | 'notfound'
 
@@ -54,6 +55,7 @@ export function VerifyDocumentPage() {
 
   return (
     <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
+      <Seo title="Verificação de documento — AlugaPro" description="Verificação pública de autenticidade de contrato." path={`/verificar/${verificationId ?? ''}`} noindex />
       <div className="w-full max-w-lg rounded-2xl border bg-background shadow-sm overflow-hidden">
         <div className="bg-primary px-6 py-5 text-primary-foreground">
           <div className="flex items-start justify-between gap-3">

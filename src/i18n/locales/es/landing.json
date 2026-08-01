@@ -235,6 +235,10 @@
     "ctaBannerBadge": "14 días gratis · Sin tarjeta de crédito",
     "ctaBannerTitle": "¿Listo para probarlo todo?",
     "ctaBannerSubtitle": "Empieza tu prueba gratuita y explora todos los recursos sin compromiso.",
+    "meta": {
+      "title": "Funcionalidades — AlugaPro",
+      "description": "Conoce todas las funcionalidades de AlugaPro: contratos digitales, cobros automáticos, portal del inquilino, notificaciones e informes para inmuebles, vehículos y equipos."
+    },
     "blocks": {
       "propertiesVehicles": {
         "badge": "Portafolio",
@@ -312,6 +316,10 @@
     "ctaBecomeAffiliate": "Quiero ser afiliado",
     "ctaGoToPanel": "Ir a mi panel",
     "ctaSeeHowItWorks": "Ver cómo funciona",
+    "meta": {
+      "title": "Programa de Afiliados — AlugaPro",
+      "description": "Recomienda AlugaPro y gana una comisión recurrente del 7% sobre la mensualidad de cada cliente activo que refieras."
+    },
     "earnTitle": "Cómo ganas",
     "earnSubtitle": "Comisión recurrente del 7% sobre la mensualidad de cada cliente activo que indiques.",
     "commissionTitle": "7% de comisión recurrente",
@@ -393,5 +401,47 @@
     "contactTagline": "Gestión de alquileres inteligente",
     "rightsReserved": "© {{year}} AlugaPro. Todos los derechos reservados.",
     "login": "Entrar"
+  },
+  "meta": {
+    "title": "AlugaPro — Gestión de alquileres de inmuebles, vehículos y equipos",
+    "description": "Plataforma completa para administrar alquileres: contratos digitales con firma electrónica, cobros automáticos, portal del inquilino y soporte para alquiler mensual, diario o semanal. 14 días gratis, sin tarjeta."
+  },
+  "faq": {
+    "title": "Preguntas frecuentes",
+    "subtitle": "Todo lo que necesitas saber antes de empezar.",
+    "items": [
+      {
+        "question": "¿Existe un período de prueba gratuito?",
+        "answer": "Sí, tienes 14 días gratis para probar todas las funciones, sin necesidad de tarjeta de crédito."
+      },
+      {
+        "question": "¿Puedo cancelar cuando quiera?",
+        "answer": "Sí, no hay permanencia — puedes cancelar la suscripción cuando quieras, directamente desde el panel."
+      },
+      {
+        "question": "¿Qué tipos de bienes puedo gestionar?",
+        "answer": "Inmuebles, vehículos y equipos, todo en la misma plataforma, con contratos, cobros y portal del inquilino propios para cada uno."
+      },
+      {
+        "question": "¿Los contratos se firman digitalmente?",
+        "answer": "Sí. AlugaPro genera el contrato, recoge la firma electrónica de todas las partes y, en cuanto todos firman, bloquea el documento con un hash SHA-256 y un código QR de verificación pública."
+      },
+      {
+        "question": "¿El sistema admite alquiler por día o temporada, además de mensual?",
+        "answer": "Sí. Además del alquiler mensual recurrente, puedes configurar contratos por día o por semana, con pago anticipado o al momento de la devolución del bien."
+      },
+      {
+        "question": "¿El inquilino tiene acceso propio al sistema?",
+        "answer": "Sí, el portal del inquilino es siempre gratuito y muestra contratos, cobros y comprobantes, sin necesidad de hablar con el gestor para hacer seguimiento."
+      },
+      {
+        "question": "¿Los cobros se generan automáticamente?",
+        "answer": "Sí, AlugaPro genera los cobros automáticamente a partir del contrato y avisa sobre vencimientos y atrasos."
+      },
+      {
+        "question": "¿Cuánto cuesta AlugaPro?",
+        "answer": "Los planes comienzan en R$39/mes y escalan según el tamaño de la operación, siempre con 14 días de prueba gratis antes de decidir."
+      }
+    ]
   }
 }
