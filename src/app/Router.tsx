@@ -1,32 +1,12 @@
+import { lazy, Suspense } from 'react'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import { Capacitor } from '@capacitor/core'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { LoginPage } from '@/modules/auth/LoginPage'
-import { DashboardPage } from '@/modules/dashboard/DashboardPage'
-import { PropertiesPage } from '@/modules/properties/PropertiesPage'
-import { VehiclesPage } from '@/modules/vehicles/VehiclesPage'
-import { EquipmentsPage } from '@/modules/equipment/EquipmentsPage'
-import { TenantsPage } from '@/modules/tenants/TenantsPage'
-import { ContractsPage } from '@/modules/contracts/ContractsPage'
-import { ContractTemplatesPage } from '@/modules/contract-templates/ContractTemplatesPage'
-import { FinancialPage } from '@/modules/financial/FinancialPage'
-import { ChargesPage } from '@/modules/charges/ChargesPage'
-import { DefaultersPage } from '@/modules/defaulters/DefaultersPage'
-import { WarningsPage } from '@/modules/warnings/WarningsPage'
-import { SharedExpensesPage } from '@/modules/shared-expenses/SharedExpensesPage'
-import { MaintenancePage } from '@/modules/maintenance/MaintenancePage'
-import { NotificationsPage } from '@/modules/notifications/NotificationsPage'
-import { ReportsPage } from '@/modules/reports/ReportsPage'
-import { SettingsPage } from '@/modules/settings/SettingsPage'
-import { OwnersPage } from '@/modules/owners/OwnersPage'
-import { TenantPortal } from '@/modules/tenant-portal/TenantPortal'
-import { TenantContractsPage } from '@/modules/tenant-portal/TenantContractsPage'
-import { AffiliatePanel } from '@/modules/affiliate/AffiliatePanel'
 import { WitnessSignPage } from '@/modules/witness-sign/WitnessSignPage'
 import { VerifyDocumentPage } from '@/modules/verify/VerifyDocumentPage'
-import { ProfilePage } from '@/modules/profile/ProfilePage'
 import { LandingPage } from '@/modules/landing/LandingPage'
 import { RecursosPage } from '@/modules/landing/RecursosPage'
 import { AfiliadosPage } from '@/modules/landing/AfiliadosPage'
@@ -34,16 +14,49 @@ import { TermsPage } from '@/modules/legal/TermsPage'
 import { PrivacyPolicyPage } from '@/modules/legal/PrivacyPolicyPage'
 import { AccountDeletionPage } from '@/modules/legal/AccountDeletionPage'
 import { UnsubscribePage } from '@/modules/legal/UnsubscribePage'
-import { SubscriptionPage } from '@/modules/subscription/SubscriptionPage'
 import { ExpiredPage } from '@/modules/subscription/ExpiredPage'
-import { WhatsAppPage } from '@/modules/settings/WhatsAppPage'
-import { SaleContractsPage } from '@/modules/sale-contracts/SaleContractsPage'
 import { SaleSignPage } from '@/modules/sale-sign/SaleSignPage'
+
+// Área autenticada (dashboard, CRUD, financeiro, portal do inquilino, painel
+// do afiliado) — carregada sob demanda, só depois do login, pra quem visita
+// só as páginas públicas (landing/recursos/afiliados) não baixar esse peso
+// todo antes da página ficar interativa (Core Web Vitals / SEO).
+const DashboardPage = lazy(() => import('@/modules/dashboard/DashboardPage').then((m) => ({ default: m.DashboardPage })))
+const PropertiesPage = lazy(() => import('@/modules/properties/PropertiesPage').then((m) => ({ default: m.PropertiesPage })))
+const VehiclesPage = lazy(() => import('@/modules/vehicles/VehiclesPage').then((m) => ({ default: m.VehiclesPage })))
+const EquipmentsPage = lazy(() => import('@/modules/equipment/EquipmentsPage').then((m) => ({ default: m.EquipmentsPage })))
+const TenantsPage = lazy(() => import('@/modules/tenants/TenantsPage').then((m) => ({ default: m.TenantsPage })))
+const ContractsPage = lazy(() => import('@/modules/contracts/ContractsPage').then((m) => ({ default: m.ContractsPage })))
+const ContractTemplatesPage = lazy(() => import('@/modules/contract-templates/ContractTemplatesPage').then((m) => ({ default: m.ContractTemplatesPage })))
+const FinancialPage = lazy(() => import('@/modules/financial/FinancialPage').then((m) => ({ default: m.FinancialPage })))
+const ChargesPage = lazy(() => import('@/modules/charges/ChargesPage').then((m) => ({ default: m.ChargesPage })))
+const DefaultersPage = lazy(() => import('@/modules/defaulters/DefaultersPage').then((m) => ({ default: m.DefaultersPage })))
+const WarningsPage = lazy(() => import('@/modules/warnings/WarningsPage').then((m) => ({ default: m.WarningsPage })))
+const SharedExpensesPage = lazy(() => import('@/modules/shared-expenses/SharedExpensesPage').then((m) => ({ default: m.SharedExpensesPage })))
+const MaintenancePage = lazy(() => import('@/modules/maintenance/MaintenancePage').then((m) => ({ default: m.MaintenancePage })))
+const NotificationsPage = lazy(() => import('@/modules/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
+const ReportsPage = lazy(() => import('@/modules/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
+const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
+const OwnersPage = lazy(() => import('@/modules/owners/OwnersPage').then((m) => ({ default: m.OwnersPage })))
+const TenantPortal = lazy(() => import('@/modules/tenant-portal/TenantPortal').then((m) => ({ default: m.TenantPortal })))
+const TenantContractsPage = lazy(() => import('@/modules/tenant-portal/TenantContractsPage').then((m) => ({ default: m.TenantContractsPage })))
+const AffiliatePanel = lazy(() => import('@/modules/affiliate/AffiliatePanel').then((m) => ({ default: m.AffiliatePanel })))
+const ProfilePage = lazy(() => import('@/modules/profile/ProfilePage').then((m) => ({ default: m.ProfilePage })))
+const SubscriptionPage = lazy(() => import('@/modules/subscription/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })))
+const WhatsAppPage = lazy(() => import('@/modules/settings/WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
+const SaleContractsPage = lazy(() => import('@/modules/sale-contracts/SaleContractsPage').then((m) => ({ default: m.SaleContractsPage })))
 
 const Spinner = () => (
   <div className="flex h-screen items-center justify-center">
     <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
   </div>
+)
+
+// Envolve cada página lazy com seu próprio Suspense — assim, ao trocar de
+// rota, só o conteúdo daquele slot mostra o spinner (sidebar/topbar do
+// AdminLayout continuam montados, sem piscar a tela toda).
+const withSuspense = (children: React.ReactNode) => (
+  <Suspense fallback={<Spinner />}>{children}</Suspense>
 )
 
 function ProtectedRoute({ children, roles }: { children: React.ReactNode; roles?: string[] }) {
@@ -109,15 +122,15 @@ const router = createBrowserRouter([
       </TenantRoute>
     ),
     children: [
-      { index: true, element: <TenantPortal /> },
-      { path: 'contratos', element: <TenantContractsPage /> },
+      { index: true, element: withSuspense(<TenantPortal />) },
+      { path: 'contratos', element: withSuspense(<TenantContractsPage />) },
     ],
   },
   {
     path: '/painel-afiliado',
     element: (
       <AffiliateRoute>
-        <AffiliatePanel />
+        {withSuspense(<AffiliatePanel />)}
       </AffiliateRoute>
     ),
   },
@@ -125,7 +138,7 @@ const router = createBrowserRouter([
     path: '/perfil',
     element: (
       <ProtectedRoute>
-        <ProfilePage />
+        {withSuspense(<ProfilePage />)}
       </ProtectedRoute>
     ),
   },
@@ -168,27 +181,27 @@ const router = createBrowserRouter([
           </ProtectedRoute>
         ),
         children: [
-          { path: 'dashboard', element: <DashboardPage /> },
-          { path: 'imoveis', element: <PropertiesPage /> },
-          { path: 'veiculos', element: <VehiclesPage /> },
-          { path: 'equipamentos', element: <EquipmentsPage /> },
-          { path: 'proprietarios', element: <OwnersPage /> },
-          { path: 'inquilinos', element: <TenantsPage /> },
-          { path: 'contratos', element: <ContractsPage /> },
-          { path: 'modelos-contrato', element: <ContractTemplatesPage /> },
-          { path: 'financeiro', element: <FinancialPage /> },
-          { path: 'cobrancas', element: <ChargesPage /> },
-          { path: 'inadimplencia', element: <DefaultersPage /> },
-          { path: 'advertencias', element: <WarningsPage /> },
-          { path: 'despesas', element: <SharedExpensesPage /> },
-          { path: 'chamados', element: <MaintenancePage /> },
-          { path: 'notificacoes', element: <NotificationsPage /> },
-          { path: 'relatorios', element: <ReportsPage /> },
+          { path: 'dashboard', element: withSuspense(<DashboardPage />) },
+          { path: 'imoveis', element: withSuspense(<PropertiesPage />) },
+          { path: 'veiculos', element: withSuspense(<VehiclesPage />) },
+          { path: 'equipamentos', element: withSuspense(<EquipmentsPage />) },
+          { path: 'proprietarios', element: withSuspense(<OwnersPage />) },
+          { path: 'inquilinos', element: withSuspense(<TenantsPage />) },
+          { path: 'contratos', element: withSuspense(<ContractsPage />) },
+          { path: 'modelos-contrato', element: withSuspense(<ContractTemplatesPage />) },
+          { path: 'financeiro', element: withSuspense(<FinancialPage />) },
+          { path: 'cobrancas', element: withSuspense(<ChargesPage />) },
+          { path: 'inadimplencia', element: withSuspense(<DefaultersPage />) },
+          { path: 'advertencias', element: withSuspense(<WarningsPage />) },
+          { path: 'despesas', element: withSuspense(<SharedExpensesPage />) },
+          { path: 'chamados', element: withSuspense(<MaintenancePage />) },
+          { path: 'notificacoes', element: withSuspense(<NotificationsPage />) },
+          { path: 'relatorios', element: withSuspense(<ReportsPage />) },
           {
             path: 'configuracoes',
             element: (
               <ProtectedRoute roles={['admin']}>
-                <SettingsPage />
+                {withSuspense(<SettingsPage />)}
               </ProtectedRoute>
             ),
           },
@@ -196,7 +209,7 @@ const router = createBrowserRouter([
             path: 'configuracoes/assinatura',
             element: (
               <ProtectedRoute roles={['admin', 'gestor']}>
-                <SubscriptionPage />
+                {withSuspense(<SubscriptionPage />)}
               </ProtectedRoute>
             ),
           },
@@ -204,7 +217,7 @@ const router = createBrowserRouter([
             path: 'configuracoes/whatsapp',
             element: (
               <ProtectedRoute roles={['admin']}>
-                <WhatsAppPage />
+                {withSuspense(<WhatsAppPage />)}
               </ProtectedRoute>
             ),
           },
@@ -212,7 +225,7 @@ const router = createBrowserRouter([
             path: 'contratos-terreno',
             element: (
               <ProtectedRoute roles={['admin']}>
-                <SaleContractsPage />
+                {withSuspense(<SaleContractsPage />)}
               </ProtectedRoute>
             ),
           },
