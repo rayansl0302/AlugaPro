@@ -47,7 +47,9 @@
     "save": "Guardar",
     "emailLocked": "El correo de acceso no se puede cambiar aquí.",
     "newPassword": "Nueva contraseña (opcional)",
-    "newPasswordHint": "Déjelo en blanco para mantener la contraseña actual."
+    "newPasswordHint": "Déjelo en blanco para mantener la contraseña actual.",
+    "setPassword": "Contraseña (crea un acceso para el inquilino)",
+    "setPasswordHint": "Si se completa, crea un acceso nuevo para este inquilino (también necesita un correo electrónico)."
   },
   "toast": {
     "created": "Registros de prueba creados",

@@ -47,7 +47,9 @@
     "save": "Salvar",
     "emailLocked": "E-mail de login não pode ser alterado por aqui.",
     "newPassword": "Nova senha (opcional)",
-    "newPasswordHint": "Deixe em branco pra manter a senha atual."
+    "newPasswordHint": "Deixe em branco pra manter a senha atual.",
+    "setPassword": "Senha (cria login pro inquilino)",
+    "setPasswordHint": "Preenchendo, cria um login novo pra esse inquilino (precisa de e-mail também)."
   },
   "toast": {
     "created": "Registros de teste criados",

@@ -47,7 +47,9 @@
     "save": "Save",
     "emailLocked": "Login email can't be changed here.",
     "newPassword": "New password (optional)",
-    "newPasswordHint": "Leave blank to keep the current password."
+    "newPasswordHint": "Leave blank to keep the current password.",
+    "setPassword": "Password (creates a login for the tenant)",
+    "setPasswordHint": "If filled, creates a new login for this tenant (also needs an email)."
   },
   "toast": {
     "created": "Test records created",
