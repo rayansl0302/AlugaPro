@@ -1,0 +1,35 @@
+{
+  "title": "Panel de QA",
+  "subtitle": "Cree un propietario y un inquilino de prueba, aislados de su empresa real, para probar el sistema libremente.",
+  "isolationNote": "Estos registros quedan en una empresa de prueba separada — no aparecen en Propietarios/Inquilinos ni en ninguna otra pantalla del sistema.",
+  "ownerSection": "Propietario de prueba",
+  "tenantSection": "Inquilino de prueba",
+  "form": {
+    "name": "Nombre",
+    "nameRequired": "Nombre *",
+    "namePlaceholder": "Nombre completo",
+    "cpf": "CPF (opcional)",
+    "cpfRequired": "CPF *",
+    "email": "Correo electrónico (opcional)",
+    "phone": "Teléfono (opcional)",
+    "create": "Crear propietario e inquilino",
+    "creating": "Creando...",
+    "validation": {
+      "ownerName": "Nombre del propietario obligatorio",
+      "tenantName": "Nombre del inquilino obligatorio",
+      "tenantCpf": "CPF del inquilino obligatorio"
+    }
+  },
+  "list": {
+    "ownersTitle": "Propietarios de prueba",
+    "tenantsTitle": "Inquilinos de prueba",
+    "empty": "Ningún registro todavía",
+    "delete": "Eliminar"
+  },
+  "toast": {
+    "created": "Propietario e inquilino de prueba creados",
+    "createError": "Error al crear los registros de prueba",
+    "deleted": "Registro eliminado",
+    "deleteError": "Error al eliminar el registro"
+  }
+}

@@ -45,6 +45,7 @@ const ProfilePage = lazy(() => import('@/modules/profile/ProfilePage').then((m) 
 const SubscriptionPage = lazy(() => import('@/modules/subscription/SubscriptionPage').then((m) => ({ default: m.SubscriptionPage })))
 const WhatsAppPage = lazy(() => import('@/modules/settings/WhatsAppPage').then((m) => ({ default: m.WhatsAppPage })))
 const SaleContractsPage = lazy(() => import('@/modules/sale-contracts/SaleContractsPage').then((m) => ({ default: m.SaleContractsPage })))
+const QaPanelPage = lazy(() => import('@/modules/qa/QaPanelPage').then((m) => ({ default: m.QaPanelPage })))
 
 const Spinner = () => (
   <div className="flex h-screen items-center justify-center">
@@ -226,6 +227,14 @@ const router = createBrowserRouter([
             element: (
               <ProtectedRoute roles={['admin']}>
                 {withSuspense(<SaleContractsPage />)}
+              </ProtectedRoute>
+            ),
+          },
+          {
+            path: 'qa',
+            element: (
+              <ProtectedRoute roles={['admin']}>
+                {withSuspense(<QaPanelPage />)}
               </ProtectedRoute>
             ),
           },

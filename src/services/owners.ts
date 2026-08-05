@@ -1,5 +1,5 @@
 import {
-  collection, doc, getDoc, getDocs, query, where,
+  collection, doc, addDoc, deleteDoc, getDoc, getDocs, query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Owner } from '@/types'
@@ -21,4 +21,19 @@ export async function getOwner(id: string): Promise<Owner | null> {
   const snap = await getDoc(doc(db, COL, id))
   if (!snap.exists()) return null
   return { id: snap.id, ...snap.data() } as Owner
+}
+
+export async function createOwner(
+  data: Omit<Owner, 'id' | 'createdAt' | 'updatedAt'>
+): Promise<string> {
+  const ref = await addDoc(collection(db, COL), {
+    ...data,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  })
+  return ref.id
+}
+
+export async function deleteOwner(id: string): Promise<void> {
+  await deleteDoc(doc(db, COL, id))
 }

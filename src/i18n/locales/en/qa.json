@@ -1,0 +1,35 @@
+{
+  "title": "QA Panel",
+  "subtitle": "Create a test owner and a test tenant, isolated from your real company, to freely test the system.",
+  "isolationNote": "These records live in a separate test company — they don't show up in Owners/Tenants or anywhere else in the system.",
+  "ownerSection": "Test owner",
+  "tenantSection": "Test tenant",
+  "form": {
+    "name": "Name",
+    "nameRequired": "Name *",
+    "namePlaceholder": "Full name",
+    "cpf": "CPF (optional)",
+    "cpfRequired": "CPF *",
+    "email": "Email (optional)",
+    "phone": "Phone (optional)",
+    "create": "Create owner and tenant",
+    "creating": "Creating...",
+    "validation": {
+      "ownerName": "Owner name is required",
+      "tenantName": "Tenant name is required",
+      "tenantCpf": "Tenant CPF is required"
+    }
+  },
+  "list": {
+    "ownersTitle": "Test owners",
+    "tenantsTitle": "Test tenants",
+    "empty": "No records yet",
+    "delete": "Delete"
+  },
+  "toast": {
+    "created": "Test owner and tenant created",
+    "createError": "Error creating test records",
+    "deleted": "Record removed",
+    "deleteError": "Error deleting record"
+  }
+}

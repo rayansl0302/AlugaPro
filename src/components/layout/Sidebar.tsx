@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Building2, Users, FileText, CreditCard, AlertTriangle,
   Bell, DollarSign, Wrench, BarChart3, Settings, ChevronLeft, ChevronRight,
-  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning, Landmark,
+  Home, LogOut, Car, UserCircle, ShieldCheck, ShieldAlert, Zap, X, HardHat, FileWarning, Landmark, FlaskConical,
 } from 'lucide-react'
 import { cn, getInitials } from '@/lib/utils'
 import { useAuth } from '@/contexts/AuthContext'
@@ -80,7 +80,10 @@ const navSections: NavSection[] = [
   },
   {
     titleKey: 'section.admin',
-    items: [{ key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] }],
+    items: [
+      { key: 'settings', href: '/configuracoes', icon: Settings, roles: ['admin'] },
+      { key: 'qaPanel', href: '/qa', icon: FlaskConical, roles: ['admin'] },
+    ],
   },
 ]
 
