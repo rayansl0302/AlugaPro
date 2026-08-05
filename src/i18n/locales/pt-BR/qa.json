@@ -41,9 +41,19 @@
     "delete": "Excluir",
     "hasLogin": "Tem login pronto"
   },
+  "edit": {
+    "title": "Editar registro de teste",
+    "cancel": "Cancelar",
+    "save": "Salvar",
+    "emailLocked": "E-mail de login não pode ser alterado por aqui.",
+    "newPassword": "Nova senha (opcional)",
+    "newPasswordHint": "Deixe em branco pra manter a senha atual."
+  },
   "toast": {
     "created": "Registros de teste criados",
     "createError": "Erro ao criar registros de teste",
+    "updated": "Registro atualizado",
+    "updateError": "Erro ao atualizar registro",
     "deleted": "Registro removido",
     "deleteError": "Erro ao excluir registro"
   }

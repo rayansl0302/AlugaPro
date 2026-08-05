@@ -4,13 +4,15 @@ import { z } from 'zod'
 import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Trash2, FlaskConical, KeyRound } from 'lucide-react'
+import { useState } from 'react'
+import { Loader2, Trash2, Pencil, FlaskConical, KeyRound } from 'lucide-react'
 import i18n from '@/i18n'
 import { db, auth } from '@/lib/firebase'
 import { User } from '@/types'
 import { createOwner, deleteOwner, getOwners } from '@/services/owners'
 import { createTenant, updateTenant, deleteTenant, getTenants } from '@/services/tenants'
 import { upsertTenantInvite } from '@/services/invites'
+import { EditQaRecordDialog, EditTarget } from './EditQaRecordDialog'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -114,6 +116,14 @@ type FormData = z.infer<typeof schema>
 export function QaPanelPage() {
   const { t } = useTranslation('qa')
   const qc = useQueryClient()
+  const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
+
+  const invalidateAll = () => {
+    qc.invalidateQueries({ queryKey: ['qa-owners'] })
+    qc.invalidateQueries({ queryKey: ['qa-tenants'] })
+    qc.invalidateQueries({ queryKey: ['qa-gestors'] })
+    qc.invalidateQueries({ queryKey: ['qa-affiliates'] })
+  }
 
   const { data: owners = [] } = useQuery({
     queryKey: ['qa-owners'],
@@ -413,17 +423,27 @@ export function QaPanelPage() {
                   <p className="truncate text-sm font-medium">{owner.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{owner.email || owner.cpf || '—'}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-destructive hover:text-destructive"
-                  title={t('list.delete')}
-                  onClick={() => {
-                    if (confirm(t('list.delete'))) deleteOwnerMutation.mutate(owner.id)
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={t('edit.title')}
+                    onClick={() => setEditTarget({ kind: 'owner', record: owner })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    title={t('list.delete')}
+                    onClick={() => {
+                      if (confirm(t('list.delete'))) deleteOwnerMutation.mutate(owner.id)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -449,17 +469,27 @@ export function QaPanelPage() {
                   </p>
                   <p className="truncate text-xs text-muted-foreground">{tenant.email || tenant.cpf}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-destructive hover:text-destructive"
-                  title={t('list.delete')}
-                  onClick={() => {
-                    if (confirm(t('list.delete'))) deleteTenantMutation.mutate({ id: tenant.id, userId: tenant.userId })
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={t('edit.title')}
+                    onClick={() => setEditTarget({ kind: 'tenant', record: tenant })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    title={t('list.delete')}
+                    onClick={() => {
+                      if (confirm(t('list.delete'))) deleteTenantMutation.mutate({ id: tenant.id, userId: tenant.userId })
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -478,17 +508,27 @@ export function QaPanelPage() {
                   <p className="truncate text-sm font-medium">{gestor.name}</p>
                   <p className="truncate text-xs text-muted-foreground">{gestor.email}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-destructive hover:text-destructive"
-                  title={t('list.delete')}
-                  onClick={() => {
-                    if (confirm(t('list.delete'))) deleteGestorMutation.mutate(gestor.id)
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={t('edit.title')}
+                    onClick={() => setEditTarget({ kind: 'gestor', record: gestor })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    title={t('list.delete')}
+                    onClick={() => {
+                      if (confirm(t('list.delete'))) deleteGestorMutation.mutate(gestor.id)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
@@ -509,22 +549,38 @@ export function QaPanelPage() {
                     {affiliate.email}{affiliate.referralCode ? ` — ${affiliate.referralCode}` : ''}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0 text-destructive hover:text-destructive"
-                  title={t('list.delete')}
-                  onClick={() => {
-                    if (confirm(t('list.delete'))) deleteAffiliateMutation.mutate(affiliate.id)
-                  }}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={t('edit.title')}
+                    onClick={() => setEditTarget({ kind: 'afiliado', record: affiliate })}
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive"
+                    title={t('list.delete')}
+                    onClick={() => {
+                      if (confirm(t('list.delete'))) deleteAffiliateMutation.mutate(affiliate.id)
+                    }}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </div>
             ))}
           </CardContent>
         </Card>
       </div>
+
+      <EditQaRecordDialog
+        target={editTarget}
+        onClose={() => setEditTarget(null)}
+        onSaved={invalidateAll}
+      />
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, deleteDoc, getDoc, getDocs, query, where, serverTimestamp,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDoc, getDocs, query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Owner } from '@/types'
@@ -32,6 +32,10 @@ export async function createOwner(
     updatedAt: serverTimestamp(),
   })
   return ref.id
+}
+
+export async function updateOwner(id: string, data: Partial<Owner>): Promise<void> {
+  await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
 }
 
 export async function deleteOwner(id: string): Promise<void> {

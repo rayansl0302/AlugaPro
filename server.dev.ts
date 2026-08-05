@@ -79,6 +79,10 @@ const server = http.createServer(async (req, res) => {
       const { default: handler } = await import('./api/qa-delete-user.js')
       return handler(vReq as never, vRes as never)
     }
+    if (url.startsWith('/api/qa-update-user')) {
+      const { default: handler } = await import('./api/qa-update-user.js')
+      return handler(vReq as never, vRes as never)
+    }
     if (url.startsWith('/api/cron-daily-notifications')) {
       const { default: handler } = await import('./api/cron-daily-notifications.js')
       return handler(vReq as never, vRes as never)
@@ -94,5 +98,5 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(PORT, () => {
   console.log(`[dev-api] API server running at http://localhost:${PORT}`)
-  console.log('[dev-api] Proxying: /api/checkout  /api/asaas-webhook  /api/verify-asaas-subscription  /api/create-affiliate-profile  /api/qa-create-user  /api/qa-delete-user')
+  console.log('[dev-api] Proxying: /api/checkout  /api/asaas-webhook  /api/verify-asaas-subscription  /api/create-affiliate-profile  /api/qa-create-user  /api/qa-delete-user  /api/qa-update-user')
 })

@@ -41,9 +41,19 @@
     "delete": "Eliminar",
     "hasLogin": "Tiene acceso listo"
   },
+  "edit": {
+    "title": "Editar registro de prueba",
+    "cancel": "Cancelar",
+    "save": "Guardar",
+    "emailLocked": "El correo de acceso no se puede cambiar aquí.",
+    "newPassword": "Nueva contraseña (opcional)",
+    "newPasswordHint": "Déjelo en blanco para mantener la contraseña actual."
+  },
   "toast": {
     "created": "Registros de prueba creados",
     "createError": "Error al crear los registros de prueba",
+    "updated": "Registro actualizado",
+    "updateError": "Error al actualizar el registro",
     "deleted": "Registro eliminado",
     "deleteError": "Error al eliminar el registro"
   }

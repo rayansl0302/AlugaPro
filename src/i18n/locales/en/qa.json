@@ -41,9 +41,19 @@
     "delete": "Delete",
     "hasLogin": "Has a ready login"
   },
+  "edit": {
+    "title": "Edit test record",
+    "cancel": "Cancel",
+    "save": "Save",
+    "emailLocked": "Login email can't be changed here.",
+    "newPassword": "New password (optional)",
+    "newPasswordHint": "Leave blank to keep the current password."
+  },
   "toast": {
     "created": "Test records created",
     "createError": "Error creating test records",
+    "updated": "Record updated",
+    "updateError": "Error updating record",
     "deleted": "Record removed",
     "deleteError": "Error deleting record"
   }
