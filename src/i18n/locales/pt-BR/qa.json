@@ -1,9 +1,10 @@
 {
   "title": "Painel de QA",
-  "subtitle": "Crie um proprietário e um inquilino de teste, isolados da sua empresa real, pra testar o sistema livremente.",
+  "subtitle": "Crie um proprietário, um gestor e um inquilino de teste, isolados da sua empresa real, pra testar o sistema livremente.",
   "isolationNote": "Esses registros ficam numa empresa de teste separada — não aparecem em Proprietários/Inquilinos nem em nenhuma outra tela do sistema.",
   "ownerSection": "Proprietário de teste",
   "tenantSection": "Inquilino de teste",
+  "gestorSection": "Gestor de teste",
   "form": {
     "name": "Nome",
     "nameRequired": "Nome *",
@@ -11,23 +12,33 @@
     "cpf": "CPF (opcional)",
     "cpfRequired": "CPF *",
     "email": "E-mail (opcional)",
+    "emailRequired": "E-mail *",
     "phone": "Telefone (opcional)",
-    "create": "Criar proprietário e inquilino",
+    "password": "Senha (opcional — cria login pronto pro portal)",
+    "passwordRequired": "Senha *",
+    "tenantPasswordHint": "Preenchendo, o inquilino já nasce com login pronto (pula o autocadastro). Precisa de e-mail também.",
+    "create": "Criar registros de teste",
     "creating": "Criando...",
     "validation": {
       "ownerName": "Nome do proprietário obrigatório",
       "tenantName": "Nome do inquilino obrigatório",
-      "tenantCpf": "CPF do inquilino obrigatório"
+      "tenantCpf": "CPF do inquilino obrigatório",
+      "gestorName": "Nome do gestor obrigatório",
+      "gestorEmail": "E-mail do gestor obrigatório",
+      "passwordMin": "A senha precisa ter pelo menos 6 caracteres",
+      "tenantEmailForLogin": "Informe o e-mail do inquilino pra criar o login"
     }
   },
   "list": {
     "ownersTitle": "Proprietários de teste",
     "tenantsTitle": "Inquilinos de teste",
+    "gestorsTitle": "Gestores de teste",
     "empty": "Nenhum registro ainda",
-    "delete": "Excluir"
+    "delete": "Excluir",
+    "hasLogin": "Tem login pronto"
   },
   "toast": {
-    "created": "Proprietário e inquilino de teste criados",
+    "created": "Registros de teste criados",
     "createError": "Erro ao criar registros de teste",
     "deleted": "Registro removido",
     "deleteError": "Erro ao excluir registro"

@@ -1,9 +1,10 @@
 {
   "title": "QA Panel",
-  "subtitle": "Create a test owner and a test tenant, isolated from your real company, to freely test the system.",
+  "subtitle": "Create a test owner, test manager, and test tenant, isolated from your real company, to freely test the system.",
   "isolationNote": "These records live in a separate test company — they don't show up in Owners/Tenants or anywhere else in the system.",
   "ownerSection": "Test owner",
   "tenantSection": "Test tenant",
+  "gestorSection": "Test manager",
   "form": {
     "name": "Name",
     "nameRequired": "Name *",
@@ -11,23 +12,33 @@
     "cpf": "CPF (optional)",
     "cpfRequired": "CPF *",
     "email": "Email (optional)",
+    "emailRequired": "Email *",
     "phone": "Phone (optional)",
-    "create": "Create owner and tenant",
+    "password": "Password (optional — creates a ready login for the portal)",
+    "passwordRequired": "Password *",
+    "tenantPasswordHint": "If filled, the tenant already gets a ready login (skips self-signup). Also needs an email.",
+    "create": "Create test records",
     "creating": "Creating...",
     "validation": {
       "ownerName": "Owner name is required",
       "tenantName": "Tenant name is required",
-      "tenantCpf": "Tenant CPF is required"
+      "tenantCpf": "Tenant CPF is required",
+      "gestorName": "Manager name is required",
+      "gestorEmail": "Manager email is required",
+      "passwordMin": "Password must be at least 6 characters",
+      "tenantEmailForLogin": "Enter the tenant's email to create the login"
     }
   },
   "list": {
     "ownersTitle": "Test owners",
     "tenantsTitle": "Test tenants",
+    "gestorsTitle": "Test managers",
     "empty": "No records yet",
-    "delete": "Delete"
+    "delete": "Delete",
+    "hasLogin": "Has a ready login"
   },
   "toast": {
-    "created": "Test owner and tenant created",
+    "created": "Test records created",
     "createError": "Error creating test records",
     "deleted": "Record removed",
     "deleteError": "Error deleting record"

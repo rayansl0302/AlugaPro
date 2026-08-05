@@ -1,12 +1,15 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
+import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
-import { Loader2, Trash2, FlaskConical } from 'lucide-react'
+import { Loader2, Trash2, FlaskConical, KeyRound } from 'lucide-react'
 import i18n from '@/i18n'
+import { db, auth } from '@/lib/firebase'
+import { User } from '@/types'
 import { createOwner, deleteOwner, getOwners } from '@/services/owners'
-import { createTenant, deleteTenant, getTenants } from '@/services/tenants'
+import { createTenant, updateTenant, deleteTenant, getTenants } from '@/services/tenants'
 import { upsertTenantInvite } from '@/services/invites'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,16 +25,68 @@ import { toast } from '@/hooks/useToast'
 // (Imóveis, Contratos, etc.), que sempre filtram pela companyId real do usuário.
 const QA_COMPANY_ID = 'alugapro-qa'
 
-const schema = z.object({
-  ownerName: requiredString(i18n.t('qa:form.validation.ownerName')),
-  ownerCpf: z.string().optional(),
-  ownerEmail: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
-  ownerPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
-  tenantName: requiredString(i18n.t('qa:form.validation.tenantName')),
-  tenantCpf: requiredString(i18n.t('qa:form.validation.tenantCpf')),
-  tenantEmail: z.string().email(i18n.t('tenants:validation.emailInvalid')).optional().or(z.literal('')),
-  tenantPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('tenants:validation.phoneInvalid')),
-})
+async function createQaLogin(payload: {
+  email: string
+  password: string
+  name: string
+  role: 'gestor' | 'inquilino'
+  tenantId?: string
+}): Promise<string> {
+  const idToken = await auth.currentUser?.getIdToken()
+  const res = await fetch('/api/qa-create-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
+    body: JSON.stringify(payload),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || 'Erro ao criar login de teste')
+  return data.uid as string
+}
+
+async function deleteQaLogin(uid: string): Promise<void> {
+  const idToken = await auth.currentUser?.getIdToken()
+  const res = await fetch('/api/qa-delete-user', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
+    body: JSON.stringify({ uid }),
+  })
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}))
+    throw new Error(data.error || 'Erro ao excluir login de teste')
+  }
+}
+
+async function getQaGestors(): Promise<User[]> {
+  const q = query(
+    collection(db, 'users'),
+    where('companyId', '==', QA_COMPANY_ID),
+    where('role', '==', 'gestor'),
+  )
+  const snap = await getDocs(q)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as User))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+const schema = z
+  .object({
+    ownerName: requiredString(i18n.t('qa:form.validation.ownerName')),
+    ownerCpf: z.string().optional(),
+    ownerEmail: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
+    ownerPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
+    tenantName: requiredString(i18n.t('qa:form.validation.tenantName')),
+    tenantCpf: requiredString(i18n.t('qa:form.validation.tenantCpf')),
+    tenantEmail: z.string().email(i18n.t('tenants:validation.emailInvalid')).optional().or(z.literal('')),
+    tenantPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('tenants:validation.phoneInvalid')),
+    tenantPassword: z.string().optional().refine((v) => !v || v.length >= 6, i18n.t('qa:form.validation.passwordMin')),
+    gestorName: requiredString(i18n.t('qa:form.validation.gestorName')),
+    gestorEmail: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('owners:validation.emailInvalid')),
+    gestorPassword: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
+  })
+  .refine((d) => !d.tenantPassword || !!d.tenantEmail, {
+    message: i18n.t('qa:form.validation.tenantEmailForLogin'),
+    path: ['tenantEmail'],
+  })
 
 type FormData = z.infer<typeof schema>
 
@@ -46,6 +101,10 @@ export function QaPanelPage() {
   const { data: tenants = [] } = useQuery({
     queryKey: ['qa-tenants'],
     queryFn: () => getTenants(QA_COMPANY_ID),
+  })
+  const { data: gestors = [] } = useQuery({
+    queryKey: ['qa-gestors'],
+    queryFn: getQaGestors,
   })
 
   const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -73,15 +132,35 @@ export function QaPanelPage() {
         ...(data.tenantPhone ? { phone: data.tenantPhone.replace(/\D/g, '') } : {}),
         active: true,
       })
-      if (data.tenantEmail) {
+      if (data.tenantPassword && data.tenantEmail) {
+        // Login pronto pro inquilino de teste — pula o convite/autocadastro,
+        // já nasce com conta+senha vinculada ao registro de teste.
+        const uid = await createQaLogin({
+          email: data.tenantEmail,
+          password: data.tenantPassword,
+          name: data.tenantName,
+          role: 'inquilino',
+          tenantId,
+        })
+        await updateTenant(tenantId, { userId: uid })
+      } else if (data.tenantEmail) {
         try {
           await upsertTenantInvite({ email: data.tenantEmail, companyId: QA_COMPANY_ID, tenantId, name: data.tenantName })
         } catch {
           // Convite é complementar; não bloqueia a criação do registro de teste.
         }
       }
+
+      await createQaLogin({
+        email: data.gestorEmail,
+        password: data.gestorPassword,
+        name: data.gestorName,
+        role: 'gestor',
+      })
+
       qc.invalidateQueries({ queryKey: ['qa-owners'] })
       qc.invalidateQueries({ queryKey: ['qa-tenants'] })
+      qc.invalidateQueries({ queryKey: ['qa-gestors'] })
       reset()
       toast({ title: t('toast.created') })
     } catch {
@@ -99,9 +178,21 @@ export function QaPanelPage() {
   })
 
   const deleteTenantMutation = useMutation({
-    mutationFn: deleteTenant,
+    mutationFn: async (tenant: { id: string; userId?: string }) => {
+      if (tenant.userId) await deleteQaLogin(tenant.userId)
+      await deleteTenant(tenant.id)
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['qa-tenants'] })
+      toast({ title: t('toast.deleted') })
+    },
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
+  })
+
+  const deleteGestorMutation = useMutation({
+    mutationFn: deleteQaLogin,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qa-gestors'] })
       toast({ title: t('toast.deleted') })
     },
     onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
@@ -192,6 +283,41 @@ export function QaPanelPage() {
                   />
                   {errors.tenantPhone && <p className="text-xs text-destructive">{errors.tenantPhone.message}</p>}
                 </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    {t('form.password')}
+                  </Label>
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.tenantPassword)} {...register('tenantPassword')} />
+                  {errors.tenantPassword && <p className="text-xs text-destructive">{errors.tenantPassword.message}</p>}
+                  <p className="text-xs text-muted-foreground">{t('form.tenantPasswordHint')}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="border-t pt-6">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('gestorSection')}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>{t('form.nameRequired')}</Label>
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.gestorName)} {...register('gestorName')} />
+                  {errors.gestorName && <p className="text-xs text-destructive">{errors.gestorName.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('form.emailRequired')}</Label>
+                  <Input type="email" className={fieldErrorClass(errors.gestorEmail)} {...register('gestorEmail')} />
+                  {errors.gestorEmail && <p className="text-xs text-destructive">{errors.gestorEmail.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    {t('form.passwordRequired')}
+                  </Label>
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.gestorPassword)} {...register('gestorPassword')} />
+                  {errors.gestorPassword && <p className="text-xs text-destructive">{errors.gestorPassword.message}</p>}
+                </div>
               </div>
             </div>
 
@@ -205,7 +331,7 @@ export function QaPanelPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 sm:grid-cols-2">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('list.ownersTitle')}</CardTitle>
@@ -245,7 +371,14 @@ export function QaPanelPage() {
             {tenants.map((tenant) => (
               <div key={tenant.id} className="flex items-center justify-between rounded-lg border p-3">
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{tenant.name}</p>
+                  <p className="flex items-center gap-1.5 truncate text-sm font-medium">
+                    {tenant.name}
+                    {tenant.userId && (
+                      <span title={t('list.hasLogin')}>
+                        <KeyRound className="h-3 w-3 shrink-0 text-emerald-600" />
+                      </span>
+                    )}
+                  </p>
                   <p className="truncate text-xs text-muted-foreground">{tenant.email || tenant.cpf}</p>
                 </div>
                 <Button
@@ -254,7 +387,36 @@ export function QaPanelPage() {
                   className="shrink-0 text-destructive hover:text-destructive"
                   title={t('list.delete')}
                   onClick={() => {
-                    if (confirm(t('list.delete'))) deleteTenantMutation.mutate(tenant.id)
+                    if (confirm(t('list.delete'))) deleteTenantMutation.mutate({ id: tenant.id, userId: tenant.userId })
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('list.gestorsTitle')}</CardTitle>
+            <CardDescription>{gestors.length}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {gestors.length === 0 && <p className="text-sm text-muted-foreground">{t('list.empty')}</p>}
+            {gestors.map((gestor) => (
+              <div key={gestor.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{gestor.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">{gestor.email}</p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-destructive hover:text-destructive"
+                  title={t('list.delete')}
+                  onClick={() => {
+                    if (confirm(t('list.delete'))) deleteGestorMutation.mutate(gestor.id)
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

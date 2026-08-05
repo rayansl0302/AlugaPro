@@ -1,9 +1,10 @@
 {
   "title": "Panel de QA",
-  "subtitle": "Cree un propietario y un inquilino de prueba, aislados de su empresa real, para probar el sistema libremente.",
+  "subtitle": "Cree un propietario, un gestor y un inquilino de prueba, aislados de su empresa real, para probar el sistema libremente.",
   "isolationNote": "Estos registros quedan en una empresa de prueba separada — no aparecen en Propietarios/Inquilinos ni en ninguna otra pantalla del sistema.",
   "ownerSection": "Propietario de prueba",
   "tenantSection": "Inquilino de prueba",
+  "gestorSection": "Gestor de prueba",
   "form": {
     "name": "Nombre",
     "nameRequired": "Nombre *",
@@ -11,23 +12,33 @@
     "cpf": "CPF (opcional)",
     "cpfRequired": "CPF *",
     "email": "Correo electrónico (opcional)",
+    "emailRequired": "Correo electrónico *",
     "phone": "Teléfono (opcional)",
-    "create": "Crear propietario e inquilino",
+    "password": "Contraseña (opcional — crea un acceso listo para el portal)",
+    "passwordRequired": "Contraseña *",
+    "tenantPasswordHint": "Si se completa, el inquilino ya tiene acceso listo (sin autorregistro). También necesita un correo electrónico.",
+    "create": "Crear registros de prueba",
     "creating": "Creando...",
     "validation": {
       "ownerName": "Nombre del propietario obligatorio",
       "tenantName": "Nombre del inquilino obligatorio",
-      "tenantCpf": "CPF del inquilino obligatorio"
+      "tenantCpf": "CPF del inquilino obligatorio",
+      "gestorName": "Nombre del gestor obligatorio",
+      "gestorEmail": "Correo electrónico del gestor obligatorio",
+      "passwordMin": "La contraseña debe tener al menos 6 caracteres",
+      "tenantEmailForLogin": "Ingrese el correo electrónico del inquilino para crear el acceso"
     }
   },
   "list": {
     "ownersTitle": "Propietarios de prueba",
     "tenantsTitle": "Inquilinos de prueba",
+    "gestorsTitle": "Gestores de prueba",
     "empty": "Ningún registro todavía",
-    "delete": "Eliminar"
+    "delete": "Eliminar",
+    "hasLogin": "Tiene acceso listo"
   },
   "toast": {
-    "created": "Propietario e inquilino de prueba creados",
+    "created": "Registros de prueba creados",
     "createError": "Error al crear los registros de prueba",
     "deleted": "Registro eliminado",
     "deleteError": "Error al eliminar el registro"
