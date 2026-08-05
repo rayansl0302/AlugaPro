@@ -20,6 +20,10 @@
     "tenantPasswordHint": "Si se completa, el inquilino ya tiene acceso listo (sin autorregistro). También necesita un correo electrónico.",
     "create": "Crear registros de prueba",
     "creating": "Creando...",
+    "createOwner": "Crear propietario de prueba",
+    "createTenant": "Crear inquilino de prueba",
+    "createGestor": "Crear gestor de prueba",
+    "createAfiliado": "Crear afiliado de prueba",
     "validation": {
       "ownerName": "Nombre del propietario obligatorio",
       "tenantName": "Nombre del inquilino obligatorio",
@@ -52,11 +56,17 @@
     "setPasswordHint": "Si se completa, crea un acceso nuevo para este inquilino (también necesita un correo electrónico)."
   },
   "toast": {
-    "created": "Registros de prueba creados",
-    "createError": "Error al crear los registros de prueba",
+    "created": "Registro de prueba creado",
+    "createError": "Error al crear el registro de prueba",
     "updated": "Registro actualizado",
     "updateError": "Error al actualizar el registro",
     "deleted": "Registro eliminado",
     "deleteError": "Error al eliminar el registro"
+  },
+  "generate": {
+    "button": "Generar y copiar",
+    "hint": "Completa el formulario con datos de prueba y los copia al portapapeles, listo para pegar y enviar al QA",
+    "copied": "¡Datos de prueba copiados! Solo pegue y envíe al QA.",
+    "copyError": "No se pudo copiar — copie los campos manualmente"
   }
 }

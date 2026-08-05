@@ -20,6 +20,10 @@
     "tenantPasswordHint": "If filled, the tenant already gets a ready login (skips self-signup). Also needs an email.",
     "create": "Create test records",
     "creating": "Creating...",
+    "createOwner": "Create test owner",
+    "createTenant": "Create test tenant",
+    "createGestor": "Create test manager",
+    "createAfiliado": "Create test affiliate",
     "validation": {
       "ownerName": "Owner name is required",
       "tenantName": "Tenant name is required",
@@ -52,11 +56,17 @@
     "setPasswordHint": "If filled, creates a new login for this tenant (also needs an email)."
   },
   "toast": {
-    "created": "Test records created",
-    "createError": "Error creating test records",
+    "created": "Test record created",
+    "createError": "Error creating test record",
     "updated": "Record updated",
     "updateError": "Error updating record",
     "deleted": "Record removed",
     "deleteError": "Error deleting record"
+  },
+  "generate": {
+    "button": "Generate and copy",
+    "hint": "Fills the form with test data and copies it to the clipboard, ready to paste and send to QA",
+    "copied": "Test data copied! Just paste and send it to QA.",
+    "copyError": "Couldn't copy — copy the fields manually"
   }
 }

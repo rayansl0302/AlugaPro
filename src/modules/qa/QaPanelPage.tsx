@@ -5,7 +5,7 @@ import { collection, query, where, getDocs } from 'firebase/firestore'
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { useState } from 'react'
-import { Loader2, Trash2, Pencil, FlaskConical, KeyRound } from 'lucide-react'
+import { Loader2, Trash2, Pencil, FlaskConical, KeyRound, Wand2 } from 'lucide-react'
 import i18n from '@/i18n'
 import { db, auth } from '@/lib/firebase'
 import { User } from '@/types'
@@ -75,6 +75,65 @@ async function getQaGestors(): Promise<User[]> {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
+function randomDigits(n: number): string {
+  let s = ''
+  for (let i = 0; i < n; i += 1) s += Math.floor(Math.random() * 10)
+  return s
+}
+
+// Mesmo algoritmo de dígito verificador de isValidCPF (src/lib/documents.ts),
+// só que gerando em vez de validando — pra não cair em CPF inválido em telas
+// que checam o dígito verificador de verdade.
+function generateFakeCPF(): string {
+  const calcCheckDigit = (base: string, startFactor: number): number => {
+    let total = 0
+    let factor = startFactor
+    for (const digit of base) {
+      total += Number(digit) * factor
+      factor -= 1
+    }
+    const remainder = (total * 10) % 11
+    return remainder === 10 ? 0 : remainder
+  }
+  const base = randomDigits(9)
+  const d1 = calcCheckDigit(base, 10)
+  const d2 = calcCheckDigit(base + d1, 11)
+  return `${base}${d1}${d2}`
+}
+
+function generateFakePhone(): string {
+  const ddd = 11 + Math.floor(Math.random() * 88)
+  return `${ddd}9${randomDigits(8)}`
+}
+
+const QA_FIRST_NAMES = ['Ana', 'Bruno', 'Carla', 'Diego', 'Elisa', 'Fábio', 'Gabriela', 'Hugo', 'Isabela', 'João', 'Karina', 'Lucas', 'Marina', 'Nicolas', 'Olivia', 'Pedro', 'Rafaela', 'Samuel', 'Tatiane', 'Vitor']
+const QA_LAST_NAMES = ['Silva', 'Souza', 'Oliveira', 'Santos', 'Pereira', 'Costa', 'Rodrigues', 'Almeida', 'Nascimento', 'Carvalho']
+
+function generateFakeName(): string {
+  const first = QA_FIRST_NAMES[Math.floor(Math.random() * QA_FIRST_NAMES.length)]
+  const last = QA_LAST_NAMES[Math.floor(Math.random() * QA_LAST_NAMES.length)]
+  return `${first} ${last} QA`
+}
+
+function generateFakeEmail(name: string): string {
+  const slug = name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z]+/g, '.')
+    .replace(/(^\.|\.$)/g, '')
+  // Domínio .test é reservado (RFC 2606) — nunca existe de verdade, então
+  // esses logins de QA nunca batem em caixa de e-mail real de ninguém.
+  return `${slug}.${randomDigits(4)}@alugapro.test`
+}
+
+function generateFakePassword(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'
+  let pass = ''
+  for (let i = 0; i < 8; i += 1) pass += chars[Math.floor(Math.random() * chars.length)]
+  return pass
+}
+
 async function getQaAffiliates(): Promise<User[]> {
   const q = query(
     collection(db, 'users'),
@@ -88,30 +147,41 @@ async function getQaAffiliates(): Promise<User[]> {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-const schema = z
-  .object({
-    ownerName: requiredString(i18n.t('qa:form.validation.ownerName')),
-    ownerCpf: z.string().optional(),
-    ownerEmail: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
-    ownerPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
-    tenantName: requiredString(i18n.t('qa:form.validation.tenantName')),
-    tenantCpf: requiredString(i18n.t('qa:form.validation.tenantCpf')),
-    tenantEmail: z.string().email(i18n.t('tenants:validation.emailInvalid')).optional().or(z.literal('')),
-    tenantPhone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('tenants:validation.phoneInvalid')),
-    tenantPassword: z.string().optional().refine((v) => !v || v.length >= 6, i18n.t('qa:form.validation.passwordMin')),
-    gestorName: requiredString(i18n.t('qa:form.validation.gestorName')),
-    gestorEmail: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('owners:validation.emailInvalid')),
-    gestorPassword: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
-    afiliadoName: requiredString(i18n.t('qa:form.validation.afiliadoName')),
-    afiliadoEmail: requiredString(i18n.t('qa:form.validation.afiliadoEmail')).email(i18n.t('owners:validation.emailInvalid')),
-    afiliadoPassword: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
-  })
-  .refine((d) => !d.tenantPassword || !!d.tenantEmail, {
-    message: i18n.t('qa:form.validation.tenantEmailForLogin'),
-    path: ['tenantEmail'],
-  })
+const ownerSchema = z.object({
+  name: requiredString(i18n.t('qa:form.validation.ownerName')),
+  cpf: z.string().optional(),
+  email: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
+  phone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
+})
+type OwnerFormData = z.infer<typeof ownerSchema>
 
-type FormData = z.infer<typeof schema>
+const tenantSchema = z
+  .object({
+    name: requiredString(i18n.t('qa:form.validation.tenantName')),
+    cpf: requiredString(i18n.t('qa:form.validation.tenantCpf')),
+    email: z.string().email(i18n.t('tenants:validation.emailInvalid')).optional().or(z.literal('')),
+    phone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('tenants:validation.phoneInvalid')),
+    password: z.string().optional().refine((v) => !v || v.length >= 6, i18n.t('qa:form.validation.passwordMin')),
+  })
+  .refine((d) => !d.password || !!d.email, {
+    message: i18n.t('qa:form.validation.tenantEmailForLogin'),
+    path: ['email'],
+  })
+type TenantFormData = z.infer<typeof tenantSchema>
+
+const gestorSchema = z.object({
+  name: requiredString(i18n.t('qa:form.validation.gestorName')),
+  email: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('owners:validation.emailInvalid')),
+  password: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
+})
+type GestorFormData = z.infer<typeof gestorSchema>
+
+const afiliadoSchema = z.object({
+  name: requiredString(i18n.t('qa:form.validation.afiliadoName')),
+  email: requiredString(i18n.t('qa:form.validation.afiliadoEmail')).email(i18n.t('owners:validation.emailInvalid')),
+  password: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
+})
+type AfiliadoFormData = z.infer<typeof afiliadoSchema>
 
 export function QaPanelPage() {
   const { t } = useTranslation('qa')
@@ -142,69 +212,153 @@ export function QaPanelPage() {
     queryFn: getQaAffiliates,
   })
 
-  const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
-    resolver: zodResolver(schema),
-    mode: 'onTouched',
-  })
+  const {
+    register: registerOwner, handleSubmit: submitOwner, setValue: setOwnerValue, reset: resetOwner,
+    formState: { errors: ownerErrors, isSubmitting: ownerSubmitting },
+  } = useForm<OwnerFormData>({ resolver: zodResolver(ownerSchema), mode: 'onTouched' })
 
-  const onSubmit = async (data: FormData) => {
+  const {
+    register: registerTenant, handleSubmit: submitTenant, setValue: setTenantValue, reset: resetTenant,
+    formState: { errors: tenantErrors, isSubmitting: tenantSubmitting },
+  } = useForm<TenantFormData>({ resolver: zodResolver(tenantSchema), mode: 'onTouched' })
+
+  const {
+    register: registerGestor, handleSubmit: submitGestor, setValue: setGestorValue, reset: resetGestor,
+    formState: { errors: gestorErrors, isSubmitting: gestorSubmitting },
+  } = useForm<GestorFormData>({ resolver: zodResolver(gestorSchema), mode: 'onTouched' })
+
+  const {
+    register: registerAfiliado, handleSubmit: submitAfiliado, setValue: setAfiliadoValue, reset: resetAfiliado,
+    formState: { errors: afiliadoErrors, isSubmitting: afiliadoSubmitting },
+  } = useForm<AfiliadoFormData>({ resolver: zodResolver(afiliadoSchema), mode: 'onTouched' })
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      toast({ title: t('generate.copied') })
+    } catch {
+      toast({ title: t('generate.copyError'), variant: 'destructive' })
+    }
+  }
+
+  const generateOwnerData = () => {
+    const name = generateFakeName()
+    const cpf = maskCPF(generateFakeCPF())
+    const email = generateFakeEmail(name)
+    const phone = maskPhone(generateFakePhone())
+    setOwnerValue('name', name, { shouldValidate: true })
+    setOwnerValue('cpf', cpf, { shouldValidate: true })
+    setOwnerValue('email', email, { shouldValidate: true })
+    setOwnerValue('phone', phone, { shouldValidate: true })
+    copyToClipboard(`${t('ownerSection')}\nNome: ${name}\nCPF: ${cpf}\nE-mail: ${email}\nTelefone: ${phone}`)
+  }
+
+  const generateTenantData = () => {
+    const name = generateFakeName()
+    const cpf = maskCPF(generateFakeCPF())
+    const email = generateFakeEmail(name)
+    const phone = maskPhone(generateFakePhone())
+    const password = generateFakePassword()
+    setTenantValue('name', name, { shouldValidate: true })
+    setTenantValue('cpf', cpf, { shouldValidate: true })
+    setTenantValue('email', email, { shouldValidate: true })
+    setTenantValue('phone', phone, { shouldValidate: true })
+    setTenantValue('password', password, { shouldValidate: true })
+    copyToClipboard(`${t('tenantSection')}\nNome: ${name}\nCPF: ${cpf}\nE-mail: ${email}\nTelefone: ${phone}\nSenha: ${password}`)
+  }
+
+  const generateGestorData = () => {
+    const name = generateFakeName()
+    const email = generateFakeEmail(name)
+    const password = generateFakePassword()
+    setGestorValue('name', name, { shouldValidate: true })
+    setGestorValue('email', email, { shouldValidate: true })
+    setGestorValue('password', password, { shouldValidate: true })
+    copyToClipboard(`${t('gestorSection')}\nNome: ${name}\nE-mail: ${email}\nSenha: ${password}`)
+  }
+
+  const generateAfiliadoData = () => {
+    const name = generateFakeName()
+    const email = generateFakeEmail(name)
+    const password = generateFakePassword()
+    setAfiliadoValue('name', name, { shouldValidate: true })
+    setAfiliadoValue('email', email, { shouldValidate: true })
+    setAfiliadoValue('password', password, { shouldValidate: true })
+    copyToClipboard(`${t('afiliadoSection')}\nNome: ${name}\nE-mail: ${email}\nSenha: ${password}`)
+  }
+
+  const onSubmitOwner = async (data: OwnerFormData) => {
     try {
       // addDoc rejeita campos com valor undefined — omite em vez de mandar
       // undefined pros opcionais não preenchidos.
       await createOwner({
         companyId: QA_COMPANY_ID,
-        name: data.ownerName,
-        ...(data.ownerCpf ? { cpf: data.ownerCpf.replace(/\D/g, '') } : {}),
-        ...(data.ownerEmail ? { email: data.ownerEmail } : {}),
-        ...(data.ownerPhone ? { phone: data.ownerPhone.replace(/\D/g, '') } : {}),
+        name: data.name,
+        ...(data.cpf ? { cpf: data.cpf.replace(/\D/g, '') } : {}),
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.phone ? { phone: data.phone.replace(/\D/g, '') } : {}),
         active: true,
       })
+      qc.invalidateQueries({ queryKey: ['qa-owners'] })
+      resetOwner()
+      toast({ title: t('toast.created') })
+    } catch {
+      toast({ title: t('toast.createError'), variant: 'destructive' })
+    }
+  }
+
+  const onSubmitTenant = async (data: TenantFormData) => {
+    try {
       const tenantId = await createTenant({
         companyId: QA_COMPANY_ID,
-        name: data.tenantName,
-        cpf: data.tenantCpf.replace(/\D/g, ''),
-        ...(data.tenantEmail ? { email: data.tenantEmail } : {}),
-        ...(data.tenantPhone ? { phone: data.tenantPhone.replace(/\D/g, '') } : {}),
+        name: data.name,
+        cpf: data.cpf.replace(/\D/g, ''),
+        ...(data.email ? { email: data.email } : {}),
+        ...(data.phone ? { phone: data.phone.replace(/\D/g, '') } : {}),
         active: true,
       })
-      if (data.tenantPassword && data.tenantEmail) {
+      if (data.password && data.email) {
         // Login pronto pro inquilino de teste — pula o convite/autocadastro,
         // já nasce com conta+senha vinculada ao registro de teste.
         const { uid } = await createQaLogin({
-          email: data.tenantEmail,
-          password: data.tenantPassword,
-          name: data.tenantName,
+          email: data.email,
+          password: data.password,
+          name: data.name,
           role: 'inquilino',
           tenantId,
         })
         await updateTenant(tenantId, { userId: uid })
-      } else if (data.tenantEmail) {
+      } else if (data.email) {
         try {
-          await upsertTenantInvite({ email: data.tenantEmail, companyId: QA_COMPANY_ID, tenantId, name: data.tenantName })
+          await upsertTenantInvite({ email: data.email, companyId: QA_COMPANY_ID, tenantId, name: data.name })
         } catch {
           // Convite é complementar; não bloqueia a criação do registro de teste.
         }
       }
-
-      await createQaLogin({
-        email: data.gestorEmail,
-        password: data.gestorPassword,
-        name: data.gestorName,
-        role: 'gestor',
-      })
-
-      await createQaLogin({
-        email: data.afiliadoEmail,
-        password: data.afiliadoPassword,
-        name: data.afiliadoName,
-        role: 'afiliado',
-      })
-
-      qc.invalidateQueries({ queryKey: ['qa-owners'] })
       qc.invalidateQueries({ queryKey: ['qa-tenants'] })
+      resetTenant()
+      toast({ title: t('toast.created') })
+    } catch {
+      toast({ title: t('toast.createError'), variant: 'destructive' })
+    }
+  }
+
+  const onSubmitGestor = async (data: GestorFormData) => {
+    try {
+      await createQaLogin({ email: data.email, password: data.password, name: data.name, role: 'gestor' })
       qc.invalidateQueries({ queryKey: ['qa-gestors'] })
+      resetGestor()
+      toast({ title: t('toast.created') })
+    } catch {
+      toast({ title: t('toast.createError'), variant: 'destructive' })
+    }
+  }
+
+  const onSubmitAfiliado = async (data: AfiliadoFormData) => {
+    try {
+      await createQaLogin({ email: data.email, password: data.password, name: data.name, role: 'afiliado' })
       qc.invalidateQueries({ queryKey: ['qa-affiliates'] })
-      reset()
+      resetAfiliado()
       toast({ title: t('toast.created') })
     } catch {
       toast({ title: t('toast.createError'), variant: 'destructive' })
@@ -261,153 +415,206 @@ export function QaPanelPage() {
         <p className="mt-1 text-xs text-muted-foreground">{t('isolationNote')}</p>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('ownerSection')}
-              </h2>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={submitOwner(onSubmitOwner)} className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('ownerSection')}
+                </h2>
+                <Button type="button" variant="outline" size="sm" title={t('generate.hint')} onClick={generateOwnerData}>
+                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t('generate.button')}
+                </Button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t('form.nameRequired')}</Label>
-                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.ownerName)} {...register('ownerName')} />
-                  {errors.ownerName && <p className="text-xs text-destructive">{errors.ownerName.message}</p>}
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(ownerErrors.name)} {...registerOwner('name')} />
+                  {ownerErrors.name && <p className="text-xs text-destructive">{ownerErrors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.cpf')}</Label>
                   <Input
                     placeholder="000.000.000-00"
-                    {...register('ownerCpf')}
-                    onChange={(e) => setValue('ownerCpf', maskCPF(e.target.value))}
+                    {...registerOwner('cpf')}
+                    onChange={(e) => setOwnerValue('cpf', maskCPF(e.target.value))}
                   />
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.email')}</Label>
-                  <Input type="email" className={fieldErrorClass(errors.ownerEmail)} {...register('ownerEmail')} />
-                  {errors.ownerEmail && <p className="text-xs text-destructive">{errors.ownerEmail.message}</p>}
+                  <Input type="email" className={fieldErrorClass(ownerErrors.email)} {...registerOwner('email')} />
+                  {ownerErrors.email && <p className="text-xs text-destructive">{ownerErrors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.phone')}</Label>
                   <Input
                     placeholder="(00) 00000-0000"
-                    className={fieldErrorClass(errors.ownerPhone)}
-                    {...register('ownerPhone')}
-                    onChange={(e) => setValue('ownerPhone', maskPhone(e.target.value))}
+                    className={fieldErrorClass(ownerErrors.phone)}
+                    {...registerOwner('phone')}
+                    onChange={(e) => setOwnerValue('phone', maskPhone(e.target.value))}
                   />
-                  {errors.ownerPhone && <p className="text-xs text-destructive">{errors.ownerPhone.message}</p>}
+                  {ownerErrors.phone && <p className="text-xs text-destructive">{ownerErrors.phone.message}</p>}
                 </div>
               </div>
-            </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={ownerSubmitting}>
+                  {ownerSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('form.createOwner')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-            <div className="border-t pt-6">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('tenantSection')}
-              </h2>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={submitTenant(onSubmitTenant)} className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('tenantSection')}
+                </h2>
+                <Button type="button" variant="outline" size="sm" title={t('generate.hint')} onClick={generateTenantData}>
+                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t('generate.button')}
+                </Button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t('form.nameRequired')}</Label>
-                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.tenantName)} {...register('tenantName')} />
-                  {errors.tenantName && <p className="text-xs text-destructive">{errors.tenantName.message}</p>}
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(tenantErrors.name)} {...registerTenant('name')} />
+                  {tenantErrors.name && <p className="text-xs text-destructive">{tenantErrors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.cpfRequired')}</Label>
                   <Input
                     placeholder="000.000.000-00"
-                    className={fieldErrorClass(errors.tenantCpf)}
-                    {...register('tenantCpf')}
-                    onChange={(e) => setValue('tenantCpf', maskCPF(e.target.value))}
+                    className={fieldErrorClass(tenantErrors.cpf)}
+                    {...registerTenant('cpf')}
+                    onChange={(e) => setTenantValue('cpf', maskCPF(e.target.value))}
                   />
-                  {errors.tenantCpf && <p className="text-xs text-destructive">{errors.tenantCpf.message}</p>}
+                  {tenantErrors.cpf && <p className="text-xs text-destructive">{tenantErrors.cpf.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.email')}</Label>
-                  <Input type="email" className={fieldErrorClass(errors.tenantEmail)} {...register('tenantEmail')} />
-                  {errors.tenantEmail && <p className="text-xs text-destructive">{errors.tenantEmail.message}</p>}
+                  <Input type="email" className={fieldErrorClass(tenantErrors.email)} {...registerTenant('email')} />
+                  {tenantErrors.email && <p className="text-xs text-destructive">{tenantErrors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.phone')}</Label>
                   <Input
                     placeholder="(00) 00000-0000"
-                    className={fieldErrorClass(errors.tenantPhone)}
-                    {...register('tenantPhone')}
-                    onChange={(e) => setValue('tenantPhone', maskPhone(e.target.value))}
+                    className={fieldErrorClass(tenantErrors.phone)}
+                    {...registerTenant('phone')}
+                    onChange={(e) => setTenantValue('phone', maskPhone(e.target.value))}
                   />
-                  {errors.tenantPhone && <p className="text-xs text-destructive">{errors.tenantPhone.message}</p>}
+                  {tenantErrors.phone && <p className="text-xs text-destructive">{tenantErrors.phone.message}</p>}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 sm:col-span-2">
                   <Label className="flex items-center gap-1.5">
                     <KeyRound className="h-3.5 w-3.5" />
                     {t('form.password')}
                   </Label>
-                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.tenantPassword)} {...register('tenantPassword')} />
-                  {errors.tenantPassword && <p className="text-xs text-destructive">{errors.tenantPassword.message}</p>}
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(tenantErrors.password)} {...registerTenant('password')} />
+                  {tenantErrors.password && <p className="text-xs text-destructive">{tenantErrors.password.message}</p>}
                   <p className="text-xs text-muted-foreground">{t('form.tenantPasswordHint')}</p>
                 </div>
               </div>
-            </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={tenantSubmitting}>
+                  {tenantSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('form.createTenant')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-            <div className="border-t pt-6">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('gestorSection')}
-              </h2>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={submitGestor(onSubmitGestor)} className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('gestorSection')}
+                </h2>
+                <Button type="button" variant="outline" size="sm" title={t('generate.hint')} onClick={generateGestorData}>
+                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t('generate.button')}
+                </Button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t('form.nameRequired')}</Label>
-                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.gestorName)} {...register('gestorName')} />
-                  {errors.gestorName && <p className="text-xs text-destructive">{errors.gestorName.message}</p>}
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(gestorErrors.name)} {...registerGestor('name')} />
+                  {gestorErrors.name && <p className="text-xs text-destructive">{gestorErrors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.emailRequired')}</Label>
-                  <Input type="email" className={fieldErrorClass(errors.gestorEmail)} {...register('gestorEmail')} />
-                  {errors.gestorEmail && <p className="text-xs text-destructive">{errors.gestorEmail.message}</p>}
+                  <Input type="email" className={fieldErrorClass(gestorErrors.email)} {...registerGestor('email')} />
+                  {gestorErrors.email && <p className="text-xs text-destructive">{gestorErrors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1.5">
                     <KeyRound className="h-3.5 w-3.5" />
                     {t('form.passwordRequired')}
                   </Label>
-                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.gestorPassword)} {...register('gestorPassword')} />
-                  {errors.gestorPassword && <p className="text-xs text-destructive">{errors.gestorPassword.message}</p>}
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(gestorErrors.password)} {...registerGestor('password')} />
+                  {gestorErrors.password && <p className="text-xs text-destructive">{gestorErrors.password.message}</p>}
                 </div>
               </div>
-            </div>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={gestorSubmitting}>
+                  {gestorSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('form.createGestor')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
 
-            <div className="border-t pt-6">
-              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                {t('afiliadoSection')}
-              </h2>
+        <Card>
+          <CardContent className="p-6">
+            <form onSubmit={submitAfiliado(onSubmitAfiliado)} className="space-y-4">
+              <div className="flex items-center justify-between gap-2">
+                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t('afiliadoSection')}
+                </h2>
+                <Button type="button" variant="outline" size="sm" title={t('generate.hint')} onClick={generateAfiliadoData}>
+                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
+                  {t('generate.button')}
+                </Button>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2 sm:col-span-2">
                   <Label>{t('form.nameRequired')}</Label>
-                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.afiliadoName)} {...register('afiliadoName')} />
-                  {errors.afiliadoName && <p className="text-xs text-destructive">{errors.afiliadoName.message}</p>}
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(afiliadoErrors.name)} {...registerAfiliado('name')} />
+                  {afiliadoErrors.name && <p className="text-xs text-destructive">{afiliadoErrors.name.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label>{t('form.emailRequired')}</Label>
-                  <Input type="email" className={fieldErrorClass(errors.afiliadoEmail)} {...register('afiliadoEmail')} />
-                  {errors.afiliadoEmail && <p className="text-xs text-destructive">{errors.afiliadoEmail.message}</p>}
+                  <Input type="email" className={fieldErrorClass(afiliadoErrors.email)} {...registerAfiliado('email')} />
+                  {afiliadoErrors.email && <p className="text-xs text-destructive">{afiliadoErrors.email.message}</p>}
                 </div>
                 <div className="space-y-2">
                   <Label className="flex items-center gap-1.5">
                     <KeyRound className="h-3.5 w-3.5" />
                     {t('form.passwordRequired')}
                   </Label>
-                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.afiliadoPassword)} {...register('afiliadoPassword')} />
-                  {errors.afiliadoPassword && <p className="text-xs text-destructive">{errors.afiliadoPassword.message}</p>}
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(afiliadoErrors.password)} {...registerAfiliado('password')} />
+                  {afiliadoErrors.password && <p className="text-xs text-destructive">{afiliadoErrors.password.message}</p>}
                 </div>
               </div>
-            </div>
-
-            <div className="flex justify-end pt-2">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {t('form.create')}
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+              <div className="flex justify-end">
+                <Button type="submit" disabled={afiliadoSubmitting}>
+                  {afiliadoSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {t('form.createAfiliado')}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
 
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <Card>

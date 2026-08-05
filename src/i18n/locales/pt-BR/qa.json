@@ -20,6 +20,10 @@
     "tenantPasswordHint": "Preenchendo, o inquilino já nasce com login pronto (pula o autocadastro). Precisa de e-mail também.",
     "create": "Criar registros de teste",
     "creating": "Criando...",
+    "createOwner": "Criar proprietário de teste",
+    "createTenant": "Criar inquilino de teste",
+    "createGestor": "Criar gestor de teste",
+    "createAfiliado": "Criar afiliado de teste",
     "validation": {
       "ownerName": "Nome do proprietário obrigatório",
       "tenantName": "Nome do inquilino obrigatório",
@@ -52,11 +56,17 @@
     "setPasswordHint": "Preenchendo, cria um login novo pra esse inquilino (precisa de e-mail também)."
   },
   "toast": {
-    "created": "Registros de teste criados",
-    "createError": "Erro ao criar registros de teste",
+    "created": "Registro de teste criado",
+    "createError": "Erro ao criar registro de teste",
     "updated": "Registro atualizado",
     "updateError": "Erro ao atualizar registro",
     "deleted": "Registro removido",
     "deleteError": "Erro ao excluir registro"
+  },
+  "generate": {
+    "button": "Gerar e copiar",
+    "hint": "Preenche o formulário com dados de teste e copia pra área de transferência, pra você colar e enviar pro QA",
+    "copied": "Dados de teste copiados! É só colar e enviar pro QA.",
+    "copyError": "Não deu pra copiar — copie os campos manualmente"
   }
 }
