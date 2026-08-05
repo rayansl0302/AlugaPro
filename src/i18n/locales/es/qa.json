@@ -5,6 +5,7 @@
   "ownerSection": "Propietario de prueba",
   "tenantSection": "Inquilino de prueba",
   "gestorSection": "Gestor de prueba",
+  "afiliadoSection": "Afiliado de prueba",
   "form": {
     "name": "Nombre",
     "nameRequired": "Nombre *",
@@ -25,6 +26,8 @@
       "tenantCpf": "CPF del inquilino obligatorio",
       "gestorName": "Nombre del gestor obligatorio",
       "gestorEmail": "Correo electrónico del gestor obligatorio",
+      "afiliadoName": "Nombre del afiliado obligatorio",
+      "afiliadoEmail": "Correo electrónico del afiliado obligatorio",
       "passwordMin": "La contraseña debe tener al menos 6 caracteres",
       "tenantEmailForLogin": "Ingrese el correo electrónico del inquilino para crear el acceso"
     }
@@ -33,6 +36,7 @@
     "ownersTitle": "Propietarios de prueba",
     "tenantsTitle": "Inquilinos de prueba",
     "gestorsTitle": "Gestores de prueba",
+    "affiliatesTitle": "Afiliados de prueba",
     "empty": "Ningún registro todavía",
     "delete": "Eliminar",
     "hasLogin": "Tiene acceso listo"

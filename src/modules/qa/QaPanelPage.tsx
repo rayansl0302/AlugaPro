@@ -24,14 +24,19 @@ import { toast } from '@/hooks/useToast'
 // Empresa isolada só pra registros de teste — nunca aparece nas telas normais
 // (Imóveis, Contratos, etc.), que sempre filtram pela companyId real do usuário.
 const QA_COMPANY_ID = 'alugapro-qa'
+// Afiliados de teste caem na MESMA companyId dos afiliados reais (é assim que
+// o cadastro de afiliado de verdade funciona, api/create-affiliate-profile.ts)
+// — por isso toda leitura/exclusão aqui filtra também por isQaTest === true,
+// pra nunca listar/apagar uma conta de afiliado real.
+const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
 
 async function createQaLogin(payload: {
   email: string
   password: string
   name: string
-  role: 'gestor' | 'inquilino'
+  role: 'gestor' | 'inquilino' | 'afiliado'
   tenantId?: string
-}): Promise<string> {
+}): Promise<{ uid: string; referralCode?: string }> {
   const idToken = await auth.currentUser?.getIdToken()
   const res = await fetch('/api/qa-create-user', {
     method: 'POST',
@@ -40,7 +45,7 @@ async function createQaLogin(payload: {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Erro ao criar login de teste')
-  return data.uid as string
+  return { uid: data.uid as string, referralCode: data.referralCode as string | undefined }
 }
 
 async function deleteQaLogin(uid: string): Promise<void> {
@@ -68,6 +73,19 @@ async function getQaGestors(): Promise<User[]> {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
+async function getQaAffiliates(): Promise<User[]> {
+  const q = query(
+    collection(db, 'users'),
+    where('companyId', '==', AFFILIATE_COMPANY_ID),
+    where('role', '==', 'afiliado'),
+    where('isQaTest', '==', true),
+  )
+  const snap = await getDocs(q)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as User))
+    .sort((a, b) => a.name.localeCompare(b.name))
+}
+
 const schema = z
   .object({
     ownerName: requiredString(i18n.t('qa:form.validation.ownerName')),
@@ -82,6 +100,9 @@ const schema = z
     gestorName: requiredString(i18n.t('qa:form.validation.gestorName')),
     gestorEmail: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('owners:validation.emailInvalid')),
     gestorPassword: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
+    afiliadoName: requiredString(i18n.t('qa:form.validation.afiliadoName')),
+    afiliadoEmail: requiredString(i18n.t('qa:form.validation.afiliadoEmail')).email(i18n.t('owners:validation.emailInvalid')),
+    afiliadoPassword: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
   })
   .refine((d) => !d.tenantPassword || !!d.tenantEmail, {
     message: i18n.t('qa:form.validation.tenantEmailForLogin'),
@@ -105,6 +126,10 @@ export function QaPanelPage() {
   const { data: gestors = [] } = useQuery({
     queryKey: ['qa-gestors'],
     queryFn: getQaGestors,
+  })
+  const { data: affiliates = [] } = useQuery({
+    queryKey: ['qa-affiliates'],
+    queryFn: getQaAffiliates,
   })
 
   const { register, handleSubmit, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -135,7 +160,7 @@ export function QaPanelPage() {
       if (data.tenantPassword && data.tenantEmail) {
         // Login pronto pro inquilino de teste — pula o convite/autocadastro,
         // já nasce com conta+senha vinculada ao registro de teste.
-        const uid = await createQaLogin({
+        const { uid } = await createQaLogin({
           email: data.tenantEmail,
           password: data.tenantPassword,
           name: data.tenantName,
@@ -158,9 +183,17 @@ export function QaPanelPage() {
         role: 'gestor',
       })
 
+      await createQaLogin({
+        email: data.afiliadoEmail,
+        password: data.afiliadoPassword,
+        name: data.afiliadoName,
+        role: 'afiliado',
+      })
+
       qc.invalidateQueries({ queryKey: ['qa-owners'] })
       qc.invalidateQueries({ queryKey: ['qa-tenants'] })
       qc.invalidateQueries({ queryKey: ['qa-gestors'] })
+      qc.invalidateQueries({ queryKey: ['qa-affiliates'] })
       reset()
       toast({ title: t('toast.created') })
     } catch {
@@ -193,6 +226,15 @@ export function QaPanelPage() {
     mutationFn: deleteQaLogin,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['qa-gestors'] })
+      toast({ title: t('toast.deleted') })
+    },
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
+  })
+
+  const deleteAffiliateMutation = useMutation({
+    mutationFn: deleteQaLogin,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['qa-affiliates'] })
       toast({ title: t('toast.deleted') })
     },
     onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
@@ -321,6 +363,32 @@ export function QaPanelPage() {
               </div>
             </div>
 
+            <div className="border-t pt-6">
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+                {t('afiliadoSection')}
+              </h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>{t('form.nameRequired')}</Label>
+                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(errors.afiliadoName)} {...register('afiliadoName')} />
+                  {errors.afiliadoName && <p className="text-xs text-destructive">{errors.afiliadoName.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('form.emailRequired')}</Label>
+                  <Input type="email" className={fieldErrorClass(errors.afiliadoEmail)} {...register('afiliadoEmail')} />
+                  {errors.afiliadoEmail && <p className="text-xs text-destructive">{errors.afiliadoEmail.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <KeyRound className="h-3.5 w-3.5" />
+                    {t('form.passwordRequired')}
+                  </Label>
+                  <Input type="password" autoComplete="new-password" className={fieldErrorClass(errors.afiliadoPassword)} {...register('afiliadoPassword')} />
+                  {errors.afiliadoPassword && <p className="text-xs text-destructive">{errors.afiliadoPassword.message}</p>}
+                </div>
+              </div>
+            </div>
+
             <div className="flex justify-end pt-2">
               <Button type="submit" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -331,7 +399,7 @@ export function QaPanelPage() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('list.ownersTitle')}</CardTitle>
@@ -417,6 +485,37 @@ export function QaPanelPage() {
                   title={t('list.delete')}
                   onClick={() => {
                     if (confirm(t('list.delete'))) deleteGestorMutation.mutate(gestor.id)
+                  }}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">{t('list.affiliatesTitle')}</CardTitle>
+            <CardDescription>{affiliates.length}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {affiliates.length === 0 && <p className="text-sm text-muted-foreground">{t('list.empty')}</p>}
+            {affiliates.map((affiliate) => (
+              <div key={affiliate.id} className="flex items-center justify-between rounded-lg border p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{affiliate.name}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {affiliate.email}{affiliate.referralCode ? ` — ${affiliate.referralCode}` : ''}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0 text-destructive hover:text-destructive"
+                  title={t('list.delete')}
+                  onClick={() => {
+                    if (confirm(t('list.delete'))) deleteAffiliateMutation.mutate(affiliate.id)
                   }}
                 >
                   <Trash2 className="h-3.5 w-3.5" />

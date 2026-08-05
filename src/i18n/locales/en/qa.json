@@ -5,6 +5,7 @@
   "ownerSection": "Test owner",
   "tenantSection": "Test tenant",
   "gestorSection": "Test manager",
+  "afiliadoSection": "Test affiliate",
   "form": {
     "name": "Name",
     "nameRequired": "Name *",
@@ -25,6 +26,8 @@
       "tenantCpf": "Tenant CPF is required",
       "gestorName": "Manager name is required",
       "gestorEmail": "Manager email is required",
+      "afiliadoName": "Affiliate name is required",
+      "afiliadoEmail": "Affiliate email is required",
       "passwordMin": "Password must be at least 6 characters",
       "tenantEmailForLogin": "Enter the tenant's email to create the login"
     }
@@ -33,6 +36,7 @@
     "ownersTitle": "Test owners",
     "tenantsTitle": "Test tenants",
     "gestorsTitle": "Test managers",
+    "affiliatesTitle": "Test affiliates",
     "empty": "No records yet",
     "delete": "Delete",
     "hasLogin": "Has a ready login"

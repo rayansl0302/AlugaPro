@@ -25,6 +25,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const { uid } = req.body as { uid?: string }
     if (!uid) return res.status(400).json({ error: 'uid obrigatório' })
 
+    // Trava de segurança: só apaga contas marcadas como criadas pelo painel
+    // de QA — evita que um uid errado (ex: de um afiliado real, que
+    // compartilha a mesma companyId 'alugapro-afiliados' dos de teste)
+    // seja excluído por engano.
+    const userSnap = await adminDb.doc(`users/${uid}`).get()
+    if (userSnap.exists && userSnap.data()?.isQaTest !== true) {
+      throw httpError(403, 'Essa conta não foi criada pelo Painel de QA')
+    }
+
     try {
       await adminAuth.deleteUser(uid)
     } catch (err) {

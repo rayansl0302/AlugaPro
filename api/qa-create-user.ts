@@ -2,23 +2,48 @@
  * POST /api/qa-create-user
  *
  * Cria um login de teste (Firebase Auth + doc users/{uid}) pro Painel de QA
- * (/qa, admin-only) — usado quando o admin quer logar como um gestor ou
- * inquilino de teste pra exercitar o sistema de verdade, sem precisar do
- * fluxo normal de autocadastro/convite.
+ * (/qa, admin-only) — usado quando o admin quer logar como um gestor,
+ * inquilino ou afiliado de teste pra exercitar o sistema de verdade, sem
+ * precisar do fluxo normal de autocadastro/convite.
  *
  * O SDK client-side não permite criar login de outra pessoa sem trocar a
  * própria sessão pela da conta nova — por isso isso só pode ser feito aqui,
  * com o Admin SDK.
  *
+ * Todo doc de usuário criado aqui recebe isQaTest: true — é o que permite o
+ * painel listar/excluir só os afiliados de teste sem nunca tocar em contas
+ * de afiliados reais (que compartilham a mesma companyId 'alugapro-afiliados').
+ *
  * Header: Authorization: Bearer <Firebase ID token do admin>
- * Body: { email, password, name, role: 'gestor' | 'inquilino', tenantId? }
+ * Body: { email, password, name, role: 'gestor' | 'inquilino' | 'afiliado', tenantId? }
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { adminAuth, adminDb, Timestamp } from './_firebase.js'
 import { requireUser, errorResponse, httpError } from './_auth.js'
 
 const QA_COMPANY_ID = 'alugapro-qa'
+const AFFILIATE_COMPANY_ID = 'alugapro-afiliados'
 const TRIAL_DAYS = 14
+// Sem 0/O e 1/I para evitar confusão ao compartilhar o código por voz/texto
+// (mesmo alfabeto do fluxo real, api/create-affiliate-profile.ts).
+const REFERRAL_CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+
+function generateCandidateCode(length = 6): string {
+  let code = ''
+  for (let i = 0; i < length; i++) {
+    code += REFERRAL_CODE_CHARS[Math.floor(Math.random() * REFERRAL_CODE_CHARS.length)]
+  }
+  return code
+}
+
+async function generateUniqueReferralCode(): Promise<string> {
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const candidate = generateCandidateCode()
+    const existing = await adminDb.collection('users').where('referralCode', '==', candidate).limit(1).get()
+    if (existing.empty) return candidate
+  }
+  throw new Error('Não foi possível gerar um código de indicação único — tente novamente')
+}
 
 async function ensureQaCompanyAndSubscription() {
   const companyRef = adminDb.doc(`companies/${QA_COMPANY_ID}`)
@@ -68,7 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       email?: string
       password?: string
       name?: string
-      role?: 'gestor' | 'inquilino'
+      role?: 'gestor' | 'inquilino' | 'afiliado'
       tenantId?: string
     }
 
@@ -78,7 +103,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     if (password.length < 6) {
       return res.status(400).json({ error: 'A senha precisa ter pelo menos 6 caracteres' })
     }
-    if (role !== 'gestor' && role !== 'inquilino') {
+    if (role !== 'gestor' && role !== 'inquilino' && role !== 'afiliado') {
       return res.status(400).json({ error: 'role inválido' })
     }
     if (role === 'inquilino' && !tenantId) {
@@ -101,19 +126,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       await ensureQaCompanyAndSubscription()
     }
 
+    const referralCode = role === 'afiliado' ? await generateUniqueReferralCode() : undefined
+
     const now = Timestamp.now()
     await adminDb.doc(`users/${uid}`).set({
       name,
       email,
       role,
-      companyId: QA_COMPANY_ID,
+      companyId: role === 'afiliado' ? AFFILIATE_COMPANY_ID : QA_COMPANY_ID,
       ...(role === 'inquilino' ? { tenantId } : {}),
+      ...(role === 'afiliado' ? { referralCode } : {}),
+      isQaTest: true,
       active: true,
       createdAt: now,
       updatedAt: now,
     })
 
-    return res.status(200).json({ uid })
+    return res.status(200).json({ uid, referralCode })
   } catch (err) {
     const { status, message } = errorResponse(err)
     console.error('[qa-create-user] error:', err)
