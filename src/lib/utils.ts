@@ -16,7 +16,9 @@ export function formatCurrency(value: number): string {
 }
 
 export function formatDate(date: string | Date, pattern = 'dd/MM/yyyy'): string {
+  if (!date) return '—'
   const d = typeof date === 'string' ? parseISO(date) : date
+  if (Number.isNaN(d.getTime())) return '—'
   return format(d, pattern, { locale: getDateFnsLocale(i18n.language) })
 }
 
