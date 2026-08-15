@@ -2,7 +2,7 @@ import { Timestamp } from 'firebase/firestore'
 
 // ─── Enums ────────────────────────────────────────────────────────────────────
 
-export type UserRole = 'admin' | 'gestor' | 'proprietario' | 'inquilino' | 'afiliado'
+export type UserRole = 'admin' | 'gestor' | 'inquilino' | 'afiliado'
 export type AppLocale = 'pt-BR' | 'en' | 'es'
 
 export type PropertyStatus = 'disponivel' | 'alugado' | 'reservado' | 'manutencao' | 'encerrado'
@@ -132,33 +132,16 @@ export interface Company {
   id: string
   name: string
   cnpj?: string
+  cpf?: string
   email?: string
   phone?: string
-  address?: string
+  address?: Address
+  bankAccount?: BankAccount
   logo?: string
   ownerId?: string
   asaasCustomerId?: string
   createdAt: Timestamp
-}
-
-// ─── Owner (Proprietário) ─────────────────────────────────────────────────────
-
-export interface Owner {
-  id: string
-  companyId: string
-  userId?: string
-  name: string
-  cpf?: string
-  cnpj?: string
-  email?: string
-  phone?: string
-  whatsapp?: string
-  photoUrl?: string
-  address?: Address
-  bankAccount?: BankAccount
-  active: boolean
-  createdAt: Timestamp
-  updatedAt: Timestamp
+  updatedAt?: Timestamp
 }
 
 // ─── Property (Imóvel) ────────────────────────────────────────────────────────
@@ -170,8 +153,6 @@ export interface Property {
   name: string
   type: PropertyType
   status: PropertyStatus
-  ownerId: string
-  ownerName?: string
   address: Address
   rentValue: number
   cautionValue?: number
@@ -220,8 +201,6 @@ export interface Vehicle {
   plate: string
   type: VehicleType
   status: VehicleStatus
-  ownerId: string
-  ownerName?: string
   color?: string
   renavam?: string
   chassi?: string
@@ -257,8 +236,6 @@ export interface Equipment {
   model: string
   type: EquipmentType
   status: EquipmentStatus
-  ownerId: string
-  ownerName?: string
   serialNumber?: string
   rentValue: number
   cautionValue?: number
@@ -327,8 +304,6 @@ export interface Contract {
   propertyName?: string
   tenantId: string
   tenantName?: string
-  ownerId: string
-  ownerName?: string
   startDate: string
   endDate?: string
   rentValue: number
@@ -395,7 +370,6 @@ export interface ContractWarning {
   contractNumber?: string
   tenantId: string
   tenantName?: string
-  ownerId?: string
   propertyId?: string
   propertyName?: string
   issuedById: string

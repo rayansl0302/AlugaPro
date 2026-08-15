@@ -50,15 +50,3 @@ export async function archiveVehicle(id: string): Promise<void> {
   await updateDoc(doc(db, COL, id), { archived: true, updatedAt: serverTimestamp() })
 }
 
-export async function getVehiclesByOwner(
-  companyId: string,
-  ownerId: string
-): Promise<Vehicle[]> {
-  const q = query(
-    collection(db, COL),
-    where('companyId', '==', companyId),
-    where('ownerId', '==', ownerId)
-  )
-  const snap = await getDocs(q)
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() } as Vehicle))
-}

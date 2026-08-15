@@ -12,7 +12,6 @@ const pageTitleKeys: Record<string, string> = {
   '/imoveis': 'properties',
   '/veiculos': 'vehicles',
   '/equipamentos': 'equipment',
-  '/proprietarios': 'owners',
   '/inquilinos': 'tenants',
   '/contratos': 'contracts',
   '/financeiro': 'financial',
@@ -36,8 +35,7 @@ export function AdminLayout() {
   const { t } = useTranslation('nav')
   const { user } = useAuth()
   const companyId = user?.companyId ?? ''
-  const canHearReceiptAlerts =
-    user?.role === 'admin' || user?.role === 'gestor' || user?.role === 'proprietario'
+  const canHearReceiptAlerts = user?.role === 'admin' || user?.role === 'gestor'
 
   useReceiptSoundAlert(companyId, canHearReceiptAlerts)
 

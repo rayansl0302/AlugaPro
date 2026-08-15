@@ -28,7 +28,6 @@
     "value": "Valor da locação",
     "brand": "Marca",
     "model": "Modelo",
-    "owner": "Proprietário",
     "description": "Descrição",
     "observations": "Observações",
     "photos": "Fotos",
@@ -43,10 +42,7 @@
     "brand": "Ex: CSM",
     "model": "Ex: CM-400L",
     "value": "0,00",
-    "notes": "Notas internas...",
-    "selectOwner": "Selecione o proprietário",
-    "searchOwner": "Buscar proprietário...",
-    "noOwners": "Nenhum proprietário cadastrado."
+    "notes": "Notas internas..."
   },
   "hints": {
     "freeType": "Digite livremente — não se limita à lista de sugestões."
@@ -55,8 +51,7 @@
     "nameRequired": "Nome obrigatório",
     "modelRequired": "Modelo obrigatório",
     "typeRequired": "Tipo obrigatório",
-    "valueRequired": "Valor obrigatório",
-    "ownerRequired": "Proprietário obrigatório"
+    "valueRequired": "Valor obrigatório"
   },
   "buttons": {
     "save": "Salvar alterações",

@@ -28,7 +28,6 @@
     "amount": "Amount",
     "date": "Date",
     "property": "Property",
-    "owner": "Owner",
     "tenant": "Tenant",
     "paymentMethod": "Payment method",
     "observations": "Notes"

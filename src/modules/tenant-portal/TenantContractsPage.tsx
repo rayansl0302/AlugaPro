@@ -3,17 +3,17 @@ import { useTranslation } from 'react-i18next'
 import { useQuery } from '@tanstack/react-query'
 import {
   FileText, Search, Eye, Download, Calendar, DollarSign,
-  CheckCircle, PenLine, Car, Building2, Loader2, User,
+  CheckCircle, PenLine, Car, Building2, Loader2,
   FileWarning, ShieldAlert, Music,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContractsByTenant } from '@/services/contracts'
 import { getProperties, getProperty } from '@/services/properties'
 import { getVehicles, getVehicle } from '@/services/vehicles'
-import { getOwners, getOwner } from '@/services/owners'
+import { getCompany } from '@/services/company'
 import { getTenant } from '@/services/tenants'
 import { getWarningsByTenant } from '@/services/warnings'
-import { Contract, ContractStatus, ContractWarning, Owner, Property, Vehicle } from '@/types'
+import { Contract, ContractStatus, ContractWarning, Property, Vehicle } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { getContractSigningStatus } from '@/lib/contractSigning'
@@ -41,7 +41,6 @@ import {
 } from '@/components/ui/accordion'
 import { PropertyDetail } from '@/modules/properties/PropertyDetail'
 import { VehicleDetail } from '@/modules/vehicles/VehicleDetail'
-import { OwnerDetail } from '@/modules/owners/OwnerDetail'
 
 const statusVariant: Record<ContractStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
   ativo: 'success',
@@ -79,21 +78,17 @@ function ContractCard({
   photoLookups,
   property,
   vehicle,
-  owner,
   warnings,
   onViewProperty,
   onViewVehicle,
-  onViewOwner,
 }: {
   contract: Contract
   photoLookups: ReturnType<typeof buildMaintenancePhotoLookups>
   property?: Property
   vehicle?: Vehicle
-  owner?: Owner
   warnings: ContractWarning[]
   onViewProperty: (contract: Contract, property?: Property) => void
   onViewVehicle: (contract: Contract, vehicle?: Vehicle) => void
-  onViewOwner: (contract: Contract, owner?: Owner) => void
 }) {
   const { t } = useTranslation('portal')
   const { viewContract, downloadContract, isContractLoading } = useTenantContractActions()
@@ -184,17 +179,6 @@ function ContractCard({
                   {t('contractsExtra.viewVehicle')}
                 </Button>
               )}
-              {(contract.ownerId || contract.ownerName) && (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="flex-1 min-w-[130px] sm:flex-none"
-                  onClick={() => onViewOwner(contract, owner)}
-                >
-                  <User className="mr-1.5 h-4 w-4" />
-                  {t('contractsExtra.viewOwner')}
-                </Button>
-              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <Button
@@ -237,10 +221,6 @@ function ContractCard({
             {property && contract.assetType !== 'veiculo' && (
               <DetailRow label={t('contractsExtra.type')} value={t(`propertyTypes.${property.type}`)} />
             )}
-            <DetailRow
-              label={t('contracts.owner')}
-              value={contract.ownerName ?? owner?.name ?? '—'}
-            />
             <DetailRow label={t('contracts.startDate')} value={formatDate(contract.startDate)} />
             <DetailRow
               label={t('contracts.endDate')}
@@ -389,7 +369,6 @@ export function TenantContractsPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('todos')
   const [viewProperty, setViewProperty] = useState<Property | null>(null)
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null)
-  const [viewOwner, setViewOwner] = useState<Owner | null>(null)
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', companyId, tenantId],
@@ -412,12 +391,6 @@ export function TenantContractsPage() {
   const { data: vehicles = [] } = useQuery({
     queryKey: ['vehicles', companyId],
     queryFn: () => getVehicles(companyId),
-    enabled: !!companyId,
-  })
-
-  const { data: owners = [] } = useQuery({
-    queryKey: ['owners', companyId],
-    queryFn: () => getOwners(companyId),
     enabled: !!companyId,
   })
 
@@ -448,12 +421,6 @@ export function TenantContractsPage() {
     return map
   }, [vehicles])
 
-  const ownerById = useMemo(() => {
-    const map: Record<string, Owner> = {}
-    owners.forEach((o) => { map[o.id] = o })
-    return map
-  }, [owners])
-
   const photoLookups = useMemo(() => {
     const tenants = tenantProfile ? [tenantProfile] : []
     return buildMaintenancePhotoLookups(properties, vehicles, tenants)
@@ -476,8 +443,7 @@ export function TenantContractsPage() {
       const matchSearch =
         !q ||
         c.contractNumber.toLowerCase().includes(q) ||
-        c.propertyName?.toLowerCase().includes(q) ||
-        c.ownerName?.toLowerCase().includes(q)
+        c.propertyName?.toLowerCase().includes(q)
       const matchStatus =
         statusFilter === 'todos' ||
         (statusFilter === 'ativos' && (c.status === 'ativo' || c.status === 'renovado')) ||
@@ -516,24 +482,6 @@ export function TenantContractsPage() {
       else toast({ title: t('contractsExtra.toast.vehicleUnavailable'), variant: 'destructive' })
     } catch {
       toast({ title: t('contractsExtra.toast.loadVehicleError'), variant: 'destructive' })
-    }
-  }
-
-  const openOwnerView = async (contract: Contract, cached?: Owner) => {
-    if (cached) {
-      setViewOwner(cached)
-      return
-    }
-    if (!contract.ownerId) {
-      toast({ title: t('contractsExtra.toast.ownerUnavailable'), variant: 'destructive' })
-      return
-    }
-    try {
-      const fetched = await getOwner(contract.ownerId)
-      if (fetched) setViewOwner(fetched)
-      else toast({ title: t('contractsExtra.toast.ownerUnavailable'), variant: 'destructive' })
-    } catch {
-      toast({ title: t('contractsExtra.toast.loadOwnerError'), variant: 'destructive' })
     }
   }
 
@@ -641,11 +589,9 @@ export function TenantContractsPage() {
                   photoLookups={photoLookups}
                   property={propertyById[contract.propertyId]}
                   vehicle={vehicleById[contract.propertyId]}
-                  owner={ownerById[contract.ownerId]}
                   warnings={warningsByContract[contract.id] ?? []}
                   onViewProperty={openPropertyView}
                   onViewVehicle={openVehicleView}
-                  onViewOwner={openOwnerView}
                 />
               ))}
             </Accordion>
@@ -680,14 +626,6 @@ export function TenantContractsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!viewOwner} onOpenChange={() => setViewOwner(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t('contractsExtra.dialogs.ownerDetails')}</DialogTitle>
-          </DialogHeader>
-          {viewOwner && <OwnerDetail owner={viewOwner} />}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -40,7 +40,6 @@
     "bedrooms": "Quartos",
     "bathrooms": "Banheiros",
     "parkingSpaces": "Vagas",
-    "owner": "Proprietário",
     "description": "Descrição",
     "observations": "Observações",
     "photos": "Fotos"
@@ -82,7 +81,6 @@
   "validation": {
     "nameRequired": "Nome obrigatório",
     "valueRequired": "Valor obrigatório",
-    "ownerRequired": "Proprietário obrigatório",
     "streetRequired": "Rua obrigatória",
     "numberRequired": "Número obrigatório",
     "neighborhoodRequired": "Bairro obrigatório",

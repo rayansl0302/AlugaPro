@@ -130,7 +130,6 @@
     "startDate": "Início",
     "endDate": "Término",
     "indefinite": "Indeterminado",
-    "owner": "Proprietário",
     "property": "Imóvel",
     "vehicle": "Veículo",
     "signedAt": "Assinado em",
@@ -247,7 +246,6 @@
     "dueEveryDay": "Vence todo dia",
     "validity": "Vigência",
     "viewVehicle": "Ver veículo",
-    "viewOwner": "Ver proprietário",
     "viewPropertyType": "Ver {{type}}",
     "subtitle": "Consulte detalhes, assinaturas e advertências dos seus contratos.",
     "searchPlaceholder": "Buscar por número, imóvel ou veículo...",
@@ -289,16 +287,13 @@
     "toast": {
       "propertyUnavailable": "Imóvel não disponível.",
       "vehicleUnavailable": "Veículo não disponível.",
-      "ownerUnavailable": "Proprietário não disponível.",
       "loadError": "Erro ao carregar dados.",
       "loadPropertyError": "Erro ao carregar imóvel.",
-      "loadVehicleError": "Erro ao carregar veículo.",
-      "loadOwnerError": "Erro ao carregar proprietário."
+      "loadVehicleError": "Erro ao carregar veículo."
     },
     "dialogs": {
       "propertyDetails": "Detalhes do imóvel",
-      "vehicleDetails": "Detalhes do veículo",
-      "ownerDetails": "Detalhes do proprietário"
+      "vehicleDetails": "Detalhes do veículo"
     }
   },
   "sharedExpensesExtra": {

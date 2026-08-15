@@ -145,7 +145,11 @@ service cloud.firestore {
         || (isAuthenticated()
             && companyId == 'company_' + request.auth.uid
             && request.resource.data.ownerId == request.auth.uid);
-      allow update: if isAdmin() && sameCompany(companyId);
+      // Gestor edita só os campos do próprio perfil de empresa (Configurações >
+      // Empresa) — ownerId/asaasCustomerId/createdAt ficam fora do alcance dele.
+      allow update: if isGestor() && sameCompany(companyId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['name', 'cnpj', 'cpf', 'email', 'phone', 'address', 'logo', 'bankAccount', 'updatedAt']);
       allow delete: if false; // never delete companies via client
     }
 
@@ -218,12 +222,6 @@ service cloud.firestore {
       allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));
       allow create, update: if isGestor() && sameCompany(request.resource.data.companyId);
       allow delete: if isGestor() && sameCompany(resource.data.companyId);
-    }
-
-    // Owners
-    match /owners/{ownerId} {
-      allow read: if isDemo() || (isAuthenticated() && sameCompany(resource.data.companyId));
-      allow write: if isGestor() && sameCompany(request.resource.data.companyId);
     }
 
     // Tenants

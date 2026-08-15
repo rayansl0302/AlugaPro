@@ -40,7 +40,6 @@
     "bedrooms": "Dormitorios",
     "bathrooms": "Baños",
     "parkingSpaces": "Estacionamientos",
-    "owner": "Propietario",
     "description": "Descripción",
     "observations": "Observaciones",
     "photos": "Fotos"
@@ -82,7 +81,6 @@
   "validation": {
     "nameRequired": "Nombre obligatorio",
     "valueRequired": "Valor obligatorio",
-    "ownerRequired": "Propietario obligatorio",
     "streetRequired": "Calle obligatoria",
     "numberRequired": "Número obligatorio",
     "neighborhoodRequired": "Barrio obligatorio",

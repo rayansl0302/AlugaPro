@@ -54,7 +54,6 @@
   "roles": {
     "admin": "Administrador",
     "gestor": "Gestor",
-    "proprietario": "Propietario",
     "inquilino": "Inquilino",
     "afiliado": "Afiliado"
   },

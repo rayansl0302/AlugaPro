@@ -10,6 +10,7 @@ import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
 import { getEquipments } from '@/services/equipments'
 import { getWarningsByCompany } from '@/services/warnings'
+import { getCompany } from '@/services/company'
 import { Contract, ContractStatus, Property, Tenant, Vehicle, Equipment } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { getContractSigningStatus } from '@/lib/contractSigning'
@@ -96,6 +97,12 @@ export function ContractsPage() {
   const { data: warnings = [] } = useQuery({
     queryKey: ['warnings', companyId],
     queryFn: () => getWarningsByCompany(companyId),
+    enabled: !!companyId,
+  })
+
+  const { data: company } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => getCompany(companyId),
     enabled: !!companyId,
   })
 
@@ -625,9 +632,7 @@ export function ContractsPage() {
         open={!!signingContract}
         contract={signingContract}
         initialEdit={signFlowEdit}
-        owner={signingContract?.ownerId
-          ? { id: signingContract.ownerId, name: signingContract.ownerName ?? '', cpf: '', companyId, active: true, createdAt: signingContract.createdAt, updatedAt: signingContract.updatedAt }
-          : undefined}
+        company={company ?? undefined}
         tenant={signingContract ? tenantById[signingContract.tenantId] : undefined}
         property={(!signingContract || signingContract.assetType === 'veiculo' || signingContract.assetType === 'equipamento') ? undefined : propertyById[signingContract.propertyId]}
         vehicle={signingContract?.assetType === 'veiculo' ? (signingContract ? vehicleById[signingContract.propertyId] : undefined) : undefined}

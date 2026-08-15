@@ -8,7 +8,7 @@ import {
   CheckCircle, Download, Loader2, User, Building2, Car, X,
   Copy, RefreshCw, Clock, Mail, Send, Eye, HardHat,
 } from 'lucide-react'
-import { Contract, Owner, Tenant, Vehicle, Property, Equipment, ImovelSigningData, VeiculoSigningData, EquipamentoSigningData, SigningParty, ContractWitness } from '@/types'
+import { Contract, Company, Tenant, Vehicle, Property, Equipment, ImovelSigningData, VeiculoSigningData, EquipamentoSigningData, SigningParty, ContractWitness } from '@/types'
 import { updateContract } from '@/services/contracts'
 import { uploadContractDocument, uploadContractPDF } from '@/services/storage'
 import { createWitnessRequest, getWitnessRequest, generateWitnessToken } from '@/services/witnessSignatures'
@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils'
 interface Props {
   open: boolean
   contract: Contract | null
-  owner?: Owner
+  company?: Company
   tenant?: Tenant
   property?: Property
   vehicle?: Vehicle
@@ -337,7 +337,7 @@ function PartyFormFields({ label, value, onChange }: {
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export function ContractSignFlow({ open, contract, owner, tenant, property, vehicle, equipment, initialEdit, onClose }: Props) {
+export function ContractSignFlow({ open, contract, company, tenant, property, vehicle, equipment, initialEdit, onClose }: Props) {
   const { t } = useTranslation('contracts')
   const qc = useQueryClient()
   const isVeiculo = contract?.assetType === 'veiculo'
@@ -381,7 +381,9 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
     setLocalWitnesses(contract.witnesses ?? [])
     setSelectedTemplateId(contract.templateId ?? 'system')
     setForm({
-      locador: emptyParty(owner),
+      locador: emptyParty(company
+        ? { name: company.name, cpf: company.cpf ?? company.cnpj, phone: company.phone, email: company.email, address: company.address }
+        : undefined),
       locatario: emptyParty(tenant),
       imovel: {
         endereco: property ? addressToStr(property.address) : '',
@@ -397,10 +399,10 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         acessorios: '',
       },
       valorExtenso: '',
-      pixKey: owner?.bankAccount?.pixKey ?? '',
-      banco: owner?.bankAccount?.bank ?? '',
-      agencia: owner?.bankAccount?.agency ?? '',
-      conta: owner?.bankAccount?.account ?? '',
+      pixKey: company?.bankAccount?.pixKey ?? '',
+      banco: company?.bankAccount?.bank ?? '',
+      agencia: company?.bankAccount?.agency ?? '',
+      conta: company?.bankAccount?.account ?? '',
       prazoExtenso: '',
       indiceReajuste: contract.readjustmentIndex,
       foro: property?.address?.city ?? '',
@@ -834,7 +836,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
         contractNumber: contract.contractNumber,
         witnessName: w.name,
         witnessEmail: w.email,
-        locadorName: contract.signingData?.locador.name ?? contract.ownerName ?? '',
+        locadorName: contract.signingData?.locador.name ?? company?.name ?? '',
         locatarioName: contract.signingData?.locatario.name ?? contract.tenantName ?? '',
         objeto: contract.propertyName ?? '',
         valor: formatCurrency(contract.rentValue),
@@ -847,7 +849,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
             toName: w.name,
             contractNumber: contract.contractNumber,
             link: `${window.location.origin}/assinar-testemunha/${token}`,
-            locadorName: contract.signingData?.locador.name ?? contract.ownerName ?? '',
+            locadorName: contract.signingData?.locador.name ?? company?.name ?? '',
             locatarioName: contract.signingData?.locatario.name ?? contract.tenantName ?? '',
           })
           emailed = true
@@ -1065,7 +1067,7 @@ export function ContractSignFlow({ open, contract, owner, tenant, property, vehi
                 <div className="grid grid-cols-2 gap-3">
                   <SignatureStatusCard
                     label={t('sign.signedView.owner')}
-                    name={contract.signingData?.locador.name ?? contract.ownerName ?? ''}
+                    name={contract.signingData?.locador.name ?? company?.name ?? ''}
                     signature={contract.signatureLocador}
                     auditAt={formatSignedAtPtBR(contract.signatureLocadorAt)}
                     auditIp={contract.signatureLocadorIp}

@@ -30,7 +30,6 @@
     "vehicle": "Vehicle",
     "equipment": "Equipment",
     "tenant": "Tenant",
-    "owner": "Owner",
     "startDate": "Start date",
     "endDate": "End date",
     "rentValue": "Rent value",
@@ -67,14 +66,12 @@
     "shortStayPreview": "{{count}}x — total {{total}}",
     "lateFee": "Late fee (%)",
     "monthlyInterest": "Monthly interest (%)",
-    "ownerPrefix": "Owner: {{name}}",
     "indexRef": "Current {{name}}: {{value}}% — ref. {{date}} (Central Bank)",
     "saveChanges": "Save changes",
     "create": "Create contract",
     "validation": {
       "selectAsset": "Select the property or vehicle",
       "selectTenant": "Select the tenant",
-      "noOwner": "The selected asset has no owner",
       "startDate": "Start date is required",
       "endDate": "End date is required",
       "rentValue": "Amount is required"
@@ -97,7 +94,6 @@
     "rejected": "Rejected",
     "sendLink": "Send link",
     "copyLink": "Copy link",
-    "owner": "Owner",
     "tenant": "Tenant",
     "witness": "Witness",
     "guarantor": "Guarantor"

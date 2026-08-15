@@ -28,7 +28,6 @@
     "amount": "Monto",
     "date": "Fecha",
     "property": "Inmueble",
-    "owner": "Propietario",
     "tenant": "Inquilino",
     "paymentMethod": "Forma de pago",
     "observations": "Observaciones"

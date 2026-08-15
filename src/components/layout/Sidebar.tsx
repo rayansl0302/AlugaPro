@@ -45,7 +45,6 @@ const navSections: NavSection[] = [
   {
     titleKey: 'section.people',
     items: [
-      { key: 'owners', href: '/proprietarios', icon: Home },
       { key: 'tenants', href: '/inquilinos', icon: Users },
     ],
   },

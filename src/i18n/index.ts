@@ -16,7 +16,6 @@ import ptDashboard from './locales/pt-BR/dashboard.json'
 import ptProperties from './locales/pt-BR/properties.json'
 import ptVehicles from './locales/pt-BR/vehicles.json'
 import ptEquipment from './locales/pt-BR/equipment.json'
-import ptOwners from './locales/pt-BR/owners.json'
 import ptTenants from './locales/pt-BR/tenants.json'
 import ptContracts from './locales/pt-BR/contracts.json'
 import ptCharges from './locales/pt-BR/charges.json'
@@ -44,7 +43,6 @@ import enDashboard from './locales/en/dashboard.json'
 import enProperties from './locales/en/properties.json'
 import enVehicles from './locales/en/vehicles.json'
 import enEquipment from './locales/en/equipment.json'
-import enOwners from './locales/en/owners.json'
 import enTenants from './locales/en/tenants.json'
 import enContracts from './locales/en/contracts.json'
 import enCharges from './locales/en/charges.json'
@@ -72,7 +70,6 @@ import esDashboard from './locales/es/dashboard.json'
 import esProperties from './locales/es/properties.json'
 import esVehicles from './locales/es/vehicles.json'
 import esEquipment from './locales/es/equipment.json'
-import esOwners from './locales/es/owners.json'
 import esTenants from './locales/es/tenants.json'
 import esContracts from './locales/es/contracts.json'
 import esCharges from './locales/es/charges.json'
@@ -101,7 +98,6 @@ export const i18nNamespaces = [
   'properties',
   'vehicles',
   'equipment',
-  'owners',
   'tenants',
   'contracts',
   'charges',
@@ -132,7 +128,6 @@ const resources = {
     properties: ptProperties,
     vehicles: ptVehicles,
     equipment: ptEquipment,
-    owners: ptOwners,
     tenants: ptTenants,
     contracts: ptContracts,
     charges: ptCharges,
@@ -161,7 +156,6 @@ const resources = {
     properties: enProperties,
     vehicles: enVehicles,
     equipment: enEquipment,
-    owners: enOwners,
     tenants: enTenants,
     contracts: enContracts,
     charges: enCharges,
@@ -190,7 +184,6 @@ const resources = {
     properties: esProperties,
     vehicles: esVehicles,
     equipment: esEquipment,
-    owners: esOwners,
     tenants: esTenants,
     contracts: esContracts,
     charges: esCharges,

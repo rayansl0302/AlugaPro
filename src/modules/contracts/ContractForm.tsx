@@ -35,8 +35,6 @@ const schema = z
     propertyName: z.string().optional(),
     tenantId: requiredString('Selecione o inquilino'),
     tenantName: z.string().optional(),
-    ownerId: requiredString('O bem selecionado não possui proprietário'),
-    ownerName: z.string().optional(),
     startDate: requiredString('Data de início obrigatória'),
     endDate: z.string().optional(),
     noEndDate: z.boolean().default(false),
@@ -97,8 +95,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
           propertyName: contract.propertyName,
           tenantId: contract.tenantId,
           tenantName: contract.tenantName,
-          ownerId: contract.ownerId,
-          ownerName: contract.ownerName,
           startDate: contract.startDate,
           endDate: contract.endDate,
           noEndDate: !contract.endDate,
@@ -161,14 +157,10 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
   const indexNameMap: Record<string, string> = { IGPM: 'IGP-M', IPCA: 'IPCA', INPC: 'INPC' }
   const currentIndex = indices.find((i) => i.name === indexNameMap[selectedIndex])
 
-  const ownerName = watch('ownerName')
-
   const handleAssetTypeChange = (value: ContractAssetType) => {
     setValue('assetType', value)
     setValue('propertyId', '')
     setValue('propertyName', '')
-    setValue('ownerId', '')
-    setValue('ownerName', '')
   }
 
   const handleAssetSelect = (assetId: string) => {
@@ -177,8 +169,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
       if (!v) return
       setValue('propertyId', v.id)
       setValue('propertyName', `${v.brand} ${v.model} — ${v.plate}`)
-      setValue('ownerId', v.ownerId)
-      setValue('ownerName', v.ownerName ?? '')
       if (!contract) {
         setValue('rentValue', v.rentValue)
         if (v.cautionValue) setValue('cautionValue', v.cautionValue)
@@ -188,8 +178,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
       if (!eq) return
       setValue('propertyId', eq.id)
       setValue('propertyName', `${eq.name} — ${eq.model}`)
-      setValue('ownerId', eq.ownerId)
-      setValue('ownerName', eq.ownerName ?? '')
       if (!contract) {
         setValue('rentValue', eq.rentValue)
         if (eq.cautionValue) setValue('cautionValue', eq.cautionValue)
@@ -199,8 +187,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
       if (!p) return
       setValue('propertyId', p.id)
       setValue('propertyName', p.name)
-      setValue('ownerId', p.ownerId)
-      setValue('ownerName', p.ownerName ?? '')
       if (!contract) {
         setValue('rentValue', p.rentValue)
         if (p.cautionValue) setValue('cautionValue', p.cautionValue)
@@ -230,8 +216,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         propertyName: data.propertyName,
         tenantId: data.tenantId,
         tenantName: data.tenantName,
-        ownerId: data.ownerId,
-        ownerName: data.ownerName,
         startDate: data.startDate,
         endDate: data.noEndDate ? '' : (data.endDate ?? ''),
         rentValue: data.rentValue,
@@ -436,7 +420,6 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
             </SelectContent>
           </Select>
           {errors.propertyId && <p className="text-xs text-destructive">{errors.propertyId.message}</p>}
-          {ownerName && <p className="text-xs text-muted-foreground">{t('form.ownerPrefix', { name: ownerName })}</p>}
         </div>
 
         <div className="space-y-2 sm:col-span-2">

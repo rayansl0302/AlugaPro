@@ -30,7 +30,6 @@
     "vehicle": "Vehículo",
     "equipment": "Equipo",
     "tenant": "Inquilino",
-    "owner": "Propietario",
     "startDate": "Fecha de inicio",
     "endDate": "Fecha de fin",
     "rentValue": "Valor del alquiler",
@@ -67,14 +66,12 @@
     "shortStayPreview": "{{count}}x — total {{total}}",
     "lateFee": "Multa por atraso (%)",
     "monthlyInterest": "Intereses mensuales (%)",
-    "ownerPrefix": "Propietario: {{name}}",
     "indexRef": "{{name}} actual: {{value}}% — ref. {{date}} (Banco Central)",
     "saveChanges": "Guardar cambios",
     "create": "Crear contrato",
     "validation": {
       "selectAsset": "Seleccione el inmueble o vehículo",
       "selectTenant": "Seleccione el inquilino",
-      "noOwner": "El bien seleccionado no tiene propietario",
       "startDate": "Fecha de inicio obligatoria",
       "endDate": "Fecha de término obligatoria",
       "rentValue": "Valor obligatorio"
@@ -97,7 +94,6 @@
     "rejected": "Rechazado",
     "sendLink": "Enviar enlace",
     "copyLink": "Copiar enlace",
-    "owner": "Propietario",
     "tenant": "Inquilino",
     "witness": "Testigo",
     "guarantor": "Garante"

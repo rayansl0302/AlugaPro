@@ -27,7 +27,6 @@ const db = getFirestore()
 const SEEDED_IDS: Record<string, Set<string>> = {
   companies:           new Set(['demo-company']),
   users:               new Set(['demo-admin', 'demo-gestor', 'demo-inquilino']),
-  owners:              new Set(['demo-owner-carlos', 'demo-owner-maria']),
   properties:          new Set(['demo-prop-apto', 'demo-prop-casa', 'demo-prop-kitnet', 'demo-prop-sala']),
   vehicles:            new Set(['demo-veh-civic', 'demo-veh-corolla']),
   tenants:             new Set(['demo-tenant-roberto', 'demo-tenant-fernanda', 'demo-tenant-pedro']),
@@ -47,7 +46,7 @@ const SEEDED_IDS: Record<string, Set<string>> = {
 }
 
 const COLLECTIONS_TO_CHECK = [
-  'properties', 'vehicles', 'tenants', 'owners',
+  'properties', 'vehicles', 'tenants',
   'contracts', 'charges', 'maintenanceRequests', 'sharedExpenses',
 ]
 

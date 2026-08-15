@@ -130,7 +130,6 @@
     "startDate": "Start",
     "endDate": "End",
     "indefinite": "Indefinite",
-    "owner": "Owner",
     "property": "Property",
     "vehicle": "Vehicle",
     "signedAt": "Signed on",
@@ -247,7 +246,6 @@
     "dueEveryDay": "Due every day",
     "validity": "Term",
     "viewVehicle": "View vehicle",
-    "viewOwner": "View owner",
     "viewPropertyType": "View {{type}}",
     "subtitle": "Review details, signatures, and warnings for your contracts.",
     "searchPlaceholder": "Search by number, property, or vehicle...",
@@ -289,16 +287,13 @@
     "toast": {
       "propertyUnavailable": "Property unavailable.",
       "vehicleUnavailable": "Vehicle unavailable.",
-      "ownerUnavailable": "Owner unavailable.",
       "loadError": "Failed to load data.",
       "loadPropertyError": "Failed to load property.",
-      "loadVehicleError": "Failed to load vehicle.",
-      "loadOwnerError": "Failed to load owner."
+      "loadVehicleError": "Failed to load vehicle."
     },
     "dialogs": {
       "propertyDetails": "Property details",
-      "vehicleDetails": "Vehicle details",
-      "ownerDetails": "Owner details"
+      "vehicleDetails": "Vehicle details"
     }
   },
   "sharedExpensesExtra": {

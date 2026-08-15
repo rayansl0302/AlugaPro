@@ -9,7 +9,6 @@ import { Loader2, Trash2, Pencil, FlaskConical, KeyRound, Wand2 } from 'lucide-r
 import i18n from '@/i18n'
 import { db, auth } from '@/lib/firebase'
 import { User } from '@/types'
-import { createOwner, deleteOwner, getOwners } from '@/services/owners'
 import { createTenant, updateTenant, deleteTenant, getTenants } from '@/services/tenants'
 import { upsertTenantInvite } from '@/services/invites'
 import { EditQaRecordDialog, EditTarget } from './EditQaRecordDialog'
@@ -147,14 +146,6 @@ async function getQaAffiliates(): Promise<User[]> {
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-const ownerSchema = z.object({
-  name: requiredString(i18n.t('qa:form.validation.ownerName')),
-  cpf: z.string().optional(),
-  email: z.string().email(i18n.t('owners:validation.emailInvalid')).optional().or(z.literal('')),
-  phone: z.string().optional().refine((v) => !v || isValidPhoneBR(v), i18n.t('owners:validation.phoneInvalid')),
-})
-type OwnerFormData = z.infer<typeof ownerSchema>
-
 const tenantSchema = z
   .object({
     name: requiredString(i18n.t('qa:form.validation.tenantName')),
@@ -171,14 +162,14 @@ type TenantFormData = z.infer<typeof tenantSchema>
 
 const gestorSchema = z.object({
   name: requiredString(i18n.t('qa:form.validation.gestorName')),
-  email: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('owners:validation.emailInvalid')),
+  email: requiredString(i18n.t('qa:form.validation.gestorEmail')).email(i18n.t('auth:emailInvalid')),
   password: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
 })
 type GestorFormData = z.infer<typeof gestorSchema>
 
 const afiliadoSchema = z.object({
   name: requiredString(i18n.t('qa:form.validation.afiliadoName')),
-  email: requiredString(i18n.t('qa:form.validation.afiliadoEmail')).email(i18n.t('owners:validation.emailInvalid')),
+  email: requiredString(i18n.t('qa:form.validation.afiliadoEmail')).email(i18n.t('auth:emailInvalid')),
   password: requiredString(i18n.t('qa:form.validation.passwordMin')).min(6, i18n.t('qa:form.validation.passwordMin')),
 })
 type AfiliadoFormData = z.infer<typeof afiliadoSchema>
@@ -189,16 +180,11 @@ export function QaPanelPage() {
   const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
 
   const invalidateAll = () => {
-    qc.invalidateQueries({ queryKey: ['qa-owners'] })
     qc.invalidateQueries({ queryKey: ['qa-tenants'] })
     qc.invalidateQueries({ queryKey: ['qa-gestors'] })
     qc.invalidateQueries({ queryKey: ['qa-affiliates'] })
   }
 
-  const { data: owners = [] } = useQuery({
-    queryKey: ['qa-owners'],
-    queryFn: () => getOwners(QA_COMPANY_ID),
-  })
   const { data: tenants = [] } = useQuery({
     queryKey: ['qa-tenants'],
     queryFn: () => getTenants(QA_COMPANY_ID),
@@ -211,11 +197,6 @@ export function QaPanelPage() {
     queryKey: ['qa-affiliates'],
     queryFn: getQaAffiliates,
   })
-
-  const {
-    register: registerOwner, handleSubmit: submitOwner, setValue: setOwnerValue, reset: resetOwner,
-    formState: { errors: ownerErrors, isSubmitting: ownerSubmitting },
-  } = useForm<OwnerFormData>({ resolver: zodResolver(ownerSchema), mode: 'onTouched' })
 
   const {
     register: registerTenant, handleSubmit: submitTenant, setValue: setTenantValue, reset: resetTenant,
@@ -239,18 +220,6 @@ export function QaPanelPage() {
     } catch {
       toast({ title: t('generate.copyError'), variant: 'destructive' })
     }
-  }
-
-  const generateOwnerData = () => {
-    const name = generateFakeName()
-    const cpf = maskCPF(generateFakeCPF())
-    const email = generateFakeEmail(name)
-    const phone = maskPhone(generateFakePhone())
-    setOwnerValue('name', name, { shouldValidate: true })
-    setOwnerValue('cpf', cpf, { shouldValidate: true })
-    setOwnerValue('email', email, { shouldValidate: true })
-    setOwnerValue('phone', phone, { shouldValidate: true })
-    copyToClipboard(`${t('ownerSection')}\nNome: ${name}\nCPF: ${cpf}\nE-mail: ${email}\nTelefone: ${phone}`)
   }
 
   const generateTenantData = () => {
@@ -285,26 +254,6 @@ export function QaPanelPage() {
     setAfiliadoValue('email', email, { shouldValidate: true })
     setAfiliadoValue('password', password, { shouldValidate: true })
     copyToClipboard(`${t('afiliadoSection')}\nNome: ${name}\nE-mail: ${email}\nSenha: ${password}`)
-  }
-
-  const onSubmitOwner = async (data: OwnerFormData) => {
-    try {
-      // addDoc rejeita campos com valor undefined — omite em vez de mandar
-      // undefined pros opcionais não preenchidos.
-      await createOwner({
-        companyId: QA_COMPANY_ID,
-        name: data.name,
-        ...(data.cpf ? { cpf: data.cpf.replace(/\D/g, '') } : {}),
-        ...(data.email ? { email: data.email } : {}),
-        ...(data.phone ? { phone: data.phone.replace(/\D/g, '') } : {}),
-        active: true,
-      })
-      qc.invalidateQueries({ queryKey: ['qa-owners'] })
-      resetOwner()
-      toast({ title: t('toast.created') })
-    } catch {
-      toast({ title: t('toast.createError'), variant: 'destructive' })
-    }
   }
 
   const onSubmitTenant = async (data: TenantFormData) => {
@@ -365,15 +314,6 @@ export function QaPanelPage() {
     }
   }
 
-  const deleteOwnerMutation = useMutation({
-    mutationFn: deleteOwner,
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['qa-owners'] })
-      toast({ title: t('toast.deleted') })
-    },
-    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
-  })
-
   const deleteTenantMutation = useMutation({
     mutationFn: async (tenant: { id: string; userId?: string }) => {
       if (tenant.userId) await deleteQaLogin(tenant.userId)
@@ -416,58 +356,6 @@ export function QaPanelPage() {
       </div>
 
       <div className="grid gap-6 xl:grid-cols-2">
-        <Card>
-          <CardContent className="p-6">
-            <form onSubmit={submitOwner(onSubmitOwner)} className="space-y-4">
-              <div className="flex items-center justify-between gap-2">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                  {t('ownerSection')}
-                </h2>
-                <Button type="button" variant="outline" size="sm" title={t('generate.hint')} onClick={generateOwnerData}>
-                  <Wand2 className="mr-1.5 h-3.5 w-3.5" />
-                  {t('generate.button')}
-                </Button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>{t('form.nameRequired')}</Label>
-                  <Input placeholder={t('form.namePlaceholder')} className={fieldErrorClass(ownerErrors.name)} {...registerOwner('name')} />
-                  {ownerErrors.name && <p className="text-xs text-destructive">{ownerErrors.name.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('form.cpf')}</Label>
-                  <Input
-                    placeholder="000.000.000-00"
-                    {...registerOwner('cpf')}
-                    onChange={(e) => setOwnerValue('cpf', maskCPF(e.target.value))}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('form.email')}</Label>
-                  <Input type="email" className={fieldErrorClass(ownerErrors.email)} {...registerOwner('email')} />
-                  {ownerErrors.email && <p className="text-xs text-destructive">{ownerErrors.email.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('form.phone')}</Label>
-                  <Input
-                    placeholder="(00) 00000-0000"
-                    className={fieldErrorClass(ownerErrors.phone)}
-                    {...registerOwner('phone')}
-                    onChange={(e) => setOwnerValue('phone', maskPhone(e.target.value))}
-                  />
-                  {ownerErrors.phone && <p className="text-xs text-destructive">{ownerErrors.phone.message}</p>}
-                </div>
-              </div>
-              <div className="flex justify-end">
-                <Button type="submit" disabled={ownerSubmitting}>
-                  {ownerSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t('form.createOwner')}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardContent className="p-6">
             <form onSubmit={submitTenant(onSubmitTenant)} className="space-y-4">
@@ -616,46 +504,7 @@ export function QaPanelPage() {
         </Card>
       </div>
 
-      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('list.ownersTitle')}</CardTitle>
-            <CardDescription>{owners.length}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {owners.length === 0 && <p className="text-sm text-muted-foreground">{t('list.empty')}</p>}
-            {owners.map((owner) => (
-              <div key={owner.id} className="flex items-center justify-between rounded-lg border p-3">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{owner.name}</p>
-                  <p className="truncate text-xs text-muted-foreground">{owner.email || owner.cpf || '—'}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    title={t('edit.title')}
-                    onClick={() => setEditTarget({ kind: 'owner', record: owner })}
-                  >
-                    <Pencil className="h-3.5 w-3.5" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive"
-                    title={t('list.delete')}
-                    onClick={() => {
-                      if (confirm(t('list.delete'))) deleteOwnerMutation.mutate(owner.id)
-                    }}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="text-base">{t('list.tenantsTitle')}</CardTitle>

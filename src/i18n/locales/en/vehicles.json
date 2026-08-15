@@ -30,7 +30,6 @@
     "fipeCode": "FIPE code",
     "status": "Status",
     "value": "Rental value",
-    "owner": "Owner",
     "mileage": "Mileage",
     "fuelType": "Fuel type",
     "transmission": "Transmission",
@@ -55,10 +54,7 @@
     "notes": "Internal notes...",
     "select": "Select",
     "selectBrand": "Select the brand",
-    "selectModel": "Select the model",
-    "selectOwner": "Select the owner",
-    "searchOwner": "Search owner...",
-    "noOwners": "No owners registered."
+    "selectModel": "Select the model"
   },
   "hints": {
     "fipeBrands": "FIPE table brands",
@@ -78,8 +74,7 @@
     "modelRequired": "Model is required",
     "yearInvalid": "Invalid year",
     "plateInvalid": "Invalid plate",
-    "valueRequired": "Value is required",
-    "ownerRequired": "Owner is required"
+    "valueRequired": "Value is required"
   },
   "buttons": {
     "save": "Save changes",

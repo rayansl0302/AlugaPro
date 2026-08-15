@@ -28,7 +28,6 @@
     "value": "Rental value",
     "brand": "Brand",
     "model": "Model",
-    "owner": "Owner",
     "description": "Description",
     "observations": "Notes",
     "photos": "Photos",
@@ -43,10 +42,7 @@
     "brand": "e.g. CSM",
     "model": "e.g. CM-400L",
     "value": "0.00",
-    "notes": "Internal notes...",
-    "selectOwner": "Select the owner",
-    "searchOwner": "Search owner...",
-    "noOwners": "No owners registered."
+    "notes": "Internal notes..."
   },
   "hints": {
     "freeType": "Type freely — not limited to the suggestions list."
@@ -55,8 +51,7 @@
     "nameRequired": "Name is required",
     "modelRequired": "Model is required",
     "typeRequired": "Type is required",
-    "valueRequired": "Value is required",
-    "ownerRequired": "Owner is required"
+    "valueRequired": "Value is required"
   },
   "buttons": {
     "save": "Save changes",

@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   FileText, Home, Wifi, Zap, Droplets, Building2, Landmark, Flame,
   ShieldCheck, AlertTriangle, Percent, Receipt, CalendarClock, Wallet,
-  Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, Car, User,
+  Upload, CheckCircle, Clock, X, TrendingDown, CreditCard, Car,
   Eye, Download, Wrench, Plus, Loader2, DollarSign, QrCode, Copy,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -15,13 +15,13 @@ import { getPaymentsByTenant } from '@/services/payments'
 import { createMaintenanceRequest, getMaintenanceRequestsByTenant, addMaintenanceComment, buildInitialStatusHistory } from '@/services/maintenance'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
-import { getOwners } from '@/services/owners'
+import { getCompany } from '@/services/company'
 import { getTenant } from '@/services/tenants'
 import { getSharedExpensesByTenant, resolveExpenseParticipantIndex, submitSharedExpenseReceipt, type TenantSharedExpenseItem } from '@/services/sharedExpenses'
 import { uploadReceipt } from '@/services/storage'
 import { useTenantContractActions } from '@/hooks/useTenantContractActions'
 import { TenantPortalHeader } from './TenantPortalHeader'
-import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Owner, Property, Vehicle } from '@/types'
+import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Company, Property, Vehicle } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -46,7 +46,6 @@ import {
 } from '@/lib/maintenanceEntityPhotos'
 import { PropertyDetail } from '@/modules/properties/PropertyDetail'
 import { VehicleDetail } from '@/modules/vehicles/VehicleDetail'
-import { OwnerDetail } from '@/modules/owners/OwnerDetail'
 
 const statusVariant = {
   pendente: 'warning',
@@ -160,7 +159,7 @@ interface TenantPaymentInfo {
   account?: string
 }
 
-function resolvePaymentInfo(contract: Contract | undefined, owner: Owner | undefined): TenantPaymentInfo {
+function resolvePaymentInfo(contract: Contract | undefined, company: Company | undefined): TenantPaymentInfo {
   const fin = contract?.signingData?.financeiro
   if (fin?.pixKey?.trim() || fin?.banco?.trim()) {
     return {
@@ -170,7 +169,7 @@ function resolvePaymentInfo(contract: Contract | undefined, owner: Owner | undef
       account: 'conta' in fin ? fin.conta?.trim() : undefined,
     }
   }
-  const bankAccount = owner?.bankAccount
+  const bankAccount = company?.bankAccount
   if (bankAccount?.pixKey?.trim() || bankAccount?.bank?.trim()) {
     return {
       pixKey: bankAccount.pixKey?.trim(),
@@ -273,7 +272,6 @@ export function TenantPortal() {
   const { viewContract, downloadContract, isContractLoading } = useTenantContractActions()
   const [viewProperty, setViewProperty] = useState<Property | null>(null)
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null)
-  const [viewOwner, setViewOwner] = useState<Owner | null>(null)
   const [showMaintenanceForm, setShowMaintenanceForm] = useState(false)
   const [viewingRequest, setViewingRequest] = useState<MaintenanceRequest | null>(null)
   const [commentText, setCommentText] = useState('')
@@ -336,9 +334,9 @@ export function TenantPortal() {
     enabled: !!companyId,
   })
 
-  const { data: owners = [] } = useQuery({
-    queryKey: ['owners', companyId],
-    queryFn: () => getOwners(companyId),
+  const { data: company } = useQuery({
+    queryKey: ['company', companyId],
+    queryFn: () => getCompany(companyId),
     enabled: !!companyId,
   })
 
@@ -354,17 +352,11 @@ export function TenantPortal() {
     return map
   }, [vehicles])
 
-  const ownerById = useMemo(() => {
-    const map: Record<string, Owner> = {}
-    owners.forEach((o) => { map[o.id] = o })
-    return map
-  }, [owners])
-
   const chargePaymentInfo = useMemo(() => {
     if (!uploadingCharge) return {}
     const contract = contracts.find((c) => c.id === uploadingCharge.contractId)
-    return resolvePaymentInfo(contract, contract ? ownerById[contract.ownerId] : undefined)
-  }, [uploadingCharge, contracts, ownerById])
+    return resolvePaymentInfo(contract, company ?? undefined)
+  }, [uploadingCharge, contracts, company])
 
   const expensePaymentInfo = useMemo(() => {
     if (!uploadingExpense) return {}
@@ -374,8 +366,8 @@ export function TenantPortal() {
           c.propertyId === uploadingExpense.expense.propertyId &&
           (c.status === 'ativo' || c.status === 'renovado'),
       ) ?? contracts.find((c) => c.propertyId === uploadingExpense.expense.propertyId)
-    return resolvePaymentInfo(contract, contract ? ownerById[contract.ownerId] : undefined)
-  }, [uploadingExpense, contracts, ownerById])
+    return resolvePaymentInfo(contract, company ?? undefined)
+  }, [uploadingExpense, contracts, company])
 
   const photoLookups = useMemo(() => {
     const tenants = tenantProfile ? [tenantProfile] : []
@@ -400,7 +392,6 @@ export function TenantPortal() {
   const selectedContract = activeContracts.find((c) => c.id === selectedContractId) ?? activeContracts[0]
   const selectedProperty = selectedContract ? propertyById[selectedContract.propertyId] : undefined
   const selectedVehicle = selectedContract ? vehicleById[selectedContract.propertyId] : undefined
-  const selectedOwner = selectedContract ? ownerById[selectedContract.ownerId] : undefined
   const pendingCharges = charges.filter((c) => c.status !== 'pago' && c.status !== 'cancelado')
   const overdueCharges = pendingCharges.filter((c) => c.dueDate && c.dueDate < TODAY)
   const totalPending = pendingCharges.reduce((s, c) => s + (c.totalAmount ?? c.amount), 0)
@@ -737,7 +728,6 @@ export function TenantPortal() {
                     {[
                       { label: t('contractsExtra.number'), value: selectedContract.contractNumber, mono: true },
                       { label: contractAssetLabel(selectedContract), value: selectedContract.propertyName },
-                      { label: t('contracts.owner'), value: selectedContract.ownerName ?? selectedOwner?.name },
                       { label: t('contractsExtra.value'), value: formatCurrency(selectedContract.rentValue), bold: true },
                       (selectedContract.billingCycle ?? 'mensal') === 'mensal'
                         ? { label: t('contractsExtra.dueEveryDay'), value: String(selectedContract.dueDay) }
@@ -772,12 +762,6 @@ export function TenantPortal() {
                       <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewVehicle(selectedVehicle)}>
                         <Car className="mr-1.5 h-4 w-4" />
                         {t('contractsExtra.viewVehicle')}
-                      </Button>
-                    )}
-                    {selectedOwner && (
-                      <Button size="sm" variant="outline" className="flex-1 min-w-[120px]" onClick={() => setViewOwner(selectedOwner)}>
-                        <User className="mr-1.5 h-4 w-4" />
-                        {t('contractsExtra.viewOwner')}
                       </Button>
                     )}
                   </div>
@@ -1569,14 +1553,6 @@ export function TenantPortal() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!viewOwner} onOpenChange={() => setViewOwner(null)}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{t('contractsExtra.dialogs.ownerDetails')}</DialogTitle>
-          </DialogHeader>
-          {viewOwner && <OwnerDetail owner={viewOwner} />}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

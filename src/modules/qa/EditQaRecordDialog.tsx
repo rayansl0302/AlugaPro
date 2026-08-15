@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader2, KeyRound } from 'lucide-react'
-import { Owner, Tenant, User } from '@/types'
+import { Tenant, User } from '@/types'
 import { auth } from '@/lib/firebase'
-import { updateOwner } from '@/services/owners'
 import { updateTenant } from '@/services/tenants'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -13,7 +12,6 @@ import { maskCPF, maskPhone } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
 
 export type EditTarget =
-  | { kind: 'owner'; record: Owner }
   | { kind: 'tenant'; record: Tenant }
   | { kind: 'gestor' | 'afiliado'; record: User }
 
@@ -67,7 +65,7 @@ export function EditQaRecordDialog({ target, onClose, onSaved }: Props) {
     if (!target) return
     setName(target.record.name)
     setPassword('')
-    if (target.kind === 'owner' || target.kind === 'tenant') {
+    if (target.kind === 'tenant') {
       setCpf(target.record.cpf ? maskCPF(target.record.cpf) : '')
       setEmail(target.record.email ?? '')
       setPhone(target.record.phone ? maskPhone(target.record.phone) : '')
@@ -81,9 +79,8 @@ export function EditQaRecordDialog({ target, onClose, onSaved }: Props) {
   if (!target) return null
 
   const tenantHasLogin = target.kind === 'tenant' && !!target.record.userId
-  const showPasswordField = target.kind === 'gestor' || target.kind === 'afiliado' || target.kind === 'tenant'
-  const emailEditable = target.kind === 'owner' || target.kind === 'tenant'
-  const showCpfPhone = target.kind === 'owner' || target.kind === 'tenant'
+  const emailEditable = target.kind === 'tenant'
+  const showCpfPhone = target.kind === 'tenant'
 
   const handleSave = async () => {
     if (password && password.length < 6) {
@@ -96,14 +93,7 @@ export function EditQaRecordDialog({ target, onClose, onSaved }: Props) {
     }
     setSaving(true)
     try {
-      if (target.kind === 'owner') {
-        await updateOwner(target.record.id, {
-          name,
-          ...(cpf ? { cpf: cpf.replace(/\D/g, '') } : {}),
-          ...(email ? { email } : {}),
-          ...(phone ? { phone: phone.replace(/\D/g, '') } : {}),
-        })
-      } else if (target.kind === 'tenant') {
+      if (target.kind === 'tenant') {
         await updateTenant(target.record.id, {
           name,
           ...(cpf ? { cpf: cpf.replace(/\D/g, '') } : {}),
@@ -159,18 +149,16 @@ export function EditQaRecordDialog({ target, onClose, onSaved }: Props) {
               <Input placeholder="(00) 00000-0000" value={phone} onChange={(e) => setPhone(maskPhone(e.target.value))} />
             </div>
           )}
-          {showPasswordField && (
-            <div className="space-y-2">
-              <Label className="flex items-center gap-1.5">
-                <KeyRound className="h-3.5 w-3.5" />
-                {target.kind === 'tenant' && !tenantHasLogin ? t('edit.setPassword') : t('edit.newPassword')}
-              </Label>
-              <Input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-              <p className="text-xs text-muted-foreground">
-                {target.kind === 'tenant' && !tenantHasLogin ? t('edit.setPasswordHint') : t('edit.newPasswordHint')}
-              </p>
-            </div>
-          )}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <KeyRound className="h-3.5 w-3.5" />
+              {target.kind === 'tenant' && !tenantHasLogin ? t('edit.setPassword') : t('edit.newPassword')}
+            </Label>
+            <Input type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+            <p className="text-xs text-muted-foreground">
+              {target.kind === 'tenant' && !tenantHasLogin ? t('edit.setPasswordHint') : t('edit.newPasswordHint')}
+            </p>
+          </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>{t('edit.cancel')}</Button>

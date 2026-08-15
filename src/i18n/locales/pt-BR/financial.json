@@ -28,7 +28,6 @@
     "amount": "Valor",
     "date": "Data",
     "property": "Imóvel",
-    "owner": "Proprietário",
     "tenant": "Inquilino",
     "paymentMethod": "Forma de pagamento",
     "observations": "Observações"

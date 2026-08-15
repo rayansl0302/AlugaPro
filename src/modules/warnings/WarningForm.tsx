@@ -62,7 +62,6 @@ export function WarningForm({ companyId, issuedById, issuedByName, presetContrac
         contractNumber: selected.contractNumber,
         tenantId: selected.tenantId,
         tenantName: selected.tenantName,
-        ownerId: selected.ownerId,
         propertyId: selected.propertyId,
         propertyName: selected.propertyName,
         issuedById,

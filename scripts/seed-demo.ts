@@ -45,7 +45,6 @@ async function upsert(col: string, id: string, data: Record<string, unknown>) {
 
 const COMPANY_ID = 'alugapro-demo'
 
-const OWN = { carlos: 'demo-owner-carlos', maria: 'demo-owner-maria' }
 const PROP = {
   apto:   'demo-prop-apto',
   casa:   'demo-prop-casa',
@@ -67,7 +66,8 @@ async function seedCompany() {
     cnpj: '00.000.000/0001-00',
     email: 'contato@imobiliariademo.com.br',
     phone: '(11) 3000-0000',
-    address: 'Av. Paulista, 1000 - Bela Vista, São Paulo - SP',
+    address: { street: 'Av. Paulista', number: '1000', neighborhood: 'Bela Vista', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
+    bankAccount: { bank: 'Itaú', agency: '1234', account: '56789-0', type: 'corrente', pixKey: 'contato@imobiliariademo.com.br' },
     createdAt: ts(-365),
     updatedAt: ts(),
   })
@@ -96,30 +96,6 @@ async function seedUsers() {
   })
 }
 
-// ─── Proprietários ────────────────────────────────────────────────────────────
-
-async function seedOwners() {
-  console.log('\n🏠 Owners')
-  await upsert('owners', OWN.carlos, {
-    id: OWN.carlos, companyId: COMPANY_ID,
-    name: 'Carlos Eduardo Silva', cpf: '123.456.789-00',
-    email: 'carlos@email.com', phone: '(11) 99001-1122',
-    whatsapp: '11990011122',
-    address: { street: 'Rua das Flores', number: '45', neighborhood: 'Jardins', city: 'São Paulo', state: 'SP', zipCode: '01402-000' },
-    bankAccount: { bank: 'Itaú', agency: '1234', account: '56789-0', type: 'corrente', pixKey: 'carlos@email.com' },
-    active: true, createdAt: ts(-365), updatedAt: ts(),
-  })
-  await upsert('owners', OWN.maria, {
-    id: OWN.maria, companyId: COMPANY_ID,
-    name: 'Maria Aparecida Santos', cpf: '987.654.321-00',
-    email: 'maria@email.com', phone: '(11) 97002-3344',
-    whatsapp: '11970023344',
-    address: { street: 'Av. Brasil', number: '200', neighborhood: 'Centro', city: 'São Paulo', state: 'SP', zipCode: '01310-100' },
-    bankAccount: { bank: 'Bradesco', agency: '5678', account: '12345-6', type: 'poupanca', pixKey: '98765432100' },
-    active: true, createdAt: ts(-300), updatedAt: ts(),
-  })
-}
-
 // ─── Imóveis ──────────────────────────────────────────────────────────────────
 
 async function seedProperties() {
@@ -129,7 +105,6 @@ async function seedProperties() {
   await upsert('properties', PROP.apto, {
     ...base, id: PROP.apto,
     code: 'IMV-001', name: 'Apartamento Centro', type: 'apartamento', status: 'alugado',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     address: { street: 'Rua Augusta', number: '500', complement: 'Apto 42', neighborhood: 'Consolação', city: 'São Paulo', state: 'SP', zipCode: '01305-000' },
     rentValue: 2800, cautionValue: 5600,
     activeContractId: CON.apto, activeTenantId: TEN.roberto, activeTenantName: 'Roberto Alves Moreira',
@@ -140,7 +115,6 @@ async function seedProperties() {
   await upsert('properties', PROP.casa, {
     ...base, id: PROP.casa,
     code: 'IMV-002', name: 'Casa Jardins', type: 'casa', status: 'alugado',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     address: { street: 'Rua Oscar Freire', number: '1234', neighborhood: 'Jardins', city: 'São Paulo', state: 'SP', zipCode: '01426-001' },
     rentValue: 5500, cautionValue: 11000,
     activeContractId: CON.casa, activeTenantId: TEN.fernanda, activeTenantName: 'Fernanda Lima Costa',
@@ -151,7 +125,6 @@ async function seedProperties() {
   await upsert('properties', PROP.kitnet, {
     ...base, id: PROP.kitnet,
     code: 'IMV-003', name: 'Kitnet Vila Madalena', type: 'kitnet', status: 'disponivel',
-    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
     address: { street: 'Rua Mourato Coelho', number: '78', complement: 'Ap 12', neighborhood: 'Vila Madalena', city: 'São Paulo', state: 'SP', zipCode: '05417-010' },
     rentValue: 1400, cautionValue: 1400,
     notes: 'Kitnet reformada, próxima ao metrô.',
@@ -161,7 +134,6 @@ async function seedProperties() {
   await upsert('properties', PROP.sala, {
     ...base, id: PROP.sala,
     code: 'IMV-004', name: 'Sala Comercial Paulista', type: 'sala_comercial', status: 'manutencao',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     address: { street: 'Av. Paulista', number: '2000', complement: 'Sala 301', neighborhood: 'Bela Vista', city: 'São Paulo', state: 'SP', zipCode: '01310-200' },
     rentValue: 3200, cautionValue: 6400,
     notes: 'Em manutenção: pintura e instalação de ar-condicionado.',
@@ -180,7 +152,6 @@ async function seedVehicles() {
     code: 'VEI-001', brand: 'Honda', model: 'Civic Sedan', year: 2022, plate: 'ABC-1234',
     type: 'carro', status: 'alugado', color: 'Prata', fuel: 'flex',
     renavam: '12345678901', mileage: 18000, fipeValue: 118000,
-    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
     rentValue: 3200, cautionValue: 6400,
     activeContractId: CON.civic, activeTenantId: TEN.pedro, activeTenantName: 'Pedro Henrique Souza',
     notes: 'Revisão realizada em fevereiro/2024.',
@@ -192,7 +163,6 @@ async function seedVehicles() {
     code: 'VEI-002', brand: 'Toyota', model: 'Corolla XEi', year: 2021, plate: 'DEF-5678',
     type: 'carro', status: 'disponivel', color: 'Branco', fuel: 'flex',
     renavam: '98765432100', mileage: 32000, fipeValue: 105000,
-    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
     rentValue: 2900, cautionValue: 5800,
     notes: 'Disponível a partir de agora.',
     createdAt: ts(-180),
@@ -209,7 +179,6 @@ async function seedEquipments() {
     ...base, id: EQP.betoneira,
     code: 'EQP-001', name: 'Betoneira 400L', brand: 'CSM', model: '400L Trifásica',
     type: 'Betoneira', status: 'alugado',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     serialNumber: 'CSM400-88213',
     rentValue: 450, cautionValue: 900, purchaseValue: 6200,
     activeContractId: CON.betoneira, activeTenantId: TEN.pedro, activeTenantName: 'Pedro Henrique Souza',
@@ -221,7 +190,6 @@ async function seedEquipments() {
     ...base, id: EQP.gerador,
     code: 'EQP-002', name: 'Gerador de Energia 5kVA', brand: 'Toyama', model: 'TG6500CXE-DF',
     type: 'Gerador de energia', status: 'disponivel',
-    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
     serialNumber: 'TY6500-44102',
     rentValue: 280, cautionValue: 560, purchaseValue: 4500,
     notes: 'Ideal para eventos e obras sem rede elétrica.',
@@ -277,7 +245,6 @@ async function seedContracts() {
     contractNumber: 'CT-2024-001', assetType: 'imovel',
     propertyId: PROP.apto, propertyName: 'Apartamento Centro',
     tenantId: TEN.roberto, tenantName: 'Roberto Alves Moreira',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     startDate: dateStr(-180), endDate: dateStr(185),
     rentValue: 2800, dueDay: 10, cautionValue: 5600,
     createdAt: ts(-180),
@@ -288,7 +255,6 @@ async function seedContracts() {
     contractNumber: 'CT-2024-002', assetType: 'imovel',
     propertyId: PROP.casa, propertyName: 'Casa Jardins',
     tenantId: TEN.fernanda, tenantName: 'Fernanda Lima Costa',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     startDate: dateStr(-365), endDate: dateStr(365),
     rentValue: 5500, dueDay: 5, cautionValue: 11000,
     createdAt: ts(-365),
@@ -299,7 +265,6 @@ async function seedContracts() {
     contractNumber: 'CT-2024-003', assetType: 'veiculo',
     propertyId: VEH.civic, propertyName: 'Honda Civic Sedan 2022',
     tenantId: TEN.pedro, tenantName: 'Pedro Henrique Souza',
-    ownerId: OWN.maria, ownerName: 'Maria Aparecida Santos',
     startDate: dateStr(-90), endDate: dateStr(275),
     rentValue: 3200, dueDay: 15, cautionValue: 6400,
     createdAt: ts(-90),
@@ -310,7 +275,6 @@ async function seedContracts() {
     contractNumber: 'CT-2024-004', assetType: 'equipamento',
     propertyId: EQP.betoneira, propertyName: 'Betoneira 400L',
     tenantId: TEN.pedro, tenantName: 'Pedro Henrique Souza',
-    ownerId: OWN.carlos, ownerName: 'Carlos Eduardo Silva',
     startDate: dateStr(-60), endDate: dateStr(120),
     rentValue: 450, dueDay: 20, cautionValue: 900,
     createdAt: ts(-60),
@@ -504,7 +468,6 @@ async function main() {
   console.log('🌱 Seeding demo-company data...')
   await seedCompany()
   await seedUsers()
-  await seedOwners()
   await seedProperties()
   await seedVehicles()
   await seedEquipments()

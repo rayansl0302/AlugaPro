@@ -40,7 +40,6 @@
     "bedrooms": "Bedrooms",
     "bathrooms": "Bathrooms",
     "parkingSpaces": "Parking spaces",
-    "owner": "Owner",
     "description": "Description",
     "observations": "Notes",
     "photos": "Photos"
@@ -82,7 +81,6 @@
   "validation": {
     "nameRequired": "Name is required",
     "valueRequired": "Value is required",
-    "ownerRequired": "Owner is required",
     "streetRequired": "Street is required",
     "numberRequired": "Number is required",
     "neighborhoodRequired": "Neighborhood is required",

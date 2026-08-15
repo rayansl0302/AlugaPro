@@ -30,7 +30,6 @@
     "fipeCode": "Código FIPE",
     "status": "Status",
     "value": "Valor da locação",
-    "owner": "Proprietário",
     "mileage": "Quilometragem",
     "fuelType": "Combustível",
     "transmission": "Câmbio",
@@ -55,10 +54,7 @@
     "notes": "Notas internas...",
     "select": "Selecione",
     "selectBrand": "Selecione a marca",
-    "selectModel": "Selecione o modelo",
-    "selectOwner": "Selecione o proprietário",
-    "searchOwner": "Buscar proprietário...",
-    "noOwners": "Nenhum proprietário cadastrado."
+    "selectModel": "Selecione o modelo"
   },
   "hints": {
     "fipeBrands": "Marcas da tabela FIPE",
@@ -78,8 +74,7 @@
     "modelRequired": "Modelo obrigatório",
     "yearInvalid": "Ano inválido",
     "plateInvalid": "Placa inválida",
-    "valueRequired": "Valor obrigatório",
-    "ownerRequired": "Proprietário obrigatório"
+    "valueRequired": "Valor obrigatório"
   },
   "buttons": {
     "save": "Salvar alterações",

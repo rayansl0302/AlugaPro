@@ -12,7 +12,6 @@
   "properties": "Inmuebles",
   "vehicles": "Vehículos",
   "equipment": "Equipos",
-  "owners": "Propietarios",
   "tenants": "Inquilinos",
   "contracts": "Contratos",
   "contractTemplates": "Modelos de Contrato",

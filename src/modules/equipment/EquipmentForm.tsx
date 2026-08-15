@@ -4,17 +4,14 @@ import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
 import i18n from '@/i18n'
 import { Equipment, EquipmentStatus, EquipmentType, EQUIPMENT_TYPE_SUGGESTIONS } from '@/types'
 import { createEquipment, updateEquipment } from '@/services/equipments'
-import { getOwners } from '@/services/owners'
 import { uploadEquipmentPhoto } from '@/services/storage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Combobox } from '@/components/ui/combobox'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { requiredString } from '@/lib/validation'
 import { fieldErrorClass } from '@/lib/formErrors'
@@ -29,7 +26,6 @@ const schema = z.object({
   rentValue: z.coerce.number().min(1, i18n.t('equipment:validation.valueRequired')),
   cautionValue: z.coerce.number().optional(),
   purchaseValue: z.coerce.number().optional(),
-  ownerId: requiredString(i18n.t('equipment:validation.ownerRequired')),
   serialNumber: z.string().optional(),
   notes: z.string().optional(),
 })
@@ -66,17 +62,10 @@ export function EquipmentForm({ equipment, companyId, onSuccess }: Props) {
           rentValue: equipment.rentValue,
           cautionValue: equipment.cautionValue,
           purchaseValue: equipment.purchaseValue,
-          ownerId: equipment.ownerId,
           serialNumber: equipment.serialNumber,
           notes: equipment.notes,
         }
       : { status: 'disponivel', type: '' },
-  })
-
-  const { data: owners = [] } = useQuery({
-    queryKey: ['owners', companyId],
-    queryFn: () => getOwners(companyId),
-    enabled: !!companyId,
   })
 
   const onSubmit = async (data: FormData) => {
@@ -92,7 +81,6 @@ export function EquipmentForm({ equipment, companyId, onSuccess }: Props) {
         rentValue: data.rentValue,
         cautionValue: data.cautionValue,
         purchaseValue: data.purchaseValue,
-        ownerId: data.ownerId,
         serialNumber: data.serialNumber,
         photos,
         notes: data.notes,
@@ -185,18 +173,6 @@ export function EquipmentForm({ equipment, companyId, onSuccess }: Props) {
           <Input type="number" step="0.01" placeholder={t('placeholders.value')} {...register('purchaseValue')} />
         </div>
 
-        <div className="space-y-2 sm:col-span-2">
-          <Label>{t('form.owner')} *</Label>
-          <Combobox
-            options={owners.map((o) => ({ value: o.id, label: o.name, description: o.cpf || o.cnpj || o.email }))}
-            value={watch('ownerId')}
-            onChange={(v) => setValue('ownerId', v)}
-            placeholder={t('placeholders.selectOwner')}
-            searchPlaceholder={t('placeholders.searchOwner')}
-            emptyText={t('placeholders.noOwners')}
-          />
-          {errors.ownerId && <p className="text-xs text-destructive">{errors.ownerId.message}</p>}
-        </div>
       </div>
 
       <MultiPhotoUpload

@@ -1,8 +1,7 @@
 {
   "title": "Painel de QA",
-  "subtitle": "Crie um proprietário, um gestor e um inquilino de teste, isolados da sua empresa real, pra testar o sistema livremente.",
-  "isolationNote": "Esses registros ficam numa empresa de teste separada — não aparecem em Proprietários/Inquilinos nem em nenhuma outra tela do sistema.",
-  "ownerSection": "Proprietário de teste",
+  "subtitle": "Crie um gestor, um inquilino e um afiliado de teste, isolados da sua empresa real, pra testar o sistema livremente.",
+  "isolationNote": "Esses registros ficam numa empresa de teste separada — não aparecem em Inquilinos nem em nenhuma outra tela do sistema.",
   "tenantSection": "Inquilino de teste",
   "gestorSection": "Gestor de teste",
   "afiliadoSection": "Afiliado de teste",
@@ -20,12 +19,10 @@
     "tenantPasswordHint": "Preenchendo, o inquilino já nasce com login pronto (pula o autocadastro). Precisa de e-mail também.",
     "create": "Criar registros de teste",
     "creating": "Criando...",
-    "createOwner": "Criar proprietário de teste",
     "createTenant": "Criar inquilino de teste",
     "createGestor": "Criar gestor de teste",
     "createAfiliado": "Criar afiliado de teste",
     "validation": {
-      "ownerName": "Nome do proprietário obrigatório",
       "tenantName": "Nome do inquilino obrigatório",
       "tenantCpf": "CPF do inquilino obrigatório",
       "gestorName": "Nome do gestor obrigatório",
@@ -37,7 +34,6 @@
     }
   },
   "list": {
-    "ownersTitle": "Proprietários de teste",
     "tenantsTitle": "Inquilinos de teste",
     "gestorsTitle": "Gestores de teste",
     "affiliatesTitle": "Afiliados de teste",

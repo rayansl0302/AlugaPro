@@ -56,7 +56,6 @@
   "roles": {
     "inquilino": "Tenant",
     "gestor": "Manager",
-    "proprietario": "Owner",
     "admin": "Administrator",
     "afiliado": "Affiliate"
   },

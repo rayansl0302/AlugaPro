@@ -4,17 +4,14 @@ import { z } from 'zod'
 import { Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useQuery } from '@tanstack/react-query'
 import i18n from '@/i18n'
 import { Property, PropertyStatus, PropertyType } from '@/types'
 import { createProperty, updateProperty } from '@/services/properties'
-import { getOwners } from '@/services/owners'
 import { uploadPropertyPhoto } from '@/services/storage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Combobox } from '@/components/ui/combobox'
 import { AddressFields } from '@/components/shared/AddressFields'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { requiredString } from '@/lib/validation'
@@ -27,7 +24,6 @@ const schema = z.object({
   status: z.enum(['disponivel', 'alugado', 'reservado', 'manutencao', 'encerrado']),
   rentValue: z.coerce.number().min(1, i18n.t('properties:validation.valueRequired')),
   cautionValue: z.coerce.number().optional(),
-  ownerId: requiredString(i18n.t('properties:validation.ownerRequired')),
   street: requiredString(i18n.t('properties:validation.streetRequired')),
   number: requiredString(i18n.t('properties:validation.numberRequired')),
   complement: z.string().optional(),
@@ -67,7 +63,6 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
           status: property.status,
           rentValue: property.rentValue,
           cautionValue: property.cautionValue,
-          ownerId: property.ownerId,
           street: property.address.street,
           number: property.address.number,
           complement: property.address.complement,
@@ -80,12 +75,6 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
       : { status: 'disponivel', type: 'apartamento' },
   })
 
-  const { data: owners = [] } = useQuery({
-    queryKey: ['owners', companyId],
-    queryFn: () => getOwners(companyId),
-    enabled: !!companyId,
-  })
-
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
@@ -96,7 +85,6 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
         status: data.status as PropertyStatus,
         rentValue: data.rentValue,
         cautionValue: data.cautionValue,
-        ownerId: data.ownerId,
         address: {
           street: data.street,
           number: data.number,
@@ -180,18 +168,6 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
           <Input type="number" step="0.01" placeholder="0,00" {...register('cautionValue')} />
         </div>
 
-        <div className="space-y-2 sm:col-span-2">
-          <Label>{t('form.owner')} *</Label>
-          <Combobox
-            options={owners.map((o) => ({ value: o.id, label: o.name, description: o.cpf || o.cnpj || o.email }))}
-            value={watch('ownerId')}
-            onChange={(v) => setValue('ownerId', v)}
-            placeholder={t('form.owner')}
-            searchPlaceholder={t('form.owner')}
-            emptyText={t('owners:empty.title')}
-          />
-          {errors.ownerId && <p className="text-xs text-destructive">{errors.ownerId.message}</p>}
-        </div>
       </div>
 
       <p className="text-sm font-semibold text-muted-foreground">{t('form.address')}</p>

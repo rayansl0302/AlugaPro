@@ -37,7 +37,6 @@ const MaintenancePage = lazy(() => import('@/modules/maintenance/MaintenancePage
 const NotificationsPage = lazy(() => import('@/modules/notifications/NotificationsPage').then((m) => ({ default: m.NotificationsPage })))
 const ReportsPage = lazy(() => import('@/modules/reports/ReportsPage').then((m) => ({ default: m.ReportsPage })))
 const SettingsPage = lazy(() => import('@/modules/settings/SettingsPage').then((m) => ({ default: m.SettingsPage })))
-const OwnersPage = lazy(() => import('@/modules/owners/OwnersPage').then((m) => ({ default: m.OwnersPage })))
 const TenantPortal = lazy(() => import('@/modules/tenant-portal/TenantPortal').then((m) => ({ default: m.TenantPortal })))
 const TenantContractsPage = lazy(() => import('@/modules/tenant-portal/TenantContractsPage').then((m) => ({ default: m.TenantContractsPage })))
 const AffiliatePanel = lazy(() => import('@/modules/affiliate/AffiliatePanel').then((m) => ({ default: m.AffiliatePanel })))
@@ -177,7 +176,7 @@ const router = createBrowserRouter([
           ]),
       {
         element: (
-          <ProtectedRoute roles={['admin', 'gestor', 'proprietario']}>
+          <ProtectedRoute roles={['admin', 'gestor']}>
             <AdminLayout />
           </ProtectedRoute>
         ),
@@ -186,7 +185,6 @@ const router = createBrowserRouter([
           { path: 'imoveis', element: withSuspense(<PropertiesPage />) },
           { path: 'veiculos', element: withSuspense(<VehiclesPage />) },
           { path: 'equipamentos', element: withSuspense(<EquipmentsPage />) },
-          { path: 'proprietarios', element: withSuspense(<OwnersPage />) },
           { path: 'inquilinos', element: withSuspense(<TenantsPage />) },
           { path: 'contratos', element: withSuspense(<ContractsPage />) },
           { path: 'modelos-contrato', element: withSuspense(<ContractTemplatesPage />) },
