@@ -81,3 +81,16 @@ export function isValidRG(value: string): boolean {
   if (/X/.test(rg.slice(0, -1))) return false
   return true
 }
+
+// RENAVAM: 11 dígitos. Não existe dígito verificador de uso público
+// confiável (numeração histórica não segue o algoritmo mais recente), então
+// validamos só por tamanho — mesmo critério já usado pra CEP.
+export function isValidRenavam(value: string): boolean {
+  return onlyDigits(value).length === 11
+}
+
+// Chassi/VIN: 17 caracteres alfanuméricos, sem I/O/Q (evitam confusão com
+// 1/0), padrão internacional.
+export function isValidChassi(value: string): boolean {
+  return /^[A-HJ-NPR-Z0-9]{17}$/i.test(value.trim())
+}

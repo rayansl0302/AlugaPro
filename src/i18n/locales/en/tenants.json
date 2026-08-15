@@ -95,6 +95,7 @@
     "updateError": "Failed to update tenant.",
     "deleteError": "Failed to delete tenant.",
     "deleteConfirm": "Are you sure you want to delete this tenant?",
+    "deleteBlockedByContract": "Can't delete — tenant linked to {{count}} contract(s). Close or delete the contract(s) first.",
     "saveError": "Failed to save tenant.",
     "photoError": "Failed to upload photo."
   }

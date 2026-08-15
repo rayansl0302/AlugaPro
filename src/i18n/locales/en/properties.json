@@ -76,10 +76,12 @@
   "itemLabel": "properties",
   "placeholders": {
     "name": "e.g. Apt 101 - Central Building",
-    "notes": "Internal notes..."
+    "notes": "Internal notes...",
+    "selectType": "Select the type..."
   },
   "validation": {
     "nameRequired": "Name is required",
+    "typeRequired": "Select the property type",
     "valueRequired": "Value is required",
     "streetRequired": "Street is required",
     "numberRequired": "Number is required",

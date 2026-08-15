@@ -13,7 +13,7 @@ import { getCommissionsByAffiliate } from '@/services/affiliateCommissions'
 import { getSubscription } from '@/services/subscription'
 import { uploadAffiliateDocument } from '@/services/storage'
 import { AffiliateCommission, AffiliateReferral, PixKeyType, SubscriptionStatus } from '@/types'
-import { formatCurrency, formatDate, maskCPF } from '@/lib/utils'
+import { formatCurrency, formatDate, maskCPF, maskCNPJ, maskPhone, cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -104,6 +104,7 @@ export function AffiliatePanel() {
   const [documentSelfieUrl, setDocumentSelfieUrl] = useState(user?.documentSelfieUrl ?? '')
   const [phone, setPhone] = useState(user?.phone ?? '')
   const [savingKyc, setSavingKyc] = useState(false)
+  const [kycAttempted, setKycAttempted] = useState(false)
 
   const { data: referrals = [], isLoading } = useQuery({
     queryKey: ['affiliateReferrals', code],
@@ -148,7 +149,15 @@ export function AffiliatePanel() {
     user?.cpf && user?.pixKey && user?.documentPhotoUrl && user?.documentSelfieUrl
   )
 
+  const handlePixKeyChange = (value: string) => {
+    if (pixKeyType === 'cpf') setPixKey(maskCPF(value))
+    else if (pixKeyType === 'cnpj') setPixKey(maskCNPJ(value))
+    else if (pixKeyType === 'phone') setPixKey(maskPhone(value))
+    else setPixKey(value)
+  }
+
   const handleSaveKyc = async () => {
+    setKycAttempted(true)
     const cpfDigits = cpf.replace(/\D/g, '')
     if (
       cpfDigits.length !== 11 || !pixKey.trim() || !pixKeyType || !documentPhotoUrl ||
@@ -190,7 +199,7 @@ export function AffiliatePanel() {
           <div className="flex items-center gap-3">
             <LanguageSelector />
             <span className="hidden text-sm font-medium text-muted-foreground sm:inline">{user?.name}</span>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title={t('panel.logout')}>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-[#032B61]" onClick={logout} title={t('panel.logout')}>
               <LogOut className="h-4 w-4" />
             </Button>
           </div>
@@ -253,27 +262,29 @@ export function AffiliatePanel() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-cpf">{t('kyc.fields.cpf')}</Label>
+                <Label htmlFor="kyc-cpf">{t('kyc.fields.cpf')} *</Label>
                 <Input
                   id="kyc-cpf"
                   value={cpf}
                   onChange={(e) => setCpf(maskCPF(e.target.value))}
                   placeholder={t('kyc.fields.cpfPlaceholder')}
+                  className={cn(kycAttempted && cpf.replace(/\D/g, '').length !== 11 && 'border-destructive')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-pix">{t('kyc.fields.pixKey')}</Label>
+                <Label htmlFor="kyc-pix">{t('kyc.fields.pixKey')} *</Label>
                 <Input
                   id="kyc-pix"
                   value={pixKey}
-                  onChange={(e) => setPixKey(e.target.value)}
+                  onChange={(e) => handlePixKeyChange(e.target.value)}
                   placeholder={t('kyc.fields.pixKeyPlaceholder')}
+                  className={cn(kycAttempted && !pixKey.trim() && 'border-destructive')}
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-pix-type">{t('kyc.fields.pixKeyType')}</Label>
-                <Select value={pixKeyType} onValueChange={(v) => setPixKeyType(v as PixKeyType)}>
-                  <SelectTrigger id="kyc-pix-type">
+                <Label htmlFor="kyc-pix-type">{t('kyc.fields.pixKeyType')} *</Label>
+                <Select value={pixKeyType} onValueChange={(v) => { setPixKeyType(v as PixKeyType); setPixKey('') }}>
+                  <SelectTrigger id="kyc-pix-type" className={cn(kycAttempted && !pixKeyType && 'border-destructive')}>
                     <SelectValue placeholder={t('kyc.fields.pixKeyTypePlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
@@ -284,12 +295,13 @@ export function AffiliatePanel() {
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-phone">{t('kyc.fields.phone')}</Label>
+                <Label htmlFor="kyc-phone">{t('kyc.fields.phone')} *</Label>
                 <Input
                   id="kyc-phone"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={(e) => setPhone(maskPhone(e.target.value))}
                   placeholder={t('kyc.fields.phonePlaceholder')}
+                  className={cn(kycAttempted && !phone.trim() && 'border-destructive')}
                 />
               </div>
             </div>
@@ -297,14 +309,14 @@ export function AffiliatePanel() {
 
             <div className="grid gap-4 sm:grid-cols-2">
               <MultiPhotoUpload
-                label={t('kyc.fields.documentPhoto')}
+                label={`${t('kyc.fields.documentPhoto')} *`}
                 value={documentPhotoUrl ? [documentPhotoUrl] : []}
                 onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'document', file)}
                 onChange={(urls) => setDocumentPhotoUrl(urls[0] ?? '')}
                 max={1}
               />
               <MultiPhotoUpload
-                label={t('kyc.fields.documentSelfie')}
+                label={`${t('kyc.fields.documentSelfie')} *`}
                 value={documentSelfieUrl ? [documentSelfieUrl] : []}
                 onUpload={(file) => uploadAffiliateDocument(user?.id ?? 'afiliado', 'selfie', file)}
                 onChange={(urls) => setDocumentSelfieUrl(urls[0] ?? '')}

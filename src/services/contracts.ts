@@ -1,5 +1,5 @@
 import {
-  collection, doc, addDoc, updateDoc, getDocs, getDoc,
+  collection, doc, addDoc, updateDoc, deleteDoc, getDocs, getDoc,
   query, where, serverTimestamp,
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
@@ -111,6 +111,14 @@ export async function createContract(
 
 export async function updateContract(id: string, data: Partial<Contract>): Promise<void> {
   await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
+}
+
+// Exclusão de verdade só faz sentido pra contrato ainda não finalizado (sem
+// assinatura completa) — pra contratos já assinados existe o status
+// 'cancelado' (releaseContractAsset + updateContract), que preserva o
+// registro e a trilha de auditoria. A trava real fica na firestore.rules.
+export async function deleteContract(id: string): Promise<void> {
+  await deleteDoc(doc(db, COL, id))
 }
 
 // Contratos vinculados a um ativo (imóvel/veículo/equipamento). O id do ativo

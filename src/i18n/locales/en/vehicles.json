@@ -74,7 +74,9 @@
     "modelRequired": "Model is required",
     "yearInvalid": "Invalid year",
     "plateInvalid": "Invalid plate",
-    "valueRequired": "Value is required"
+    "valueRequired": "Value is required",
+    "renavamInvalid": "Invalid RENAVAM — must have 11 digits",
+    "chassiInvalid": "Invalid chassis/VIN — must have 17 characters"
   },
   "buttons": {
     "save": "Save changes",

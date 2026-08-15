@@ -311,11 +311,12 @@ function PartyFormFields({ label, value, onChange }: {
 }) {
   const { t } = useTranslation('contracts')
   const set = (k: keyof PartyForm, v: string) => onChange({ ...value, [k]: v })
+  const errorClass = (v: string) => cn(!v.trim() && 'border-destructive')
   return (
     <div className="space-y-3">
       <p className="text-sm font-semibold text-primary border-b pb-1">{label}</p>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <div className="space-y-1"><Label className="text-xs">{t('sign.party.fullName')}</Label><Input value={value.name} onChange={(e) => set('name', e.target.value)} /></div>
+        <div className="space-y-1"><Label className="text-xs">{t('sign.party.fullName')} *</Label><Input value={value.name} onChange={(e) => set('name', e.target.value)} className={errorClass(value.name)} /></div>
         <div className="space-y-1"><Label className="text-xs">{t('sign.party.nationality')}</Label><Input value={value.nationality} onChange={(e) => set('nationality', e.target.value)} /></div>
         <div className="space-y-1">
           <Label className="text-xs">{t('sign.party.maritalStatus')}</Label>
@@ -325,7 +326,7 @@ function PartyFormFields({ label, value, onChange }: {
           </Select>
         </div>
         <div className="space-y-1"><Label className="text-xs">{t('sign.party.profession')}</Label><Input value={value.profession} onChange={(e) => set('profession', e.target.value)} /></div>
-        <div className="space-y-1"><Label className="text-xs">{t('sign.party.cpf')}</Label><Input value={value.cpf} onChange={(e) => set('cpf', maskCPF(e.target.value))} placeholder={t('sign.party.cpfPlaceholder')} inputMode="numeric" maxLength={14} /></div>
+        <div className="space-y-1"><Label className="text-xs">{t('sign.party.cpf')} *</Label><Input value={value.cpf} onChange={(e) => set('cpf', maskCPF(e.target.value))} placeholder={t('sign.party.cpfPlaceholder')} inputMode="numeric" maxLength={14} className={errorClass(value.cpf)} /></div>
         <div className="space-y-1"><Label className="text-xs">{t('sign.party.rg')}</Label><Input value={value.rg} onChange={(e) => set('rg', e.target.value)} /></div>
         <div className="space-y-1"><Label className="text-xs">{t('sign.party.phone')}</Label><Input value={value.phone} onChange={(e) => set('phone', maskPhone(e.target.value))} placeholder={t('sign.party.phonePlaceholder')} inputMode="tel" maxLength={15} /></div>
         <div className="space-y-1"><Label className="text-xs">{t('sign.party.email')}</Label><Input value={value.email} onChange={(e) => set('email', e.target.value)} /></div>

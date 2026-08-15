@@ -20,7 +20,9 @@ import { toast } from '@/hooks/useToast'
 
 const schema = z.object({
   name: requiredString(i18n.t('properties:validation.nameRequired')),
-  type: z.enum(['apartamento', 'casa', 'kitnet', 'sala_comercial', 'galpao', 'terreno', 'outro']),
+  type: z.enum(['apartamento', 'casa', 'kitnet', 'sala_comercial', 'galpao', 'terreno', 'outro'], {
+    required_error: i18n.t('properties:validation.typeRequired'),
+  }),
   status: z.enum(['disponivel', 'alugado', 'reservado', 'manutencao', 'encerrado']),
   rentValue: z.coerce.number().min(1, i18n.t('properties:validation.valueRequired')),
   cautionValue: z.coerce.number().optional(),
@@ -72,7 +74,7 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
           zipCode: property.address.zipCode,
           notes: property.notes,
         }
-      : { status: 'disponivel', type: 'apartamento' },
+      : { status: 'disponivel' },
   })
 
   const onSubmit = async (data: FormData) => {
@@ -125,9 +127,9 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
           <Label>{t('form.type')} *</Label>
           <Select
             value={watch('type')}
-            onValueChange={(v) => setValue('type', v as PropertyType)}
+            onValueChange={(v) => setValue('type', v as PropertyType, { shouldValidate: true })}
           >
-            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectTrigger className={fieldErrorClass(errors.type)}><SelectValue placeholder={t('placeholders.selectType')} /></SelectTrigger>
             <SelectContent>
               <SelectItem value="apartamento">{t('types.apartamento')}</SelectItem>
               <SelectItem value="casa">{t('types.casa')}</SelectItem>
@@ -138,6 +140,7 @@ export function PropertyForm({ property, companyId, onSuccess }: Props) {
               <SelectItem value="outro">{t('types.outro')}</SelectItem>
             </SelectContent>
           </Select>
+          {errors.type && <p className="text-xs text-destructive">{errors.type.message}</p>}
         </div>
 
         <div className="space-y-2">

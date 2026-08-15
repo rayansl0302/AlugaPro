@@ -114,7 +114,8 @@
     "createError": "Failed to create contract.",
     "updateError": "Failed to update contract.",
     "deleteError": "Failed to delete contract.",
-    "deleteConfirm": "Are you sure you want to delete this contract?",
+    "deleteConfirm": "Are you sure you want to delete this contract? This cannot be undone.",
+    "cancelConfirm": "Are you sure you want to cancel this contract?",
     "pdfGenerated": "PDF generated successfully.",
     "pdfError": "Failed to generate PDF.",
     "linkCopied": "Link copied.",
@@ -126,7 +127,9 @@
     "statusError": "Failed to update status.",
     "updatedShort": "Contract updated.",
     "createdWithCharges": "Contract created with {{count}} charges generated.",
-    "saveError": "Failed to save contract."
+    "saveError": "Failed to save contract.",
+    "savedWithWarning": "Contract saved, but there was a problem generating charges, attaching the PDF, or linking the asset — please check manually.",
+    "deleteNotAllowed": "Only contracts that haven't been finalized can be deleted. Use \"Cancel\" for this contract instead."
   },
   "searchPlaceholderShort": "Search contracts...",
   "newContract": "New Contract",
@@ -161,7 +164,9 @@
     "sign": "Sign contract",
     "viewWarnings": "View warnings",
     "viewTenant": "View tenant",
-    "viewAsset": "View property/vehicle/equipment"
+    "viewAsset": "View property/vehicle/equipment",
+    "cancelContract": "Cancel contract",
+    "deleteContract": "Delete contract"
   },
   "detailTenant": "Tenant details",
   "detailProperty": "Property details",

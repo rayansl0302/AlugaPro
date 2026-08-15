@@ -74,7 +74,9 @@
     "modelRequired": "Modelo obligatorio",
     "yearInvalid": "Año inválido",
     "plateInvalid": "Placa inválida",
-    "valueRequired": "Valor obligatorio"
+    "valueRequired": "Valor obligatorio",
+    "renavamInvalid": "RENAVAM inválido — debe tener 11 dígitos",
+    "chassiInvalid": "Chasis inválido — debe tener 17 caracteres"
   },
   "buttons": {
     "save": "Guardar cambios",

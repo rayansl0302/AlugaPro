@@ -10,7 +10,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader } from '@/components/ui/card'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/useToast'
 import i18n from '@/i18n'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
@@ -175,12 +174,18 @@ export function LoginPage() {
   const [signupRole, setSignupRole] = useState<LoginRole>(
     tabParam === 'afiliado' ? 'afiliado' : 'gestor',
   )
+
+  // Cadastro vindo de link de indicação (?ref=): trava em Gestor — não faz
+  // sentido indicar alguém pra virar inquilino/afiliado por esse link.
+  useEffect(() => {
+    if (refCode && signupRole !== 'gestor') setSignupRole('gestor')
+  }, [refCode, signupRole])
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [forgotMode, setForgotMode] = useState(false)
   const [loading, setLoading] = useState(false)
   const [googleLoading, setGoogleLoading] = useState(false)
-  const [role, setRole] = useState<LoginRole>(
+  const [role] = useState<LoginRole>(
     tabParam === 'inquilino' ? 'inquilino' : tabParam === 'afiliado' ? 'afiliado' : 'gestor',
   )
 
@@ -344,8 +349,8 @@ export function LoginPage() {
                   </div>
                 )}
 
-                {/* Role selector */}
-                <div className="grid grid-cols-3 gap-2 mb-5">
+                {/* Role selector — link de indicação trava em Gestor */}
+                <div className={cn('grid gap-2 mb-5', refCode ? 'grid-cols-1' : 'grid-cols-3')}>
                   <button
                     type="button"
                     onClick={() => setSignupRole('gestor')}
@@ -360,34 +365,38 @@ export function LoginPage() {
                     <p className="font-semibold text-sm">{t('tabs.gestor')}</p>
                     <p className="text-xs text-muted-foreground leading-tight">{t('hints.gestorShort')}</p>
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setSignupRole('inquilino')}
-                    className={cn(
-                      'rounded-xl border-2 p-3 text-left transition-all',
-                      signupRole === 'inquilino'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-muted-foreground/40',
-                    )}
-                  >
-                    <User className={cn('h-5 w-5 mb-1.5', signupRole === 'inquilino' ? 'text-primary' : 'text-muted-foreground')} />
-                    <p className="font-semibold text-sm">{t('tabs.inquilino')}</p>
-                    <p className="text-xs text-muted-foreground leading-tight">{t('hints.inquilinoShort')}</p>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSignupRole('afiliado')}
-                    className={cn(
-                      'rounded-xl border-2 p-3 text-left transition-all',
-                      signupRole === 'afiliado'
-                        ? 'border-primary bg-primary/5'
-                        : 'border-border hover:border-muted-foreground/40',
-                    )}
-                  >
-                    <Gift className={cn('h-5 w-5 mb-1.5', signupRole === 'afiliado' ? 'text-primary' : 'text-muted-foreground')} />
-                    <p className="font-semibold text-sm">{t('tabs.afiliado')}</p>
-                    <p className="text-xs text-muted-foreground leading-tight">{t('hints.afiliadoShort')}</p>
-                  </button>
+                  {!refCode && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole('inquilino')}
+                        className={cn(
+                          'rounded-xl border-2 p-3 text-left transition-all',
+                          signupRole === 'inquilino'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-muted-foreground/40',
+                        )}
+                      >
+                        <User className={cn('h-5 w-5 mb-1.5', signupRole === 'inquilino' ? 'text-primary' : 'text-muted-foreground')} />
+                        <p className="font-semibold text-sm">{t('tabs.inquilino')}</p>
+                        <p className="text-xs text-muted-foreground leading-tight">{t('hints.inquilinoShort')}</p>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSignupRole('afiliado')}
+                        className={cn(
+                          'rounded-xl border-2 p-3 text-left transition-all',
+                          signupRole === 'afiliado'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-muted-foreground/40',
+                        )}
+                      >
+                        <Gift className={cn('h-5 w-5 mb-1.5', signupRole === 'afiliado' ? 'text-primary' : 'text-muted-foreground')} />
+                        <p className="font-semibold text-sm">{t('tabs.afiliado')}</p>
+                        <p className="text-xs text-muted-foreground leading-tight">{t('hints.afiliadoShort')}</p>
+                      </button>
+                    </>
+                  )}
                 </div>
 
                 {signupRole === 'gestor' && (
@@ -536,16 +545,6 @@ export function LoginPage() {
             </CardHeader>
 
             <CardContent>
-              {!forgotMode && (
-                <Tabs value={role} onValueChange={(v) => setRole(v as LoginRole)} className="mb-4">
-                  <TabsList className="w-full">
-                    <TabsTrigger value="gestor" className="flex-1">{t('tabs.gestor')}</TabsTrigger>
-                    <TabsTrigger value="inquilino" className="flex-1">{t('tabs.inquilino')}</TabsTrigger>
-                    <TabsTrigger value="afiliado" className="flex-1">{t('tabs.afiliado')}</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              )}
-
               {isLocked && (
                 <div className="mb-4 flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                   <Clock className="h-4 w-4 shrink-0" />

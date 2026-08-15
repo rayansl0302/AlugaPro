@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning, Upload } from 'lucide-react'
+import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning, Upload, XCircle, Trash2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
-import { getContracts, updateContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
+import { getContracts, updateContract, deleteContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
 import { getTenants } from '@/services/tenants'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
@@ -196,6 +196,25 @@ export function ContractsPage() {
     }
   }
 
+  const deleteContractMutation = useMutation({
+    mutationFn: async (contract: Contract) => {
+      const ref = { assetType: contract.assetType ?? 'imovel', assetId: contract.propertyId }
+      await releaseContractAsset(ref, contract.tenantId)
+      await deleteContract(contract.id)
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['contracts'] })
+      qc.invalidateQueries({ queryKey: ['properties'] })
+      qc.invalidateQueries({ queryKey: ['vehicles'] })
+      toast({ title: t('toast.deleted') })
+    },
+    onError: () => toast({ title: t('toast.deleteError'), variant: 'destructive' }),
+  })
+
+  const handleDeleteContract = (contract: Contract) => {
+    if (confirm(t('toast.deleteConfirm'))) deleteContractMutation.mutate(contract)
+  }
+
   const renderContractActions = (contract: Contract, signing: ReturnType<typeof getContractSigningStatus>) => (
     <>
       <Button
@@ -280,6 +299,30 @@ export function ContractsPage() {
           onClick={() => handleStatusChange(contract, 'encerrado')}
         >
           {t('close')}
+        </Button>
+      )}
+      {(contract.status === 'ativo' || contract.status === 'renovado') && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-amber-600"
+          title={t('actions.cancelContract')}
+          onClick={() => {
+            if (confirm(t('toast.cancelConfirm'))) handleStatusChange(contract, 'cancelado')
+          }}
+        >
+          <XCircle className="h-3.5 w-3.5" />
+        </Button>
+      )}
+      {!contract.documentFinalizedAt && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-destructive hover:text-destructive"
+          title={t('actions.deleteContract')}
+          onClick={() => handleDeleteContract(contract)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
         </Button>
       )}
     </>

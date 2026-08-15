@@ -230,45 +230,62 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         ...(clearingExternalPdf ? { externalPdfUrl: '' } : {}),
       }
 
+      // Passo 1: grava o contrato em si. Se isso der certo, o registro já
+      // existe de verdade — os passos seguintes (cobranças, PDF, vínculo do
+      // bem) ganham um catch separado pra não fazer parecer que nada foi
+      // salvo (e o usuário tentar de novo, duplicando o contrato).
       let contractId: string
-      if (contract) {
-        const oldAssetType = contract.assetType ?? 'imovel'
-        if (contract.propertyId && contract.propertyId !== data.propertyId) {
-          await releaseContractAsset(
-            { assetType: oldAssetType, assetId: contract.propertyId },
-            contract.tenantId
-          )
+      try {
+        if (contract) {
+          const oldAssetType = contract.assetType ?? 'imovel'
+          if (contract.propertyId && contract.propertyId !== data.propertyId) {
+            await releaseContractAsset(
+              { assetType: oldAssetType, assetId: contract.propertyId },
+              contract.tenantId
+            )
+          }
+          await updateContract(contract.id, payload)
+          contractId = contract.id
+        } else {
+          contractId = await createContract(payload)
         }
-        await updateContract(contract.id, payload)
-        contractId = contract.id
-      } else {
-        contractId = await createContract(payload)
-        // Gera as cobranças de aluguel automaticamente. Importado não gera
-        // retroativas (histórico já pago fora da plataforma) — só do mês atual.
-        const fullContract = { ...payload, id: contractId, status: 'ativo' as const }
-        const count = await generateChargesForContract(
-          fullContract as Contract,
-          willBeImported ? { fromDate: new Date().toISOString().slice(0, 10) } : undefined,
+      } catch {
+        toast({ title: t('toast.saveError'), variant: 'destructive' })
+        return
+      }
+
+      // Passo 2: cobranças, upload de PDF importado e vínculo com o bem.
+      // Falha aqui não desfaz o contrato já criado/atualizado — avisa o
+      // usuário pra conferir manualmente, em vez de dar erro de "salvar".
+      try {
+        if (contract) {
+          toast({ title: t('toast.updatedShort') })
+        } else {
+          // Gera as cobranças de aluguel automaticamente. Importado não gera
+          // retroativas (histórico já pago fora da plataforma) — só do mês atual.
+          const fullContract = { ...payload, id: contractId, status: 'ativo' as const }
+          const count = await generateChargesForContract(
+            fullContract as Contract,
+            willBeImported ? { fromDate: new Date().toISOString().slice(0, 10) } : undefined,
+          )
+          toast({ title: t('toast.createdWithCharges', { count }) })
+        }
+
+        // Upload do PDF importado só depois de ter o contractId (path do arquivo).
+        if (importFile) {
+          const url = await uploadContractDocument(companyId, contractId, importFile, 'importado')
+          await updateContract(contractId, { externalPdfUrl: url, isImported: true })
+        }
+
+        await linkContractToAsset(
+          { assetType: data.assetType, assetId: data.propertyId },
+          { contractId, tenantId: data.tenantId, tenantName: data.tenantName, setRented: isActive }
         )
-        toast({ title: t('toast.createdWithCharges', { count }) })
+      } catch {
+        toast({ title: t('toast.savedWithWarning'), variant: 'destructive' })
       }
-
-      // Upload do PDF importado só depois de ter o contractId (path do arquivo).
-      if (importFile) {
-        const url = await uploadContractDocument(companyId, contractId, importFile, 'importado')
-        await updateContract(contractId, { externalPdfUrl: url, isImported: true })
-      }
-
-      if (contract) toast({ title: t('toast.updatedShort') })
-
-      await linkContractToAsset(
-        { assetType: data.assetType, assetId: data.propertyId },
-        { contractId, tenantId: data.tenantId, tenantName: data.tenantName, setRented: isActive }
-      )
 
       onSuccess()
-    } catch {
-      toast({ title: t('toast.saveError'), variant: 'destructive' })
     } finally {
       setLoading(false)
     }

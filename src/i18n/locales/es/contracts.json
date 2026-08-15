@@ -114,7 +114,8 @@
     "createError": "Error al crear contrato.",
     "updateError": "Error al actualizar contrato.",
     "deleteError": "Error al eliminar contrato.",
-    "deleteConfirm": "¿Está seguro de que desea eliminar este contrato?",
+    "deleteConfirm": "¿Está seguro de que desea eliminar este contrato? Esta acción no se puede deshacer.",
+    "cancelConfirm": "¿Está seguro de que desea cancelar este contrato?",
     "pdfGenerated": "PDF generado con éxito.",
     "pdfError": "Error al generar PDF.",
     "linkCopied": "Enlace copiado.",
@@ -126,7 +127,9 @@
     "statusError": "Error al actualizar el estado.",
     "updatedShort": "Contrato actualizado.",
     "createdWithCharges": "Contrato creado con {{count}} cobros generados.",
-    "saveError": "Error al guardar el contrato."
+    "saveError": "Error al guardar el contrato.",
+    "savedWithWarning": "Contrato guardado, pero hubo un problema al generar cobros, adjuntar el PDF o vincular el bien — verifique manualmente.",
+    "deleteNotAllowed": "Solo se pueden eliminar contratos aún no finalizados. Use \"Cancelar\" para este contrato."
   },
   "searchPlaceholderShort": "Buscar contratos...",
   "newContract": "Nuevo contrato",
@@ -161,7 +164,9 @@
     "sign": "Firmar contrato",
     "viewWarnings": "Ver advertencias",
     "viewTenant": "Ver inquilino",
-    "viewAsset": "Ver inmueble/vehículo/equipo"
+    "viewAsset": "Ver inmueble/vehículo/equipo",
+    "cancelContract": "Cancelar contrato",
+    "deleteContract": "Eliminar contrato"
   },
   "detailTenant": "Detalles del inquilino",
   "detailProperty": "Detalles del inmueble",

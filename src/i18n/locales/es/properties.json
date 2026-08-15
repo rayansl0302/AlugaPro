@@ -76,10 +76,12 @@
   "itemLabel": "inmuebles",
   "placeholders": {
     "name": "Ej: Apto 101 - Edificio Central",
-    "notes": "Notas internas..."
+    "notes": "Notas internas...",
+    "selectType": "Seleccione el tipo..."
   },
   "validation": {
     "nameRequired": "Nombre obligatorio",
+    "typeRequired": "Seleccione el tipo de inmueble",
     "valueRequired": "Valor obligatorio",
     "streetRequired": "Calle obligatoria",
     "numberRequired": "Número obligatorio",

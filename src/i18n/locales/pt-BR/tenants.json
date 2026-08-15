@@ -95,6 +95,7 @@
     "updateError": "Erro ao atualizar inquilino.",
     "deleteError": "Erro ao excluir inquilino.",
     "deleteConfirm": "Tem certeza que deseja excluir este inquilino?",
+    "deleteBlockedByContract": "Não é possível excluir — inquilino vinculado a {{count}} contrato(s). Encerre ou exclua o(s) contrato(s) primeiro.",
     "saveError": "Erro ao salvar inquilino.",
     "photoError": "Erro ao enviar a foto."
   }

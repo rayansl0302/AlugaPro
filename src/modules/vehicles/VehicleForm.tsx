@@ -17,6 +17,7 @@ import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
 import { requiredString } from '@/lib/validation'
 import { fieldErrorClass } from '@/lib/formErrors'
 import { cn } from '@/lib/utils'
+import { isValidRenavam, isValidChassi } from '@/lib/documents'
 import { toast } from '@/hooks/useToast'
 
 const schema = z.object({
@@ -29,8 +30,8 @@ const schema = z.object({
   rentValue: z.coerce.number().min(1, i18n.t('vehicles:validation.valueRequired')),
   cautionValue: z.coerce.number().optional(),
   color: z.string().optional(),
-  renavam: z.string().optional(),
-  chassi: z.string().optional(),
+  renavam: z.string().refine(isValidRenavam, i18n.t('vehicles:validation.renavamInvalid')),
+  chassi: z.string().refine(isValidChassi, i18n.t('vehicles:validation.chassiInvalid')),
   fuel: z.enum(['gasolina', 'etanol', 'flex', 'diesel', 'gnv', 'eletrico', 'hibrido']).optional(),
   mileage: z.coerce.number().optional(),
   notes: z.string().optional(),
@@ -260,13 +261,26 @@ export function VehicleForm({ vehicle, companyId, onSuccess }: Props) {
         </div>
 
         <div className="space-y-2">
-          <Label>{t('form.renavam')}</Label>
-          <Input placeholder={t('placeholders.renavam')} {...register('renavam')} />
+          <Label>{t('form.renavam')} *</Label>
+          <Input
+            placeholder={t('placeholders.renavam')}
+            maxLength={11}
+            inputMode="numeric"
+            className={fieldErrorClass(errors.renavam)}
+            {...register('renavam')}
+          />
+          {errors.renavam && <p className="text-xs text-destructive">{errors.renavam.message}</p>}
         </div>
 
         <div className="space-y-2">
-          <Label>{t('form.chassi')}</Label>
-          <Input placeholder={t('placeholders.chassi')} {...register('chassi')} />
+          <Label>{t('form.chassi')} *</Label>
+          <Input
+            placeholder={t('placeholders.chassi')}
+            maxLength={17}
+            className={cn('uppercase', fieldErrorClass(errors.chassi))}
+            {...register('chassi')}
+          />
+          {errors.chassi && <p className="text-xs text-destructive">{errors.chassi.message}</p>}
         </div>
 
         <div className="space-y-2">

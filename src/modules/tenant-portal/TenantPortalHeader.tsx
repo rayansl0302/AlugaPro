@@ -61,7 +61,7 @@ export function TenantPortalHeader() {
               {user ? getInitials(user.name) : 'U'}
             </AvatarFallback>
           </Avatar>
-          <span className="hidden items-center gap-1 text-sm font-medium lg:flex">
+          <span className="hidden items-center gap-1 text-sm font-medium text-[#032B61] lg:flex">
             {user?.name}
             {user?.phoneVerified ? (
               <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-green-600" aria-label={t('profile.phoneVerified')} />
@@ -69,10 +69,10 @@ export function TenantPortalHeader() {
               <ShieldAlert className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-label={t('profile.phoneNotVerified')} />
             )}
           </span>
-          <Button asChild variant="ghost" size="icon" className="h-8 w-8" title={t('nav.myProfile')}>
+          <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-[#032B61]" title={t('nav.myProfile')}>
             <Link to="/perfil"><UserCircle className="h-4 w-4" /></Link>
           </Button>
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={logout} title={t('nav.logout')}>
+          <Button variant="ghost" size="icon" className="h-8 w-8 text-[#032B61]" onClick={logout} title={t('nav.logout')}>
             <LogOut className="h-4 w-4" />
           </Button>
         </div>

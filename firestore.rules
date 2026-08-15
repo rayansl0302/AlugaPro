@@ -145,11 +145,13 @@ service cloud.firestore {
         || (isAuthenticated()
             && companyId == 'company_' + request.auth.uid
             && request.resource.data.ownerId == request.auth.uid);
-      // Gestor edita só os campos do próprio perfil de empresa (Configurações >
-      // Empresa) — ownerId/asaasCustomerId/createdAt ficam fora do alcance dele.
-      allow update: if isGestor() && sameCompany(companyId)
-        && request.resource.data.diff(resource.data).affectedKeys()
-            .hasOnly(['name', 'cnpj', 'cpf', 'email', 'phone', 'address', 'logo', 'bankAccount', 'updatedAt']);
+      // Admin sempre tem acesso total. Gestor edita só os campos do próprio
+      // perfil de empresa (Configurações > Empresa) — ownerId/asaasCustomerId/
+      // createdAt ficam fora do alcance dele.
+      allow update: if isAdmin()
+        || (isGestor() && sameCompany(companyId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['name', 'cnpj', 'cpf', 'email', 'phone', 'address', 'logo', 'bankAccount', 'updatedAt']));
       allow delete: if false; // never delete companies via client
     }
 
@@ -230,7 +232,7 @@ service cloud.firestore {
         || (isAuthenticated() &&
           (sameCompany(resource.data.companyId) || request.auth.uid == tenantId));
       allow create, update: if isGestor();
-      allow delete: if isAdmin();
+      allow delete: if isGestor() && sameCompany(resource.data.companyId);
     }
 
     // Contracts
@@ -259,7 +261,6 @@ service cloud.firestore {
             && isLinkedTenant(resource.data.tenantId)
             && request.resource.data.companyId  == resource.data.companyId
             && request.resource.data.tenantId    == resource.data.tenantId
-            && request.resource.data.ownerId     == resource.data.ownerId
             && request.resource.data.propertyId  == resource.data.propertyId
             && request.resource.data.contractNumber == resource.data.contractNumber
             && request.resource.data.rentValue   == resource.data.rentValue
@@ -272,7 +273,11 @@ service cloud.firestore {
             && request.resource.data.docsLocador == resource.data.docsLocador
             && signingFieldsUnchangedIfFinalized());
 
-      allow delete: if isAdmin();
+      // Exclusão de verdade só pro gestor e só se o contrato ainda não foi
+      // finalizado (sem assinatura completa) — contrato assinado só pode
+      // virar 'cancelado' (update normal), nunca ser apagado de fato.
+      allow delete: if isAdmin()
+        || (isGestor() && sameCompany(resource.data.companyId) && resource.data.get('documentFinalizedAt', null) == null);
     }
 
     // Charges

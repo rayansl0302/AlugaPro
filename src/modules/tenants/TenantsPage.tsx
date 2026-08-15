@@ -6,6 +6,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { getTenants, deleteTenant } from '@/services/tenants'
 import { getProperties } from '@/services/properties'
 import { getVehicles } from '@/services/vehicles'
+import { getContractsByTenant } from '@/services/contracts'
 import { Property, Tenant, Vehicle } from '@/types'
 import { formatCPF, formatPhone } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -96,7 +97,12 @@ export function TenantsPage() {
 
   const pag = usePagination(filtered, 12)
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
+    const linkedContracts = await getContractsByTenant(companyId, id)
+    if (linkedContracts.length > 0) {
+      toast({ title: t('toast.deleteBlockedByContract', { count: linkedContracts.length }), variant: 'destructive' })
+      return
+    }
     if (confirm(t('toast.deleteConfirm'))) deleteMutation.mutate(id)
   }
 
