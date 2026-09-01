@@ -284,13 +284,14 @@ function NotifyDropdown({
         .replace(/\*(.+?)\*/g, '<b>$1</b>')
         .replace(/\n/g, '<br>')
       const idToken = await (await import('@/lib/firebase')).auth.currentUser?.getIdToken()
-      const res = await fetch('/api/send-charge-email', {
+      const res = await fetch('/api/whatsapp-notify', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${idToken ?? ''}`,
         },
         body: JSON.stringify({
+          channel: 'email',
           to: tenantEmail,
           subject: emailSubject,
           html,
