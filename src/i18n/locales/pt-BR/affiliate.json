@@ -80,6 +80,7 @@
     "saveSuccess": "Dados de recebimento salvos!",
     "saveError": "Erro ao salvar. Tente novamente.",
     "validationError": "Preencha todos os campos — CPF, chave PIX (e o tipo), fotos e telefone — antes de salvar.",
+    "invalidPixEmail": "Chave PIX do tipo e-mail inválida — precisa ter @ e um domínio válido (ex: .com, .br).",
     "pixPayoutNote": "Suas comissões são pagas por PIX direto nessa chave — sem precisar criar conta em nenhuma outra plataforma."
   },
   "earnings": {

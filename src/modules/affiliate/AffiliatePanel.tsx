@@ -157,14 +157,17 @@ export function AffiliatePanel() {
     else setPixKey(value)
   }
 
+  const isValidPixEmail = (value: string) => /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/.test(value.trim())
+
   const handleSaveKyc = async () => {
     setKycAttempted(true)
     const cpfDigits = cpf.replace(/\D/g, '')
+    const pixEmailInvalid = pixKeyType === 'email' && !isValidPixEmail(pixKey)
     if (
       cpfDigits.length !== 11 || !pixKey.trim() || !pixKeyType || !documentPhotoUrl ||
-      !documentSelfieUrl || !phone.trim()
+      !documentSelfieUrl || !phone.trim() || pixEmailInvalid
     ) {
-      toast({ title: t('kyc.validationError'), variant: 'destructive' })
+      toast({ title: pixEmailInvalid ? t('kyc.invalidPixEmail') : t('kyc.validationError'), variant: 'destructive' })
       return
     }
     setSavingKyc(true)
@@ -280,8 +283,15 @@ export function AffiliatePanel() {
                   value={pixKey}
                   onChange={(e) => handlePixKeyChange(e.target.value)}
                   placeholder={t('kyc.fields.pixKeyPlaceholder')}
-                  className={cn(kycAttempted && !pixKey.trim() && 'border-destructive')}
+                  className={cn(
+                    kycAttempted &&
+                      (!pixKey.trim() || (pixKeyType === 'email' && !isValidPixEmail(pixKey))) &&
+                      'border-destructive'
+                  )}
                 />
+                {kycAttempted && pixKeyType === 'email' && pixKey.trim() && !isValidPixEmail(pixKey) && (
+                  <p className="text-xs text-destructive">{t('kyc.invalidPixEmail')}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="kyc-pix-type">{t('kyc.fields.pixKeyType')} *</Label>

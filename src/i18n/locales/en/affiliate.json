@@ -80,6 +80,7 @@
     "saveSuccess": "Payout details saved!",
     "saveError": "Failed to save. Please try again.",
     "validationError": "Fill in all fields — CPF, PIX key (and its type), photos and phone — before saving.",
+    "invalidPixEmail": "Invalid email PIX key — must contain @ and a valid domain (e.g. .com, .br).",
     "pixPayoutNote": "Your commissions are paid via PIX straight to this key — no need to create an account anywhere else."
   },
   "earnings": {

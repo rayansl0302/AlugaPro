@@ -152,7 +152,7 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole, refC
         } catch {
           // a regra exige correspondência com o convite — se falhar, segue em memória
         }
-        return baseProfile(fbUser, profileId, invite.role, invite.companyId, { name: invite.name })
+        return baseProfile(fbUser, profileId, invite.role, invite.companyId, { name: invite.name, tenantId: invite.tenantId })
       }
     } catch {
       // ignora

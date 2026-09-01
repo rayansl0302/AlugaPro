@@ -80,6 +80,7 @@
     "saveSuccess": "¡Datos de cobro guardados!",
     "saveError": "Error al guardar. Inténtalo de nuevo.",
     "validationError": "Completa todos los campos — CPF, clave PIX (y su tipo), fotos y teléfono — antes de guardar.",
+    "invalidPixEmail": "Clave PIX de tipo correo inválida — debe contener @ y un dominio válido (ej: .com, .br).",
     "pixPayoutNote": "Tus comisiones se pagan por PIX directamente a esta clave — sin necesidad de crear cuenta en otra plataforma."
   },
   "earnings": {

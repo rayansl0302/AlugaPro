@@ -259,6 +259,12 @@ export function TenantPortal() {
   const qc = useQueryClient()
   const companyId = user?.companyId ?? ''
   const tenantId = user?.tenantId ?? user?.id ?? ''
+  if (user && !user.tenantId) {
+    // user.tenantId ausente no doc users/{uid} — caindo no fallback (user.id).
+    // Se o contrato não aparecer mesmo assim, o problema é esse campo faltando
+    // no Firestore, não a query de contratos em si.
+    console.warn('[TenantPortal] user.tenantId ausente, usando fallback user.id:', user.id)
+  }
 
   const [uploadingCharge, setUploadingCharge] = useState<Charge | null>(null)
   const [uploadingExpense, setUploadingExpense] = useState<TenantSharedExpenseItem | null>(null)
