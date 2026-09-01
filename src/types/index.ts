@@ -59,6 +59,8 @@ export interface User {
   phoneVerified?: boolean
   phoneVerifiedAt?: string
   avatar?: string
+  /** Tokens FCM de push notification — array pra suportar múltiplos dispositivos. */
+  fcmTokens?: string[]
   companyId: string
   locale?: AppLocale
   active: boolean

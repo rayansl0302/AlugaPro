@@ -40,6 +40,15 @@
     "saveError": "Error al guardar las preferencias de notificación."
   },
   "save": "Guardar preferencias",
+  "pushBanner": {
+    "title": "Activa las notificaciones",
+    "description": "Recibe avisos de cobro y novedades directo en el navegador, incluso con la app cerrada.",
+    "enable": "Activar",
+    "enabling": "Activando...",
+    "dismiss": "Descartar",
+    "enabled": "Notificaciones activadas con éxito.",
+    "error": "No fue posible activar las notificaciones."
+  },
   "pageSubtitle": "Alertas en tiempo real y configuración de mensajes automáticos",
   "pendingAlerts": "Alertas pendientes",
   "pendingAlertsDescription": "Comprobantes enviados, cobros vencidos y llamados pendientes de acción",

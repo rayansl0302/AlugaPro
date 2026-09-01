@@ -1,12 +1,12 @@
 /**
  * POST /api/whatsapp-notify
  *
- * Envia uma notificação de cobrança/inadimplência via WhatsApp (Evolution API)
- * ou e-mail (Resend) e registra o trigger enviado na cobrança. Endpoint único
- * pros dois canais (Vercel Hobby limita a 12 Serverless Functions — juntar os
- * dois evita estourar o limite em vez de criar um endpoint novo).
+ * Envia uma notificação de cobrança/inadimplência via WhatsApp (Evolution API),
+ * e-mail (Resend) ou push (FCM) e registra o trigger enviado na cobrança.
+ * Endpoint único pros três canais (Vercel Hobby limita a 12 Serverless
+ * Functions — juntar evita estourar o limite em vez de criar endpoints novos).
  *
- * Body: { channel?: 'whatsapp' | 'email', phone?, to?, subject?, message?/html?, chargeId?, companyId?, trigger? }
+ * Body: { channel?: 'whatsapp' | 'email' | 'push', phone?, to?, subject?, message?/html?, tenantId?, chargeId?, companyId?, trigger? }
  * Header: x-internal-key = INTERNAL_API_KEY (obrigatório) OU Bearer <Firebase ID token> de gestor/admin
  */
 import type { VercelRequest, VercelResponse } from '@vercel/node'
@@ -14,6 +14,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb } from './_firebase.js'
 import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
 import { sendEmail } from './_resend.js'
+import { sendPush, getTokensForTenant } from './_push.js'
 import { requireGestor, errorResponse, type AuthedUser } from './_auth.js'
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -37,14 +38,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const {
-    channel, phone, message, to, subject, html, chargeId, trigger,
+    channel, phone, message, to, subject, html, tenantId, chargeId, trigger,
   } = req.body as {
-    channel?: 'whatsapp' | 'email'
+    channel?: 'whatsapp' | 'email' | 'push'
     phone?: string
     message?: string
     to?: string
     subject?: string
     html?: string
+    tenantId?: string
     chargeId?: string
     companyId?: string
     trigger?: string
@@ -57,6 +59,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const result = await sendEmail(to, subject, html)
     if (!result.ok) {
       console.error('[whatsapp-notify] Falha no envio de e-mail:', result.error)
+      return res.status(502).json({ error: result.error })
+    }
+  } else if (channel === 'push') {
+    if (!tenantId || !subject || !message) {
+      return res.status(400).json({ error: 'tenantId, subject e message são obrigatórios' })
+    }
+    const tokens = await getTokensForTenant(tenantId)
+    const result = await sendPush(tokens, subject, message)
+    if (!result.ok) {
+      console.error('[whatsapp-notify] Falha no envio de push:', result.error)
       return res.status(502).json({ error: result.error })
     }
   } else {

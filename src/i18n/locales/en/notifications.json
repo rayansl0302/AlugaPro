@@ -40,6 +40,15 @@
     "saveError": "Failed to save notification preferences."
   },
   "save": "Save preferences",
+  "pushBanner": {
+    "title": "Enable notifications",
+    "description": "Get billing alerts and updates right in your browser, even with the app closed.",
+    "enable": "Enable",
+    "enabling": "Enabling...",
+    "dismiss": "Dismiss",
+    "enabled": "Notifications enabled successfully.",
+    "error": "Couldn't enable notifications."
+  },
   "pageSubtitle": "Real-time alerts and automatic message settings",
   "pendingAlerts": "Pending alerts",
   "pendingAlertsDescription": "Submitted receipts, overdue charges, and tickets awaiting action",

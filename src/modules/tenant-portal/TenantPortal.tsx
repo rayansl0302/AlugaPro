@@ -21,6 +21,7 @@ import { getSharedExpensesByTenant, resolveExpenseParticipantIndex, submitShared
 import { uploadReceipt } from '@/services/storage'
 import { useTenantContractActions } from '@/hooks/useTenantContractActions'
 import { TenantPortalHeader } from './TenantPortalHeader'
+import { PushPermissionBanner } from '@/components/shared/PushPermissionBanner'
 import { Charge, ChargeType, PaymentMethod, MaintenanceCategory, MaintenanceRequest, ExpenseType, Contract, Company, Property, Vehicle } from '@/types'
 import { formatCurrency, formatDate, formatDateOptional } from '@/lib/utils'
 import { cn } from '@/lib/utils'
@@ -633,6 +634,8 @@ export function TenantPortal() {
             {t('home.summarySubtitle')}
           </p>
         </div>
+
+        {firebaseUser?.uid && <PushPermissionBanner uid={firebaseUser.uid} />}
 
         {/* ── KPI row ── */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

@@ -18,6 +18,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, Timestamp } from './_firebase.js'
 import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
 import { sendEmail, resendConfigured, textToEmailHtml } from './_resend.js'
+import { sendPush, getTokensForTenant } from './_push.js'
 import { getTriggerForToday, buildMessage, buildEmailSubject, type ChargeSnapshot, type NotificationTrigger } from './_notifyLogic.js'
 import { createPixTransfer, type AsaasPixKeyType } from './_asaas.js'
 
@@ -298,6 +299,23 @@ async function sendDailyChargeNotifications() {
       }
     }
 
+    if (channels.push) {
+      const tokens = await getTokensForTenant(charge.tenantId)
+      if (tokens.length > 0) {
+        anyAttempted = true
+        const subject = buildEmailSubject(charge, trigger)
+        const result = await sendPush(tokens, subject, buildMessage(charge, trigger))
+        if (result.ok) {
+          anyOk = true
+          console.log(`[cron] ✓ push ${trigger} → ${tenant?.name ?? charge.tenantName} (${charge.id})`)
+        } else {
+          console.error(`[cron] ✗ push ${charge.id}: ${result.error}`)
+        }
+      } else {
+        console.log(`[cron] Sem token de push para tenant ${charge.tenantId} (cobrança ${charge.id})`)
+      }
+    }
+
     if (!anyAttempted) { skipped++; continue }
 
     if (anyOk) {
@@ -338,16 +356,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
+  // Push (FCM) não depende de env var extra — já usa o mesmo Admin SDK do
+  // resto do app, então sempre "configurado" e não entra nessa checagem.
   let notifications: unknown = { skipped: 'no_channel_configured' }
-  if (evolutionConfigured() || resendConfigured()) {
-    try {
-      notifications = await sendDailyChargeNotifications()
-    } catch (err) {
-      console.error('[cron] Erro nas notificações:', err)
-      notifications = { error: err instanceof Error ? err.message : String(err) }
-    }
-  } else {
-    console.log('[cron] Nenhum canal configurado (Evolution API / Resend) — pulando envios.')
+  try {
+    notifications = await sendDailyChargeNotifications()
+  } catch (err) {
+    console.error('[cron] Erro nas notificações:', err)
+    notifications = { error: err instanceof Error ? err.message : String(err) }
   }
 
   let affiliatePayouts: unknown
