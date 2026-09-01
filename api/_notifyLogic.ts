@@ -125,3 +125,17 @@ export function buildMessage(charge: ChargeSnapshot, trigger: NotificationTrigge
       )
   }
 }
+
+/** Assunto do e-mail para cada trigger. */
+export function buildEmailSubject(charge: ChargeSnapshot, trigger: NotificationTrigger): string {
+  const property = charge.propertyName ?? 'seu imóvel'
+  switch (trigger) {
+    case 'vencimento_7dias': return `[AlugaPro] Cobrança vence em 7 dias — ${property}`
+    case 'vencimento_3dias': return `[AlugaPro] Cobrança vence em 3 dias — ${property}`
+    case 'vencimento_1dia':  return `[AlugaPro] Cobrança vence amanhã — ${property}`
+    case 'vencido_dia':      return `[AlugaPro] Cobrança vencida hoje — ${property}`
+    case 'vencido_3dias':    return `[AlugaPro] Cobrança em atraso (3 dias) — ${property}`
+    case 'vencido_7dias':    return `[AlugaPro] Cobrança em atraso (7 dias) — ${property}`
+    case 'vencido_15dias':   return `[AlugaPro] Cobrança em atraso (15 dias) — ${property}`
+  }
+}

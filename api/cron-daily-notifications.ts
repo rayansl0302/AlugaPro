@@ -5,8 +5,9 @@
  * Faz dois trabalhos independentes nessa mesma execução (pra não passar do
  * limite de 12 serverless functions do plano Hobby da Vercel):
  *
- * 1. Varre cobranças não pagas e envia notificações WhatsApp via Evolution
- *    API conforme a escala de vencimento definida em _notifyLogic.ts.
+ * 1. Varre cobranças não pagas e envia notificações WhatsApp (Evolution API)
+ *    e/ou e-mail (Resend) conforme a escala de vencimento definida em
+ *    _notifyLogic.ts e as preferências de canal salvas em notificationSettings.
  * 2. Paga as comissões de afiliado pendentes via transferência PIX
  *    (ver payoutPendingAffiliateCommissions abaixo) — só no dia de payout.
  *
@@ -16,8 +17,27 @@ import type { VercelRequest, VercelResponse } from '@vercel/node'
 import { FieldValue } from 'firebase-admin/firestore'
 import { adminDb, Timestamp } from './_firebase.js'
 import { sendWhatsAppMessage, evolutionConfigured } from './_evolution.js'
-import { getTriggerForToday, buildMessage, type ChargeSnapshot } from './_notifyLogic.js'
+import { sendEmail, resendConfigured, textToEmailHtml } from './_resend.js'
+import { getTriggerForToday, buildMessage, buildEmailSubject, type ChargeSnapshot, type NotificationTrigger } from './_notifyLogic.js'
 import { createPixTransfer, type AsaasPixKeyType } from './_asaas.js'
+
+interface NotificationRuleChannels {
+  whatsapp: boolean
+  email: boolean
+  push: boolean
+}
+
+// Espelha DEFAULT_CHANNELS em src/modules/notifications/NotificationsPage.tsx —
+// usado quando a empresa nunca salvou preferências customizadas.
+const DEFAULT_CHANNELS: Record<NotificationTrigger, NotificationRuleChannels> = {
+  vencimento_7dias: { whatsapp: true, email: true, push: false },
+  vencimento_3dias: { whatsapp: true, email: false, push: true },
+  vencimento_1dia: { whatsapp: true, email: false, push: true },
+  vencido_dia: { whatsapp: true, email: true, push: true },
+  vencido_3dias: { whatsapp: true, email: true, push: false },
+  vencido_7dias: { whatsapp: true, email: true, push: false },
+  vencido_15dias: { whatsapp: true, email: true, push: false },
+}
 
 // Dia do mês em que as comissões acumuladas são pagas via PIX
 const PAYOUT_DAY_OF_MONTH = 5
@@ -168,7 +188,8 @@ async function payoutPendingAffiliateCommissions() {
   return { paid, belowMinimum, missingPixKey, failed, pendingTotal: pendingSnap.size }
 }
 
-// Varre cobranças pendentes/atrasadas e envia notificações WhatsApp.
+// Varre cobranças pendentes/atrasadas e envia notificações (WhatsApp e/ou
+// e-mail, conforme os canais habilitados por empresa/gatilho).
 // Independente do payout de comissões de afiliado — uma coisa não deve
 // bloquear a outra (ex.: Evolution API fora do ar não pode impedir o cron
 // de pagar comissões vencidas).
@@ -195,8 +216,9 @@ async function sendDailyChargeNotifications() {
 
   console.log(`[cron] ${charges.length} cobrança(s) ativa(s) encontrada(s)`)
 
-  // ── 2. Cache de tenants para evitar reads duplicados ──────────────────────
+  // ── 2. Cache de tenants e preferências por empresa (evita reads duplicados) ─
   const tenantCache = new Map<string, TenantDoc>()
+  const settingsCache = new Map<string, Record<string, NotificationRuleChannels>>()
 
   async function getTenant(tenantId: string): Promise<TenantDoc | null> {
     if (tenantCache.has(tenantId)) return tenantCache.get(tenantId)!
@@ -211,6 +233,18 @@ async function sendDailyChargeNotifications() {
     }
   }
 
+  async function getChannels(companyId: string, trigger: NotificationTrigger): Promise<NotificationRuleChannels> {
+    if (!settingsCache.has(companyId)) {
+      try {
+        const snap = await adminDb.collection('notificationSettings').doc(companyId).get()
+        settingsCache.set(companyId, snap.exists ? (snap.data()?.rules ?? {}) : {})
+      } catch {
+        settingsCache.set(companyId, {})
+      }
+    }
+    return settingsCache.get(companyId)![trigger] ?? DEFAULT_CHANNELS[trigger]
+  }
+
   // ── 3. Processa cada cobrança ─────────────────────────────────────────────
   let sent = 0
   let skipped = 0
@@ -221,17 +255,52 @@ async function sendDailyChargeNotifications() {
     if (!trigger) { skipped++; continue }
 
     const tenant = await getTenant(charge.tenantId)
-    const phone  = tenant?.whatsapp ?? tenant?.phone
-    if (!phone) {
-      console.log(`[cron] Sem WhatsApp para tenant ${charge.tenantId} (cobrança ${charge.id})`)
-      skipped++
-      continue
+    const channels = await getChannels(charge.companyId ?? '', trigger)
+
+    const phone = tenant?.whatsapp ?? tenant?.phone
+    const email = tenant?.email
+
+    let anyOk = false
+    let anyAttempted = false
+
+    if (channels.whatsapp && evolutionConfigured()) {
+      if (phone) {
+        anyAttempted = true
+        const message = buildMessage(charge, trigger)
+        const result = await sendWhatsAppMessage(phone, message)
+        if (result.ok) {
+          anyOk = true
+          console.log(`[cron] ✓ whatsapp ${trigger} → ${tenant?.name ?? charge.tenantName} (${charge.id})`)
+        } else {
+          console.error(`[cron] ✗ whatsapp ${charge.id}: ${result.error}`)
+        }
+        // Delay anti-ban entre envios de WhatsApp
+        await new Promise((r) => setTimeout(r, 1_500))
+      } else {
+        console.log(`[cron] Sem WhatsApp para tenant ${charge.tenantId} (cobrança ${charge.id})`)
+      }
     }
 
-    const message = buildMessage(charge, trigger)
-    const result  = await sendWhatsAppMessage(phone, message)
+    if (channels.email && resendConfigured()) {
+      if (email) {
+        anyAttempted = true
+        const subject = buildEmailSubject(charge, trigger)
+        const html = textToEmailHtml(buildMessage(charge, trigger))
+        const result = await sendEmail(email, subject, html)
+        if (result.ok) {
+          anyOk = true
+          console.log(`[cron] ✓ email ${trigger} → ${tenant?.name ?? charge.tenantName} (${charge.id})`)
+        } else {
+          console.error(`[cron] ✗ email ${charge.id}: ${result.error}`)
+        }
+      } else {
+        console.log(`[cron] Sem e-mail para tenant ${charge.tenantId} (cobrança ${charge.id})`)
+      }
+    }
 
-    if (result.ok) {
+    if (!anyAttempted) { skipped++; continue }
+
+    if (anyOk) {
       try {
         const isOverdue = trigger.startsWith('vencido_')
         await adminDb.collection('charges').doc(charge.id).update({
@@ -245,15 +314,10 @@ async function sendDailyChargeNotifications() {
       } catch (err) {
         console.error(`[cron] Erro ao atualizar charge ${charge.id}:`, err)
       }
-      console.log(`[cron] ✓ ${trigger} → ${tenant?.name ?? charge.tenantName} (${charge.id})`)
       sent++
     } else {
-      console.error(`[cron] ✗ ${charge.id}: ${result.error}`)
       failed++
     }
-
-    // Delay anti-ban entre envios (1.5s)
-    await new Promise((r) => setTimeout(r, 1_500))
   }
 
   const summary = { today, sent, skipped, failed, total: charges.length }
@@ -274,8 +338,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 
-  let notifications: unknown = { skipped: 'evolution_not_configured' }
-  if (evolutionConfigured()) {
+  let notifications: unknown = { skipped: 'no_channel_configured' }
+  if (evolutionConfigured() || resendConfigured()) {
     try {
       notifications = await sendDailyChargeNotifications()
     } catch (err) {
@@ -283,7 +347,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       notifications = { error: err instanceof Error ? err.message : String(err) }
     }
   } else {
-    console.log('[cron] Evolution API não configurada — pulando envios.')
+    console.log('[cron] Nenhum canal configurado (Evolution API / Resend) — pulando envios.')
   }
 
   let affiliatePayouts: unknown
