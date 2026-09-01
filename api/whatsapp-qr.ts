@@ -81,6 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. QR code (timeout 5s)
     let qrData: Record<string, unknown> = {}
+    let qrError: string | undefined
     try {
       const ctrl2 = new AbortController()
       const t2 = setTimeout(() => ctrl2.abort(), 5_000)
@@ -88,14 +89,20 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         headers, signal: ctrl2.signal,
       })
       clearTimeout(t2)
-      if (r2.ok) qrData = await r2.json()
-    } catch { /* sem QR, retorna vazio */ }
+      if (r2.ok) {
+        qrData = await r2.json()
+      } else {
+        qrError = `Evolution API retornou HTTP ${r2.status} ao pedir o QR: ${(await r2.text()).slice(0, 200)}`
+      }
+    } catch (e) {
+      qrError = `Falha ao pedir o QR: ${String(e)}`
+    }
 
     const qrcode =
       (qrData.base64 as string | undefined) ??
       ((qrData.qrcode as Record<string, unknown> | undefined)?.base64 as string | undefined)
 
-    return res.status(200).json({ configured: true, connected: false, state, qrcode })
+    return res.status(200).json({ configured: true, connected: false, state, qrcode, qrError })
 
   } catch (err) {
     return res.status(200).json({
