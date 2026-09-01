@@ -35,8 +35,11 @@
     "deleted": "Notification deleted.",
     "loadError": "Failed to load notifications.",
     "markError": "Failed to update notification.",
-    "deleteError": "Failed to delete notification."
+    "deleteError": "Failed to delete notification.",
+    "saved": "Notification preferences saved.",
+    "saveError": "Failed to save notification preferences."
   },
+  "save": "Save preferences",
   "pageSubtitle": "Real-time alerts and automatic message settings",
   "pendingAlerts": "Pending alerts",
   "pendingAlertsDescription": "Submitted receipts, overdue charges, and tickets awaiting action",

@@ -1,9 +1,9 @@
-import { Moon, Sun, Search, Zap, AlertTriangle, Menu } from 'lucide-react'
+import { Search, Zap, AlertTriangle, Menu } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { useTheme } from '@/contexts/ThemeContext'
+import { ThemeToggle } from './ThemeToggle'
 import { NotificationBell } from './NotificationBell'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -16,7 +16,6 @@ interface TopbarProps {
 
 export function Topbar({ title, onMenuClick }: TopbarProps) {
   const { t } = useTranslation(['nav', 'subscription'])
-  const { resolvedTheme, setTheme } = useTheme()
   const navigate = useNavigate()
   const { user } = useAuth()
   const { status, daysRemaining, isAdmin, isLoading } = useSubscription()
@@ -38,7 +37,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
         <Button variant="ghost" size="icon" className="shrink-0 md:hidden" onClick={onMenuClick}>
           <Menu className="h-5 w-5" />
         </Button>
-        <h1 className="truncate text-lg font-semibold sm:text-xl">{title}</h1>
+        <h1 className="truncate text-lg font-semibold text-card-foreground sm:text-xl">{title}</h1>
       </div>
 
       <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
@@ -67,13 +66,7 @@ export function Topbar({ title, onMenuClick }: TopbarProps) {
           <Input placeholder={t('nav:searchPlaceholder')} className="h-9 w-56 pl-9" />
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-        >
-          {resolvedTheme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-        </Button>
+        <ThemeToggle />
 
         <LanguageSelector className="hidden sm:inline-flex" />
 

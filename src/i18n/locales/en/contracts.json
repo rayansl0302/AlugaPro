@@ -129,7 +129,8 @@
     "createdWithCharges": "Contract created with {{count}} charges generated.",
     "saveError": "Failed to save contract.",
     "savedWithWarning": "Contract saved, but there was a problem generating charges, attaching the PDF, or linking the asset — please check manually.",
-    "deleteNotAllowed": "Only contracts that haven't been finalized can be deleted. Use \"Cancel\" for this contract instead."
+    "deleteNotAllowed": "Only contracts that haven't been finalized can be deleted. Use \"Cancel\" for this contract instead.",
+    "assetAlreadyRented": "This asset is already linked to another active contract. End or cancel the existing contract before creating a new one."
   },
   "searchPlaceholderShort": "Search contracts...",
   "newContract": "New Contract",

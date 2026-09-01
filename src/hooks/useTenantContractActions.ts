@@ -33,7 +33,7 @@ export function useTenantContractActions() {
       window.open(contract.signedPdfUrl, '_blank')
       return
     }
-    toast({ title: 'Contrato ainda não disponível para visualização.' })
+    toast({ title: 'Contrato aguardando assinatura — peça ao gestor para concluir a assinatura.' })
   }
 
   const downloadContract = async (contract: Contract) => {
@@ -60,7 +60,7 @@ export function useTenantContractActions() {
       window.open(contract.signedPdfUrl, '_blank')
       return
     }
-    toast({ title: 'Contrato ainda não disponível.' })
+    toast({ title: 'Contrato aguardando assinatura — peça ao gestor para concluir a assinatura.' })
   }
 
   const isContractLoading = (contractId: string, action: 'view' | 'download') =>

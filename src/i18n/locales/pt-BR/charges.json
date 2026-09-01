@@ -67,6 +67,7 @@
     "noWhatsapp": "WhatsApp não cadastrado para este inquilino.",
     "noEmail": "E-mail não cadastrado para este inquilino.",
     "whatsappSent": "WhatsApp enviado pelo servidor com sucesso.",
+    "emailSent": "E-mail enviado com sucesso.",
     "sendFail": "Falha: {{error}}",
     "networkError": "Erro de rede ao enviar.",
     "noActiveContract": "Nenhum contrato ativo.",

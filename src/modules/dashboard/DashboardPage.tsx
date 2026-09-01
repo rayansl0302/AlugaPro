@@ -125,7 +125,12 @@ export function DashboardPage() {
 
   const rented = properties.filter((p) => p.status === 'alugado').length
   const vacant = properties.filter((p) => p.status === 'disponivel').length
-  const overdueCharges = charges.filter((c) => c.status === 'atrasado')
+  // 'atrasado' nunca é persistido no Firestore — é sempre calculado por data,
+  // não por status (mesmo padrão usado no portal do inquilino e no relatório).
+  const today = format(new Date(), 'yyyy-MM-dd')
+  const overdueCharges = charges.filter(
+    (c) => c.status !== 'pago' && c.status !== 'cancelado' && !!c.dueDate && c.dueDate < today
+  )
   const pendingCharges = charges.filter((c) => c.status === 'pendente')
   const paidCharges = charges.filter((c) => c.status === 'pago')
   const expectedRevenue = charges.reduce((s, c) => s + c.amount, 0)

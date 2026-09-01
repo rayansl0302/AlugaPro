@@ -6,6 +6,7 @@ import { getInitials } from '@/lib/utils'
 import { cn } from '@/lib/utils'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 const navItems = [
   { key: 'home', href: '/portal', icon: Home, exact: true },
@@ -55,6 +56,7 @@ export function TenantPortalHeader() {
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
+          <ThemeToggle className="h-8 w-8 text-[#032B61]" />
           <LanguageSelector />
           <Avatar className="h-8 w-8">
             <AvatarFallback className="bg-[#032B61]/10 text-[#032B61] text-xs font-bold">

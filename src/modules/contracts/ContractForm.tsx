@@ -11,6 +11,7 @@ import {
   updateContract,
   linkContractToAsset,
   releaseContractAsset,
+  getContractsByAsset,
 } from '@/services/contracts'
 import { uploadContractDocument } from '@/services/storage'
 import { generateChargesForContract } from '@/services/charges'
@@ -203,6 +204,18 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
   const onSubmit = async (data: FormData) => {
     setLoading(true)
     try {
+      // Bloqueia contrato duplicado pro mesmo bem — bem já vinculado a outro
+      // contrato ativo/renovado não pode receber um segundo contrato.
+      const existing = await getContractsByAsset(companyId, data.propertyId)
+      const conflicting = existing.find(
+        (c) => c.id !== contract?.id && (c.status === 'ativo' || c.status === 'renovado')
+      )
+      if (conflicting) {
+        toast({ title: t('toast.assetAlreadyRented'), variant: 'destructive' })
+        setLoading(false)
+        return
+      }
+
       const status = contract?.status ?? 'ativo'
       const isActive = status === 'ativo' || status === 'renovado'
       const willBeImported = !!(importFile || existingPdfUrl)
@@ -249,7 +262,8 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
         } else {
           contractId = await createContract(payload)
         }
-      } catch {
+      } catch (err) {
+        console.error('[ContractForm] Falha ao salvar contrato:', err)
         toast({ title: t('toast.saveError'), variant: 'destructive' })
         return
       }
@@ -281,7 +295,8 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
           { assetType: data.assetType, assetId: data.propertyId },
           { contractId, tenantId: data.tenantId, tenantName: data.tenantName, setRented: isActive }
         )
-      } catch {
+      } catch (err) {
+        console.error('[ContractForm] Falha na 2ª etapa (cobranças/PDF/vínculo do bem):', err)
         toast({ title: t('toast.savedWithWarning'), variant: 'destructive' })
       }
 
@@ -422,16 +437,18 @@ export function ContractForm({ contract, companyId, startInImport, onSuccess }: 
               } />
             </SelectTrigger>
             <SelectContent className="max-h-60">
-              {/* Bens removidos (archived) não podem receber novo contrato/cobrança. */}
+              {/* Bens removidos (archived) ou já alugados por outro contrato não
+                  podem receber novo contrato/cobrança — exceto o próprio bem
+                  já vinculado a este contrato, ao editar. */}
               {assetType === 'veiculo'
-                ? vehicles.filter((v) => !v.archived).map((v) => (
+                ? vehicles.filter((v) => !v.archived && (v.status !== 'alugado' || v.id === contract?.propertyId)).map((v) => (
                     <SelectItem key={v.id} value={v.id}>{v.brand} {v.model} — {v.plate}</SelectItem>
                   ))
                 : assetType === 'equipamento'
-                ? equipments.filter((eq) => !eq.archived).map((eq) => (
+                ? equipments.filter((eq) => !eq.archived && (eq.status !== 'alugado' || eq.id === contract?.propertyId)).map((eq) => (
                     <SelectItem key={eq.id} value={eq.id}>{eq.name} — {eq.model}</SelectItem>
                   ))
-                : properties.filter((p) => !p.archived).map((p) => (
+                : properties.filter((p) => !p.archived && (p.status !== 'alugado' || p.id === contract?.propertyId)).map((p) => (
                     <SelectItem key={p.id} value={p.id}>{p.name} — {p.code}</SelectItem>
                   ))}
             </SelectContent>

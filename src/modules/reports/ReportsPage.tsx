@@ -191,7 +191,7 @@ export function ReportsPage() {
         <Card>
           <CardContent className="p-5 text-center">
             <p className="text-3xl font-bold text-destructive">
-              {charges.filter((c) => c.status === 'atrasado').length}
+              {charges.filter((c) => c.status !== 'pago' && c.status !== 'cancelado' && !!c.dueDate && c.dueDate < today).length}
             </p>
             <p className="text-sm text-muted-foreground mt-1">{t('summary.overdue')}</p>
           </CardContent>

@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { MultiPhotoUpload } from '@/components/shared/MultiPhotoUpload'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { toast } from '@/hooks/useToast'
 
@@ -197,6 +198,7 @@ export function AffiliatePanel() {
             <img src="/logo-completa-horizontal-alugapro.png" alt="AlugaPro" className="h-8 w-auto object-contain" />
           </Link>
           <div className="flex items-center gap-3">
+            <ThemeToggle className="h-8 w-8 text-[#032B61]" />
             <LanguageSelector />
             <span className="hidden text-sm font-medium text-muted-foreground sm:inline">{user?.name}</span>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-[#032B61]" onClick={logout} title={t('panel.logout')}>

@@ -35,8 +35,11 @@
     "deleted": "Notificación eliminada.",
     "loadError": "Error al cargar notificaciones.",
     "markError": "Error al actualizar la notificación.",
-    "deleteError": "Error al eliminar la notificación."
+    "deleteError": "Error al eliminar la notificación.",
+    "saved": "Preferencias de notificación guardadas.",
+    "saveError": "Error al guardar las preferencias de notificación."
   },
+  "save": "Guardar preferencias",
   "pageSubtitle": "Alertas en tiempo real y configuración de mensajes automáticos",
   "pendingAlerts": "Alertas pendientes",
   "pendingAlertsDescription": "Comprobantes enviados, cobros vencidos y llamados pendientes de acción",

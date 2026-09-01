@@ -892,8 +892,8 @@ export function TenantPortal() {
                 {toPay.length === 0 ? (
                   <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed bg-white dark:bg-gray-900 py-16 text-center">
                     <CheckCircle className="h-12 w-12 text-green-500 mb-3" />
-                    <p className="font-semibold text-foreground">{t('chargesExtra.allCaughtUpTitle')}</p>
-                    <p className="text-sm text-muted-foreground mt-1">{t('charges.emptyPending')}</p>
+                    <p className="font-semibold text-gray-900 dark:text-gray-100">{t('chargesExtra.allCaughtUpTitle')}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">{t('charges.emptyPending')}</p>
                   </div>
                 ) : (
                   toPay.map((charge) => {

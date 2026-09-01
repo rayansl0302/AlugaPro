@@ -15,6 +15,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges, updateCharge, generateChargesForContract, createCharge } from '@/services/charges'
 import { getContracts } from '@/services/contracts'
+import { createPayment } from '@/services/payments'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { getVehicles } from '@/services/vehicles'
@@ -271,12 +272,44 @@ function NotifyDropdown({
     window.open(buildWhatsAppLink(tenantWhatsApp, message), '_blank')
   }
 
-  const handleEmail = () => {
+  const handleEmail = async () => {
     if (!tenantEmail) {
       toast({ title: t('toast.noEmail'), variant: 'destructive' })
       return
     }
-    window.location.href = `mailto:${tenantEmail}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(message)}`
+    setSending(true)
+    try {
+      const html = message
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/\*(.+?)\*/g, '<b>$1</b>')
+        .replace(/\n/g, '<br>')
+      const idToken = await (await import('@/lib/firebase')).auth.currentUser?.getIdToken()
+      const res = await fetch('/api/send-charge-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken ?? ''}`,
+        },
+        body: JSON.stringify({
+          to: tenantEmail,
+          subject: emailSubject,
+          html,
+          chargeId,
+          companyId,
+          trigger: trigger ?? 'manual',
+        }),
+      })
+      if (res.ok) {
+        toast({ title: t('toast.emailSent') })
+      } else {
+        const { error } = await res.json().catch(() => ({ error: 'Erro desconhecido' }))
+        toast({ title: t('toast.sendFail', { error }), variant: 'destructive' })
+      }
+    } catch {
+      toast({ title: t('toast.networkError'), variant: 'destructive' })
+    } finally {
+      setSending(false)
+    }
   }
 
   // Envio automático via servidor (Evolution API) — requer EVOLUTION_API configurado
@@ -567,11 +600,34 @@ export function ChargesPage() {
 
   const handleConfirmReceipt = async (charge: Charge) => {
     try {
+      const paidDate = format(new Date(), 'yyyy-MM-dd')
       await updateCharge(charge.id, { receiptStatus: 'confirmado', status: 'pago', paidBy: 'admin' })
+      // Aprovar comprovante também precisa criar o Payment — sem isso a
+      // cobrança fica 'pago' mas nunca aparece no Histórico de Pagamentos
+      // do inquilino (que lê a collection payments, não charges).
+      await createPayment({
+        companyId: charge.companyId,
+        contractId: charge.contractId,
+        propertyId: charge.propertyId,
+        propertyName: charge.propertyName,
+        tenantId: charge.tenantId,
+        tenantName: charge.tenantName ?? '',
+        chargeId: charge.id,
+        type: charge.type,
+        description: charge.description,
+        amount: charge.amount,
+        dueDate: charge.dueDate ?? '',
+        paidDate,
+        paymentMethod: charge.paymentMethod ?? 'pix',
+        status: 'pago',
+        ...(charge.receipt ? { receipt: charge.receipt } : {}),
+      })
       qc.invalidateQueries({ queryKey: ['charges'] })
+      qc.invalidateQueries({ queryKey: ['payments'] })
       toast({ title: t('toast.receiptConfirmed') })
       setViewingCharge(null)
-    } catch {
+    } catch (err) {
+      console.error('[ChargesPage] Falha ao confirmar comprovante:', err)
       toast({ title: t('toast.confirmError'), variant: 'destructive' })
     }
   }

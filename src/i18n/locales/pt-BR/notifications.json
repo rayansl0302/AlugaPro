@@ -35,8 +35,11 @@
     "deleted": "Notificação excluída.",
     "loadError": "Erro ao carregar notificações.",
     "markError": "Erro ao atualizar notificação.",
-    "deleteError": "Erro ao excluir notificação."
+    "deleteError": "Erro ao excluir notificação.",
+    "saved": "Preferências de notificação salvas.",
+    "saveError": "Erro ao salvar preferências de notificação."
   },
+  "save": "Salvar preferências",
   "pageSubtitle": "Alertas em tempo real e configuração de mensagens automáticas",
   "pendingAlerts": "Alertas pendentes",
   "pendingAlertsDescription": "Comprovantes enviados, cobranças em atraso e chamados aguardando ação",

@@ -207,7 +207,9 @@ export async function generateChargesForContract(
 // Contratos por diária/semanal geram uma única cobrança (não recorrente) pro
 // período todo — sem endDate não há como calcular a duração, então não gera.
 async function generateShortStayCharge(contract: ChargeGenerationContract): Promise<number> {
-  if (!contract.endDate) return 0
+  if (!contract.endDate) {
+    throw new Error('Contrato de diária/semanal sem data de término definida — não é possível calcular a cobrança.')
+  }
 
   const q = query(collection(db, COL), where('contractId', '==', contract.id), where('type', '==', 'aluguel'))
   const snap = await getDocs(q)

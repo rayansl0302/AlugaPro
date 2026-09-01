@@ -129,7 +129,8 @@
     "createdWithCharges": "Contrato criado com {{count}} cobranças geradas.",
     "saveError": "Erro ao salvar contrato.",
     "savedWithWarning": "Contrato salvo, mas houve um problema ao gerar cobranças, anexar o PDF ou vincular o bem — confira manualmente.",
-    "deleteNotAllowed": "Só é possível excluir contratos ainda não finalizados. Use \"Cancelar\" para este contrato."
+    "deleteNotAllowed": "Só é possível excluir contratos ainda não finalizados. Use \"Cancelar\" para este contrato.",
+    "assetAlreadyRented": "Este bem já está vinculado a outro contrato ativo. Encerre ou cancele o contrato existente antes de criar um novo."
   },
   "searchPlaceholderShort": "Buscar contratos...",
   "newContract": "Novo Contrato",

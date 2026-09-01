@@ -67,6 +67,7 @@
     "noWhatsapp": "WhatsApp not registered for this tenant.",
     "noEmail": "Email not registered for this tenant.",
     "whatsappSent": "WhatsApp sent successfully by the server.",
+    "emailSent": "Email sent successfully.",
     "sendFail": "Failed: {{error}}",
     "networkError": "Network error while sending.",
     "noActiveContract": "No active contract.",

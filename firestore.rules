@@ -106,6 +106,12 @@ service cloud.firestore {
       allow create: if sameCompany(companyId) && isGestor();
     }
 
+    // Notification settings — um doc por empresa com as preferências de
+    // canal/template dos alertas automáticos de cobrança.
+    match /notificationSettings/{companyId} {
+      allow read, write: if isGestor() && sameCompany(companyId);
+    }
+
     // Affiliate Referrals — vincula uma empresa a um único código de afiliado,
     // pra sempre. Documento indexado pelo próprio companyId (uma indicação por
     // empresa) — só pode ser criado uma vez (update/delete sempre false) e só

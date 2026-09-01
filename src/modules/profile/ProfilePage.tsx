@@ -19,6 +19,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/useToast'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { PLANS } from '@/types'
 import { getReferral, createReferral } from '@/services/affiliateReferrals'
 
@@ -194,12 +195,15 @@ export function ProfilePage() {
   return (
     <div className="light pb-safe min-h-screen bg-muted/30">
       <header className="pt-safe sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
-        <div className="mx-auto flex h-14 max-w-2xl items-center gap-3 px-4">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)} title={t('back')}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <img src="/favicon.png" alt="AlugaPro" className="h-7 w-7 object-contain" />
-          <span className="font-bold tracking-tight">{t('title')}</span>
+        <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)} title={t('back')}>
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <img src="/favicon.png" alt="AlugaPro" className="h-7 w-7 object-contain" />
+            <span className="font-bold tracking-tight">{t('title')}</span>
+          </div>
+          <ThemeToggle className="h-8 w-8" />
         </div>
       </header>
 

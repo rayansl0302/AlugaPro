@@ -3,6 +3,7 @@ import { AlertTriangle, Clock, TrendingDown, MessageSquare } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuth } from '@/contexts/AuthContext'
 import { getCharges } from '@/services/charges'
+import { getTenants } from '@/services/tenants'
 import { formatCurrency, formatDateOptional, getDaysLate } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -21,6 +22,11 @@ export function DefaultersPage() {
   const { data: charges = [], isLoading } = useQuery({
     queryKey: ['charges', companyId],
     queryFn: () => getCharges(companyId),
+    enabled: !!companyId,
+  })
+  const { data: tenants = [] } = useQuery({
+    queryKey: ['tenants', companyId],
+    queryFn: () => getTenants(companyId),
     enabled: !!companyId,
   })
 
@@ -123,7 +129,7 @@ export function DefaultersPage() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => sendWhatsApp(tenantName)}
+                      onClick={() => sendWhatsApp(tenantName, tenants.find((t) => t.id === tenantId)?.whatsapp)}
                       className="gap-1"
                     >
                       <MessageSquare className="h-3 w-3" />
