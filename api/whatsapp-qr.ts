@@ -34,6 +34,23 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const headers: Record<string, string> = { apikey: API_KEY }
 
+    // POST = força um logout limpo antes de reconectar. Sessões que ficam
+    // presas em "connecting" (reconexões repetidas sem logout, comuns depois
+    // de reiniciar a instância ou trocar configuração) fazem o WhatsApp
+    // rejeitar o pareamento com "Não é possível conectar novos dispositivos".
+    if (req.method === 'POST') {
+      try {
+        const ctrlLogout = new AbortController()
+        const tLogout = setTimeout(() => ctrlLogout.abort(), 5_000)
+        await globalFetch(`${BASE_URL}/instance/logout/${INSTANCE}`, {
+          method: 'DELETE', headers, signal: ctrlLogout.signal,
+        })
+        clearTimeout(tLogout)
+      } catch {
+        // Segue mesmo se o logout falhar (ex.: já estava desconectada)
+      }
+    }
+
     // 1. Estado da conexão (timeout 5s)
     let stateStatus = 0
     let stateText = ''
