@@ -37,7 +37,11 @@ export async function getPresignedUploadUrl(
   key: string,
   contentType: string,
 ): Promise<{ uploadUrl: string; publicUrl: string }> {
-  const command = new PutObjectCommand({ Bucket: BUCKET_NAME, Key: key, ContentType: contentType })
+  // IfNoneMatch: '*' — o R2 recusa o PUT se já existir um objeto nessa key,
+  // mesmo que alguém consiga uma URL assinada pra um path já usado.
+  const command = new PutObjectCommand({
+    Bucket: BUCKET_NAME, Key: key, ContentType: contentType, IfNoneMatch: '*',
+  })
   const uploadUrl = await getSignedUrl(getClient(), command, { expiresIn: 300 })
   const publicUrl = `${PUBLIC_URL_BASE}/${key}`
   return { uploadUrl, publicUrl }

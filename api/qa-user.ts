@@ -167,10 +167,13 @@ async function handleDelete(req: VercelRequest, res: VercelResponse) {
 
   // Trava de segurança: só apaga contas marcadas como criadas pelo painel
   // de QA — evita que um uid errado (ex: de um afiliado real, que
-  // compartilha a mesma companyId 'alugapro-afiliados' dos de teste)
-  // seja excluído por engano.
+  // compartilha a mesma companyId 'alugapro-afiliados' dos de teste, ou
+  // qualquer outra conta real) seja excluído por engano. Exige o doc
+  // existir E estar marcado isQaTest — sem essa segunda condição, um uid
+  // sem doc no Firestore (ex: conta real cujo doc falhou ao gravar) passaria
+  // pela trava sem checagem nenhuma.
   const userSnap = await adminDb.doc(`users/${uid}`).get()
-  if (userSnap.exists && userSnap.data()?.isQaTest !== true) {
+  if (!userSnap.exists || userSnap.data()?.isQaTest !== true) {
     throw httpError(403, 'Essa conta não foi criada pelo Painel de QA')
   }
 
