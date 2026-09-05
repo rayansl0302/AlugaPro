@@ -23,10 +23,10 @@ interface Props {
 
 async function updateQaLogin(payload: { uid: string; name?: string; password?: string }): Promise<void> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-update-user', {
+  const res = await fetch('/api/qa-user', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ action: 'update', ...payload }),
   })
   if (!res.ok) {
     const data = await res.json().catch(() => ({}))
@@ -42,10 +42,10 @@ async function createQaLogin(payload: {
   tenantId: string
 }): Promise<{ uid: string }> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-create-user', {
+  const res = await fetch('/api/qa-user', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({ action: 'create', ...payload }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || 'Erro ao criar login de teste')

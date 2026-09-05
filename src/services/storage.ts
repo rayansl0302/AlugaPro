@@ -1,17 +1,14 @@
-import { uploadToCloudinary } from './cloudinary'
+import { uploadToR2 } from './r2'
 
-function folderFromPath(path: string): string {
-  const idx = path.lastIndexOf('/')
-  return idx >= 0 ? path.slice(0, idx) : ''
-}
-
+// Arquivos novos vão pro Cloudflare R2 (uploadToCloudinary permanece em
+// cloudinary.ts, sem uso, só pra não perder o código — os arquivos antigos
+// continuam servidos normalmente pelas URLs do Cloudinary já salvas no banco,
+// nada foi apagado de lá).
 export async function uploadFile(
   file: File,
   path: string,
-  publicId?: string,
 ): Promise<string> {
-  const resourceType = file.type === 'application/pdf' ? 'raw' : 'auto'
-  return uploadToCloudinary(file, { folder: folderFromPath(path), resourceType, publicId })
+  return uploadToR2(file, path)
 }
 
 export async function uploadReceipt(
@@ -54,7 +51,7 @@ export async function uploadContractPDF(
   const fileName = `contrato-${namePart}-assinado`
   const path = `companies/${companyId}/contracts/${contractId}/${fileName}_${Date.now()}.pdf`
   const file = new File([blob], `${fileName}.pdf`, { type: 'application/pdf' })
-  return uploadFile(file, path, `${fileName}-${Date.now()}.pdf`)
+  return uploadFile(file, path)
 }
 
 export async function uploadPropertyPhoto(
@@ -116,7 +113,7 @@ export async function uploadSaleContractPDF(
   const fileName = `contrato-${namePart}-assinado`
   const path = `sale-contracts/${saleContractId}/${fileName}_${Date.now()}.pdf`
   const file = new File([blob], `${fileName}.pdf`, { type: 'application/pdf' })
-  return uploadFile(file, path, `${fileName}-${Date.now()}.pdf`)
+  return uploadFile(file, path)
 }
 
 export async function uploadSaleSignatureDocument(
