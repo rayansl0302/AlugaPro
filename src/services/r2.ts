@@ -23,9 +23,11 @@ export async function uploadToR2(file: File, path: string): Promise<string> {
   }
   const { uploadUrl, publicUrl } = (await presignRes.json()) as { uploadUrl: string; publicUrl: string }
 
+  // If-None-Match precisa bater com o que foi assinado no backend
+  // (api/_r2.ts) — senão a assinatura da URL não confere e o R2 recusa com 403.
   const putRes = await fetch(uploadUrl, {
     method: 'PUT',
-    headers: { 'Content-Type': contentType },
+    headers: { 'Content-Type': contentType, 'If-None-Match': '*' },
     body: file,
   })
   if (!putRes.ok) {
