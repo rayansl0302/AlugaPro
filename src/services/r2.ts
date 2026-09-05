@@ -3,9 +3,18 @@
 export async function uploadToR2(file: File, path: string): Promise<string> {
   const contentType = file.type || 'application/octet-stream'
 
+  // Sem sessão (ex: assinante externo de contrato de venda, sem conta no
+  // app) — o backend libera esse caso específico validando o token na URL,
+  // não a sessão Firebase, então segue sem Authorization mesmo.
+  const { auth } = await import('@/lib/firebase')
+  const idToken = await auth.currentUser?.getIdToken().catch(() => undefined)
+
   const presignRes = await fetch('/api/r2-presign', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(idToken ? { Authorization: `Bearer ${idToken}` } : {}),
+    },
     body: JSON.stringify({ path, contentType }),
   })
   if (!presignRes.ok) {
