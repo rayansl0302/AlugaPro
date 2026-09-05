@@ -11,6 +11,7 @@ import {
   updateSaleSignatureSnapshot, deleteSaleSignatureRequest, subscribeSaleSignatures,
 } from '@/services/saleContracts'
 import { uploadSaleContractPDF } from '@/services/storage'
+import { compressImageUrlToDataURL } from '@/lib/imageCompress'
 import { buildTerrenoBlocks } from '@/lib/contractTemplates/terreno'
 import { generateSaleContractPDF, contractPDFToBlob, PDFWitness } from '@/lib/contractPDF'
 import { openOrShareBlob } from '@/lib/nativeFile'
@@ -30,17 +31,16 @@ const emptyParty: SaleContractParty = { name: '', nationality: '', maritalStatus
 
 // jsPDF não busca URL remota — precisa converter pra base64 antes de embutir
 // no PDF (as fotos ficam hospedadas no Cloudinary, diferente da assinatura
-// que já chega em base64 direto do canvas).
+// que já chega em base64 direto do canvas). Comprime antes de embutir — sem
+// isso, 4 assinantes × 3 fotos (frente/verso/selfie) em resolução de câmera
+// de celular geram um PDF de 50-60MB, estourando o limite do Cloudinary.
 async function urlToDataURL(url: string | undefined): Promise<string | undefined> {
   if (!url) return undefined
-  const res = await fetch(url)
-  const blob = await res.blob()
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onloadend = () => resolve(reader.result as string)
-    reader.onerror = reject
-    reader.readAsDataURL(blob)
-  })
+  try {
+    return await compressImageUrlToDataURL(url)
+  } catch {
+    return undefined
+  }
 }
 
 function openBlankTab(): Window | null {
