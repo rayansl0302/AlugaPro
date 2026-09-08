@@ -651,17 +651,17 @@ export function MaintenancePage() {
 
                 <MaintenanceRequestPhotos photos={viewingRequest.photos} />
 
-                <div className="space-y-1.5 border-t pt-4">
+                <div className="max-w-[220px] space-y-1.5 border-t pt-4">
                   <Label>{t('ticketStatus')}</Label>
                   <Select
                     value={viewingRequest.status}
                     onValueChange={(v) => handleStatusChange(v as MaintenanceStatus)}
                     disabled={statusLoading}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-9">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-56">
                       {Object.entries(statusConfig).map(([value, { label }]) => (
                         <SelectItem key={value} value={value}>{label}</SelectItem>
                       ))}

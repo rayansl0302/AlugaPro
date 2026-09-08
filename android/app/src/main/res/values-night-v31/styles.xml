@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <!-- Mesma ideia de values-v31/styles.xml, mas pro tema escuro do sistema —
-         cor igual à usada em drawable-night/splash.png (gerada pelo
-         Capacitor Assets), pra não trocar de tom entre a splash do sistema
-         (Android 12+) e a splash do Capacitor que vem em seguida. -->
+    <!-- Tema escuro do sistema: mantém fundo branco igual ao light e à splash
+         do Capacitor. Fundo #111111 deixava a abertura preta com o ícone
+         pequeno no centro — visual ruim. -->
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">#111111</item>
+        <item name="windowSplashScreenBackground">#FFFFFF</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">#FFFFFF</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>
