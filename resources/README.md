@@ -23,9 +23,5 @@ cp resources/splash-icon.png android/app/src/main/res/drawable/splash_icon.png
 npm run build:android
 ```
 
-Fundo da splash: lavagem clara da marca (`#E8F0FA` → branco), para a logo
-navy/verde ter contraste. Não usar navy sólido de fundo — a casinha some.
-
-`SplashScreen.backgroundColor` em `capacitor.config.ts` e
-`windowSplashScreenBackground` em `values-v31` / `values-night-v31` devem
-ficar alinhados a `#E8F0FA`.
+Fundo da splash: **branco puro** (`#FFFFFF`) com a logo completa centralizada.
+`SplashScreen.backgroundColor` e `windowSplashScreenBackground` ficam em `#FFFFFF`.

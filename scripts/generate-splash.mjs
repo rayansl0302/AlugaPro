@@ -10,7 +10,7 @@ const outSplashDark = resolve(root, 'resources/splash-dark.png')
 const outSplashIcon = resolve(root, 'resources/splash-icon.png')
 
 const SIZE = 2732
-const LOGO_WIDTH = Math.round(SIZE * 0.42)
+const LOGO_WIDTH = Math.round(SIZE * 0.48)
 
 async function makeSplash(outputPath) {
   const logo = await sharp(logoPath)
@@ -22,17 +22,10 @@ async function makeSplash(outputPath) {
   const left = Math.round((SIZE - (meta.width ?? LOGO_WIDTH)) / 2)
   const top = Math.round((SIZE - (meta.height ?? LOGO_WIDTH)) / 2)
 
-  // Fundo claro com leve lavagem na cor da marca (#032B61)
+  // Fundo branco com logo completa centralizada
   const svg = Buffer.from(`
     <svg width="${SIZE}" height="${SIZE}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#E8F0FA"/>
-          <stop offset="55%" stop-color="#FFFFFF"/>
-          <stop offset="100%" stop-color="#F3F7FC"/>
-        </linearGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#g)"/>
+      <rect width="100%" height="100%" fill="#FFFFFF"/>
     </svg>
   `)
 
