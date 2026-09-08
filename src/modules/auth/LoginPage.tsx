@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useSearchParams, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
-import { App } from '@capacitor/app'
 import { Loader2, Eye, EyeOff, AlertTriangle, Clock, Building2, User, Info, CheckCircle, Gift } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
@@ -192,18 +191,7 @@ export function LoginPage() {
 
   const rememberedEmail = loadRememberedEmail()
   const [remember, setRemember] = useState(!!rememberedEmail)
-  const [appVersion, setAppVersion] = useState('')
-
-  useEffect(() => {
-    let cancelled = false
-    void App.getInfo()
-      .then((info) => {
-        if (cancelled || !info.version) return
-        setAppVersion(info.build ? `v${info.version} (${info.build})` : `v${info.version}`)
-      })
-      .catch(() => {})
-    return () => { cancelled = true }
-  }, [])
+  const appVersion = `v${__APP_VERSION_NAME__} (${__APP_VERSION_CODE__})`
 
   const [failCount, setFailCount] = useState(0)
   const [lockedUntil, setLockedUntil] = useState<Date | null>(null)
@@ -676,9 +664,7 @@ export function LoginPage() {
           {t('terms.and')}{' '}
           <Link to="/politica-de-privacidade" className="underline-offset-2 hover:text-primary hover:underline">{t('terms.privacyPolicy')}</Link>.
         </p>
-        {appVersion ? (
-          <p className="mt-1 text-center text-[10px] text-muted-foreground/70">{appVersion}</p>
-        ) : null}
+        <p className="mt-1 text-center text-[10px] text-muted-foreground/70">{appVersion}</p>
       </div>
     </div>
   )

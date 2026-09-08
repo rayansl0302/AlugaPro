@@ -1,9 +1,27 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import fs from 'fs'
 import path from 'path'
 
+function readAndroidVersion(): { code: string; name: string } {
+  try {
+    const gradle = fs.readFileSync(path.resolve(__dirname, 'android/app/build.gradle'), 'utf8')
+    const code = gradle.match(/versionCode\s+(\d+)/)?.[1] ?? '0'
+    const name = gradle.match(/versionName\s+"([^"]+)"/)?.[1] ?? '0.0.0'
+    return { code, name }
+  } catch {
+    return { code: '0', name: '0.0.0' }
+  }
+}
+
+const androidVersion = readAndroidVersion()
+
 export default defineConfig({
+  define: {
+    __APP_VERSION_NAME__: JSON.stringify(androidVersion.name),
+    __APP_VERSION_CODE__: JSON.stringify(androidVersion.code),
+  },
   plugins: [
     react(),
     VitePWA({
