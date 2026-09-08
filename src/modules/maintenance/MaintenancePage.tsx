@@ -597,9 +597,9 @@ export function MaintenancePage() {
           }
         }}
       >
-        <DialogContent className="flex max-h-[90dvh] max-w-4xl flex-col">
-          <DialogHeader>
-            <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-4xl flex-col gap-3 overflow-hidden p-4 sm:w-full sm:p-6">
+          <DialogHeader className="min-w-0 shrink-0">
+            <DialogTitle className="break-words pr-8">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
 
           {viewingRequest && (() => {
@@ -608,9 +608,9 @@ export function MaintenancePage() {
             return (
             // Mobile: scroll único para todo o conteúdo empilhado.
             // Desktop: overflow oculto aqui — cada coluna do grid tem seu próprio scroll.
-            <div className="min-h-0 flex-1 overflow-y-auto lg:overflow-hidden">
-              <div className="grid gap-6 lg:grid-cols-[1fr_300px] lg:h-full">
-              <div className="space-y-4 lg:overflow-y-auto lg:pr-1">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden">
+              <div className="grid min-w-0 gap-6 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+              <div className="min-w-0 space-y-4 lg:overflow-y-auto lg:pr-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={statusConfig[viewingRequest.status].variant}>
                     {statusConfig[viewingRequest.status].label}
@@ -674,7 +674,7 @@ export function MaintenancePage() {
                 </div>
               </div>
 
-              <div className="border-t pt-4 lg:border-t-0 lg:pt-0">
+              <div className="min-w-0 border-t pt-4 lg:border-t-0 lg:min-h-0 lg:overflow-hidden lg:pt-0">
                 <MaintenanceCommentsPanel
                   comments={viewingRequest.comments ?? []}
                   tenantId={viewingRequest.tenantId}

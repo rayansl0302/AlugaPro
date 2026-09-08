@@ -1480,17 +1480,18 @@ export function TenantPortal() {
           }
         }}
       >
-        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="pr-6">{viewingRequest?.title}</DialogTitle>
+        <DialogContent className="flex max-h-[90dvh] w-[calc(100vw-1.5rem)] max-w-4xl flex-col gap-3 overflow-hidden p-4 sm:w-full sm:p-6">
+          <DialogHeader className="min-w-0 shrink-0">
+            <DialogTitle className="break-words pr-8">{viewingRequest?.title}</DialogTitle>
           </DialogHeader>
 
           {viewingRequest && (() => {
             const entityPhotos = resolveMaintenanceEntityPhotos(viewingRequest, photoLookups)
             const assetLabel = entityPhotos.assetType === 'veiculo' ? t('contracts.vehicle') : t('contracts.property')
             return (
-            <div className="grid min-h-0 flex-1 gap-6 lg:grid-cols-[1fr_300px]">
-              <div className="space-y-4 overflow-y-auto pr-1">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden lg:overflow-hidden">
+            <div className="grid min-w-0 gap-6 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(0,300px)]">
+              <div className="min-w-0 space-y-4 lg:overflow-y-auto lg:pr-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant={maintenanceStatusVariant[viewingRequest.status]}>
                     {t(`status.${STATUS_I18N[viewingRequest.status]}`)}
@@ -1526,6 +1527,7 @@ export function TenantPortal() {
                 <MaintenanceStatusHistoryPanel request={viewingRequest} />
               </div>
 
+              <div className="min-w-0 border-t pt-4 lg:border-t-0 lg:min-h-0 lg:overflow-hidden lg:pt-0">
               <MaintenanceCommentsPanel
                 comments={viewingRequest.comments ?? []}
                 tenantId={viewingRequest.tenantId}
@@ -1538,6 +1540,8 @@ export function TenantPortal() {
                 inputId="tenant-maintenance-comment"
                 placeholder={t('maintenanceExtra.commentPlaceholder')}
               />
+              </div>
+            </div>
             </div>
             )
           })()}
