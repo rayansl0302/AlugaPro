@@ -29,7 +29,7 @@ export function TenantPortalHeader() {
             <img
               src="/logo-completa-horizontal-alugapro.png"
               alt="AlugaPro"
-              className="h-8 w-auto object-contain"
+              className="h-8 w-auto object-contain dark:brightness-0 dark:invert"
             />
           </Link>
 

@@ -198,7 +198,7 @@ export function AffiliatePanel() {
       <header className="pt-safe sticky top-0 z-10 border-b border-[#032B61]/10 bg-background/90 backdrop-blur shadow-sm">
         <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-4">
           <Link to="/painel-afiliado" className="flex items-center">
-            <img src="/logo-completa-horizontal-alugapro.png" alt="AlugaPro" className="h-8 w-auto object-contain" />
+            <img src="/logo-completa-horizontal-alugapro.png" alt="AlugaPro" className="h-8 w-auto object-contain dark:brightness-0 dark:invert" />
           </Link>
           <div className="flex items-center gap-3">
             <ThemeToggle className="h-8 w-8 text-[#032B61]" />

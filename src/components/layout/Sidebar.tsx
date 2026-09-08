@@ -136,13 +136,13 @@ export function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose }: Side
       <div className="flex h-16 items-center justify-between border-b px-4">
         {!collapsed && (
           <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="AlugaPro" className="h-9 w-9 object-contain" />
+            <img src="/favicon.png" alt="AlugaPro" className="h-9 w-9 object-contain dark:brightness-0 dark:invert" />
             <span className="text-lg font-bold tracking-tight">AlugaPro</span>
           </div>
         )}
         {collapsed && (
           <div className="mx-auto hidden flex-col items-center gap-1 md:flex">
-            <img src="/favicon.png" alt="AlugaPro" className="h-8 w-8 object-contain" />
+            <img src="/favicon.png" alt="AlugaPro" className="h-8 w-8 object-contain dark:brightness-0 dark:invert" />
             <Button variant="ghost" size="icon" onClick={onToggle} className="h-6 w-6" title={t('common:actions.open')}>
               <ChevronRight className="h-4 w-4" />
             </Button>

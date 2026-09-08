@@ -355,7 +355,7 @@ export function ProfilePage() {
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)} title={t('back')}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <img src="/favicon.png" alt="AlugaPro" className="h-7 w-7 object-contain" />
+            <img src="/favicon.png" alt="AlugaPro" className="h-7 w-7 object-contain dark:brightness-0 dark:invert" />
             <span className="font-bold tracking-tight">{t('title')}</span>
           </div>
           <ThemeToggle className="h-8 w-8" />
