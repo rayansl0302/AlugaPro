@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Navigate, useSearchParams, Link } from 'react-router-dom'
+import { Capacitor } from '@capacitor/core'
 import { useTranslation } from 'react-i18next'
 import { Loader2, Eye, EyeOff, AlertTriangle, Clock, Building2, User, Info, CheckCircle, Gift } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -192,6 +193,7 @@ export function LoginPage() {
   const rememberedEmail = loadRememberedEmail()
   const [remember, setRemember] = useState(!!rememberedEmail)
   const appVersion = `v${__APP_VERSION_NAME__} (${__APP_VERSION_CODE__})`
+  const isNative = Capacitor.isNativePlatform()
 
   const [failCount, setFailCount] = useState(0)
   const [lockedUntil, setLockedUntil] = useState<Date | null>(null)
@@ -329,10 +331,12 @@ export function LoginPage() {
             {/* Left: signup form */}
             <Card className="w-full shadow-xl">
               <CardHeader className="text-center pb-2">
-                <div className="mb-4 flex items-center justify-between gap-2">
-                  <Link to="/" className="inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
-                    {t('buttons.backToSite')}
-                  </Link>
+                <div className={cn('mb-4 flex items-center gap-2', isNative ? 'justify-end' : 'justify-between')}>
+                  {!isNative && (
+                    <Link to="/" className="inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
+                      {t('buttons.backToSite')}
+                    </Link>
+                  )}
                   <LanguageSelector />
                 </div>
                 <img
@@ -532,10 +536,12 @@ export function LoginPage() {
 
           <Card className="w-full shadow-xl">
             <CardHeader className="text-center">
-              <div className="mb-4 flex items-center justify-between gap-2">
-                <Link to="/" className="inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
-                  {t('buttons.backToSite')}
-                </Link>
+              <div className={cn('mb-4 flex items-center gap-2', isNative ? 'justify-end' : 'justify-between')}>
+                {!isNative && (
+                  <Link to="/" className="inline-block text-xs text-muted-foreground transition-colors hover:text-primary">
+                    {t('buttons.backToSite')}
+                  </Link>
+                )}
                 <LanguageSelector />
               </div>
               <img
