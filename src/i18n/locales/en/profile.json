@@ -65,5 +65,21 @@
     "resendCode": "Resend code / correct number",
     "cancel": "Cancel"
   },
-  "toastPhoneVerified": "Phone verified successfully."
+  "toastPhoneVerified": "Phone verified successfully.",
+  "password": {
+    "cardTitle": "Login password",
+    "hint": "Change the password used to sign in to your account.",
+    "change": "Change password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "save": "Save new password",
+    "cancel": "Cancel",
+    "toastSuccess": "Password changed successfully.",
+    "errorWrongCurrent": "Current password is incorrect.",
+    "errorWeak": "New password must be at least 6 characters.",
+    "errorMismatch": "Passwords don't match.",
+    "errorTooMany": "Too many attempts. Wait a few minutes and try again.",
+    "errorGeneric": "Couldn't change the password. Please try again."
+  }
 }

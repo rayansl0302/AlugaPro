@@ -65,5 +65,21 @@
     "resendCode": "Reenviar código / corregir número",
     "cancel": "Cancelar"
   },
-  "toastPhoneVerified": "Teléfono verificado con éxito."
+  "toastPhoneVerified": "Teléfono verificado con éxito.",
+  "password": {
+    "cardTitle": "Contraseña de acceso",
+    "hint": "Cambia la contraseña usada para acceder a tu cuenta.",
+    "change": "Cambiar contraseña",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar nueva contraseña",
+    "save": "Guardar nueva contraseña",
+    "cancel": "Cancelar",
+    "toastSuccess": "Contraseña cambiada con éxito.",
+    "errorWrongCurrent": "Contraseña actual incorrecta.",
+    "errorWeak": "La nueva contraseña debe tener al menos 6 caracteres.",
+    "errorMismatch": "Las contraseñas no coinciden.",
+    "errorTooMany": "Demasiados intentos. Espera unos minutos e intenta de nuevo.",
+    "errorGeneric": "No fue posible cambiar la contraseña. Intenta de nuevo."
+  }
 }

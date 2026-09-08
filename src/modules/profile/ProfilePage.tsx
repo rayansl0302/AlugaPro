@@ -4,8 +4,11 @@ import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { doc, serverTimestamp, setDoc } from 'firebase/firestore'
 import {
+  EmailAuthProvider, reauthenticateWithCredential, updatePassword, type AuthError,
+} from 'firebase/auth'
+import {
   ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone, Zap, CreditCard,
-  AlertTriangle, Gift, Languages,
+  AlertTriangle, Gift, Languages, KeyRound,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
@@ -125,6 +128,127 @@ function AffiliateCodeCard({ companyId, status, name, email }: {
   )
 }
 
+function passwordErrorMessage(t: (key: string) => string, code?: string): string {
+  switch (code) {
+    case 'auth/wrong-password':
+    case 'auth/invalid-credential':
+      return t('password.errorWrongCurrent')
+    case 'auth/weak-password':
+      return t('password.errorWeak')
+    case 'auth/too-many-requests':
+      return t('password.errorTooMany')
+    default:
+      return t('password.errorGeneric')
+  }
+}
+
+// Só mostra pra contas que têm senha de verdade (login por e-mail/senha) —
+// contas que só entram via Google não têm senha nenhuma pra "trocar" aqui.
+function ChangePasswordCard() {
+  const { t } = useTranslation('profile')
+  const [changing, setChanging] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  const reset = () => {
+    setChanging(false)
+    setCurrentPassword('')
+    setNewPassword('')
+    setConfirmPassword('')
+  }
+
+  const handleSave = async () => {
+    const fbUser = auth.currentUser
+    if (!fbUser?.email) return
+
+    if (newPassword.length < 6) {
+      toast({ title: t('password.errorWeak'), variant: 'destructive' })
+      return
+    }
+    if (newPassword !== confirmPassword) {
+      toast({ title: t('password.errorMismatch'), variant: 'destructive' })
+      return
+    }
+
+    setSaving(true)
+    try {
+      const credential = EmailAuthProvider.credential(fbUser.email, currentPassword)
+      await reauthenticateWithCredential(fbUser, credential)
+      await updatePassword(fbUser, newPassword)
+      toast({ title: t('password.toastSuccess') })
+      reset()
+    } catch (err) {
+      toast({ title: passwordErrorMessage(t, (err as AuthError)?.code), variant: 'destructive' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-base">
+          <KeyRound className="h-4 w-4" /> {t('password.cardTitle')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {!changing ? (
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-muted-foreground">{t('password.hint')}</p>
+            <Button variant="outline" size="sm" className="shrink-0" onClick={() => setChanging(true)}>
+              {t('password.change')}
+            </Button>
+          </div>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <Label>{t('password.current')}</Label>
+              <Input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                autoComplete="current-password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t('password.new')}</Label>
+              <Input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t('password.confirm')}</Label>
+              <Input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                autoComplete="new-password"
+              />
+            </div>
+            <div className="flex gap-2 pt-1">
+              <Button
+                onClick={handleSave}
+                disabled={saving || !currentPassword || !newPassword || !confirmPassword}
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('password.save')}
+              </Button>
+              <Button variant="ghost" onClick={reset} disabled={saving}>
+                {t('password.cancel')}
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
 export function ProfilePage() {
   const { t } = useTranslation('profile')
   const navigate = useNavigate()
@@ -227,6 +351,10 @@ export function ProfilePage() {
             </div>
           </CardContent>
         </Card>
+
+        {auth.currentUser?.providerData.some((p) => p.providerId === 'password') && (
+          <ChangePasswordCard />
+        )}
 
         <Card>
           <CardHeader>
