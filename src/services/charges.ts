@@ -49,6 +49,14 @@ export async function getChargesByTenant(companyId: string, tenantId: string): P
     .sort((a, b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
 }
 
+export async function getChargesByContract(contractId: string): Promise<Charge[]> {
+  const q = query(collection(db, COL), where('contractId', '==', contractId))
+  const snap = await getDocs(q)
+  return snap.docs
+    .map((d) => ({ id: d.id, ...d.data() } as Charge))
+    .sort((a, b) => (b.dueDate ?? '').localeCompare(a.dueDate ?? ''))
+}
+
 export async function getOverdueCharges(companyId: string): Promise<Charge[]> {
   const q = query(
     collection(db, COL),

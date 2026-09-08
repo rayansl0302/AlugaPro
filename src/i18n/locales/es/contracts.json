@@ -167,12 +167,22 @@
     "viewTenant": "Ver inquilino",
     "viewAsset": "Ver inmueble/vehículo/equipo",
     "cancelContract": "Cancelar contrato",
-    "deleteContract": "Eliminar contrato"
+    "deleteContract": "Eliminar contrato",
+    "viewContract": "Ver contrato"
   },
   "detailTenant": "Detalles del inquilino",
   "detailProperty": "Detalles del inmueble",
   "detailVehicle": "Detalles del vehículo",
   "detailEquipment": "Detalles del equipo",
+  "detailDialog": {
+    "pdfAvailable": "Documento firmado disponible.",
+    "pdfNotAvailable": "PDF aún no disponible — esperando firma completa.",
+    "viewPdf": "Ver PDF",
+    "noCharges": "Ningún cobro vinculado a este contrato.",
+    "chargesSummary": "{{paid}} pagado(s) · {{pending}} pendiente(s) · {{overdue}} atrasado(s)",
+    "template": "Modelo",
+    "rescissionRisk": "Este inquilino alcanzó el límite de advertencias — el contrato puede rescindirse según la cláusula contractual."
+  },
   "templates": {
     "title": "Plantillas de contrato",
     "subtitle": "Las plantillas del sistema siempre están disponibles. Clónelas para crear versiones personalizadas de su empresa.",

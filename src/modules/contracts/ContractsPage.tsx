@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
-import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning, Upload, XCircle, Trash2 } from 'lucide-react'
+import { Plus, Search, FileText, Edit, Eye, Calendar, DollarSign, PenLine, CheckCircle, Clock, Users, Lock, LockKeyhole, ListFilter, ChevronDown, Check, FileWarning, Upload, XCircle, Trash2, FileSearch } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { getContracts, updateContract, deleteContract, linkContractToAsset, releaseContractAsset } from '@/services/contracts'
 import { getTenants } from '@/services/tenants'
@@ -31,6 +31,7 @@ import { TenantDetail } from '../tenants/TenantDetail'
 import { PropertyDetail } from '../properties/PropertyDetail'
 import { VehicleDetail } from '../vehicles/VehicleDetail'
 import { EquipmentDetail } from '../equipment/EquipmentDetail'
+import { ContractDetailDialog } from './ContractDetailDialog'
 
 const statusVariants: Record<ContractStatus, 'success' | 'info' | 'warning' | 'secondary' | 'destructive'> = {
   ativo: 'success',
@@ -63,6 +64,7 @@ export function ContractsPage() {
   const [viewProperty, setViewProperty] = useState<Property | null>(null)
   const [viewVehicle, setViewVehicle] = useState<Vehicle | null>(null)
   const [viewEquipment, setViewEquipment] = useState<Equipment | null>(null)
+  const [viewingContract, setViewingContract] = useState<Contract | null>(null)
 
   const { data: contracts = [], isLoading } = useQuery({
     queryKey: ['contracts', companyId],
@@ -217,6 +219,17 @@ export function ContractsPage() {
 
   const renderContractActions = (contract: Contract, signing: ReturnType<typeof getContractSigningStatus>) => (
     <>
+      {(contract.status === 'ativo' || contract.status === 'renovado') && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-primary"
+          title={t('actions.viewContract')}
+          onClick={() => setViewingContract(contract)}
+        >
+          <FileSearch className="h-3.5 w-3.5" />
+        </Button>
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -681,6 +694,16 @@ export function ContractsPage() {
         vehicle={signingContract?.assetType === 'veiculo' ? (signingContract ? vehicleById[signingContract.propertyId] : undefined) : undefined}
         equipment={signingContract?.assetType === 'equipamento' ? (signingContract ? equipmentById[signingContract.propertyId] : undefined) : undefined}
         onClose={() => { setSigningContract(null); setSignFlowEdit(false) }}
+      />
+
+      <ContractDetailDialog
+        contract={viewingContract}
+        tenant={viewingContract ? tenantById[viewingContract.tenantId] : undefined}
+        property={(!viewingContract || viewingContract.assetType === 'veiculo' || viewingContract.assetType === 'equipamento') ? undefined : propertyById[viewingContract.propertyId]}
+        vehicle={viewingContract?.assetType === 'veiculo' ? vehicleById[viewingContract.propertyId] : undefined}
+        equipment={viewingContract?.assetType === 'equipamento' ? equipmentById[viewingContract.propertyId] : undefined}
+        warnings={viewingContract ? warnings.filter((w) => w.contractId === viewingContract.id) : []}
+        onClose={() => setViewingContract(null)}
       />
     </div>
   )

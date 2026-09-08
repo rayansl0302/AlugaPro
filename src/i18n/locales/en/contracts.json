@@ -167,12 +167,22 @@
     "viewTenant": "View tenant",
     "viewAsset": "View property/vehicle/equipment",
     "cancelContract": "Cancel contract",
-    "deleteContract": "Delete contract"
+    "deleteContract": "Delete contract",
+    "viewContract": "View contract"
   },
   "detailTenant": "Tenant details",
   "detailProperty": "Property details",
   "detailVehicle": "Vehicle details",
   "detailEquipment": "Equipment details",
+  "detailDialog": {
+    "pdfAvailable": "Signed document available.",
+    "pdfNotAvailable": "PDF not available yet — waiting for full signature.",
+    "viewPdf": "View PDF",
+    "noCharges": "No charges linked to this contract.",
+    "chargesSummary": "{{paid}} paid · {{pending}} pending · {{overdue}} overdue",
+    "template": "Template",
+    "rescissionRisk": "This tenant has reached the warning limit — the contract may be terminated per its clause."
+  },
   "templates": {
     "title": "Contract templates",
     "subtitle": "System templates are always available. Clone them to create custom versions for your company.",

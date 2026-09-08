@@ -167,12 +167,22 @@
     "viewTenant": "Ver inquilino",
     "viewAsset": "Ver imóvel/veículo/equipamento",
     "cancelContract": "Cancelar contrato",
-    "deleteContract": "Excluir contrato"
+    "deleteContract": "Excluir contrato",
+    "viewContract": "Ver contrato"
   },
   "detailTenant": "Detalhes do Inquilino",
   "detailProperty": "Detalhes do Imóvel",
   "detailVehicle": "Detalhes do Veículo",
   "detailEquipment": "Detalhes do Equipamento",
+  "detailDialog": {
+    "pdfAvailable": "Documento assinado disponível.",
+    "pdfNotAvailable": "PDF ainda não disponível — aguardando assinatura completa.",
+    "viewPdf": "Ver PDF",
+    "noCharges": "Nenhuma cobrança vinculada a este contrato.",
+    "chargesSummary": "{{paid}} paga(s) · {{pending}} pendente(s) · {{overdue}} atrasada(s)",
+    "template": "Modelo",
+    "rescissionRisk": "Este inquilino atingiu o limite de advertências — contrato pode ser rescindido conforme cláusula contratual."
+  },
   "templates": {
     "title": "Modelos de Contrato",
     "subtitle": "Os modelos do sistema estão sempre disponíveis. Clone-os para criar versões personalizadas da sua empresa.",
