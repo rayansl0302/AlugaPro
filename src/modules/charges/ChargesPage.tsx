@@ -28,7 +28,6 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { TableSkeleton } from '@/components/ui/skeleton'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Pagination } from '@/components/ui/pagination'
@@ -397,7 +396,11 @@ export function ChargesPage() {
   const canManage = user?.role === 'admin' || user?.role === 'gestor'
 
   // State
-  const [viewMode, setViewMode] = useState<ViewMode>('timeline')
+  // Em tela estreita (celular), o modo timeline (grade de meses) exige scroll
+  // horizontal — abre direto no modo "list" (cards), que já é responsivo.
+  const [viewMode, setViewMode] = useState<ViewMode>(
+    () => (typeof window !== 'undefined' && window.innerWidth < 640 ? 'list' : 'timeline')
+  )
   const [centerMonth, setCenterMonth] = useState(startOfMonth(new Date()))
   const [search, setSearch] = useState('')
   const [tenantFilter, setTenantFilter] = useState('todos')
@@ -1069,126 +1072,104 @@ export function ChargesPage() {
 
       ) : (
 
-        /* ─── List View ──────────────────────────────────────────────────── */
-        <div className="rounded-lg border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{t('table.description')}</TableHead>
-                <TableHead>{t('table.tenant')}</TableHead>
-                <TableHead>{t('table.asset')}</TableHead>
-                <TableHead>{t('table.dueDate')}</TableHead>
-                <TableHead>{t('table.amount')}</TableHead>
-                <TableHead>{t('table.status')}</TableHead>
-                <TableHead className="text-right">{t('table.actions')}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredList.length === 0 ? (
-                <TableRow>
-                  <td colSpan={7} className="py-12 text-center text-muted-foreground text-sm">
-                    {t('emptyTitle')}
-                  </td>
-                </TableRow>
-              ) : (
-                listPag.pageItems.map((charge) => {
-                  const contract = charge.contractId ? contractById[charge.contractId] : undefined
-                  const entityPhotos = resolveChargeEntityPhotos(
-                    {
-                      tenantId: charge.tenantId,
-                      tenantName: charge.tenantName,
-                      propertyId: charge.propertyId,
-                      propertyName: charge.propertyName,
-                      assetType: contract?.assetType,
-                    },
-                    photoLookups,
-                  )
+        /* ─── List View (cards) ──────────────────────────────────────────── */
+        <div className="space-y-3">
+          {filteredList.length === 0 ? (
+            <div className="rounded-lg border py-12 text-center text-sm text-muted-foreground">
+              {t('emptyTitle')}
+            </div>
+          ) : (
+            listPag.pageItems.map((charge) => {
+              const contract = charge.contractId ? contractById[charge.contractId] : undefined
+              const entityPhotos = resolveChargeEntityPhotos(
+                {
+                  tenantId: charge.tenantId,
+                  tenantName: charge.tenantName,
+                  propertyId: charge.propertyId,
+                  propertyName: charge.propertyName,
+                  assetType: contract?.assetType,
+                },
+                photoLookups,
+              )
 
-                  return (
-                  <TableRow
-                    key={charge.id}
-                    className={charge.status === 'atrasado' ? 'bg-destructive/5' : ''}
-                  >
-                    <TableCell className="font-medium">{charge.description}</TableCell>
-                    <TableCell className="max-w-[180px]">
+              return (
+                <Card key={charge.id} className={cn(charge.status === 'atrasado' && 'border-destructive/40 bg-destructive/5')}>
+                  <CardContent className="space-y-3 p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium">{charge.description}</p>
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          <Badge variant={STATUS_VARIANT[charge.status]}>{statusLabel(charge.status)}</Badge>
+                          {charge.receiptStatus === 'aguardando' && (
+                            <Badge variant="warning" className="text-[10px]">{t('receiptPendingBadge')}</Badge>
+                          )}
+                          {(charge.notificationsSent?.length ?? 0) > 0 && (
+                            <Badge variant="secondary" className="gap-1 text-[10px]">
+                              <Send className="h-2.5 w-2.5" />
+                              {t('waSent', { count: charge.notificationsSent!.length })}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p className="font-semibold">
+                          {formatCurrency(charge.paidAmount ?? charge.totalAmount ?? charge.amount)}
+                        </p>
+                        {charge.paidAmount && charge.paidAmount !== charge.amount && (
+                          <p className="text-xs text-muted-foreground line-through">{formatCurrency(charge.amount)}</p>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM/yyyy') : '—'}
+                          {charge.daysLate ? <span className="text-destructive"> ({charge.daysLate}d)</span> : null}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 border-t pt-3">
                       <MaintenanceEntityPhotos photos={entityPhotos} variant="tenant" />
-                    </TableCell>
-                    <TableCell className="max-w-[180px]">
                       <MaintenanceEntityPhotos photos={entityPhotos} variant="asset" />
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {charge.dueDate ? format(parseISO(charge.dueDate), 'dd/MM/yyyy') : '—'}
-                      {charge.daysLate ? (
-                        <span className="ml-1 text-xs text-destructive">({charge.daysLate}d)</span>
-                      ) : null}
-                    </TableCell>
-                    <TableCell className="font-semibold">
-                      {formatCurrency(charge.paidAmount ?? charge.totalAmount ?? charge.amount)}
-                      {charge.paidAmount && charge.paidAmount !== charge.amount && (
-                        <span className="ml-1 text-xs line-through text-muted-foreground">
-                          {formatCurrency(charge.amount)}
-                        </span>
+                    </div>
+
+                    <div className="flex flex-wrap justify-end gap-1.5 border-t pt-3">
+                      {charge.receipt && charge.receiptStatus === 'aguardando' && canManage && (
+                        <Button
+                          size="sm" variant="outline"
+                          className="text-orange-600 border-orange-300 hover:bg-orange-50"
+                          onClick={() => setViewingCharge(charge)}
+                        >
+                          <Eye className="mr-1 h-3 w-3" />
+                          {t('viewReceipt')}
+                        </Button>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col items-start gap-1">
-                        <Badge variant={STATUS_VARIANT[charge.status]}>
-                          {statusLabel(charge.status)}
-                        </Badge>
-                        {charge.receiptStatus === 'aguardando' && (
-                          <Badge variant="warning" className="text-[10px]">{t('receiptPendingBadge')}</Badge>
-                        )}
-                        {(charge.notificationsSent?.length ?? 0) > 0 && (
-                          <Badge variant="secondary" className="text-[10px] gap-1">
-                            <Send className="h-2.5 w-2.5" />
-                            {t('waSent', { count: charge.notificationsSent!.length })}
-                          </Badge>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        {charge.receipt && charge.receiptStatus === 'aguardando' && canManage && (
-                          <Button
-                            size="sm" variant="outline"
-                            className="text-orange-600 border-orange-300 hover:bg-orange-50"
-                            onClick={() => setViewingCharge(charge)}
-                          >
-                            <Eye className="mr-1 h-3 w-3" />
-                            {t('viewReceipt')}
-                          </Button>
-                        )}
-                        {charge.status === 'pago' && (
-                          <Button size="sm" variant="ghost" onClick={() => setViewingCharge(charge)}>
-                            {t('buttons.see')}
-                          </Button>
-                        )}
-                        {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && charge.receiptStatus !== 'aguardando' && (
-                          <Button size="sm" onClick={() => setPayingCharge(charge)}>
-                            <CheckCircle className="mr-1 h-3 w-3" /> {t('buttons.paid')}
-                          </Button>
-                        )}
-                        {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && (
-                          <NotifyDropdown
-                            tenantWhatsApp={tenants.find((t) => t.id === charge.tenantId)?.whatsapp}
-                            tenantEmail={tenants.find((t) => t.id === charge.tenantId)?.email}
-                            message={chargeNotifyMessage(charge)}
-                            emailSubject={`Cobrança: ${charge.description} — AlugaPro`}
-                            chargeId={charge.id}
-                            companyId={charge.companyId}
-                            trigger="manual"
-                          />
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
+                      {charge.status === 'pago' && (
+                        <Button size="sm" variant="ghost" onClick={() => setViewingCharge(charge)}>
+                          {t('buttons.see')}
+                        </Button>
+                      )}
+                      {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && charge.receiptStatus !== 'aguardando' && (
+                        <Button size="sm" onClick={() => setPayingCharge(charge)}>
+                          <CheckCircle className="mr-1 h-3 w-3" /> {t('buttons.paid')}
+                        </Button>
+                      )}
+                      {charge.status !== 'pago' && charge.status !== 'cancelado' && canManage && (
+                        <NotifyDropdown
+                          tenantWhatsApp={tenants.find((t) => t.id === charge.tenantId)?.whatsapp}
+                          tenantEmail={tenants.find((t) => t.id === charge.tenantId)?.email}
+                          message={chargeNotifyMessage(charge)}
+                          emailSubject={`Cobrança: ${charge.description} — AlugaPro`}
+                          chargeId={charge.id}
+                          companyId={charge.companyId}
+                          trigger="manual"
+                        />
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })
+          )}
           {filteredList.length > 0 && (
-            <div className="border-t px-4 py-3">
+            <div className="rounded-lg border px-4 py-3">
               <Pagination
                 page={listPag.page}
                 totalPages={listPag.totalPages}

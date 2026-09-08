@@ -42,7 +42,7 @@ export function MaintenanceCommentsPanel({
 }: MaintenanceCommentsPanelProps) {
   const { t } = useTranslation('maintenance')
   return (
-    <div className="flex min-h-0 flex-col rounded-xl border bg-muted/20 lg:max-h-[min(70vh,560px)]">
+    <div className="flex min-h-0 flex-col rounded-xl border bg-muted/20 max-h-[400px] lg:max-h-[min(70vh,560px)]">
       <div className="border-b px-4 py-3">
         <p className="text-sm font-semibold">{t('commentsPanel.title')}</p>
         <p className="text-xs text-muted-foreground">{t('commentsPanel.messagesCount', { count: comments.length })}</p>

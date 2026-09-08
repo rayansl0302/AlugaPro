@@ -640,14 +640,18 @@ export function MaintenancePage() {
                   </div>
                 </div>
 
-                <div>
+                <div className="border-t pt-4">
                   <p className="text-xs font-medium text-muted-foreground mb-1">{t('form.description')}</p>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
+                  {viewingRequest.description ? (
+                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{viewingRequest.description}</p>
+                  ) : (
+                    <p className="text-sm italic text-muted-foreground">{t('noDescription')}</p>
+                  )}
                 </div>
 
                 <MaintenanceRequestPhotos photos={viewingRequest.photos} />
 
-                <div className="space-y-1.5">
+                <div className="space-y-1.5 border-t pt-4">
                   <Label>{t('ticketStatus')}</Label>
                   <Select
                     value={viewingRequest.status}
@@ -665,20 +669,24 @@ export function MaintenancePage() {
                   </Select>
                 </div>
 
-                <MaintenanceStatusHistoryPanel request={viewingRequest} />
+                <div className="border-t pt-4">
+                  <MaintenanceStatusHistoryPanel request={viewingRequest} />
+                </div>
               </div>
 
-              <MaintenanceCommentsPanel
-                comments={viewingRequest.comments ?? []}
-                tenantId={viewingRequest.tenantId}
-                tenantName={viewingRequest.tenantName}
-                commentText={commentText}
-                onCommentTextChange={setCommentText}
-                onSubmit={handleAddComment}
-                loading={commentLoading}
-                inputId="gestor-comment"
-                placeholder={t('commentPlaceholder')}
-              />
+              <div className="border-t pt-4 lg:border-t-0 lg:pt-0">
+                <MaintenanceCommentsPanel
+                  comments={viewingRequest.comments ?? []}
+                  tenantId={viewingRequest.tenantId}
+                  tenantName={viewingRequest.tenantName}
+                  commentText={commentText}
+                  onCommentTextChange={setCommentText}
+                  onSubmit={handleAddComment}
+                  loading={commentLoading}
+                  inputId="gestor-comment"
+                  placeholder={t('commentPlaceholder')}
+                />
+              </div>
             </div>
             </div>
             )

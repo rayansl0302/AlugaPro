@@ -205,8 +205,8 @@ export function NotificationsPage() {
           const channels = rules[rule.trigger] ?? DEFAULT_CHANNELS[rule.trigger]
           return (
             <Card key={rule.trigger}>
-              <CardContent className="flex items-center justify-between gap-4 p-5">
-                <div className="flex items-center gap-4">
+              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                <div className="flex min-w-0 items-center gap-4">
                   <Badge
                     variant={rule.daysOffset <= 0 ? 'warning' : 'destructive'}
                     className="shrink-0 w-24 justify-center"
@@ -217,9 +217,9 @@ export function NotificationsPage() {
                       ? t('onDay')
                       : t('daysAfter', { count: rule.daysOffset })}
                   </Badge>
-                  <span className="text-sm font-medium">{t(`rules.${rule.trigger}`)}</span>
+                  <span className="min-w-0 truncate text-sm font-medium">{t(`rules.${rule.trigger}`)}</span>
                 </div>
-                <div className="flex items-center gap-6">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={channels.whatsapp}

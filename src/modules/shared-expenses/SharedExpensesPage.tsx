@@ -203,7 +203,11 @@ export function SharedExpensesPage() {
   const currentMonthStr = todayStr.slice(0, 7)
   const canManage       = user?.role === 'admin' || user?.role === 'gestor'
 
-  const [viewMode, setViewMode]               = useState<ViewMode>('timeline')
+  // Em tela estreita (celular), o modo timeline (grade de meses) exige scroll
+  // horizontal — abre direto no modo "list" (cards), que já é responsivo.
+  const [viewMode, setViewMode]               = useState<ViewMode>(
+    () => (typeof window !== 'undefined' && window.innerWidth < 640 ? 'list' : 'timeline')
+  )
   const [centerMonth, setCenterMonth]         = useState(startOfMonth(new Date()))
   const [search, setSearch]                   = useState('')
   const [propertyFilter, setPropertyFilter]   = useState('todos')

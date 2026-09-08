@@ -129,5 +129,6 @@
   "itemLabel": "llamados",
   "openedAt": "Abierto el {{date}}",
   "ticketStatus": "Estado del llamado",
-  "priorityWithValue": "Prioridad {{value}}"
+  "priorityWithValue": "Prioridad {{value}}",
+  "noDescription": "Sin descripción informada."
 }

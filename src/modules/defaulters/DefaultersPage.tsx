@@ -8,7 +8,6 @@ import { formatCurrency, formatDateOptional, getDaysLate } from '@/lib/utils'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Pagination } from '@/components/ui/pagination'
 import { usePagination } from '@/hooks/usePagination'
 import { format } from 'date-fns'
@@ -137,31 +136,24 @@ export function DefaultersPage() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>{t('defaulters.columns.description')}</TableHead>
-                        <TableHead>{t('defaulters.columns.due')}</TableHead>
-                        <TableHead>{t('defaulters.columns.late')}</TableHead>
-                        <TableHead>{t('defaulters.columns.value')}</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {tenantCharges.map((charge) => (
-                        <TableRow key={charge.id}>
-                          <TableCell>{charge.description}</TableCell>
-                          <TableCell>{formatDateOptional(charge.dueDate, t('defaulters.noDueDate'))}</TableCell>
-                          <TableCell>
-                            <Badge variant="destructive">{t('defaulters.daysBadge', { count: charge.daysLate })}</Badge>
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {formatCurrency(charge.amount)}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                <CardContent className="space-y-2 pt-0">
+                  {tenantCharges.map((charge) => (
+                    <div
+                      key={charge.id}
+                      className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 rounded-lg border bg-muted/30 px-3 py-2"
+                    >
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{charge.description}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {t('defaulters.columns.due')}: {formatDateOptional(charge.dueDate, t('defaulters.noDueDate'))}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-3">
+                        <Badge variant="destructive">{t('defaulters.daysBadge', { count: charge.daysLate })}</Badge>
+                        <span className="font-semibold">{formatCurrency(charge.amount)}</span>
+                      </div>
+                    </div>
+                  ))}
                 </CardContent>
               </Card>
             )

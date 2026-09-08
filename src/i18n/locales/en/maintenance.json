@@ -129,5 +129,6 @@
   "itemLabel": "tickets",
   "openedAt": "Opened at {{date}}",
   "ticketStatus": "Ticket status",
-  "priorityWithValue": "Priority {{value}}"
+  "priorityWithValue": "Priority {{value}}",
+  "noDescription": "No description provided."
 }
