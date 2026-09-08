@@ -619,7 +619,7 @@ export function TenantPortal() {
   }
 
   return (
-    <div className="light pb-safe min-h-screen bg-slate-50">
+    <div className="pb-safe min-h-screen bg-muted/30">
 
       <TenantPortalHeader />
 

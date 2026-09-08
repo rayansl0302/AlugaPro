@@ -17,6 +17,14 @@
     "email": "Email",
     "role": "Role"
   },
+  "avatar": {
+    "change": "Change photo",
+    "uploading": "Uploading...",
+    "toastSuccess": "Profile photo updated.",
+    "toastError": "Couldn't update the photo.",
+    "invalidType": "Select an image (JPG, PNG or WEBP).",
+    "tooLarge": "Image too large (max 5 MB)."
+  },
   "subStatus": {
     "trialing": "Trial active",
     "active": "Active",

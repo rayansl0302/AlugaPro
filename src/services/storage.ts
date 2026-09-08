@@ -126,6 +126,16 @@ export async function uploadSaleSignatureDocument(
   return uploadFile(file, path)
 }
 
+export async function uploadUserAvatar(
+  companyId: string,
+  userId: string,
+  file: File
+): Promise<string> {
+  const ext = file.name.split('.').pop() ?? 'jpg'
+  const path = `companies/${companyId}/users/${userId}/avatar_${Date.now()}.${ext}`
+  return uploadFile(file, path)
+}
+
 export async function uploadAffiliateDocument(
   affiliateId: string,
   slot: 'document' | 'selfie',

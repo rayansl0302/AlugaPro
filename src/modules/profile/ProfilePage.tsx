@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
@@ -8,23 +8,28 @@ import {
 } from 'firebase/auth'
 import {
   ArrowLeft, Loader2, Phone, ShieldCheck, ShieldAlert, Smartphone, Zap, CreditCard,
-  AlertTriangle, Gift, Languages, KeyRound,
+  AlertTriangle, Gift, Languages, KeyRound, Camera,
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { usePhoneVerification } from '@/hooks/usePhoneVerification'
 import { auth, db } from '@/lib/firebase'
-import { formatPhone, maskPhone, cn } from '@/lib/utils'
+import { formatPhone, maskPhone, cn, getInitials } from '@/lib/utils'
+import { compressImageFile } from '@/lib/imageCompress'
+import { uploadUserAvatar } from '@/services/storage'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from '@/hooks/useToast'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
 import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { PLANS } from '@/types'
 import { getReferral, createReferral } from '@/services/affiliateReferrals'
+
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024
 
 const RECAPTCHA_ID = 'recaptcha-profile-container'
 
@@ -261,6 +266,32 @@ export function ProfilePage() {
   const [phone, setPhone] = useState(user?.phone ? formatPhone(user.phone) : '')
   const [code, setCode] = useState('')
   const [saving, setSaving] = useState(false)
+  const [uploadingAvatar, setUploadingAvatar] = useState(false)
+  const avatarInputRef = useRef<HTMLInputElement>(null)
+
+  const handleAvatarSelect = async (file: File) => {
+    if (!user) return
+    if (!file.type.startsWith('image/')) {
+      toast({ title: t('avatar.invalidType'), variant: 'destructive' })
+      return
+    }
+    if (file.size > MAX_AVATAR_BYTES) {
+      toast({ title: t('avatar.tooLarge'), variant: 'destructive' })
+      return
+    }
+    setUploadingAvatar(true)
+    try {
+      const compressed = await compressImageFile(file)
+      const url = await uploadUserAvatar(user.companyId, user.id, compressed)
+      await setDoc(doc(db, 'users', user.id), { avatar: url, updatedAt: serverTimestamp() }, { merge: true })
+      updateLocalUser({ avatar: url })
+      toast({ title: t('avatar.toastSuccess') })
+    } catch {
+      toast({ title: t('avatar.toastError'), variant: 'destructive' })
+    } finally {
+      setUploadingAvatar(false)
+    }
+  }
 
   if (!user) return null
 
@@ -317,8 +348,8 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="light pb-safe min-h-screen bg-muted/30">
-      <header className="pt-safe sticky top-0 z-10 border-b bg-white/90 backdrop-blur">
+    <div className="pb-safe min-h-screen bg-muted/30">
+      <header className="pt-safe sticky top-0 z-10 border-b bg-background/90 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-2xl items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-3">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate(-1)} title={t('back')}>
@@ -337,6 +368,49 @@ export function ProfilePage() {
             <CardTitle className="text-base">{t('personalInfo')}</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2">
+            <div className="flex items-center gap-4 sm:col-span-2">
+              <button
+                type="button"
+                onClick={() => !uploadingAvatar && avatarInputRef.current?.click()}
+                className="group relative shrink-0"
+                title={t('avatar.change')}
+              >
+                <Avatar className="h-16 w-16">
+                  <AvatarImage src={user.avatar} alt={user.name} />
+                  <AvatarFallback className="bg-primary/10 text-lg font-semibold text-primary">
+                    {getInitials(user.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute inset-0 flex items-center justify-center rounded-full bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-5 w-5 animate-spin text-white" />
+                  ) : (
+                    <Camera className="h-5 w-5 text-white" />
+                  )}
+                </span>
+              </button>
+              <input
+                ref={avatarInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) handleAvatarSelect(file)
+                  e.target.value = ''
+                }}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={uploadingAvatar}
+                onClick={() => avatarInputRef.current?.click()}
+              >
+                {uploadingAvatar && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {t('avatar.change')}
+              </Button>
+            </div>
             <div>
               <p className="text-xs text-muted-foreground">{t('fields.name')}</p>
               <p className="font-medium">{user.name}</p>

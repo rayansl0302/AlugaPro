@@ -486,7 +486,7 @@ export function TenantContractsPage() {
   }
 
   return (
-    <div className="light pb-safe min-h-screen bg-white">
+    <div className="pb-safe min-h-screen bg-muted/30">
       <TenantPortalHeader />
 
       <main className="mx-auto max-w-6xl px-4 py-6 space-y-6">

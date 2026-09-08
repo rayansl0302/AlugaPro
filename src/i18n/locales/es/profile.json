@@ -17,6 +17,14 @@
     "email": "Correo electrónico",
     "role": "Perfil"
   },
+  "avatar": {
+    "change": "Cambiar foto",
+    "uploading": "Subiendo...",
+    "toastSuccess": "Foto de perfil actualizada.",
+    "toastError": "No se pudo actualizar la foto.",
+    "invalidType": "Selecciona una imagen (JPG, PNG o WEBP).",
+    "tooLarge": "Imagen demasiado grande (máx. 5 MB)."
+  },
   "subStatus": {
     "trialing": "Prueba activa",
     "active": "Activo",
