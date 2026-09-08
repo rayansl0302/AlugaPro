@@ -1,25 +1,31 @@
 # Resources for Capacitor
 
-Modo usado neste projeto: **Easy Mode** (um único arquivo de logo + cor de fundo).
+## Arquivos de marca
 
-- `logo.png` — pelo menos 1024x1024px, PNG com fundo transparente (a marca AlugaPro,
-  gerado a partir de `public/android-chrome-512x512.png`)
+- `logo.png` — ícone (casa + predinho + check), ≥1024px, fundo transparente
+- `splash.png` / `splash-dark.png` — splash full-bleed com **logo completa**
+  (ícone + “AlugaPro” + tagline), geradas por `node scripts/generate-splash.mjs`
+- `splash-icon.png` — ícone denso para a Splash Screen API do Android 12+
 
-## Gerar/regenerar os ícones e splash (Android):
+## Regenerar splash + ícones (Android)
+
 ```bash
-npx capacitor-assets generate --assetPath resources --iconBackgroundColor '#FFFFFF' --splashBackgroundColor '#FFFFFF' --android
+# 1. Monta splash com a logo completa (public/logo-completa-alugapro.png)
+node scripts/generate-splash.mjs
+
+# 2. Gera densidades Android
+npx capacitor-assets generate --assetPath resources --iconBackgroundColor '#FFFFFF' --splashBackgroundColor '#E8F0FA' --android
+
+# 3. Copia o ícone da splash Android 12+ (se o generate não o incluir)
+cp resources/splash-icon.png android/app/src/main/res/drawable/splash_icon.png
+
+# 4. Build + sync
+npm run build:android
 ```
 
-Fundo branco (`#FFFFFF`) foi escolhido de propósito: o ícone tem a casinha em
-navy (`#032B61`), a mesma cor de fundo usada antes no splash — colocando o
-logo num fundo navy a casa ficava quase invisível (baixo contraste). Se trocar
-a logo por uma versão com bom contraste em navy, pode voltar a usar navy como
-`--iconBackgroundColor`/`--splashBackgroundColor` (e reverter
-`SplashScreen.backgroundColor` em `capacitor.config.ts` junto).
+Fundo da splash: lavagem clara da marca (`#E8F0FA` → branco), para a logo
+navy/verde ter contraste. Não usar navy sólido de fundo — a casinha some.
 
-O Capacitor Assets gera automaticamente todos os tamanhos necessários
-para Android (mdpi, hdpi, xhdpi, xxhdpi, xxxhdpi), incluindo variante
-dark mode do splash (`drawable-night`).
-
-Depois de gerar, rode `npm run build:android` pra sincronizar e reabra o
-Android Studio pra rebuildar o APK.
+`SplashScreen.backgroundColor` em `capacitor.config.ts` e
+`windowSplashScreenBackground` em `values-v31` / `values-night-v31` devem
+ficar alinhados a `#E8F0FA`.
