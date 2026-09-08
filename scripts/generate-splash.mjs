@@ -10,7 +10,8 @@ const outSplashDark = resolve(root, 'resources/splash-dark.png')
 const outSplashIcon = resolve(root, 'resources/splash-icon.png')
 
 const SIZE = 2732
-const LOGO_WIDTH = Math.round(SIZE * 0.48)
+// Fonte obrigatória: public/logo-completa-alugapro.png (ícone + AlugaPro + tagline)
+const LOGO_WIDTH = Math.round(SIZE * 0.56)
 
 async function makeSplash(outputPath) {
   const logo = await sharp(logoPath)

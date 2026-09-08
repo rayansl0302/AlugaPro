@@ -8,6 +8,7 @@ import { AuthProvider } from '@/contexts/AuthContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Toaster } from '@/components/ui/toaster'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { LaunchSplash } from '@/components/LaunchSplash'
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -16,7 +17,9 @@ export function Providers({ children }: { children: ReactNode }) {
         <ThemeProvider>
           <AuthProvider>
             <TooltipProvider delayDuration={200}>
-              {children}
+              <LaunchSplash>
+                {children}
+              </LaunchSplash>
               <Toaster />
             </TooltipProvider>
           </AuthProvider>
