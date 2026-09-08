@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader } from '@/components/ui/card'
 import { toast } from '@/hooks/useToast'
 import i18n from '@/i18n'
 import { LanguageSelector } from '@/i18n/LanguageSelector'
+import { ThemeToggle } from '@/components/layout/ThemeToggle'
 import { cn } from '@/lib/utils'
 
 type LoginRole = 'gestor' | 'inquilino' | 'afiliado'
@@ -127,7 +128,7 @@ function RoleInfoCard({ selectedRole }: { selectedRole: LoginRole }) {
               </li>
             ))}
           </ul>
-          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700">
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-2 text-xs text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
             <Info className="h-3.5 w-3.5 shrink-0 mt-0.5" />
             <span>{t('hints.inquilino.inviteHint')}</span>
           </div>
@@ -319,7 +320,7 @@ export function LoginPage() {
   const attemptsUntilLock = LOCKOUT_RULES[0].after - failCount
 
   return (
-    <div className="light pt-safe pb-safe flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div className="pt-safe pb-safe flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4 dark:from-background dark:to-background">
       <div className={cn(
         'flex w-full flex-col items-center gap-4',
         pageMode === 'signup' ? 'max-w-4xl' : 'max-w-md',
@@ -337,18 +338,21 @@ export function LoginPage() {
                       {t('buttons.backToSite')}
                     </Link>
                   )}
-                  <LanguageSelector />
+                  <div className="flex items-center gap-1">
+                    <ThemeToggle className="h-8 w-8" />
+                    <LanguageSelector />
+                  </div>
                 </div>
                 <img
                   src="/logo-completa-alugapro.png"
                   alt="AlugaPro"
-                  className="mx-auto mb-2 w-44"
+                  className="mx-auto mb-2 w-44 dark:brightness-0 dark:invert"
                 />
               </CardHeader>
 
               <CardContent>
                 {refCode && signupRole === 'gestor' && (
-                  <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700">
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-sm text-emerald-700 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-300">
                     <Gift className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{t('signup.referredByPartner')}</span>
                   </div>
@@ -417,7 +421,7 @@ export function LoginPage() {
                 )}
 
                 {signupRole === 'inquilino' && (
-                  <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700">
+                  <div className="mb-4 flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-700 dark:border-blue-900/40 dark:bg-blue-950/30 dark:text-blue-300">
                     <Info className="h-4 w-4 shrink-0 mt-0.5" />
                     <span>{t('hints.inquilino.inviteHint')}</span>
                   </div>
@@ -542,12 +546,15 @@ export function LoginPage() {
                     {t('buttons.backToSite')}
                   </Link>
                 )}
-                <LanguageSelector />
+                <div className="flex items-center gap-1">
+                  <ThemeToggle className="h-8 w-8" />
+                  <LanguageSelector />
+                </div>
               </div>
               <img
                 src="/logo-completa-alugapro.png"
                 alt="AlugaPro - Gestão Inteligente de Aluguéis"
-                className="mx-auto mb-2 w-48"
+                className="mx-auto mb-2 w-48 dark:brightness-0 dark:invert"
               />
             </CardHeader>
 
@@ -560,7 +567,7 @@ export function LoginPage() {
               )}
 
               {!isLocked && failCount >= 3 && (
-                <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700">
+                <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-700 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
                   <AlertTriangle className="h-4 w-4 shrink-0" />
                   <span>
                     {attemptsUntilLock > 0
