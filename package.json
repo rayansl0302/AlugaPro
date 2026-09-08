@@ -14,7 +14,9 @@
     "build:mobile": "npm run build && npx cap sync",
     "open:android": "npx cap open android",
     "open:ios": "npx cap open ios",
-    "sync": "npx cap sync"
+    "sync": "npx cap sync",
+    "att": "node scripts/att-version.mjs",
+    "att-all": "node scripts/att-version.mjs all"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1127.0",
