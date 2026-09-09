@@ -5,6 +5,7 @@ import {
 import * as XLSX from 'xlsx'
 import { db, auth } from '@/lib/firebase'
 import { renderReplyEmail } from '@/lib/emailMarketing'
+import { apiUrl } from '@/lib/apiUrl'
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -290,7 +291,7 @@ export async function sendCampaign(input: {
   const user = auth.currentUser
   if (!user) throw new Error('Sessão expirada — entre novamente.')
   const idToken = await user.getIdToken()
-  const res = await fetch('/api/send-campaign', {
+  const res = await fetch(apiUrl('/api/send-campaign'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
     body: JSON.stringify(input),

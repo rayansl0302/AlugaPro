@@ -12,6 +12,7 @@ import { User } from '@/types'
 import { createTenant, updateTenant, deleteTenant, getTenants } from '@/services/tenants'
 import { upsertTenantInvite } from '@/services/invites'
 import { EditQaRecordDialog, EditTarget } from './EditQaRecordDialog'
+import { apiUrl } from '@/lib/apiUrl'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -39,7 +40,7 @@ async function createQaLogin(payload: {
   tenantId?: string
 }): Promise<{ uid: string; referralCode?: string }> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-user', {
+  const res = await fetch(apiUrl('/api/qa-user'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
     body: JSON.stringify({ action: 'create', ...payload }),
@@ -51,7 +52,7 @@ async function createQaLogin(payload: {
 
 async function deleteQaLogin(uid: string): Promise<void> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-user', {
+  const res = await fetch(apiUrl('/api/qa-user'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
     body: JSON.stringify({ action: 'delete', uid }),

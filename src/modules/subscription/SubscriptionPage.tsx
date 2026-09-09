@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { useSubscription } from '@/hooks/useSubscription'
 import { PLANS, PlanId } from '@/types'
 import { getDaysRemaining } from '@/services/subscription'
+import { apiUrl } from '@/lib/apiUrl'
 import { formatCurrency, maskCPF } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -54,7 +55,7 @@ export function SubscriptionPage() {
     setVerifying(true)
     import('@/lib/firebase')
       .then(({ auth }) => auth.currentUser?.getIdToken())
-      .then((idToken) => fetch('/api/verify-asaas-subscription', {
+      .then((idToken) => fetch(apiUrl('/api/verify-asaas-subscription'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
         body: JSON.stringify({ companyId: user.companyId }),
@@ -80,7 +81,7 @@ export function SubscriptionPage() {
     try {
       const { auth } = await import('@/lib/firebase')
       const idToken = await auth.currentUser?.getIdToken()
-      const res = await fetch('/api/checkout', {
+      const res = await fetch(apiUrl('/api/checkout'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
         body: JSON.stringify({

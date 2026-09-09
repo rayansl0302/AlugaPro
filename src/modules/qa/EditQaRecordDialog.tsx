@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { maskCPF, maskPhone } from '@/lib/utils'
 import { toast } from '@/hooks/useToast'
+import { apiUrl } from '@/lib/apiUrl'
 
 export type EditTarget =
   | { kind: 'tenant'; record: Tenant }
@@ -23,7 +24,7 @@ interface Props {
 
 async function updateQaLogin(payload: { uid: string; name?: string; password?: string }): Promise<void> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-user', {
+  const res = await fetch(apiUrl('/api/qa-user'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
     body: JSON.stringify({ action: 'update', ...payload }),
@@ -42,7 +43,7 @@ async function createQaLogin(payload: {
   tenantId: string
 }): Promise<{ uid: string }> {
   const idToken = await auth.currentUser?.getIdToken()
-  const res = await fetch('/api/qa-user', {
+  const res = await fetch(apiUrl('/api/qa-user'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken ?? ''}` },
     body: JSON.stringify({ action: 'create', ...payload }),

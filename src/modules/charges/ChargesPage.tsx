@@ -18,6 +18,7 @@ import { getContracts } from '@/services/contracts'
 import { createPayment } from '@/services/payments'
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
+import { apiUrl } from '@/lib/apiUrl'
 import { getVehicles } from '@/services/vehicles'
 import { getEquipments } from '@/services/equipments'
 import { Charge, Contract, ContractAssetType } from '@/types'
@@ -283,7 +284,7 @@ function NotifyDropdown({
         .replace(/\*(.+?)\*/g, '<b>$1</b>')
         .replace(/\n/g, '<br>')
       const idToken = await (await import('@/lib/firebase')).auth.currentUser?.getIdToken()
-      const res = await fetch('/api/whatsapp-notify', {
+      const res = await fetch(apiUrl('/api/whatsapp-notify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -321,7 +322,7 @@ function NotifyDropdown({
     setSending(true)
     try {
       const idToken = await (await import('@/lib/firebase')).auth.currentUser?.getIdToken()
-      const res = await fetch('/api/whatsapp-notify', {
+      const res = await fetch(apiUrl('/api/whatsapp-notify'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

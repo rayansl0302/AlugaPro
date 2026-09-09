@@ -13,6 +13,7 @@ import {
 import { getProperties } from '@/services/properties'
 import { getTenants } from '@/services/tenants'
 import { getVehicles } from '@/services/vehicles'
+import { apiUrl } from '@/lib/apiUrl'
 import { getEquipments } from '@/services/equipments'
 import { MaintenanceRequest, MaintenanceCategory, MaintenanceStatus } from '@/types'
 import { formatDate } from '@/lib/utils'
@@ -66,7 +67,7 @@ async function notifyMaintenanceWhatsApp(phone: string | undefined, message: str
   try {
     const { auth } = await import('@/lib/firebase')
     const idToken = await auth.currentUser?.getIdToken()
-    await fetch('/api/whatsapp-notify', {
+    await fetch(apiUrl('/api/whatsapp-notify'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

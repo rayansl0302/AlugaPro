@@ -18,6 +18,7 @@ import { auth, db } from '@/lib/firebase'
 import { User, UserRole, AppLocale } from '@/types'
 import { Timestamp } from 'firebase/firestore'
 import { getInviteByEmail } from '@/services/invites'
+import { apiUrl } from '@/lib/apiUrl'
 import { createTrialSubscription, getSubscription } from '@/services/subscription'
 import { createReferral } from '@/services/affiliateReferrals'
 import { queryClient } from '@/lib/queryClient'
@@ -207,7 +208,7 @@ async function resolveUserProfile(fbUser: FirebaseUser, hintRole: UserRole, refC
   if (hintRole === 'afiliado') {
     try {
       const idToken = await fbUser.getIdToken()
-      const res = await fetch('/api/create-affiliate-profile', {
+      const res = await fetch(apiUrl('/api/create-affiliate-profile'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
         body: JSON.stringify({ name: fbUser.displayName ?? fbUser.email ?? 'Usuário', email: fbUser.email ?? '' }),

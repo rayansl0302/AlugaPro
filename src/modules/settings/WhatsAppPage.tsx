@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { RefreshCw, Smartphone, CheckCircle2, AlertCircle, WifiOff } from 'lucide-react'
+import { apiUrl } from '@/lib/apiUrl'
 
 type WaStatus =
   | { configured: false }
@@ -21,7 +22,7 @@ export function WhatsAppPage() {
     try {
       const { auth } = await import('@/lib/firebase')
       const idToken = await auth.currentUser?.getIdToken()
-      const res = await fetch('/api/whatsapp-qr', {
+      const res = await fetch(apiUrl('/api/whatsapp-qr'), {
         headers: { Authorization: `Bearer ${idToken ?? ''}` },
       })
       const text = await res.text()

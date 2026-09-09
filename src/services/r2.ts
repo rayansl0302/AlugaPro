@@ -1,3 +1,5 @@
+import { apiUrl } from '@/lib/apiUrl'
+
 // Upload direto pro Cloudflare R2 via URL assinada (o navegador nunca vê as
 // credenciais do R2 — pede a URL assinada no backend e faz o PUT direto).
 export async function uploadToR2(file: File, path: string): Promise<string> {
@@ -9,7 +11,7 @@ export async function uploadToR2(file: File, path: string): Promise<string> {
   const { auth } = await import('@/lib/firebase')
   const idToken = await auth.currentUser?.getIdToken().catch(() => undefined)
 
-  const presignRes = await fetch('/api/r2-presign', {
+  const presignRes = await fetch(apiUrl('/api/r2-presign'), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
