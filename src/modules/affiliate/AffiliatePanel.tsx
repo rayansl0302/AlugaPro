@@ -277,23 +277,6 @@ export function AffiliatePanel() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="kyc-pix">{t('kyc.fields.pixKey')} *</Label>
-                <Input
-                  id="kyc-pix"
-                  value={pixKey}
-                  onChange={(e) => handlePixKeyChange(e.target.value)}
-                  placeholder={t('kyc.fields.pixKeyPlaceholder')}
-                  className={cn(
-                    kycAttempted &&
-                      (!pixKey.trim() || (pixKeyType === 'email' && !isValidPixEmail(pixKey))) &&
-                      'border-destructive'
-                  )}
-                />
-                {kycAttempted && pixKeyType === 'email' && pixKey.trim() && !isValidPixEmail(pixKey) && (
-                  <p className="text-xs text-destructive">{t('kyc.invalidPixEmail')}</p>
-                )}
-              </div>
-              <div className="space-y-1.5">
                 <Label htmlFor="kyc-pix-type">{t('kyc.fields.pixKeyType')} *</Label>
                 <Select value={pixKeyType} onValueChange={(v) => { setPixKeyType(v as PixKeyType); setPixKey('') }}>
                   <SelectTrigger id="kyc-pix-type" className={cn(kycAttempted && !pixKeyType && 'border-destructive')}>
@@ -305,6 +288,24 @@ export function AffiliatePanel() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="kyc-pix">{t('kyc.fields.pixKey')} *</Label>
+                <Input
+                  id="kyc-pix"
+                  value={pixKey}
+                  onChange={(e) => handlePixKeyChange(e.target.value)}
+                  placeholder={t('kyc.fields.pixKeyPlaceholder')}
+                  disabled={!pixKeyType}
+                  className={cn(
+                    kycAttempted &&
+                      (!pixKey.trim() || (pixKeyType === 'email' && !isValidPixEmail(pixKey))) &&
+                      'border-destructive'
+                  )}
+                />
+                {kycAttempted && pixKeyType === 'email' && pixKey.trim() && !isValidPixEmail(pixKey) && (
+                  <p className="text-xs text-destructive">{t('kyc.invalidPixEmail')}</p>
+                )}
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="kyc-phone">{t('kyc.fields.phone')} *</Label>
