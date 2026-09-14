@@ -4,7 +4,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Vehicle } from '@/types'
-import { generateVehicleCode } from '@/lib/utils'
+import { generateVehicleCode, stripUndefined } from '@/lib/utils'
 
 const COL = 'vehicles'
 
@@ -29,7 +29,7 @@ export async function createVehicle(
   data: Omit<Vehicle, 'id' | 'createdAt' | 'updatedAt' | 'code'>
 ): Promise<string> {
   const ref = await addDoc(collection(db, COL), {
-    ...data,
+    ...stripUndefined(data),
     code: generateVehicleCode(),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -38,7 +38,7 @@ export async function createVehicle(
 }
 
 export async function updateVehicle(id: string, data: Partial<Vehicle>): Promise<void> {
-  await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
+  await updateDoc(doc(db, COL, id), { ...stripUndefined(data), updatedAt: serverTimestamp() })
 }
 
 export async function deleteVehicle(id: string): Promise<void> {

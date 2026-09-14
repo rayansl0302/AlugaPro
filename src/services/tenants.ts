@@ -4,6 +4,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/lib/firebase'
 import { Tenant } from '@/types'
+import { stripUndefined } from '@/lib/utils'
 
 const COL = 'tenants'
 
@@ -28,7 +29,7 @@ export async function createTenant(
   data: Omit<Tenant, 'id' | 'createdAt' | 'updatedAt'>
 ): Promise<string> {
   const ref = await addDoc(collection(db, COL), {
-    ...data,
+    ...stripUndefined(data),
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   })
@@ -36,7 +37,7 @@ export async function createTenant(
 }
 
 export async function updateTenant(id: string, data: Partial<Tenant>): Promise<void> {
-  await updateDoc(doc(db, COL, id), { ...data, updatedAt: serverTimestamp() })
+  await updateDoc(doc(db, COL, id), { ...stripUndefined(data), updatedAt: serverTimestamp() })
 }
 
 export async function deleteTenant(id: string): Promise<void> {

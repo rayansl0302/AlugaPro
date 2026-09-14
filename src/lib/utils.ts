@@ -180,3 +180,14 @@ export function getInitials(name: string): string {
 export function removeMask(value: string): string {
   return value.replace(/\D/g, '')
 }
+
+// O Firestore rejeita `undefined` em qualquer campo do documento — campos
+// opcionais deixados em branco em formulários (ex: email, foto) viram
+// `undefined` no payload e derrubam addDoc/updateDoc com um erro genérico.
+// Filtra essas chaves antes de gravar, em vez de gravar cada formulário
+// pra tratar isso manualmente.
+export function stripUndefined<T extends Record<string, unknown>>(obj: T): T {
+  return Object.fromEntries(
+    Object.entries(obj).filter(([, value]) => value !== undefined)
+  ) as T
+}
